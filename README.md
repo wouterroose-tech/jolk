@@ -5,6 +5,14 @@ Jolk a Message Oriented Programming Language for the JVM
 
 ## Licensing
 
+**Summary of Rights**
+
+| Component | License | Permitted Use |
+| --- | --- | --- |
+| **Compiler & Grammar** | Apache 2.0 | Commercial, Modification, Distribution |
+| **The Jolk Book** | CC BY-NC-SA 4.0 | Non-Commercial Sharing & Adaptation |
+| **Trademarks** | Fair Use | Reference only; no affiliation implied |
+
 This project is dual-licensed to protect both the architectural specifications and the educational manuscript:
 
 * **Compiler & Grammar**: [Apache License 2.0](LICENSE)

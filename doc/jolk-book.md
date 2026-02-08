@@ -2,11 +2,11 @@
 
 # JOLK
 
-Messages in Motion 
+**Messages in Motion**
 
-The Language and its Transpilation
+**The Language and its Transpilation**
 
-Building Industrial-Strength Message-Passing Systems on the JVM
+**Building Industrial-Strength Message-Passing Systems on the JVM**
 
 Cobalt is a deep blue. It pays homage to the original "Blue Book"(1) while signalling a modern evolution of language principles. In engineering, cobalt is associated with high-strength alloys; similarly, this volume proposes the conceptual foundation for building industrial-strength systems.
 

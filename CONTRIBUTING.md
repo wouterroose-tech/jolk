@@ -1,10 +1,6 @@
-To establish **Industrial Sovereignty** over contributions, a `CONTRIBUTING.md` file serves as a legal and technical gateway. It ensures that any code submitted by the community automatically adheres to the **Apache License 2.0** terms, preventing "Intellectual Property Grit" from stalling the project's evolution.
 
-### **Jolk Contribution Protocol**
+# **Jolk Contribution Protocol**
 
-The following structure ensures **Nominalised Precision** for all community interactions:
-
----
 
 #### **1. Legal Foundation (Individual Contributor License Agreement)**
 
@@ -32,7 +28,7 @@ To maintain a clean **Mojo** history, all commits must follow the **Nominalised 
 
 ### **Maintaining the Factory Pattern**
 
-Contributions should focus on enhancing the **Lazy Meta Constant Lens Projection** and **Polymorphism** core to Jolk. We prioritize submissions that:
+Contributions should focus on enhancing the Jolk Grammar, Core Type System and Compiler. We prioritize submissions that:
 
 * Enhance **JVM Integration**.
 * Refine the **Tolk Grammar** for improved LL(1) performance.

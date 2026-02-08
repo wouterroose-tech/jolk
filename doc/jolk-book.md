@@ -84,80 +84,80 @@ By eliminating syntactic noise and formalising message-passing, Jolk bridges the
 
 Jolk blends the structural discipline and familiar Java syntax of Java with Smalltalk’s pure message-passing philosophy, resulting in a robust, industry-ready grammar that combines strict state encapsulation with a natural, human-readable syntax designed to reduce cognitive load through intuitive mathematical hierarchies and expressive, lazy-evaluated control flow.
 
-`(* Jolk Grammar *)`  
-`(* ============ *)`
-
-`unit            = [ package ] { import } { annotation } ( type_decl | extension_decl)`  
-`package         = "package" namespace  ";"`  
-`import          = "import" namespace [ ".*" ] ";"`  
-`namespace       = identifier { "." identifier }`
-
-`type_decl       = { visibility } type_classifier type_bound "{" { type_mbr } "}"`  
-`type_classifier = ( "class" | "value" | "record" | "enum" | "protocol" )`  
-`type_bound      = type [ type_contracts ]`  
-`type            = “Self” | [ namespace ] meta_id [ type_args ]`  
-`type_args       = "[" type_bound { "," type_bound } "]"`  
-`type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]`  
-`type_mbr        = { annotation } [ "meta" ] { visibility } member | statement`  
-`member          = state | field | enum | method`  
-`extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"`  
-`extension_mbr   = { annotation } [ visibility ] method`
-
-`state           = "constant" type binding`  
-`binding         = identifier assignment`  
-`assignment      = w "=" w expression`  
-`field           = type identifier [ assignment ] ";"`  
-`enum            = meta_id [ "(" argument_list ")" ] ";"`  
-`method          = [ “lazy” ] [ type_args ] type selector_id "(" [ parameter_list ] ")" ( closure | ";" )`  
-`selector_id     = identifier | operator`  
-`parameter_list  = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )`  
-`annotated_type  = { annotation } type`  
-`vararg_id	    = "..." instance_id`  
-`annotation      = "@" identifier [ "(" [ annotation_args ] ")" ]`  
-`annotation_args = annotation_arg { "," annotation_arg } | annotation_val`  
-`annotation_arg  = identifier "=" annotation_val`  
-`annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_val } ] "}"`
-
-`statement       = ( state | binding | [ "^" ] expression ) ";"`  
-`expression      = logic_or [ ("?" | "?!") branch [ ":" branch ] ] (* ternary pattern *)`  
-`branch          = expression | closure`  
-`logic_or        = logic_and { "||" logic_and }`  
-`logic_and       = equality { "&&" equality }`  
-`equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }`  
-`comparison      = term { ( ">" | ">=" | "<" | "<=" ) term }`   
-`term            = factor { ( "+" | "-" ) factor }`  
-`xl         = unary { ( "*" | "/" | "%" ) unary }`  
-`unary           = ( "!" | "-" ) unary | power`  
-`power           = message [ "**" unary ]`  
-`message         = primary { w selector [ "(" [ argument_list ] ")" ] [ closure ] }`  
-`primary         = reserved | identifier | literal | "(" expression ")" | closure`  
-`selector        = "#" identifier`  
-`argument_list   = expression { "," expression }`  
-`closure         = "{" [ parameter_list "->" ] { statement } [ expression ] "}"`
-
-`identifier      = meta_id | instance_id`   
-`meta_id         = upper_alpha { alpha | digit }`  
-`instance_id     = lower_alpha { alpha | digit }`  
-`literal         = list_literal | number_literal | string_literal | char_literal`  
-`list_literal    = "#(" [ argument_list ] ")"`  
-`number_literal  = digit { digit } [ "." digit { digit } ]`  
-`string_literal  = '"' { string_char } '"'`  
-`char_literal    = "'" single_char "'"`  
-`string_char     = char_except_double_quote | escape_char`  
-`single_char     = char_except_single_quote | escape_char`
-
-`reserved        = "true" | "false" | "null" | "super" | "self"`  
-`visibility      = "#" { "<" | "~" | "v" | ">" | "?" | "!" }`   
-`operator        = "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "~~" | "!~" | ">" | ">=" | "<" | "<=" | "!" | "**" | "?" | "?!”`
-
-`w               = sp { sp }                             (* mandatory whitespace *)`  
-`i               = { sp | nl | comment }                 (* ignorable content *)`  
-`sp              = " " | "\t"`  
-`nl              = "\n" | "\r" | "\r\n"`  
-`comment         = line_comment |  block_comment`  
-`line_comment    = "//" { "/" } { char_except_nl } nl    (* /// for markdown comment *)`  
-`block_comment   = "/*" { char_except_star_slash } "*/"  (* non-greedy *)`  
-`escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | '"' | "'" | "\" )`
+    (* Jolk Grammar *)
+    (* ============ *)
+	
+	unit            = [ package ] { import } { annotation } ( type_decl | extension_decl)  
+	package         = "package" namespace  ";"  
+	import          = "import" namespace [ ".*" ] ";"  
+	namespace       = identifier { "." identifier }
+	
+	type_decl       = { visibility } type_classifier type_bound "{" { type_mbr } "}"  
+	type_classifier = ( "class" | "value" | "record" | "enum" | "protocol" )  
+	type_bound      = type [ type_contracts ]  
+	type            = “Self” | [ namespace ] meta_id [ type_args ]  
+	type_args       = "[" type_bound { "," type_bound } "]"  
+	type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]  
+	type_mbr        = { annotation } [ "meta" ] { visibility } member | statement  
+	member          = state | field | enum | method  
+	extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"  
+	extension_mbr   = { annotation } [ visibility ] method
+	
+	state           = "constant" type binding  
+	binding         = identifier assignment  
+	assignment      = w "=" w expression  
+	field           = type identifier [ assignment ] ";"  
+	enum            = meta_id [ "(" argument_list ")" ] ";"  
+	method          = [ “lazy” ] [ type_args ] type selector_id "(" [ parameter_list ] ")" ( closure | ";" )  
+	selector_id     = identifier | operator  
+	parameter_list  = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )  
+	annotated_type  = { annotation } type  
+	vararg_id	    = "..." instance_id  
+	annotation      = "@" identifier [ "(" [ annotation_args ] ")" ]  
+	annotation_args = annotation_arg { "," annotation_arg } | annotation_val  
+	annotation_arg  = identifier "=" annotation_val  
+	annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_val } ] "}"
+	
+	statement       = ( state | binding | [ "^" ] expression ) ";"  
+	expression      = logic_or [ ("?" | "?!") branch [ ":" branch ] ] (* ternary pattern *)
+	branch          = expression | closure
+	logic_or        = logic_and { "||" logic_and }
+	logic_and       = equality { "&&" equality }
+	equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
+	comparison      = term { ( ">" | ">=" | "<" | "<=" ) term }   
+	term            = factor { ( "+" | "-" ) factor }  
+	factor          = unary { ( "*" | "/" | "%" ) unary }  
+	unary           = ( "!" | "-" ) unary | power  
+	power           = message [ "**" unary ]  
+	message         = primary { w selector [ "(" [ argument_list ] ")" ] [ closure ] }  
+	primary         = reserved | identifier | literal | "(" expression ")" | closure  
+	selector        = "#" identifier  
+	argument_list   = expression { "," expression }  
+	closure         = "{" [ parameter_list "->" ] { statement } [ expression ] "}"
+	
+	identifier      = meta_id | instance_id   
+	meta_id         = upper_alpha { alpha | digit }  
+	instance_id     = lower_alpha { alpha | digit }  
+	literal         = list_literal | number_literal | string_literal | char_literal  
+	list_literal    = "#(" [ argument_list ] ")"  
+	number_literal  = digit { digit } [ "." digit { digit } ]  
+	string_literal  = '"' { string_char } '"'  
+	char_literal    = "'" single_char "'"  
+	string_char     = char_except_double_quote | escape_char  
+	single_char     = char_except_single_quote | escape_char
+	
+	reserved        = "true" | "false" | "null" | "super" | "self"  
+	visibility      = "#" { "<" | "\~" | "v" | ">" | "?" | "!" }   
+	operator        = "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "~~" | "!~" | ">" | ">=" | "<" | "<=" | "!" | "**" | "?" | "?!”
+	
+	w               = sp { sp }                             (* mandatory whitespace *)  
+	i               = { sp | nl | comment }                 (* ignorable content *)  
+	sp              = " " | "\t"  
+	nl              = "\n" | "\r" | "\r\n"  
+	comment         = line_comment |  block_comment  
+	line_comment    = "//" { "/" } { char_except_nl } nl    (* /// for markdown comment *)  
+	block_comment   = "/*" { char_except_star_slash } "*/"  (* non-greedy *)  
+	escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | '"' | "'" | "\" )
 
 The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like sp (space) and nl (newline) from higher-level abstractions like w (mandatory whitespace for message sends) and `s` (optional separation for blocks), the specification enforces strict syntactic signatures—such as the required space between objects and selectors—while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both compiler performance and human readability.
 
@@ -175,11 +175,11 @@ In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Id
 
 **Reserved Object Identifiers:** These keywords represent the fundamental mechanics of the object model: Identity, Awareness, and Literals.They are pre-defined identifiers for First-class Identities.
 
-* self: Represents the current instance.  
-* super: Represents the parent context/identity.  
-* Self: Represents the meta-awareness of the type itself.  
-* null: (The refined replacement for null) representing the absence of an object.  
-* true / false: The fundamental boolean object literals.
+* `self`: Represents the current instance.  
+* `super`: Represents the parent context/identity.  
+* `Self`: Represents the meta-awareness of the type itself.  
+* `null`: (The refined replacement for null) representing the absence of an object.  
+* `true` / `false`: The fundamental boolean object literals.
 
 **Structural Scaffolding** (Architectural Metadata): These markers tell the compiler how to organise the code into the JVM ecosystem, but they do not participate in the message-passing flow.
 
@@ -189,13 +189,9 @@ In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Id
 
 ### Lexical Anchors
 
-**Visibility**; The anchors (\#\< , \#\~ , \#v,  \#\>, \#? , \#\!) designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity.
-
 **Operators**: Expressed as mathematical or logical symbols (e.g., \+, \-, \==, \!=, \~\~, \!\~) .
 
 **Returns**: Jolk uses the caret ^ as an explicit return symbol. If a return type is Self in a method declaration and no explicit return is specified, it implicitly returns self to facilitate fluent API 
-
-**Annotations**: These are anchored by the at-symbol (@). When the Tolk lexer sees this character, it immediately tags the token as an annotation.
 
 **Selectors**: Identified by an anchor hashtag (\#) followed by a string (e.g., \#print, \#PI ). This approach treats logic as a fluent, pipe-like chain (e.g., this \#name \#uppercase \#print, Math \#PI), significantly reducing the "ceremony" of nested parentheses.
 
@@ -204,13 +200,17 @@ The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexic
 * Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., String, PI, \#PI)  
 * Variables, Parameters Properties & instance selectors: start with a lowercase letter (e.g., name, \#name).
 
+**Visibility**; The anchors (\#\< , \#\~ , \#v,  \#\>, \#? , \#\!) designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity.
+
+**Annotations**: These are anchored by the at-symbol (@). When the Tolk lexer sees this character, it immediately tags the token as an annotation.
+
 ### Structural Anchors
 
 Syntactic elements act as structural anchors for the parser. 
 
 **& Operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a mathematically precise intersection of multiple algebras while reinforcing the architectural separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
-**Square Brackets** (\[ \]): While Jolk is "bracket-light," it retains brackets as anchors for Generics. This ensures parsing stability for complex nested types like Map\[String, List\[Int\]\].
+**Square Brackets** (`\[ \]`): While Jolk is "bracket-light," it retains brackets as anchors for Generics. This ensures parsing stability for complex nested types like `Map\[String, List\[Int\]\]`.
 
 **Closures** are brace-delimited {} and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an \-\> arrow.
 

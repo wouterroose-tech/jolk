@@ -2,6 +2,12 @@
 Jolk a Message Oriented Programming Language for the JVM
 
 
+## Community and Contributions
+
+To maintain **Industrial Sovereignty** and the structural density of the Jolk ecosystem, all contributions must adhere to our established protocols. 
+
+* **Contributing**: Please review our [Contributing Guidelines](CONTRIBUTING.md) for details on our commit standards and the legal requirements for code submissions.
+* **Security**: For vulnerability disclosures, refer to our [Security Policy](SECURITY.md).
 
 ## Licensing
 

@@ -314,41 +314,41 @@ To maintain encapsulation, direct field manipulation is restricted to the local 
 
 When a developer declares a field with a public modifier, the language does not expose the field; instead, it creates a Lexical Fence. This fence restricts direct memory manipulation—performed via the internal terminal (^field for retrieval or field \= value for assignment)—strictly to the Archetype, while permitting interaction through public accessors. This model provides an automatic Fluent API where all synthesised setters inherently return Self.
 
-**`class`** `Point {`  
-    `public Int x;`  
-    `public Int y;`
-
-    `// Synthesised default accessors`  
-    `// public Int x() { ^x }`  
-    `// public Self x(Int v) { x = v }`
-
-    `// ...`  
-`}`
+	**class** Point {  
+	    public Int x;  
+	    public Int y;
+	
+	    // Synthesised default accessors  
+	    // public Int x() { ^x }  
+	    // public Self x(Int v) { x = v }
+	
+	    // ...  
+	}
 
 The binding protocol—state and binding—establishes a deterministic hierarchy for state management. By anchoring state with an explicit Type, the language ensures slots are architecturally defined, while mandatory initialisation provides a streamlined route for Referential Stability. This allows the binding production to function exclusively as a state-update mechanism for existing identifiers; because it lacks a leading type or modifier, the Tolk Engine immediately distinguishes mutation from declaration. This distinction categorises every identifier interaction at the grammar level, ensuring total structural transparency.
 
-**`Self`** `method() {`  
-    `constant Int x = 10 // constant - Immutability`  
-    `Int y = 10;         // variable - Mutability`  
-    `y = 20              // binding  - value update`
-
-    `// ...`  
-`}`
+	**Self** method() {  
+	    constant Int x = 10 // constant - Immutability  
+	    Int y = 10;         // variable - Mutability  
+	    y = 20              // binding  - value update
+	
+	    // ...  
+	}
 
 ### Standard Protocol
 
 The Jolk Core Protocol establishes the Jolk Object Foundation, ensuring that every instance is operationally complete and predictable from the moment of instantiation. This framework achieves Industrial Sovereignty by replacing legacy boilerplate with deterministic, high-density selectors—Equivalence (\~\~ / \!\~), Identification (\#hash), Pattern Matching (\#isInstance / \#instanceOf), Representation (\#toString), and Flow Control (\#ifPresent / \#ifEmpty)—which map directly to optimized JVM bytecode. By treating object creation via \#new as a formal capability, the protocol ensures that archetype-specific behaviours (such as the immutable, cached-hash nature of Records or the identity-optimised constants of Enums) are applied with Structural Density. This unified model achieves Signal Determinism, shifting the developer's focus from internal storage to external capability through Protocol Standardisation across all archetypes. Implicit Field Encapsulation ensures that while the syntax maintains the density of field access, every interaction remains a formal message-passing event.
 
-    `// Synthesised default for a class with fields x and y`  
-    `Boolean ~~ (Object other) {`  
-        `self == other ? ^true;`  
-        `other #instanceOf(Self) ?! ^false;`  
-        `// Recursive equivalence check on all fields`  
-        `^ x ~~ other #x && y ~~ other #y`  
-    `}`  
-    `Boolean instanceOf(Type class) { // this instanceOf Type }`  
-    `Self ifPresent(Closure action) { action #apply(self) }`  
-    `Self ifEmpty(Closure action) { }`
+    // Synthesised default for a class with fields x and y  
+    Boolean ~~ (Object other) {  
+        self == other ? ^true;  
+        other #instanceOf(Self) ?! ^false;  
+        // Recursive equivalence check on all fields  
+        ^ x ~~ other #x && y ~~ other #y  
+    }  
+    Boolean instanceOf(Type class) { // this instanceOf Type }  
+    Self ifPresent(Closure action) { action #apply(self) }  
+    Self ifEmpty(Closure action) { }
 
 ### Archetypes
 

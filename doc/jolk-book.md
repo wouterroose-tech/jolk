@@ -183,26 +183,26 @@ In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Id
 
 **Structural Scaffolding** (Architectural Metadata): These markers tell the compiler how to organise the code into the JVM ecosystem, but they do not participate in the message-passing flow.
 
-* Structure / Metadata: package, import, class, value, record, enum, protocol, extension  
-* Relations / Hierarchy : extends &  implements are hierarchy markers  
-* Access / Visibility : meta, public, protected, private, package, abstract, final , constant
+* *Structure / Metadata*: package, import, class, value, record, enum, protocol, extension  
+* *Relations / Hierarchy*: extends &  implements are hierarchy markers  
+* *Access / Visibility*: meta, public, protected, private, package, abstract, final , constant
 
 ### Lexical Anchors
 
-**Operators**: Expressed as mathematical or logical symbols (e.g., \+, \-, \==, \!=, \~\~, \!\~) .
+**Operators**: Expressed as mathematical or logical symbols (e.g., `+`, `-`, `==`, `!=`, `~~`, `!~`).
 
-**Returns**: Jolk uses the caret ^ as an explicit return symbol. If a return type is Self in a method declaration and no explicit return is specified, it implicitly returns self to facilitate fluent API 
+**Returns**: Jolk uses the caret `^` as an explicit return symbol. If a return type is Self in a method declaration and no explicit return is specified, it implicitly returns self to facilitate fluent API 
 
-**Selectors**: Identified by an anchor hashtag (\#) followed by a string (e.g., \#print, \#PI ). This approach treats logic as a fluent, pipe-like chain (e.g., this \#name \#uppercase \#print, Math \#PI), significantly reducing the "ceremony" of nested parentheses.
+**Selectors**: Identified by an anchor hashtag (`#`) followed by a string (e.g., `#print`, `#PI`). This approach treats logic as a fluent, pipe-like chain (e.g., `this #name #uppercase #print`, `Math #PI`), significantly reducing the "ceremony" of nested parentheses.
 
 The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexical rule in the Jolk language where the first-letter casing of an identifier determines its semantic category and role:
 
-* Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., String, PI, \#PI)  
-* Variables, Parameters Properties & instance selectors: start with a lowercase letter (e.g., name, \#name).
+* Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., `String`, `PI`, `#PI`)  
+* Variables, Parameters Properties & instance selectors: start with a lowercase letter (e.g., `name`, `#name`).
 
-**Visibility**; The anchors (\#\< , \#\~ , \#v,  \#\>, \#? , \#\!) designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity.
+**Visibility**; The anchors (`#<` , `#~` , `#v`,  `#>`, `#?` , `#!`) designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity.
 
-**Annotations**: These are anchored by the at-symbol (@). When the Tolk lexer sees this character, it immediately tags the token as an annotation.
+**Annotations**: These are anchored by the at-symbol (`@`). When the Tolk lexer sees this character, it immediately tags the token as an annotation.
 
 ### Structural Anchors
 
@@ -210,7 +210,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **& Operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a mathematically precise intersection of multiple algebras while reinforcing the architectural separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
-**Square Brackets** (`\[ \]`): While Jolk is "bracket-light," it retains brackets as anchors for Generics. This ensures parsing stability for complex nested types like `Map\[String, List\[Int\]\]`.
+**Square Brackets** (`[ ]`): While Jolk is "bracket-light," it retains brackets as anchors for Generics. This ensures parsing stability for complex nested types like `Map[String, List[Int]]`.
 
 **Closures** are brace-delimited {} and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an \-\> arrow.
 

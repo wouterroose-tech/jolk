@@ -1,0 +1,77 @@
+
+(* Jolk Grammar *)
+(* ============ *)
+
+unit            = [ package ] { import } { annotation } ( type_decl | extension_decl)
+package         = "package" namespace  ";"
+import          = "import" namespace [ ".*" ] ";"
+namespace       = identifier { "." identifier }
+
+type_decl       = { visibility } type_classifier type_bound "{" { type_mbr } "}"
+type_classifier = ( "class" | "value" | "record" | "enum" | "protocol" )
+type_bound      = type [ type_contracts ]
+type            = “Self” | [ namespace ] meta_id [ type_args ]
+type_args       = "[" type_bound { "," type_bound } "]"
+type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
+type_mbr        = { annotation } [ "meta" ] { visibility } member | statement
+member          = state | field | enum | method
+extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
+extension_mbr   = { annotation } [ visibility ] method
+
+state           = "constant" type binding
+binding         = identifier assignment
+assignment      = w "=" w expression
+field           = type identifier [ assignment ] ";"
+enum            = meta_id [ "(" argument_list ")" ] ";"
+method          = [ “lazy” ] [ type_args ] type selector_id "(" [ parameter_list ] ")" ( closure | ";" )
+selector_id     = identifier | operator
+parameter_list  = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
+annotated_type  = { annotation } type
+vararg_id	      = "..." instance_id
+
+statement       = ( state | binding | [ "^" ] expression ) ";"
+expression      = logic_or [ ("?" | "?!") branch [ ":" branch ] ] (* ternary pattern *)
+branch          = expression | closure
+logic_or        = logic_and { "||" logic_and }
+logic_and       = equality { "&&" equality }
+equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
+comparison      = term { ( ">" | ">=" | "<" | "<=" ) term } 
+term            = factor { ( "+" | "-" ) factor }
+factor          = unary { ( "*" | "/" | "%" ) unary }
+unary           = ( "!" | "-" ) unary | power
+power           = message [ "**" unary ]
+message         = primary { w selector [ "(" [ argument_list ] ")" ] [ closure ] }
+primary         = reserved | identifier | literal | "(" expression ")" | closure
+selector        = "#" identifier
+argument_list   = expression { "," expression }
+closure         = "{" [ parameter_list "->" ] { statement } [ expression ] "}"
+
+identifier      = meta_id | instance_id 
+meta_id         = upper_alpha { alpha | digit }
+instance_id     = lower_alpha { alpha | digit }
+literal         = list_literal | number_literal | string_literal | char_literal
+list_literal    = "#(" [ argument_list ] ")"
+number_literal  = digit { digit } [ "." digit { digit } ]
+string_literal  = '"' { string_char } '"'
+char_literal    = "'" single_char "'"
+string_char     = char_except_double_quote | escape_char
+single_char     = char_except_single_quote | escape_char
+
+annotation      = "@" identifier [ "(" [ annotation_args ] ")" ]
+annotation_args = annotation_arg { "," annotation_arg } | annotation_val
+annotation_arg  = identifier "=" annotation_val
+annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_val } ] "}"
+
+reserved        = "true" | "false" | "null" | "super" | "self"
+visibility      = ("public" | "package" | "protected" | "private" | "abstract" | "final") 
+visibility_ops  = "#" { "<" | "~" | "v" | ">" | "?" | "!" } 
+operator        = "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "~~" | "!~" | ">" | ">=" | "<" | "<=" | "!" | "**" | "?" | "?!”
+
+w               = sp { sp }                             (* mandatory whitespace *)
+i               = { sp | nl | comment }                 (* ignorable content *)
+sp              = " " | "\t"
+nl              = "\n" | "\r" | "\r\n"
+comment         = line_comment |  block_comment
+line_comment    = "//" { "/" } { char_except_nl } nl    (* /// for markdown comment *)
+block_comment   = "/*" { char_except_star_slash } "*/"  (* non-greedy *)
+escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | '"' | "'" | "\" )

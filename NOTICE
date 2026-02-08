@@ -1,0 +1,13 @@
+Jolk Programming Language
+Copyright © 2026 Wouter Roose
+
+This product includes the Jolk programming language specification, the 
+Tolk grammar, and associated compiler implementations.
+
+The manuscript and educational documentation (The Jolk Book) included 
+in this repository are licensed under the Creative Commons 
+Attribution-NonCommercial-ShareAlike 4.0 International License.
+
+Java and the JVM are registered trademarks of Oracle and/or its affiliates. 
+This project is an independent effort and is not endorsed by or 
+affiliated with Oracle.

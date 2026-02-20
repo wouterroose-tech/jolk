@@ -7,31 +7,35 @@ package         = "package" namespace  ";"
 import          = "import" namespace [ ".*" ] ";"
 namespace       = identifier { "." identifier }
 
-type_decl       = { visibility } type_classifier type_bound "{" { type_mbr ";" } [ type_mbr ] "}"
-type_classifier = ( "class" | "value" | "record" | "enum" | "protocol" )
+type_decl       = [ visibility ] [ variability ] archetype type_bound "{" { type_mbr } "}"
+visibility      = "public" | "package" | "protected" | "private"
+variability     = "abstract" | "final"
+archetype       = "class" | "value" | "record" | "enum" | "protocol"
 type_bound      = type [ type_contracts ]
-type            = “Self” | [ namespace ] meta_id [ type_args ]
+type            = self_type | [ namespace ] meta_id [ type_args ]
 type_args       = "[" type_bound { "," type_bound } "]"
 type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
-type_mbr        = { annotation } [ "meta" ] { visibility } member | statement
-member          = state | field | enum | method
-extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr ";" } [ extension_mbr ] "}"
-extension_mbr   = { annotation } [ visibility ] method
-
-state           = "constant" type binding
+type_mbr        = { annotation } ( [ "meta" ] [ visibility ] member | enum )
+member          = state | field | [ variability ] method
+state           = "constant" type binding ";"
 binding         = identifier assignment
-assignment      = w "=" w expression
-field           = type identifier [ assignment ]
-enum            = meta_id [ "(" argument_list ")" ]
-method          = [ “lazy” ] [ type_args ] type selector_id "(" [ parameter_list ] ")" [ closure ]
-selector_id     = identifier | operator
-parameter_list  = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
+assignment      = "=" expression
+field           = type identifier [ assignment ] ";"
+enum            = meta_id [ "(" argument_list ")" ] ";"
+method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
+typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 annotated_type  = { annotation } type
-vararg_id	      = "..." instance_id
+vararg_id	    = "..." instance_id
+extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
+extension_mbr   = { annotation } [ visibility ] [ variability ] method
+annotation      = "@" identifier [ "(" [ annotation_args ] ")" ]
+annotation_args = annotation_arg { "," annotation_arg } | annotation_val
+annotation_arg  = identifier "=" annotation_val
+annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_val } ] "}"
 
-statement       = state | binding | [ "^" ] expression
-expression      = logic_or [ ("?" | "?!") branch [ ":" branch ] ] (* ternary pattern *)
-branch          = expression | closure
+block           = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
+statement       = state | binding | [ returnOp ] expression
+expression      = logic_or [ condOp expression [ ":" expression ] ] (* ternary pattern *)
 logic_or        = logic_and { "||" logic_and }
 logic_and       = equality { "&&" equality }
 equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
@@ -40,32 +44,39 @@ term            = factor { ( "+" | "-" ) factor }
 factor          = unary { ( "*" | "/" | "%" ) unary }
 unary           = ( "!" | "-" ) unary | power
 power           = message [ "**" unary ]
-message         = primary { w selector [ "(" [ argument_list ] ")" ] [ closure ] }
-primary         = reserved | identifier | literal | "(" expression ")" | closure
-selector        = "#" identifier
-argument_list   = expression { "," expression }
-closure         = "{" [ parameter_list "->" ] { statement ";" } [ statement ] "}"
+message         = primary { selector [ ( "(" argument_list ")" | block ) ] }
+primary         = reserved | identifier | literal | "(" expression ")" | block
+argument_list   = argument { "," argument }
+argument        = expression | lambda
+lambda          = ( instance_id | "(" [ stat_params ] ")" ) "->" statement
+stat_params     = typed_params | inferred_params
+inferred_params = instance_id { "," instance_id }
 
-identifier      = meta_id | instance_id 
+reserved        = "true" | "false" | "null" | "super" | self_type | self_instance
+self_type       = "Self"
+self_instance   = "self"
+selector_id     = identifier | operator
+selector        = "#" identifier
+identifier      = meta_id | instance_id
 meta_id         = upper_alpha { alpha | digit }
 instance_id     = lower_alpha { alpha | digit }
 literal         = list_literal | number_literal | string_literal | char_literal
-list_literal    = "#(" [ argument_list ] ")"
+list_literal    = "#(" [ expression { "," expression } ] ")"
 number_literal  = digit { digit } [ "." digit { digit } ]
-string_literal  = '"' { string_char } '"'
+string_literal  = "\"" { string_char } "\""
 char_literal    = "'" single_char "'"
-string_char     = char_except_double_quote | escape_char
-single_char     = char_except_single_quote | escape_char
 
-annotation      = "@" identifier [ "(" [ annotation_args ] ")" ]
-annotation_args = annotation_arg { "," annotation_arg } | annotation_val
-annotation_arg  = identifier "=" annotation_val
-annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_val } ] "}"
-
-reserved        = "true" | "false" | "null" | "super" | "self"
-visibility      = ("public" | "package" | "protected" | "private" | "abstract" | "final") 
-visibility_ops  = "#" { "<" | "~" | "v" | ">" | "?" | "!" } 
-operator        = "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "~~" | "!~" | ">" | ">=" | "<" | "<=" | "!" | "**" | "?" | "?!”
+returnOp        = "^"
+condOp          = "?" | "?!"
+lambdaOp        = "->"
+spreadOp        = "..."
+eqOp            = "==" | "!=" | "~~" | "!~"
+relOp           = ">" | ">=" | "<" | "<="
+addOp           = "+" | "-" ;
+mulOp           = "*" | "/" | "%"
+powOp           = "**"
+notOp           = "!"
+negOp           = "-"
 
 w               = sp { sp }                             (* mandatory whitespace *)
 i               = { sp | nl | comment }                 (* ignorable content *)
@@ -73,5 +84,8 @@ sp              = " " | "\t"
 nl              = "\n" | "\r" | "\r\n"
 comment         = line_comment |  block_comment
 line_comment    = "//" { "/" } { char_except_nl } nl    (* /// for markdown comment *)
-block_comment   = "/*" { char_except_star_slash } "*/"  (* non-greedy *)
-escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | '"' | "'" | "\" )
+block_comment   = "/*" { char_except_star_slash } "*/"
+string_char     = char_except_double_quote | escape_char
+single_char     = char_except_single_quote | escape_char
+escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "'" | "\" )
+operator        = "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "~~" | "!~" | ">" | ">=" | "<" | "<=" | "!" | "**" | "?" | "?!"

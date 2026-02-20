@@ -1,0 +1,21 @@
+package demo.validation.engine;
+
+/// # Node
+/// 
+///Abstract root of the validation elements (Composite Pattern),
+/// providing the entry point for navigational behaviour (Visitor Pattern).
+///
+/// Defines the common interface for all validation elements, enabling uniform treatment of leaf nodes ([Rule])
+/// and composites ([RuleSet]). The [#accept] method supports Visitor-style traversal.
+///
+/// Package protected because internal to the engine.
+///
+/// @param [T] the type of the validation subject
+///
+/// @author Wouter Roose
+
+package abstract class Node[T] {
+
+    /// Visits this node with the given subject and execution context.
+    package abstract Self accept(T subject, ExecutionContext executionContext);
+}

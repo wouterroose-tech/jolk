@@ -1,0 +1,15 @@
+package demo.validation.domain;
+
+///
+/// @author Wouter Roose
+
+final class ContactForm {
+    public Person person;
+    public String description;
+
+    meta ContactForm new(Person person, String description) {
+        ^ super #new
+            #person(person)
+            #description(description)
+    }
+}

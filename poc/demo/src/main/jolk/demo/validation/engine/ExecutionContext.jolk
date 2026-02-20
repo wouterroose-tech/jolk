@@ -1,0 +1,36 @@
+package demo.validation.engine;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
+/// # ExecutionContext
+///
+/// This class carries state during validation and collects issues.
+///
+/// @author Wouter Roose
+
+class ExecutionContext {
+
+    constant List[Issue] issues = ArrayList #new;
+
+    /// Adds an issue for the given subject.
+    Self add(Object subject, Issue issue) {
+        issues #add(issue)
+    }
+
+    /// Returns true if any issue has been reported.
+    Boolean hasIssue() {
+        ^ !issues #isEmpty
+    }
+
+    /// Returns true if any issue was reported for the given subject.
+    Boolean hasIssue(Object subject) {
+        ^ self #hasMatch(i -> subject == i #subject)
+    }
+
+    private Boolean hasMatch(Predicate[Issue] p) {
+        ^ issues #stream #anyMatch(p)
+    }
+
+}

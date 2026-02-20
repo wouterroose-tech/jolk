@@ -1,0 +1,30 @@
+package demo.validation.rules;
+
+import demo.validation.engine.*;
+import demo.validation.domain.Person;
+
+///
+/// @author Wouter Roose
+
+final class InssConstraint extends Constraint[Person] {
+
+    Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
+        ^ person #ssn #isPresent
+    }
+
+    protected Boolean isValid(Person person) {
+        ^ self #isValid(person #ssn)
+    }
+
+    private Boolean isValid(Long ssn) {
+        ^ (ssn / 97) != (ssn % 97)
+    }
+
+    protected Issue getIssue(Person person,  ExecutionContext executionContext) {
+        ^ Issue #new(person, "INSS_INVALID",  Level #ERROR)
+    }
+
+    protected Interrupt interrupt() {
+        ^ ContactFormValidation #FORM_INTERRUPT
+    }
+}

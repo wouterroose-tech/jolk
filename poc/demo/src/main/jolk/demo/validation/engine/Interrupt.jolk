@@ -1,0 +1,26 @@
+package demo.validation.engine;
+
+/// # Interrupt
+/// 
+/// Signals a controlled short-circuit of the validation pipeline (Chain of Responsibility pattern).
+///
+/// This exception is an internal **control-flow marker** used to halt rule evaluation once a specific logical
+/// `level` (defined by the [RuleSet] hierarchy) is reached. It is not a failure state, but a mechanism to
+/// optimise processing when further validation is impossible or would result in meaningless issues.
+///
+/// The engine catches this signal and compares it against the current execution context to determine the unwinding depth.
+/// A specialised sentinel, [#HALT], is provided to halt the entire demo.validation.
+/// Any signal that does not match a [RuleSet #interrupt] in the current hierarchy will result in a full termination.
+///
+/// Throw the signal within a rule implementation to stop evaluation immediately upon reaching a decisive outcome.
+///
+/// @author woro
+
+final class Interrupt extends RuntimeException {
+
+    /// The Sentinel: A unique instance internal to the valdation.
+    meta public constant Interrupt HALT = Interrupt #new;
+
+    meta Interrupt HALT() { ^ HALT }
+    
+}

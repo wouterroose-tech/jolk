@@ -1,0 +1,55 @@
+package demo.validation.engine;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.function.Function;
+
+/// Composite container for validation nodes (Composite pattern).
+///
+/// Groups [Node]s into hierarchical structures mirroring the domain model. The validation is implemented through
+/// a visitor-inspired navigational behaviour. During validation, visits each node; only [Rule] subclasses execute
+/// validation logic; other nodes facilitate navigation.
+///
+/// **Design patterns:**
+/// - **Composite:** Aggregates nodes uniformly, enabling recursive validation structures
+/// - **Chain of Responsibility:** [Interrupt] propagates to unwind the call stack up to a specified level.
+///
+/// @author woro
+
+abstract class ValidationSuite[T] extends Validation[T] {
+
+    constant Collection[Node[T]] nodes = ArrayList #new;
+
+    /// Adds a validation constraint to this ruleset.
+    final Self add(Constraint[T] constraint) {
+        nodes #add(constraint)
+    }
+
+    /// Adds a nested ruleset, allowing hierarchical composition of validations.
+    final Self add(ValidationSuite[T] suite) {
+        nodes #add(suite)
+    }
+
+    /// Adds validation for a child object extracted from the parent subject.
+    final [R] Self add(Validation[R] suite, Function[T, R] supplier) {
+        nodes #add(ChildValidation[T, R] #new(supplier, suite))
+    }
+
+    /// Validates the subject by recursively visiting each element in the ruleset.
+    /// Any [ValidationInterruptException] at the root level is caught and ignored.
+    final Self validate(T subject, ExecutionContext executionContext) {
+        { self #accept(subject, executionContext) }
+            #catch { Interrupt e -> /* ignore */ }
+    }
+
+    /// Visit each node in the ruleset. If a [ValidationInterruptException]
+    /// is thrown and doesn't match this level, it is rethrown for handling at a higher level.
+    package final Self doAccept(T subject, ExecutionContext executionContext) {
+        { nodes #forEach(node -> node #accept(subject, executionContext)) }
+            #catch { 
+                // the further validation of this ruleset is ignored on an interrupt
+                Interrupt e ->  (e != self #interrupt) ? e #throw
+                // no action required, the containing ruleset will resume the validation
+            }
+    }
+}

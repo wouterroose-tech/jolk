@@ -1,0 +1,36 @@
+package demo.validation.engine;
+
+import java.util.function.Function;
+
+/// # ChildValidation
+///
+/// A final node for traversing object graphs during demo.validation.
+///
+/// This class demonstrates Jolk's ability to handle nested validation logic
+/// through functional messaging and safe null navigation.
+///
+/// - **R**: The domain object type of the supplied child.
+///
+/// @author woro
+
+package final class ChildValidation[T, R] extends Node[T] {
+
+    Function[T, R] supplier;
+    Validation[R] validation;
+
+    meta ChildValidation new(Function[T, R] supplier, Validation[R] validation) {
+        ^ super #new
+            #supplier(supplier)
+            #validation(validation)
+    }
+
+    /// ## accept
+    /// Executes the child validation logic.
+    ///
+    /// - **subject**: The parent entity.
+    /// - **executionContext**: The shared industrial state.
+    @Override
+    package Self accept(T subject, ExecutionContext executionContext) {
+        supplier #apply(subject) #ifPresent { child -> validation #accept(child, executionContext) }
+    }
+}

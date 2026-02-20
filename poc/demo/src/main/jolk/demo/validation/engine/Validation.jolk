@@ -1,0 +1,43 @@
+package demo.validation.engine;
+
+/// # Validation
+///
+///Abstract base for [Constraint] and [RuleSet] (Template Method pattern), orchestrating the execution lifecycle
+/// by managing scope validation and precondition checks. Subclasses implement [#doAccept] for domain logic.
+///
+/// The [#accept] method defines the fixed algorithm (Template) and executes [#doAccept] when:
+/// - The validation's scope matches the execution context's scope
+/// - The precondition is satisfied (if defined by [#satisfiesPreCondition] in subclasses)
+///
+/// Package-protected: internal to the engine.
+///
+/// @author Wouter Roose
+
+package abstract class Validation[T] extends Node[T] {
+
+    /// Checks if the precondition for executing this validation is satisfied.
+    ///
+    /// Subclasses can override this method to define conditions that must be met before validation executes.
+    /// For example, a rule might only validate when a specific field is not null.
+    ///
+    /// @return `true` (the default) if validation should proceed, `false` otherwise
+    protected Boolean satisfiesPreCondition(T subject, ExecutionContext executionContext) {
+        ^ true
+    }
+
+    /// Continue the navigation if scope is applicable and preconditions are satisfied.
+    @Override
+    package final Self accept(T subject, ExecutionContext executionContext) {
+        self #satisfiesPreCondition(subject, executionContext) ? self #doAccept(subject, executionContext)
+    }
+
+    /// Visitor Pattern Continuation.
+    package abstract Self doAccept(T subject, ExecutionContext executionContext);
+
+    /// Returns the interrupt level to use when this constraint fails.
+    ///
+    /// @return the interrupt level identifier, or null (the default)
+    protected Interrupt interrupt() {
+        ^ null
+    }
+}

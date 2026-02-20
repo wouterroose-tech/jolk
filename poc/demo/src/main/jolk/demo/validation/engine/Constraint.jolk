@@ -1,0 +1,29 @@
+package demo.validation.engine;
+
+/// # Constraint
+///
+/// This abstract base class defines a Declarative Validation Constraint that implements a boolean check.
+/// It enforces the logic: "if the constraint is violated, an issue is raised."
+///
+/// Subclasses **MUST** implement the abstract predicate [#isViolation(T)], which returns `true` to signify
+/// a violation when the condition is not met. Constraints can be further customised by supplying an optional
+/// [Scope] via the constructor to restrict applicability or by overriding [#interrupt()] to halt
+/// validation execution at the indicated level.
+///
+/// @author woro
+
+abstract class Constraint[T] extends Validation[T] {
+
+    @Override
+    package final Self doAccept(T subject, ExecutionContext executionContext) {
+        !(self #isValid(subject)) ? {^ self};
+        // executionContext #add(subject, self #getIssue(subject, executionContext));
+        self #interrupt #ifPresent { i -> i #throw }
+    }
+
+    /// Returns true when the constraint is violated for the given subject.
+    protected abstract Boolean isValid(T subject);
+
+    /// Creates the issue to add when the constraint fails for the given subject.
+    protected abstract Issue getIssue(T subject, ExecutionContext executionContext);
+}

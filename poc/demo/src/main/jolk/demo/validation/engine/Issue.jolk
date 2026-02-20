@@ -1,0 +1,11 @@
+package demo.validation.engine;
+
+/// # Issue
+/// 
+/// @author Wouter Roose
+
+record Issue {
+    Object subject;
+    String message;
+    Level level;
+}

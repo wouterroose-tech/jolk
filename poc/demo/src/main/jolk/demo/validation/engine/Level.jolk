@@ -1,0 +1,31 @@
+package demo.validation.engine;
+
+/// Issue Codes.
+///
+/// @author Wouter Roose
+
+enum Level {
+
+    // basic enum
+    ERROR;
+    WARNING;
+    INFO;
+
+    // enum with fields
+    // ERROR("E");
+    // WARNING("W");
+    // INFO("I")
+
+    ///private default by language rule
+    ///String code
+
+    /// default variadic constructor
+    /// private Level Level(String c) { code = c }
+    
+    /// default valueOf methods
+    /// static Level valueOf(String code) {}
+    /// static Level valueOfCode(String code) {}
+
+    /// default accessor for enum fields
+    /// String code() { ^code }
+}

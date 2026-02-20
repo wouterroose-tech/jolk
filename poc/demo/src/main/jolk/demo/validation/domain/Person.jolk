@@ -1,0 +1,17 @@
+package demo.validation.domain;
+
+///
+/// @author Wouter Roose
+
+final class Person {
+    public Long ssn;
+    public String firstName;
+    public String lastName;
+
+    meta Person new(Long ssn, String firstName, String lastName) {
+        ^ super #new
+            #ssn(ssn)
+            #firstName(firstName)
+            #lastName(lastName)
+    }
+}

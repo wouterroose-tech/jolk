@@ -1,0 +1,41 @@
+
+
+/// # Pattern Matching
+/// Demonstrates Jolk's message-based pattern matching which replaces the traditional
+/// switch statement with a fluid chain of `#case` selectors.
+///
+/// @author Wouter Roose
+
+/// # List Literal 
+Array[String] colors = #("red", "green", "blue");
+
+// The #case selector acts as an expression-oriented pivot in the message chain.
+// It evaluates the closure only if the receiver matches the argument.
+Color primaryColor = colors #first
+    #case("red")   { Color #new(255, 0, 0) }
+    #case("green") { Color #new(0, 255, 0) }
+    #case("blue")  { Color #new(0, 0, 255) }
+    #default       { Color #new(0, 0, 0) };
+
+/// # Enum
+/// Enums are first-class identities with fields and methods.
+enum Color { 
+    RED(255, 0, 0);
+    GREEN(0, 255, 0);
+    BLUE(0, 0, 255);
+    WHITE(255, 255, 255);
+    BLACK(0, 0, 0);
+
+    Int r; Int g; Int b;
+}
+
+Array[Color] palette = #(Color #RED, Color #WHITE, Color #BLACK);
+
+// Mapping the array via a pattern matching chain
+Array[String] hexCodes = palette #map { color ->
+    color 
+        #case(Color #RED)   { "#FF0000" }
+        #case(Color #WHITE) { "#FFFFFF" }
+        #case(Color #BLACK) { "#000000" }
+        #default            { "#UNKNOWN" }
+};

@@ -1,0 +1,44 @@
+
+/// # Reified Block
+/// Demonstrates the dual nature of Jolk closures, which can be either flattened
+/// into inline code or reified into first-class objects.
+///
+/// ## Static Flattening (Inlined Path)
+/// When a closure is used for local, synchronous operations (e.g., `#filter`),
+/// the Tolk compiler performs **Static Flattening**. The closure's logic is
+/// unrolled directly into the calling method's bytecode, eliminating object
+/// allocation and achieving the performance of a native Java loop.
+///
+/// ## Dynamic Escaping (Reified Object)
+/// When a closure is assigned to a variable or used in a context where it must
+/// outlive the current stack frame (e.g., for exception handling with `#catch`),
+/// it undergoes **Dynamic Escaping**. The compiler reifies the block into a
+/// `jolk.lang.Closure` object, a sovereign identity that can receive messages
+/// and manage its own execution lifecycle.
+///
+/// @author Wouter Roose
+
+    /// Assumes `remoteService` and `log` are available in the scope.
+    /// The method returns the result of the remote call or a default value on error.
+    List<Result> processData(data: List<String>) {
+        
+        // 1. Inlined Lambda: Static Flattening
+        // The JolctVisitor merges this directly into the method body for performance.
+        List<String> validData = data #filter { item -> item #isNotEmpty };
+
+        // 2. Reified Closure: Dynamic Escaping
+        // This block is reified into a Closure object to handle messages like #catch.
+        // The non-local return (`^`) exits the `processData` method directly.
+        {
+            ^ remoteService #fetch(validData)
+        } #catch { IOException e ->
+            log #error("Failed to fetch data due to IO error.", e);
+            ^ List #new() // Return an empty list on IO error
+        } #catch { Exception e ->
+            log #error("An unexpected error occurred.", e);
+            e #throw // Re-throw other exceptions
+        } #finally {
+            remoteService #close();
+        }
+
+    }

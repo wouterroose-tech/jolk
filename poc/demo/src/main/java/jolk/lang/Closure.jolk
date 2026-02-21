@@ -1,0 +1,86 @@
+package jolk.lang;
+
+/// # Closure
+/// A first-class representation of a block of code or function.
+///
+/// Closures in Jolk are intrinsic identities that represent pure functional blocks.
+/// They capture their defining scope and can be executed, passed as arguments, or used
+/// for control flow structures like loops and exception handling.
+///
+/// ## Exception Handling
+/// Closures provide the mechanism for exception handling in Jolk via the `#catch` and `#finally` messages.
+///
+/// ## Resource Management
+/// The Closure type does not require a specific "try-with-resources" method. 
+/// In Jolk's design, resource management is typically inverted as a method on the resource itself
+/// (e.g., `resource #use { ... }`), or handled via the existing `#finally` block.
+///
+/// - **T**: The return type of the closure execution.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+package class Closure<T> {
+    
+    /// The captured home scope for Non-Local Return tunneling
+    private ExecutionContext context; 
+
+    /// The raw structural logic bound to this JoMoo
+    private java.util.function.Supplier<T> logic;
+
+    /// Executes the reified logic of this closure.
+    ///
+    /// @return The result of the closure execution.
+    T apply() {/*
+        return logic.get();
+    */}
+
+    /// Executes the closure logic with the provided arguments.
+    ///
+    /// This is primarily used by the runtime for invoking closures that expect parameters,
+    /// such as exception handlers or parameterized blocks.
+    ///
+    /// @param args: The arguments to pass to the closure.
+    /// @return  The result of the closure execution.
+    T apply(Object... args) {/*
+        // Compiler intrinsic implementation
+    */}
+
+    /// Functional interception of exceptions.
+    ///
+    /// Wraps the execution of this closure in a try-catch block. If an exception matching
+    /// the specified `errorType` occurs, the `handler` closure is executed with the exception
+    /// as an argument. Otherwise, the exception is propagated.
+    ///
+    /// Note: The compiler flattens chained `#catch` messages into a single efficient try-catch structure.
+    ///
+    /// @param errorType: The type of exception to catch (e.g., `Exception`, `IOException`).
+    /// @param handler: A closure that accepts the exception and handles it.
+    /// @return The result of the original closure if successful, or the result of the handler if caught.
+    T #catch(Type errorType, Closure handler) {/*
+        try {
+            return (T) this.apply();
+        } 
+        catch ( Exception e) {
+            if ( errorType.isInstance(e) ) {
+                return (T) handler.apply(e);
+            }
+            throw e;
+        }
+    */}
+    
+    /// Executes a cleanup action after this closure completes, regardless of success or failure.
+    ///
+    /// This corresponds to the `finally` block in Java. The `finalAction` is guaranteed to run.
+    ///
+    /// @param finalAction: The closure to execute for cleanup.
+    /// @return The result of the original closure execution.
+    T #finally(Closure finalAction) {/*
+        try {
+            return (T) this.apply();
+        } finally {
+            finalAction.apply();
+        }
+    */}
+    
+}

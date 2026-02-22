@@ -799,6 +799,20 @@ Jolk provides three fundamental collection archetypes, each defined by a unique 
 
 The **Array** is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at:`) and stack-based operations (`#push:`, `#pop:`).
 
+	@Intrinsic
+	public final class Array[T] {
+	
+	    meta Array[T] new(T... elements) { }
+	
+	    T at(Int index) { }
+	    Self put(Int index, T element) { }
+	    T first() { }
+	    [R] Array[R] map(Closure[R] mapper) { }
+	    T pop() { }
+	    Self push(T element) { }
+	}
+
+
 The **Set** represents a collection of unique identities, excising duplication and disregarding ordinality. Its literal, `#{ }`, uses the brace, the canonical symbol of Set Theory.  Membership is defined by identity, not position. It responds to membership queries (`#includes:`) and mathematical unions.
 
 The **Map** is an associative archetype that reifies the relationship between a domain and a codomain. The parenthesis, `#( )`, denotes this associative environment, distinguishing the mapping of a domain from the containment of a set or the logic of a block. It uses the entry operator (`->`) to link keys to values. It responds to key-based retrieval (`#atKey:`) and domain inspections.

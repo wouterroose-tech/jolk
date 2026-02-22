@@ -111,13 +111,10 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	selector_id     = identifier | operator
 	typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 	annotated_type  = { annotation } type
+	annotation      = "@" identifier [ "(" ... ")" ]
 	vararg_id       = "..." instance_id
 	extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
 	extension_mbr   = { annotation } [ visibility ] [variability] method
-	annotation      = "@" identifier [ "(" [ annotation_args ] ")" ]
-	annotation_args = annotation_arg { "," annotation_arg } | annotation_val
-	annotation_arg  = identifier "=" annotation_val
-	annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_val } ] "}"
 
 	statement       = state | binding | [ "^" ] expression
 	expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ] (* ternary pattern *)
@@ -130,7 +127,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	unary           = ( "!" | "-" ) unary | power
 	power           = message [ "**" unary ]
 	message         = primary { selector [ ( "(" argument_list ")" | block ) ] }
-	primary         = reserved | identifier | literal | "(" expression ")" | block
+	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | block
 	argument_list   = argument { "," argument }
 	argument        = expression | lambda
 	block           = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
@@ -143,8 +140,14 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	identifier      = meta_id | instance_id 
 	meta_id         = upper_alpha { alpha | digit }
 	instance_id     = lower_alpha { alpha | digit }
-	literal         = list_literal | number_literal | string_literal | char_literal
-	list_literal    = "#(" [ expression { "," expression } ] ")"
+	literal         = number_literal | string_literal | char_literal
+	list_literal    = array_literal | set_literal | map_literal
+	array_literal   = "#[" [ literal_list ] "]"
+	set_literal     = "#{" [ literal_list ] "}"
+	map_literal     = "#(" [ map_list ] ")"
+	literal_list    = expression { "," expression }
+	map_list        = map_entry { "," map_entry }
+	map_entry       = expression "->" expression
 	number_literal  = digit { digit } [ "." digit { digit } ]
 	string_literal  = "\"" { char } "\""
 	char_literal    = "'" char "'"
@@ -202,7 +205,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **& Operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a mathematically precise intersection of multiple algebras while reinforcing the architectural separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
-**Square Brackets** (`[ ]`): While Jolk is "bracket-light," it retains brackets as anchors for Generics. This ensures parsing stability for complex nested types like `Map[String, List[Int]]`.
+**Generic Type Brackets** While the final specification adopts `< >` to achieve alignment with Java and the Strongtalk lineage, the current version utilises `[ ]` to minimize lexical complexity.
 
 **Closures** are brace-delimited {} and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
 
@@ -210,7 +213,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
-**List Literals**: A list\_literal is a shorthand for the underlying message-based variadic creation of a primary object, ready to participate in the message chain. 
+**Collection Literals**: A collection literal (Array, Set or Map) is a shorthand for the underlying message-based variadic creation of a primary object, ready to participate in the message chain. 
 
 **meta**: The meta stratum anchor designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta Strata.
 
@@ -248,7 +251,7 @@ In accordance with the principle of Engineered Integrity, Jolk prioritises sourc
 
 ### Statement Termination 
 
-Statement Termination Logic balances structural discipline with the fluid message-passing ergonomics. The semicolon is mandatory for architectural metadata, such as package and import declarations, as well as instance state declarations like fields and enums. Within method bodies, standard statements including variables, assignments, and expressions are firmly anchored by the semicolon to ensure clarity and  structural integrity.
+Statement Termination Logic balances structural discipline with the fluid message-passing ergonomics. The semicolon is mandatory for architectural metadata, such as package and import declarations, as well as instance state declarations like fields and enums. Within method bodies, standard statements including variables, assignments, and expressions are firmly anchored by the semicolon to ensure clarity and structural integrity. 
 
 ### Closure Dual-Usage
 
@@ -492,17 +495,17 @@ The Creation Displacement Rule: If a Type defines an explicit creation method, t
 		// ...
 	}
 
-**List creation methods**
+**Collection creation methods**
 
-In Jolk, literal list creation methods utilize the `#` anchor as a shorthand for message-based instantiation. This notation allows for the concise creation of collections, such as `Array[String] colors = #("red", "green", "blue")`, serving as a minimalist alternative to the variadic new with the varargs pattern: `Array #new("red", "green", "blue")`.
+In Jolk, literal collection creation methods utilize the `#` anchor as a shorthand for message-based instantiation. This notation allows for the concise creation of collections, such as `Array[String] colors = #["red", "green", "blue"]`, serving as a minimalist alternative to the variadic new with the varargs pattern: `Array #new("red", "green", "blue")`.
 
     // variadic creation method  
-    Array]String] colors = Array #new("red", "green", "blue");
+    Array[String] colors = Array #new("red", "green", "blue");
 
     // literal anchor shortcut  
-    Array[String] colors = #("red", "green", "blue");
+    Array[String] colors = #["red", "green", "blue"];
 
-By implementing these as literal anchors, Jolk remains "bracket-light" while upholding the Unified Messaging principle. Because these literals are treated as sugar for underlying messages, the resulting list is immediately ready to participate in a message chain. This ensures that every interaction remains a formal message send rather than an opaque compiler secret, maintaining the fluid messaging architecture.
+By implementing these as literal anchors, Jolk remains "bracket-light" while upholding the Unified Messaging principle. Because these literals are treated as sugar for underlying messages, the resulting collection is immediately ready to participate in a message chain. This ensures that every interaction remains a formal message send rather than an opaque compiler secret, maintaining the fluid messaging architecture.
 
 **Constants**
 
@@ -788,6 +791,19 @@ Closures are Intrinsic identities that represent pure functional blocks, defined
 	    // Finally always runs and returns the result or self  
 	    Self finally(Closure finalAction) { }  
 	}
+
+### Core Collection Types
+
+Jolk provides three fundamental collection archetypes, each defined by a unique lexical anchor that mirrors its mathematical origin. This design ensures that the code remains a scientific record of intent, free from the qualitative bias of legacy object-oriented naming.
+
+The **Array** is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at:`) and stack-based operations (`#push:`, `#pop:`).
+
+The **Set** represents a collection of unique identities, excising duplication and disregarding ordinality. Its literal, `#{ }`, uses the brace, the canonical symbol of Set Theory.  Membership is defined by identity, not position. It responds to membership queries (`#includes:`) and mathematical unions.
+
+The **Map** is an associative archetype that reifies the relationship between a domain and a codomain. The parenthesis, `#( )`, denotes this associative environment, distinguishing the mapping of a domain from the containment of a set or the logic of a block. It uses the entry operator (`->`) to link keys to values. It responds to key-based retrieval (`#atKey:`) and domain inspections.
+
+By standardising on these three archetypes, Tolk applies Protocol Standardisation. This maintains a single, dense model through a 1:1 mapping between mathematical concept and syntactic form.
+
 
 ### Augmented Types
 

@@ -1,7 +1,5 @@
 package demo.validation.engine;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Predicate;
 
 /// # ExecutionContext
@@ -12,7 +10,7 @@ import java.util.function.Predicate;
 
 class ExecutionContext {
 
-    constant List[Issue] issues = ArrayList #new;
+    constant Array[Issue] issues = Array #new;
 
     /// Adds an issue for the given subject.
     Self add(Object subject, Issue issue) {

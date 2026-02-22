@@ -23,8 +23,7 @@ enum Level {
     /// private Level Level(String c) { code = c }
     
     /// default valueOf methods
-    /// static Level valueOf(String code) {}
-    /// static Level valueOfCode(String code) {}
+    /// static Level valueOf(String label) {}
 
     /// default accessor for enum fields
     /// String code() { ^code }

@@ -1,7 +1,5 @@
 package demo.validation.engine;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.function.Function;
 
 /// Composite container for validation nodes (Composite pattern).
@@ -18,7 +16,7 @@ import java.util.function.Function;
 
 abstract class ValidationSuite[T] extends Validation[T] {
 
-    constant Collection[Node[T]] nodes = ArrayList #new;
+    constant Array[Node[T]] nodes = Array #new;
 
     /// Adds a validation constraint to this ruleset.
     final Self add(Constraint[T] constraint) {

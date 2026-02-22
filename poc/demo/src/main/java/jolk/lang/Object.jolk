@@ -1,0 +1,98 @@
+package jolk.lang;
+
+/// # Object
+///
+/// The root class of the Jolk object hierarchy.
+/// Every class, record, and enum implicitly inherits from Object.
+/// It defines the fundamental protocol for identity, equality, and string representation.
+///
+/// @author Wouter Roose
+
+@Intrinsic("java.lang.Object")
+public class Object {
+
+    /// The default constructor
+    ///
+    /// - **Returns**: A new instance of the class.
+    meta public [O extends Object] O #new {
+        ^ this #class #new
+    }  
+
+    /// The generic variadic constructor
+    ///
+    /// - **fields**: A map of field names and values to initialize the object with.
+    /// - **Returns**: A new instance of the class populated with the provided fields.
+    meta public [O extends Object] O new (Map[String, Object] fields...) {
+        ^ this #class #new(fields)
+    }
+
+    /// ## class
+    /// Returns the class object representing the type of the receiver.
+    ///
+    /// - **Returns**: The Class of the instance.
+    public MetaClass[Self] getClass() {
+        // java pseudocode
+        // return this.getClass();
+    }
+
+    /// ## ==
+    /// Performs an equality check.
+    ///
+    /// **Industrial Note**: This is the core message for the equality operator.
+    ///
+    /// - **other**: The [Object] to compare against.
+    /// - **Returns**: True if the objects are the same.
+    public Boolean == ([Object] other) {
+        // java pseudocode
+        // return this == other;
+    }
+
+    /// ## ~~
+    /// Performs a semantic equivalent check.
+    ///
+    /// **Industrial Note**: This is the core message for the semantic equivalent operator.
+    /// By default, it falls back to identity (`==`), but is overridden by `record`
+    /// and `enum` types to perform value-based comparison.
+    ///
+    /// - **other**: The [Object] to compare against.
+    /// - **Returns**: True if the objects are semantically equivalent.
+    public Boolean ~~ ([Object] other) {
+        // java pseudocode
+        // return this.equals(other);
+    }
+
+    /// ## ifPresent
+    /// Executes a functional block if the receiver is not null.
+    /// This is the primary industrial alternative to explicit null checks.
+    ///
+    /// - **action**: A [Lambda] that receives the current object as an argument.
+    public [R] R ifPresent(Closure[Self] action) {
+        ^ action #value(this)
+    }
+
+    /// ## ifEmpty
+    /// Executes a functional block if the receiver is null (Nothing).
+    /// This is the primary industrial alternative to explicit null checks.
+    ///
+    /// - **action**: A [Lambda] that receives the current object as an argument.
+    public Self ifEmpty(Closure action) {
+        ^ self
+    }
+    
+    /// ## isPresent
+    /// Checks if the receiver is a valid, non-null identity.
+    ///
+    /// - **Returns**: `true` for all objects except `null` (Nothing).
+    public Boolean isPresent() {
+        ^ true
+    }
+    
+    /// ## isEmpty
+    /// Checks if the receiver represents the absence of a value.
+    ///
+    /// - **Returns**: `false` for all objects except `null` (Nothing).
+    public Boolean isEmpty() {
+        ^ false
+    }
+
+}

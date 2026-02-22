@@ -1,0 +1,64 @@
+package jolk.lang;
+
+/// # Array
+///
+/// The **Array** is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic.
+///
+/// Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector.
+/// This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence.
+///
+/// * **Semantics**: Every element is indexed by its position.
+/// * **Message Pivot**: Responds to positional messages (`#at`) and stack-based operations (`#push`, `#pop`).
+///
+/// - **T**: The element type of the data structure.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+public final class Array[T] {
+
+    /// Creates a new Array containing the provided elements.
+    ///
+    /// @param elements the elements to be contained in the array
+    /// @return a new Array containing the elements
+    meta Array[T] new(T... elements) {
+        // Intrinsic implementation maps to Array.of
+    }
+
+    /// Appends the specified element to the end of this array.
+    ///
+    /// @param element element to be appended to this array
+    /// @return self
+    Self push(T element) { }
+
+    /// Removes and returns the last element of the array.
+    /// Returns null if the array is empty.
+    ///
+    /// @return the last element or null
+    T pop() { }
+
+    /// Returns the element at the specified position in this array.
+    ///
+    /// @param index index of the element to return
+    /// @return the element at the specified position
+    T at(Int index) { }
+
+    /// Replaces the element at the specified position in this array with the specified element.
+    ///
+    /// @param index index of the element to replace
+    /// @param element element to be stored at the specified position
+    /// @return self
+    Self put(Int index, T element) { }
+
+    /// Returns the first element of the array, or null if empty.
+    ///
+    /// @return the first element or null
+    T first() { }
+
+    /// Returns a new Array consisting of the results of applying the given function to the elements of this array.
+    ///
+    /// @param mapper a non-interfering, stateless function to apply to each element
+    /// @param <R> The element type of the new array
+    /// @return the new array
+    [R] Array[R] map(Closure[R] mapper) { }
+}

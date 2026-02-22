@@ -1,0 +1,29 @@
+package jolk.lang;
+
+/// # Map
+///
+/// The **Map** is an associative archetype that reifies the relationship between a domain and a codomain.
+///
+/// The parenthesis, `#( )`, denotes this associative environment.
+///
+/// * **Semantics**: Uses the entry operator (`->`) to link keys to values.
+/// * **Message Pivot**: Responds to key-based retrieval (`#atKey`) and domain inspections.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+public final class Map[K, V] {
+
+    /// Creates a new Map containing the provided keys and values.
+    /// Arguments are flattened: key1, value1, key2, value2...
+    meta Map[K, V] new(Object... entries) { }
+
+    /// Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
+    V atKey(K key) { }
+
+    /// Associates the specified value with the specified key in this map.
+    Self put(K key, V value) { }
+
+    /// Returns a Set view of the keys contained in this map.
+    Set[K] keys() { }
+}

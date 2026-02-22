@@ -7,7 +7,7 @@
 /// @author Wouter Roose
 
 /// # List Literal 
-Array[String] colors = #("red", "green", "blue");
+Array[String] colors = #["red", "green", "blue"];
 
 // The #case selector acts as an expression-oriented pivot in the message chain.
 // It evaluates the closure only if the receiver matches the argument.
@@ -29,7 +29,7 @@ enum Color {
     Int r; Int g; Int b;
 }
 
-Array[Color] palette = #(Color #RED, Color #WHITE, Color #BLACK);
+Array[Color] palette = #[Color #RED, Color #WHITE, Color #BLACK];
 
 // Mapping the array via a pattern matching chain
 Array[String] hexCodes = palette #map { color ->

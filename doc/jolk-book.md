@@ -390,7 +390,7 @@ Strict encapsulation is maintained by prohibiting direct field access. Instead, 
 
 an Enum is a specialised type representing a fixed set of shared singletons reified as uppercase Lexically Anchored identities. To maintain Semantic Casing, these constants function as Meta-Objects within the unified messaging protocol. Members are typically accessed by sending a Meta-Selector to the type (e.g., `Day #MO`), but importing a specific member opens a Lens on that identity. This allows the member name to be used directly, removing syntactic noise by eliminating the need for the `#` selector or the type prefix.
 
-Structurally, enum constants use a shorthand notation for public meta constant declarations separated by semicolons. To ensure Engineered Integrity, the system synthesises an immutable, canonical creation method (`#new`). To facilitate data retrieval and JVM interoperability, Jolk automatically synthesises message selectors and resolvers—such as `#valueOf` and slot-specific resolvers like `#valueOfLabel`—for every field defined in the body. This ensures enums are first-class participants in the message flow.
+Structurally, enum constants use a shorthand notation for public meta constant declarations separated by semicolons. To ensure Engineered Integrity, the system synthesises an immutable, canonical creation method (`#new`). To facilitate data retrieval and JVM interoperability, Jolk automatically synthesises message selectors and resolvers—such as `#valueOf`. This ensures enums are first-class participants in the message flow.
 
 	enum Day {
 	
@@ -410,12 +410,13 @@ Structurally, enum constants use a shorthand notation for public meta constant d
 	    // lens projection  
 	    // today = MO;
 	
-	    // synthesised resolvers  
-	    // meta level valueOf(String name) {}  
-	    // meta Level valueOfIndex(Int index) {}  
-	    // meta Level valueOfLabel(String label) {}  
-	    //  
-	    // today = Day #valueOfIndex(1);  
+	    // synthesised resolver
+	    // meta level valueOf(String name) {} 
+
+        // default accessor for enum fields
+		// Int index() { ^index }
+        // String label() { ^label }
+	
 	}
 
 **value**

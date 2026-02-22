@@ -16,8 +16,8 @@ abstract class Constraint[T] extends Validation[T] {
 
     @Override
     package final Self doAccept(T subject, ExecutionContext executionContext) {
-        !(self #isValid(subject)) ? {^ self};
-        // executionContext #add(subject, self #getIssue(subject, executionContext));
+        !(self #isValid(subject)) ? { ^ self };
+        executionContext #add(subject, self #getIssue(subject, executionContext));
         self #interrupt #ifPresent { i -> i #throw }
     }
 

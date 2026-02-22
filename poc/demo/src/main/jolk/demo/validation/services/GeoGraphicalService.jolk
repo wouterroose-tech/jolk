@@ -1,0 +1,24 @@
+package demo.validation.services;
+
+///
+/// @author Wouter Roose
+
+final class GeoGraphicalService {
+    
+    meta public constant Array[Integer] Mechelen = #[2800, 2801, 2811, 2812];
+
+    meta private GeoGraphicalService new() {
+        ^ super #new
+    }
+
+    // Caching the external service
+    meta public constant GeoGraphicalService GGS = GeoGraphicalService #new;
+
+    Boolean exists(Integer zipCode) {
+        // simulate lookup via DAO
+        ^ 1000 < zipCode && zipCode < 9999
+    }
+}
+
+
+}

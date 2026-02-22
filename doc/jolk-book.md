@@ -117,7 +117,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	extension_mbr   = { annotation } [ visibility ] [variability] method
 
 	statement       = state | binding | [ "^" ] expression
-	expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ] (* ternary pattern *)
+	expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ]
 	logic_or        = logic_and { "||" logic_and }
 	logic_and       = equality { "&&" equality }
 	equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
@@ -811,7 +811,6 @@ The **Array** is a linear continuum of ordered facts, serving as the primary veh
 	    T pop() { }
 	    Self push(T element) { }
 	}
-
 
 The **Set** represents a collection of unique identities, excising duplication and disregarding ordinality. Its literal, `#{ }`, uses the brace, the canonical symbol of Set Theory.  Membership is defined by identity, not position. It responds to membership queries (`#includes:`) and mathematical unions.
 

@@ -1,0 +1,32 @@
+package demo.validation.rules;
+
+import demo.validation.engine.*;
+import demo.validation.domain.ContactForm;
+import demo.validation.services.GeoGraphicalService;
+
+
+///
+/// @author Wouter Roose
+
+final class ZipConstraint extends Constraint[ContactForm] {
+
+    Boolean satisfiesPreCondition(ContactForm form, ExecutionContext executionContext) {
+        ^ form #zipCode #isPresent
+    }
+
+    protected Boolean isValid(ContactForm form) {
+        ^ self #isMalinesArea(form #zipCode)
+    }
+
+    private Boolean isMalinesArea(Integer zipCode) {
+        ^ GeoGraphicalService #GGS #exists(zipCode) && GeoGraphicalService #Mechelen #contains(zipCode)
+    }
+
+    protected Issue getIssue(ContactForm form,  ExecutionContext executionContext) {
+        ^ Issue #new(form, "ZIP_INVALID",  Level #ERROR)
+    }
+
+    protected Interrupt interrupt() {
+        ^ ContactFormValidation #FORM_INTERRUPT
+    }
+}

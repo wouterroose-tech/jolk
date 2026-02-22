@@ -14,7 +14,7 @@ archetype       = "class" | "value" | "record" | "enum" | "protocol"
 type_bound      = type [ type_contracts ]
 type            = self_type | [ namespace ] meta_id [ type_args ]
 type_args       = "[" type_bound { "," type_bound } "]"
-type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
+type_contracts  = "extends" type [ "implements" type { "&" type } ] | "implements" type { "&" type }
 type_mbr        = { annotation } ( [ "meta" ] [ visibility ] member | enum )
 member          = state | field | [ variability ] method
 state           = "constant" type binding ";"
@@ -35,7 +35,7 @@ annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_v
 
 block           = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
 statement       = state | binding | [ returnOp ] expression
-expression      = logic_or [ condOp expression [ ":" expression ] ] (* ternary pattern *)
+expression      = logic_or [ condOp expression [ ":" expression ] ]
 logic_or        = logic_and { "||" logic_and }
 logic_and       = equality { "&&" equality }
 equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }

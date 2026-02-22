@@ -1,0 +1,7 @@
+package demo.validation.services;
+
+record City {
+    Long zipcode;
+    String name;
+    String province;
+}

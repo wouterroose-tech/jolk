@@ -101,11 +101,12 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	type_args       = "[" type_bound { "," type_bound } "]"
 	type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
 	type_mbr        = { annotation } ( [ "meta" ] [ visibility ] member | enum ";" )
-	member          = state | field | [ variability ] method
-	state           = "constant" type binding ";"
+	member          = state | [ variability ] method
+	state           = ( constant | field ) ";"
+	constant        = "constant" type binding
 	binding         = identifier assignment
 	assignment      = "=" expression
-	field           = type identifier [ assignment ] ";"
+	field           = type identifier [ assignment ]
 	enum            = meta_id [ "(" argument_list ")" ]
 	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
 	selector_id     = identifier | operator
@@ -116,7 +117,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
 	extension_mbr   = { annotation } [ visibility ] [variability] method
 
-	statement       = state | binding | [ "^" ] expression
+	statement       = constant | field | binding | [ "^" ] expression
 	expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ]
 	logic_or        = logic_and { "||" logic_and }
 	logic_and       = equality { "&&" equality }

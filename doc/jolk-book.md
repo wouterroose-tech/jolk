@@ -108,7 +108,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	assignment      = "=" expression
 	field           = type identifier [ assignment ]
 	enum            = meta_id [ "(" argument_list ")" ]
-	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
+	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( closure | ";" )
 	selector_id     = identifier | operator
 	typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 	annotated_type  = { annotation } type
@@ -127,12 +127,10 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	factor          = unary { ( "*" | "/" | "%" ) unary }
 	unary           = ( "!" | "-" ) unary | power
     power           = message [ "**" unary ] { "??" power }
-	message         = primary { selector [ ( "(" argument_list ")" | block ) ] }
-	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | block
-	argument_list   = argument { "," argument }
-	argument        = expression | lambda
-	block           = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
-	lambda          = ( instance_id | "(" [ stat_params ] ")" ) "->" statement
+	message         = primary { selector [ ( "(" argument_list ")" | closure ) ] }
+	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure
+	argument_list   = expression { "," expression }
+	closure         = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
 	stat_params     = typed_params | inferred_params
 	inferred_params = instance_id { "," instance_id }
 
@@ -782,10 +780,15 @@ Safety is enforced at the Lexical Fence via a structural type system. By utilisi
 
 **Closure**
 
-Closures are Intrinsic identities that represent pure functional blocks, defined by JOLK’s own scoping and capture rules rather than existing Java interfaces. While the jolc compiler transpiles these blocks into high-performance JVM structures like Lambdas or Anonymous Inner Classes, the closure remains a first-class language construct that can receive messages and participate in JOLK's unified message-passing protocol. This approach ensures that closures are not mere "callbacks" but sovereign entities with predictable, solid behaviour.
+In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Reified Identity*. It represents a block of deferred logic that maintains a sovereign link to its defining environment. The closure is a first-class object governed by the *Transparency Contract*. The capability of a closure to interact with its parent scope depends on the nature of the message selector it serves.
+
+*   *Transparent Scope (Intrinsic & Inline)*: When a closure is passed to a structural selector (like `#if`, `#while`) or a library template marked `@Inline` (like `#withLock`), it is treated as a structural extension of the method. The boundary is *Transparent*. In this context, the closure enjoys *Scope Permeability*: it can mutate local variables without overhead and, crucially, use the return terminal (`^`) to perform a *Non-Local Return*, exiting the parent method immediately.
+*   *Opaque Scope (Functional)*: When a closure is passed to a standard functional selector (like `#map`, `#filter`, or `#async`), it operates as an encapsulated unit of logic. The boundary is *Opaque*. While the closure can still capture and mutate state (managed via *Identity Promotion*), it is strictly forbidden from using the return terminal (`^`) to exit the parent method. The compiler enforces this via the *Semantic Guard* to prevent invalid stack manipulation.
+
+Syntactically, closures are defined by a brace-centric `{}` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk enforces the *Functional Exclusion Principle*. Closures must not be embedded within a parenthesized argument list (e.g., `#do(param, { ... })`). Instead, the language mandates *Selector Refining*, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do { ... }`). This *Pivot Pattern* ensures that logic is never a secondary attribute but always the sovereign focus of the interaction.
 
 	@Intrinsic  
-	class Closure {
+	class Closure<T> {
 	
 	    // Catch specific types by passing the Meta-ID and a handler  
 	    Self catch(Type errorType, Closure handler) { }
@@ -793,6 +796,36 @@ Closures are Intrinsic identities that represent pure functional blocks, defined
 	    // Finally always runs and returns the result or self  
 	    Self finally(Closure finalAction) { }  
 	}
+
+In Jolk, a closure is a *Reified Identity*, not a function pointer. Defined by `{ [params] -> [statements] }`, it represents deferred logic governed by *Scope Permeability*:
+
+*   *Transparent Scope (Intrinsic & Inline)*: When passed to structural selectors (e.g., `#if`, `#while`) or `@Inline` templates (e.g., `#withLock`), the closure acts as a structural extension. It enjoys *Scope Permeability*, allowing direct variable mutation and *Non-Local Returns* (`^`) that exit the parent method.
+*   *Opaque Scope (Functional)*: When passed to standard selectors (e.g., `#map`, `#async`), the closure is an encapsulated unit. While it can capture state (via Identity Promotion), it is strictly forbidden from using `^` to exit the parent method.
+
+To enable custom control structures, the `Closure` archetype provides `@Inline` selectors that pull logic into the caller's scope:
+
+*   `#call`: Executes the closure, acting as the "hole" for user logic.
+*   `#finally(cleanup)`: Guarantees execution during stack unwinding.
+*   `#catch(error, handler)`: Intercepts specific error identities.
+
+This architecture allows developers to define templates like `#withResource` that behave like native language keywords.
+
+	@Inline
+	T #withResource(Resource r, Closure<T> logic) {
+		r #open;
+		{
+			^ logic#call // The "Hole" where user logic is injected
+		} #finally {
+			R #close
+		}
+	}
+
+The relationship between a Jolk closure and its environment is defined by the *Closure Contract*, which is governed by the transparency of the receiving selector. This distinction is the foundation of structural safety in Jolk.
+
+*   *The Transparent Contract (Inline/Intrinsic)*: When a closure is passed to an `@Intrinsic` or `@Inline` selector, the boundary is transparent. The closure operates directly on the caller’s stack, permitting direct variable mutation and non-local returns (`^`) that exit the parent method.
+*   *The Opaque Contract (Standard)*: For standard selectors, the boundary is opaque. The closure is a self-contained unit. While variable mutation is managed via compiler-driven *Identity Promotion*, non-local returns are forbidden to maintain state integrity.
+
+To preserve *Nominalised Precision*, Jolk enforces the *Functional Exclusion Principle*. This architectural guardrail forbids raw closure literals within a message's parenthesized argument list, preventing "procedural leakage." Instead, Jolk mandates the *Pivot Pattern*, where a closure is the sovereign payload of its own dedicated message. This ensures every message remains a singular, crystalline intent and that logic is never a secondary, nested attribute. This discipline elevates anonymous logic to its own stage in the choreography, maintaining a clean sequence of identities.
 
 ### Core Collection Types
 
@@ -1043,11 +1076,11 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 
 		final Self validate(T subject, ExecutionContext context) {  
 			{ self #accept(subject, context) }  
-				#catch { Interrupt e -> //ignore };  
+				#catch { Interrupt e -> //ignore }
 		}
 
 		package final Self doAccept(T subject, ExecutionContext context) {  
-			{ nodes #forEach(node -> node #accept(subject, context)) }  
+			{ nodes #forEach {node -> node #accept(subject, context)} }  
 				#catch { Interrupt e -> (e != self #interrupt) ? e #throw }  
 		}  
 	}
@@ -1112,7 +1145,8 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 		// singleton in DI configuration  
 		meta lazy ContactFormValidation new() {  
 			^ super #new  
-				#add(InssConstraint #new, form -> form #person)  
+				#add(ZipConstraint #new)
+				#subject { f -> f #person } #add(InssConstraint #new)
 		}
 
 		Interrupt interrupt() { ^ INTERRUPT }  
@@ -1144,6 +1178,96 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 
 		protected Interrupt interrupt() { ^ ContactFormValidation #INTERRUPT }  
 	}
+
+## Fragments
+
+### Closure 
+Closures & The Selector Contract
+In the Jolk architecture, the behavior of a closure is dictated by the selector that receives it. The compiler categorizes these interactions into three distinct contracts to determine the appropriate substrate projection.
+
+*Intrinsic Selectors* (Structural Primitives) These are hard-coded building blocks known to the compiler (e.g., `?`, `#catch`). They undergo Flattening, projecting directly to native Java constructs like if statements or try-catch blocks. They support non-local returns (`^`) and require no imports.
+
+	user #isActive ? {
+		Log #info("Access Granted");
+		^ true // Non-local return: exits the parent method
+	} #catch { Error e -> 
+		log #error(e #message);
+		^ false
+	}
+
+*Transparent Selectors* (Custom Control Templates) Library methods marked with `@Inline`. The transpiler performs Lexical Inlining, injecting the method body directly into the call site. This allows developers to create custom control structures (like #`withLock`) that support non-local returns, extending the language without modifying the compiler.
+
+	@Inline
+	T #withLock(Closure<T> logic) {
+		self #lock;
+		{ ^ logic #call } #finally { self #unlock }
+	}
+
+	// Usage
+	#withLock {
+		item #isExpired ? ^ false; // Exits the parent method via inlining
+		item #process
+	}
+
+*Opaque Selectors* (Functional Messages) Standard methods (e.g., `#map`) where the closure is treated as a self-contained unit of work. The transpiler applies Boxing, converting the closure into a Java Lambda. To ensure thread safety and logical consistency, the Semantic Guard forbids non-local returns in this context.
+
+	Thread #async { 
+		Log #info("Running in background");
+		^ false; // ERROR: Cannot escape a thread boundary.
+	}
+
+In the JoMoo model, placing a closure within a parenthetical argument list—such as #`do(param, { logic })`—is a diagnostic signal of Procedural Bias. This pattern forces a collision between static data and deferred logic. To maintain fluidity, Jolk adopts the Selector Refining Protocol: logic must never be a secondary passenger; it must be the primary payload of a Refining Selector. Instead of saturating a single message, the choreography is split into Contextualisation and Application.
+
+	// Anti-Pattern: anonym parameter
+	db #query(sql, { row -> ... });
+
+	// Allowed Pattern: identified parameter
+	rowHandler = { row -> ... };
+	db #query(sql, rowHandler);
+
+	// Recommended Pattern: Selector Refining
+	db #query(sql) #each { row -> ... };
+
+## Jolk Desing Patterns
+
+### The Pivot Pattern
+
+In the JoMoo (Jolk Message-Oriented Object) architecture, the *Pivot Pattern* is the primary mechanism for managing hierarchical transitions without compromising the Unified Messaging Syntax. It resolves the "Saturated Message" anti-pattern—where a single selector is forced to accept multiple, disparate arguments (e.g., `#add(Email #new, { f -> f #email })`))—by reifying a context shift into a transitional identity.
+
+The Pivot Pattern allows an identity to temporarily delegate its messaging protocol to a *Subject-Oriented Proxy*. This ensures that the manuscript remains linear and declarative, avoiding the syntactic noise of nested closures or multi-argument procedural calls. It transforms a command into a choreography. The pattern is composed of four distinct participants that maintain Industrial Sovereignty through role separation:
+
+* *The Sovereign*: The root aggregator maintaining the primary protocol (e.g., `ValidationSuite`).
+* *The Pivot Selector*:  message that initiates the context shift (e.g., `#subject`).
+* *The Requirement*: A transitional interface representing the pending operation (e.g., `ChildRequirement`).
+* *The Bridge*: A package-private implementation that captures context and reverts to the Sovereign.
+
+The defining characteristic of the JoMoo Pivot is *Automatic Identity Reversion*. Unlike standard fluent APIs that "trap" the user in a sub-context, a Pivot-compliant selector ensures that the terminal message of the chain reverts the focus back to the Sovereign.
+
+	// Master Manuscript: Linear and Precise
+	ValidationSuite #new
+		#add(PresenceConstraint #new)               // Sovereign Context
+		#subject { f -> f #email } #add(Email #new) // Pivot -> Fulfilment -> Reversion
+		#add(NextConstraint #new)                   // Automatic Sovereign Recovery
+
+The Pivot Pattern adheres to *Nominalised Precision* by ensuring every message has a singular, absolute responsibility:
+* *Identity Transformation*: The `#subject` selector creates the "Lens."
+* *Identity Binding*: The `#add` message on the Requirement fulfills the intent.
+
+By decoupling these concerns, the Sovereign remains "data-blind." It never interacts with the raw extraction logic; it only receives the resulting Identity Node provided by the Bridge upon completion. To implement the pattern, the Sovereign delegates to a hidden Bridge that encapsulates the parent reference and the extraction logic.
+
+	// inside Sovereign[T]
+	final [R] Requirement[T, R] subject(Closure[T, R] supplier) {
+		^ RequirementBridge #new(this, supplier)
+	}
+
+	// inside RequirementBridge[T, R]
+	final [T] Sovereign[T] add(Constraint[R] node) {
+		// Construct internal mapping and update the master aggregate
+		master #nodes #add(MappingNode #new(supplier, node))
+		^ master // Terminal Reversion
+	}
+
+The Pivot Pattern prevents *Syntactic Drift*. As architectures grow, the temptation to add "helper methods" with complex signatures increases. This pattern provides a repeatable mechanism to absorb complexity into the object graph. 
 
 ## Dependency Injection
 

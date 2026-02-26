@@ -23,7 +23,7 @@ field           = type identifier [ assignment ]
 binding         = identifier assignment
 assignment      = "=" expression
 enum            = meta_id [ "(" argument_list ")" ] ";"
-method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
+method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( closure | ";" )
 typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 annotated_type  = { annotation } type
 vararg_id	    = "..." instance_id
@@ -34,7 +34,7 @@ annotation_args = annotation_arg { "," annotation_arg } | annotation_val
 annotation_arg  = identifier "=" annotation_val
 annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_val } ] "}"
 
-block           = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
+closure         = "{" [ stat_params lambdaOp ] [ statement { ";" statement } [ ";" ] ] "}"
 statement       = constant | field | binding | [ returnOp ] expression
 expression      = logic_or [ condOp expression [ ":" expression ] ]
 logic_or        = logic_and { "||" logic_and }
@@ -45,11 +45,9 @@ term            = factor { ( "+" | "-" ) factor }
 factor          = unary { ( "*" | "/" | "%" ) unary }
 unary           = ( "!" | "-" ) unary | power
 power           = message [ "**" unary ]
-message         = primary { selector [ ( "(" argument_list ")" | block ) ] }
-primary         = reserved | identifier | literal | list_literal | "(" expression ")" | block
-argument_list   = argument { "," argument }
-argument        = expression | lambda
-lambda          = ( instance_id | "(" [ stat_params ] ")" ) "->" statement
+message         = primary { selector [ ( "(" argument_list ")" | closure ) ] }
+primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure
+argument_list   = expression { "," expression }
 stat_params     = typed_params | inferred_params
 inferred_params = instance_id { "," instance_id }
 

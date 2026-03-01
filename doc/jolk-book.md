@@ -1085,26 +1085,6 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 	}
 
 	//  
-	abstract class ValidationSuite[T] extends Validation[T] {
-
-		constant Collection[Node[T]] nodes = ArrayList #new();
-
-		final [R] Self add(RuleSet[R] ruleSet, Function[T, R] supplier) {  
-			nodes #add(ruleSet, supplier)  
-		}
-
-		final Self validate(T subject, ExecutionContext context) {  
-			{ self #accept(subject, context) }  
-				#catch { Interrupt e -> //ignore }
-		}
-
-		package final Self doAccept(T subject, ExecutionContext context) {  
-			{ nodes #forEach {node -> node #accept(subject, context)} }  
-				#catch { Interrupt e -> (e != self #interrupt) ? e #throw }  
-		}  
-	}
-
-	//  
 	abstract class Constraint[T] extends Validation[T] {
 
 		package final Self doAccept(T subject, ExecutionContext context) {  
@@ -1116,6 +1096,34 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 		protected abstract Boolean isValid(T subject);
 
 		protected abstract Issue getIssue(T subject,ExecutionContext context);  
+	}
+
+	//  
+	abstract class ValidationSuite[T] extends Validation[T] {
+
+		constant Array[Node[T]] nodes = Array #new;
+
+		final Self add(Constraint[T] constraint) {
+        	nodes #add(constraint)
+    	}
+
+		package final [R] Self add(ChildValidation[T, R] suite) {
+        	nodes #add(suite)
+    	}
+
+		final Self validate(T subject, ExecutionContext executionContext) {
+			{ self #accept(subject, executionContext) }
+				#catch { Interrupt e -> /* ignore */ }
+		}
+
+		package final Self doAccept(T subject, ExecutionContext executionContext) {
+			{ nodes #forEach {node -> node #accept(subject, executionContext)} }
+				#catch { 
+					// the further validation of this ruleset is ignored on an interrupt
+					Interrupt e ->  (e != self #interrupt) ? e #throw
+					// no action required, the containing ruleset will resume the validation
+				}
+		}
 	}
 
 	//  

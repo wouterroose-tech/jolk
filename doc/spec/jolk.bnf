@@ -44,9 +44,10 @@ comparison      = term { ( ">" | ">=" | "<" | "<=" ) term }
 term            = factor { ( "+" | "-" ) factor }
 factor          = unary { ( "*" | "/" | "%" ) unary }
 unary           = ( "!" | "-" ) unary | power
-power           = message [ "**" unary ]
+power           = message [ "**" unary ] { "??" power }
 message         = primary { selector [ ( "(" argument_list ")" | closure ) ] }
-primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure
+primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
+method_ref      = ( identifier | reserved ) "##" identifier
 argument_list   = expression { "," expression }
 stat_params     = typed_params | inferred_params
 inferred_params = instance_id { "," instance_id }
@@ -93,4 +94,4 @@ block_comment   = "/*" { char_except_star_slash } "*/"
 string_char     = char_except_double_quote | escape_char
 single_char     = char_except_single_quote | escape_char
 escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "'" | "\" )
-operator        = "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "~~" | "!~" | ">" | ">=" | "<" | "<=" | "!" | "**" | "?" | "?!"
+operator        = "+" | "-" | "*" | "/" | "%" | "==" | "!=" | "~~" | "!~" | ">" | ">=" | "<" | "<=" | "!" | "**" | "?" | "?!" | "??" | "##"

@@ -128,7 +128,8 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	unary           = ( "!" | "-" ) unary | power
     power           = message [ "**" unary ] { "??" power }
 	message         = primary { selector [ ( "(" argument_list ")" | closure ) ] }
-	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure
+	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
+	method_ref      = ( identifier | reserved ) "##" identifier
 	argument_list   = expression { "," expression }
 	closure         = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
 	stat_params     = typed_params | inferred_params
@@ -631,6 +632,18 @@ Jolk enforces a strict separation between data and logic arguments. A message ma
 The distinction between *data access* and *mutation* is handled through a sleek, unified messaging protocol that eliminates the need for "get" and "set" prefixes. When a hashtag selector is invoked without arguments, such as user `#age`, it acts as a property getter to retrieve state. To perform a mutation, the same selector is used as a property setter by passing the new value within parentheses, as seen in `user #age(currentAge + 1`). This approach maintains a clean, identifier-centric syntax where the intent—whether reading or writing—is defined entirely by the presence of a data argument.
 
 Control flow is reimagined through the "short" selectors `?` and `:`, which replace `if/else` statements. In Jolk’s pure object model, these are overloaded selectors sent to Boolean singletons; the True identity executes a `?` block, while False ignores it. This design allows for fluent, space-delimited branching chains that return the receiver for continued messaging. Because the `#` selector is the exclusive gateway to an object’s state, these keywords enforce strict encapsulation, ensuring that all interactions adhere to the object's defined protocol.
+
+### Method References
+
+Method References allow existing message selectors to be treated as first-class closures. Anchored by the double-hash (`##`), this syntax reifies a specific method on a receiver into a `Closure` identity, enabling functional composition without the verbosity of a block wrapper.
+
+    // Block syntax
+    names #map { n -> n #toUpperCase }
+
+    // Method Reference syntax
+    names #map(String ##toUpperCase)
+
+This mechanism supports both instance-bound references (`self ##method`, `instance ##method`) and static meta-references (`Type ##method`). The Tolk engine projects these directly to JVM `MethodHandle` or `LambdaMetafactory` instructions, ensuring zero-overhead adaptation.
 
 ### Control flow 
 

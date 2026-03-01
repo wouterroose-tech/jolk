@@ -1,0 +1,61 @@
+package examples;
+
+import java.util.concurrent.atomic.AtomicReference;
+import jolk.lang.Array;
+
+/// Demonstrates Jolk's Core Collection `Array` and its shim-less integration with the Java Collections Framework.
+///
+/// Jolk messages like `#at` and `#put` provide a unified protocol, while native Java methods like `#size` and `#forEach` are accessed seamlessly.
+/// * Jolk `#at(index)` -> Java `get(index)`
+/// * Jolk `#put(index, value)` -> Java `set(index, value)`
+/// * Jolk `#size` -> Java `size()`
+/// * Jolk `#toString` -> Java `toString()`
+/// * Jolk `#forEach` -> Java `forEach(lambda)`
+///
+/// @author Wouter Roose
+
+final class CoreCollectionDemonstrator {
+
+    Array[String] runNew() {
+        ^ Array #new("red", "green", "blue")
+    }
+
+    Array[String] runLiteral() {
+        ^ #["red", "green", "blue"]
+    }
+
+    String runAt() {
+        constant Array[String] colors = Array #new("red", "green", "blue");
+        ^ colors #at(1)
+    }
+
+    Array[String] runPut() {
+        Array[String] colors = Array #new("red", "green", "blue");
+        colors #put(1, "yellow");
+        ^ colors
+    }
+
+    Integer runSize() {
+        constant Array[String] colors = Array #new("red", "green", "blue");
+        ^ colors #size
+    }
+
+    String runToString() {
+        constant Array[String] colors = Array #new("red", "green", "blue");
+        ^ colors #toString
+    }
+    
+    String runFor() {
+        constant Array[String] colors = Array #new("red", "green", "blue");
+        StringBuffer result = StringBuffer #new;
+        colors #forEach {color -> result #append(color) };
+        ^ result #toString
+    }
+
+    String runForEach() {
+        constant Array[String] colors = Array #new("red", "green", "blue");
+        constant AtomicReference[String] result = AtomicReference #new("");
+        colors #forEach { color -> result #set(result #get + color) };
+        ^ result #get
+    }
+}

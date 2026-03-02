@@ -15,8 +15,10 @@ class ContactFormValidation extends ValidationSuite[ContactForm] {
         ^ super #new
             //#add basic constraint
             #add(ZipConstraint #new)
-            //#add ChildValidation
-            #add(InssConstraint #new, form -> form #person )
+
+            //#add ChildValidation via pivot pattern
+            #subject { f -> f #person } #add(InssConstraint #new)
+
             //#add nested ruleset 
     }
 

@@ -21,10 +21,15 @@ class ExecutionContext {
     Boolean hasIssue() {
         ^ !issues #isEmpty
     }
+    
+    /// Returns true if any error has been reported.
+    Boolean hasError() {
+        ^ self #hasMatch(Issue ##isError)
+    }
 
     /// Returns true if any issue was reported for the given subject.
     Boolean hasIssue(Object subject) {
-        ^ self #hasMatch(i -> subject == i #subject)
+        ^ self #hasMatch {i -> i #concerns(subject)}
     }
 
     private Boolean hasMatch(Predicate[Issue] p) {

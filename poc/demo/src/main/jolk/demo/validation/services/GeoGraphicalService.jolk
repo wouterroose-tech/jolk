@@ -19,6 +19,3 @@ final class GeoGraphicalService {
         ^ 1000 < zipCode && zipCode < 9999
     }
 }
-
-
-}

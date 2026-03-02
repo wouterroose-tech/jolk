@@ -16,7 +16,7 @@ final class InssConstraint extends Constraint[Person] {
         ^ self #isValid(person #ssn)
     }
 
-    private Boolean isValid(Long ssn) {
+    private Boolean isValid(Integer ssn) {
         ^ (ssn / 97) != (ssn % 97)
     }
 

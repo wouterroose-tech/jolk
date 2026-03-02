@@ -4,7 +4,6 @@ import demo.validation.engine.*;
 import demo.validation.domain.ContactForm;
 import demo.validation.services.GeoGraphicalService;
 
-
 ///
 /// @author Wouter Roose
 

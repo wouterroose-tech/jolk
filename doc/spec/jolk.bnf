@@ -22,7 +22,7 @@ constant        = "constant" type binding
 field           = type identifier [ assignment ]
 binding         = identifier assignment
 assignment      = "=" expression
-enum            = meta_id [ "(" argument_list ")" ] ";"
+enum            = meta_id [ arguments ] ";"
 method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( closure | ";" )
 typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 annotated_type  = { annotation } type
@@ -45,10 +45,11 @@ term            = factor { ( "+" | "-" ) factor }
 factor          = unary { ( "*" | "/" | "%" ) unary }
 unary           = ( "!" | "-" ) unary | power
 power           = message [ "**" unary ] { "??" power }
-message         = primary { selector [ ( "(" argument_list ")" | closure ) ] }
+message         = primary { selector [ payload ] }
 primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
 method_ref      = ( identifier | reserved ) "##" identifier
-argument_list   = expression { "," expression }
+payload         = arguments | closure
+arguments       = "(" [ expression { "," expression } ] ")"
 stat_params     = typed_params | inferred_params
 inferred_params = instance_id { "," instance_id }
 

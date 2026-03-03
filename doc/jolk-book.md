@@ -107,7 +107,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	binding         = identifier assignment
 	assignment      = "=" expression
 	field           = type identifier [ assignment ]
-	enum            = meta_id [ "(" argument_list ")" ]
+	enum            = meta_id [ arguments ] ";"
 	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( closure | ";" )
 	selector_id     = identifier | operator
 	typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
@@ -127,10 +127,11 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	factor          = unary { ( "*" | "/" | "%" ) unary }
 	unary           = ( "!" | "-" ) unary | power
     power           = message [ "**" unary ] { "??" power }
-	message         = primary { selector [ ( "(" argument_list ")" | closure ) ] }
+	message         = primary { selector [ payload ] }
 	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
 	method_ref      = ( identifier | reserved ) "##" identifier
-	argument_list   = expression { "," expression }
+	payload         = arguments | closure
+	arguments       = "(" [ expression { "," expression } ] ")"
 	closure         = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
 	stat_params     = typed_params | inferred_params
 	inferred_params = instance_id { "," instance_id }
@@ -186,9 +187,9 @@ In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Id
 
 **Operators**: Expressed as mathematical or logical symbols (e.g., `+`, `-`, `==`, `!=`, `~~`, `!~`).
 
-**Returns**: Jolk uses the caret `^` as an explicit return symbol. If a return type is Self in a method declaration and no explicit return is specified, it implicitly returns self to facilitate fluent API 
+**Selectors**: Identified by an anchor hashtag (`#`) followed by a string (e.g., `#print`, `#PI`). This approach treats logic as a fluent, pipe-like chain (e.g., `this #name #uppercase #print`, `Math #PI`). Anchored by the double-hash (`##`), method references reify a specific method on a receiver into a `Closure` identity, enabling functional composition without the verbosity of a block wrapper.
 
-**Selectors**: Identified by an anchor hashtag (`#`) followed by a string (e.g., `#print`, `#PI`). This approach treats logic as a fluent, pipe-like chain (e.g., `this #name #uppercase #print`, `Math #PI`), significantly reducing the "ceremony" of nested parentheses.
+**Returns**: Jolk uses the caret `^` as an explicit return symbol. If a return type is Self in a method declaration and no explicit return is specified, it implicitly returns self to facilitate fluent API 
 
 The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexical rule in the Jolk language where the first-letter casing of an identifier determines its semantic category and role:
 
@@ -208,8 +209,6 @@ Syntactic elements act as structural anchors for the parser.
 **Generic Type Brackets** While the final specification adopts `< >` to achieve alignment with Java and the Strongtalk lineage, the current version utilises `[ ]` to minimize lexical complexity.
 
 **Closures** are brace-delimited {} and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
-
-**Whitespace Strictness**: To reinforce their role as anchors for a preceding message, Jolk permits no whitespace between a selector and the opening brace (`{`) of a closure.
 
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 

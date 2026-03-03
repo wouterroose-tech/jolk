@@ -26,4 +26,21 @@ final class Person {
     String toString() {
         ^ "Person[ssn=" + self #ssn + ", firstName=" + self #firstName + ", lastName=" + self #lastName + "]"
     }
+
+    Boolean ~~(Object other) {
+        (self == other) ? { ^true };
+        other #instanceOf(Person) ?! { ^ false };
+        Person p = other #as(Person);
+        ^ (self #ssn ~~ p #ssn) &&
+            (self #firstName ~~ p #firstName) &&
+            (self #lastName ~~ p #lastName)
+        /*
+        // final pattern matching version, not yet supported by the compiler
+        other #as(Person) #ifPresent { p ->
+            ^ (self #ssn == p #ssn)    // intrinsic Int
+              && (self #firstName ~~ p #firstName)
+              && (self #lastName ~~ p #lastName)
+        };
+        */
+    }
 }

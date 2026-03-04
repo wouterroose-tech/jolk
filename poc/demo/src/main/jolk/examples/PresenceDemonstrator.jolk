@@ -7,8 +7,8 @@ package examples;
 ///
 /// * Jolk `subject #isPresent` -> Java `subject != null`
 /// * Jolk `subject #isEmpty`   -> Java `subject == null`
-/// * Jolk `subject #ifPresent { ... }` -> Java `if (subject != null) { ... }`
-/// * Jolk `subject #ifEmpty { ... }`   -> Java `if (subject == null) { ... }`
+/// * Jolk `subject #ifPresent [ ... ]` -> Java `if (subject != null) { ... }`
+/// * Jolk `subject #ifEmpty [ ... ]`   -> Java `if (subject == null) { ... }`
 ///
 /// @author Wouter Roose
 

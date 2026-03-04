@@ -6,7 +6,7 @@ package examples;
 /// * `?` is the "if-true" operator.
 /// * `?!` is the "if-not-true" operator.
 /// * `condition ? trueVal : falseVal` is transpiled to a Java ternary expression.
-/// * `condition ? { ... }` is transpiled to a Java if-statement.
+/// * `condition ? [ ... ]` is transpiled to a Java if-statement.
 ///
 /// @author Wouter Roose
 

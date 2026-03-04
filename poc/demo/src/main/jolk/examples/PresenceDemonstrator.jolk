@@ -23,12 +23,12 @@ final class PresenceDemonstrator {
     }
 
     String runIfPresent(Object subject) {
-        subject #ifPresent { ^ "Present" };
+        subject #ifPresent [ ^ "Present" ];
         ^ "Empty"
     }
 
     String runIfEmpty(Object subject) {
-        subject #ifEmpty { ^ "Empty" };
+        subject #ifEmpty [ ^ "Empty" ];
         ^ "Present"
     }
 }

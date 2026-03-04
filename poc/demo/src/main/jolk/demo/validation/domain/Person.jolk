@@ -28,8 +28,8 @@ final class Person {
     }
 
     Boolean ~~(Object other) {
-        (self == other) ? { ^true };
-        other #instanceOf(Person) ?! { ^ false };
+        (self == other) ? [ ^true ];
+        other #instanceOf(Person) ?! [ ^false ];
         Person p = other #as(Person);
         ^ (self #ssn ~~ p #ssn) &&
             (self #firstName ~~ p #firstName) &&

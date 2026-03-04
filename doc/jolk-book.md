@@ -108,7 +108,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	assignment      = "=" expression
 	field           = type identifier [ assignment ]
 	enum            = meta_id [ arguments ] ";"
-	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( closure | ";" )
+	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
 	selector_id     = identifier | operator
 	typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 	annotated_type  = { annotation } type
@@ -117,6 +117,8 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
 	extension_mbr   = { annotation } [ visibility ] [variability] method
 
+	block           = "{" [ statements ] "}"
+	statements      = statement { ";" statement } [ ";" ]
 	statement       = constant | field | binding | [ "^" ] expression
 	expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ]
 	logic_or        = logic_and { "||" logic_and }
@@ -129,10 +131,10 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
     power           = message [ "**" unary ] { "??" power }
 	message         = primary { selector [ payload ] }
 	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
+	closure         = "[" [ stat_params lambdaOp ] [ statements ] "]"
 	method_ref      = ( identifier | reserved ) "##" identifier
 	payload         = arguments | closure
 	arguments       = "(" [ expression { "," expression } ] ")"
-	closure         = "{" [ stat_params "->" ] [ statement { ";" statement } [ ";" ] ] "}"
 	stat_params     = typed_params | inferred_params
 	inferred_params = instance_id { "," instance_id }
 
@@ -208,7 +210,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **Generic Type Brackets** While the final specification adopts `< >` to achieve alignment with Java and the Strongtalk lineage, the current version utilises `[ ]` to minimize lexical complexity.
 
-**Closures** are brace-delimited {} and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
+**Closures** are bracket-delimited [] and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
 
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
@@ -216,7 +218,13 @@ Syntactic elements act as structural anchors for the parser.
 
 **meta**: The meta stratum anchor designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta Strata.
 
-**lazy**: The temporality lazy directive designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message. 
+**lazy**: The temporality lazy directive designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
+
+**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Syntactic Overload*, ensuring the semantic intent of every symbol remains absolute and singular. By assigning a unique geometry to each architectural fact—`{}` for *Scope*, `[]` for *Deferred Identity*, and `()` for *Realised Identity*—the code achieves a state of structural buoyancy.
+
+	List<Result> process(List<Signal> signals) {
+		^ signals #map [ s -> Result #new(s #id) ]
+	}
 
 ## Semantics
 
@@ -230,8 +238,8 @@ Jolk is built on Unified Message-Passing, where every interaction follows the *R
 
 By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts control flow from a structural language constraint to an emergent property of object interaction. Logic is implemented as a library feature rather than a compiler construct, ensuring that even fundamental branching obeys the same rules of encapsulation as user-defined code.
 
-*Branching*: Traditional if-else blocks are replaced by the ternary pattern `condition ? {closure} : (expression | closure)`. Here, `?` and `:` are classified as Structural Selectors—grammatical delimiters that are semantically resolved as messages sent to Boolean identities to determine which branch is reified.  
-*Looping*: Native while and for statements are superseded by messages sent to Closures or Integers, such as `{cond} #while {body} or 10 #times {n -> ...}`.  
+*Branching*: Traditional if-else blocks are replaced by the ternary pattern `condition ? [closure] : (expression | [closure])`. Here, `?` and `:` are classified as Structural Selectors—grammatical delimiters that are semantically resolved as messages sent to Boolean identities to determine which branch is reified.  
+*Looping*: Native while and for statements are superseded by messages sent to Closures or Integers, such as `[cond] #while [body] or 10 #times [n -> ...]`.  
 *Error Handling*: Exception logic is unified with the messaging model, replacing try/catch with `#catch` and `#finally` messages sent directly to closures.
 
 ### Type System
@@ -624,9 +632,9 @@ To implement an operator, developers define a method using the symbol as the ide
 
 Jolk employs a Unified Messaging model that distinguishes between *Data Arguments* in parentheses and *Logic Arguments* in blocks. Anchored by a mandatory hashtag prefix, these selectors act as lexical fences that enable the Tolk engine to differentiate behaviour from data with $O(1)$ efficiency.
 
-Property access, such as `#name`, requires no arguments and therefore omits parentheses. In contrast, data messages like list `#add(item)` require mandatory parentheses to encapsulate passive values. Logic-driven messages, such as `list #forEach { i -> ... }`, allow for a bracket-light syntax where parentheses are omitted for the closure.
+Property access, such as `#name`, requires no arguments and therefore omits parentheses. In contrast, data messages like list `#add(item)` require mandatory parentheses to encapsulate passive values. Logic-driven messages, such as `list #forEach [ i -> ... ]`, allow for a bracket-light syntax where parentheses are omitted for the closure.
 
-Jolk enforces a strict separation between data and logic arguments. A message may accept parenthesised arguments OR a closure block, but not both simultaneously. Consequently, the hybrid trailing closure pattern (e.g., `file #open("data.txt") { ... }`) is not supported. For interactions requiring both data and logic, the closure must be passed as a standard argument within the parentheses, such as `file #open("data.txt", { f -> ... })`.
+Jolk enforces a strict separation between data and logic arguments. A message may accept parenthesised arguments OR a closure block, but not both simultaneously. Consequently, the hybrid trailing closure pattern (e.g., `file #open("data.txt") [ ... ]`) is not supported. For interactions requiring both data and logic, the closure must be passed as a standard argument within the parentheses, such as `file #open("data.txt", [ f -> ... ])`.
 
 The distinction between *data access* and *mutation* is handled through a sleek, unified messaging protocol that eliminates the need for "get" and "set" prefixes. When a hashtag selector is invoked without arguments, such as user `#age`, it acts as a property getter to retrieve state. To perform a mutation, the same selector is used as a property setter by passing the new value within parentheses, as seen in `user #age(currentAge + 1`). This approach maintains a clean, identifier-centric syntax where the intent—whether reading or writing—is defined entirely by the presence of a data argument.
 
@@ -637,7 +645,7 @@ Control flow is reimagined through the "short" selectors `?` and `:`, which repl
 Method References allow existing message selectors to be treated as first-class closures. Anchored by the double-hash (`##`), this syntax reifies a specific method on a receiver into a `Closure` identity, enabling functional composition without the verbosity of a block wrapper.
 
     // Block syntax
-    names #map { n -> n #toUpperCase }
+    names #map[n -> n #toUpperCase]
 
     // Method Reference syntax
     names #map(String ##toUpperCase)
@@ -650,13 +658,13 @@ Logic is executed by sending overloaded selectors (`?`, `:`, and `#while`) direc
 
 **if-elseIf-else Chaining**
 
-Branching is formalised as a recursive Message Expression sent to Boolean identities, utilizing a "bracket-light," space-delimited syntax. Following the grammar rule `expression = logic_or [ ("?" | "?!") closure [ ":" (expression | closure) ] ]`, the `?` (“ifTrue”) and `:` (“ifFalse/Else”) symbols act as *structural selectors* that guide the message flow. Because the : selector can be followed by either a nested Expression (starting a new ternary check) or a terminal Closure, the grammar ensures the structure "fails fast" during parsing if a chain is invalid. This architecture reifies logic as a fluid, keyword-less sequence of messages sent to Boolean singletons.
+Branching is formalised as a recursive Message Expression sent to Boolean identities. Following the grammar rule `expression = logic_or [ ("?" | "?!") closure [ ":" (expression | closure) ] ]`, the `?` (“ifTrue”) and `:` (“ifFalse/Else”) symbols act as *structural selectors* that guide the message flow. Because the : selector can be followed by either a nested Expression (starting a new ternary check) or a terminal Closure, the grammar ensures the structure "fails fast" during parsing if a chain is invalid. This architecture reifies logic as a fluid, keyword-less sequence of messages sent to Boolean singletons.
 
     // Multi-branch logic using ? and :
 
-    (score >= 90) ? { Grade #A }   
-        : (score >= 80) ? { Grade #B }  
-        : { Grade #F };
+    (score >= 90) ? [ Grade #A ]   
+        : (score >= 80) ? [ Grade #B ]  
+        : [ Grade #F ];
 
 While the Jolk grammar facilitates recursive expression branching through both positive (?) and negative (?!) operators, Structural Integrity is best preserved by maintaining unipolar cascades. Mixed-polarity expressions introduce cognitive friction by pivoting the logical meaning of the colon (:) branch, potentially obscuring the precision of the nominal state.
 
@@ -666,7 +674,7 @@ Control loops are implemented as polymorphic dispatch messages sent to objects. 
 
     // A while  loop  
     counter = 0;  
-    { counter < 5 } #while { counter = counter + 1 }
+    [ counter < 5 ] #while [ counter = counter + 1 ]
 
 **Pattern matching** 
 
@@ -675,15 +683,15 @@ Pattern Matching is not based on language keywords or a switch statement. Instea
 The Type-Gate message chain replaces pattern-matching syntax with a pipeline that uses an Intrinsic  Match container to refine untrusted inputs into safe, typed executions.
 
     ^ String #isInstance(x)                     //Returns Match[String] with the value or Nothing  
-        #filter { s -> !(s #isEmpty) }          // If false the content of Selection is dropped  
-        #map { s -> System #out #println(s) }  // It was a non-empty String so it gets printed
+        #filter [ s -> !(s #isEmpty) ]          // If false the content of Selection is dropped  
+        #map [ s -> System #out #println(s) ]  // It was a non-empty String so it gets printed
 
 The `#case` selector acts as a logic gate that evaluates a closure only if the receiver matches the provided argument, maintaining the "flow of messages" philosophy. The Tolk toolchain identifies these sequences and "intrinsifies" them into native JVM switch opcodes.
 
     ^ status  
-        #case(200) { "Success" }         /// Returns if 200, or passes along  
-        #case(404) { "Not Found" }       /// Returns if 404, or passes along  
-        #default { "Unknown Error" }     /// 
+        #case(200) #do ["Success"]         /// Returns if 200, or passes along  
+        #case(404) #do ["Not Found"]       /// Returns if 404, or passes along  
+        #default ["Unknown Error"]         /// default
 
 Pattern Matching results in a `Match[T]` to drive logic flow through a message chain, whereas `Optional[T]` is used to represent the state of a value that may be absent over time..
 
@@ -716,17 +724,17 @@ Since there is no throw keyword, exceptions are thrown by sending the `#throw` m
 
 To handle a potential exception, you wrap the risky code in a closure (block) and send it the `#catch` message. The argument to this message is another closure that uses type-hinted parameters to specify which exception to catch.
 
-    { file #open(fileName) }  
-        #catch { IOException e -> System #out #println ("File error") }  
-        #catch { FileNotFoundException e -> System #out #println("File not found : " + fileName) }
+    [ file #open(fileName) ]  
+        #catch [ IOException e -> System #out #println ("File error") ]  
+        #catch [ FileNotFoundException e -> System #out #println("File not found : " + fileName) ]
 
 **Cleanup Logic (\#finally)**
 
 For code that must execute regardless of whether an error occurred, Jolk uses the `#finally` message sent to the closure chain.
 
-    { file #open(fileName) }  
-        #catch { IOException e -> ... }  
-        #finally { file #close }
+    [ file #open(fileName) ]  
+        #catch [ IOException e -> ... ]  
+        #finally [ file #close ]
 
 ###  Return
 
@@ -813,7 +821,7 @@ Syntactically, closures are defined by a brace-centric `{}` boundary. Parameters
 	    Self finally(Closure finalAction) { }  
 	}
 
-In Jolk, a closure is a *Reified Identity*, not a function pointer. Defined by `{ [params] -> [statements] }`, it represents deferred logic governed by *Scope Permeability*:
+In Jolk, a closure is a *Reified Identity*, not a function pointer. Defined by [ [params] -> [statements] ], it represents deferred logic governed by *Scope Permeability*:
 
 *   *Transparent Scope (Intrinsic & Inline)*: When passed to structural selectors (e.g., `#if`, `#while`) or `@Inline` templates (e.g., `#withLock`), the closure acts as a structural extension. It enjoys *Scope Permeability*, allowing direct variable mutation and *Non-Local Returns* (`^`) that exit the parent method.
 *   *Opaque Scope (Functional)*: When passed to standard selectors (e.g., `#map`, `#async`), the closure is an encapsulated unit. While it can capture state (via Identity Promotion), it is strictly forbidden from using `^` to exit the parent method.
@@ -829,11 +837,8 @@ This architecture allows developers to define templates like `#withResource` tha
 	@Inline
 	T #withResource(Resource r, Closure<T> logic) {
 		r #open;
-		{
-			^ logic#call // The "Hole" where user logic is injected
-		} #finally {
-			R #close
-		}
+		[ ^ logic#call // The "Hole" where user logic is injected ]
+			#finally [ R #close ]
 	}
 
 The relationship between a Jolk closure and its environment is defined by the *Closure Contract*, which is governed by the transparency of the receiving selector. This distinction is the foundation of structural safety in Jolk.
@@ -938,7 +943,7 @@ The jolk.lang.Object class acts as the root Meta-Object Descriptor. It defines t
 	    Selection[T] instanceOf(Type[T] type) { }
 	
 	    Self #project(Map[String, Object] fields) { 
-	        fields #forEach { String key, Object value -> self #put(key, value) };  
+	        fields #forEach [ String key, Object value -> self #put(key, value) ];  
 	    }
 	
 	}
@@ -1065,7 +1070,7 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 		Validation[R] validation;
 
 		package Self accept(T subject, ExecutionContext context) {  
-			supplier #value(subject) #ifPresent { child -> validation #accept(child, context) }  
+			supplier #value(subject) #ifPresent [ child -> validation #accept(child, context) ]  
 		}  
 	}
 
@@ -1073,7 +1078,7 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 	package abstract class Validation[T] extends Node[T] {
 
 		package final Self accept(T subject, ExecutionContext context) {  
-			(self #satisfiesPreCondition(subject, context)) ? { self #doAccept(subject, context) }  
+			(self #satisfiesPreCondition(subject, context)) ? [ self #doAccept(subject, context) ]  
 		}
 
 		protected Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
@@ -1087,9 +1092,9 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 	abstract class Constraint[T] extends Validation[T] {
 
 		package final Self doAccept(T subject, ExecutionContext context) {  
-			self #isValid(subject) ? { ^self };  
+			self #isValid(subject) ? [ ^self ];  
 			context #add(subject, self #getIssue(subject, context));  
-			self #interrupt #ifPresent { e -> e #throw }  
+			self #interrupt #ifPresent [ e -> e #throw ]  
 		}
 
 		protected abstract Boolean isValid(T subject);
@@ -1111,17 +1116,17 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
     	}
 
 		final Self validate(T subject, ExecutionContext executionContext) {
-			{ self #accept(subject, executionContext) }
-				#catch { Interrupt e -> /* ignore */ }
+			[ self #accept(subject, executionContext) ]
+				#catch [ Interrupt e -> /* ignore */ ]
 		}
 
 		package final Self doAccept(T subject, ExecutionContext executionContext) {
-			{ nodes #forEach {node -> node #accept(subject, executionContext)} }
-				#catch { 
+			[ nodes #forEach [node -> node #accept(subject, executionContext)] ]
+				#catch [ 
 					// the further validation of this ruleset is ignored on an interrupt
 					Interrupt e ->  (e != self #interrupt) ? e #throw
 					// no action required, the containing ruleset will resume the validation
-				}
+				]
 		}
 	}
 
@@ -1172,7 +1177,7 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 		meta lazy ContactFormValidation new() {  
 			^ super #new  
 				#add(ZipConstraint #new)
-				#subject { f -> f #person } #add(InssConstraint #new)
+				#subject [ f -> f #person ] #add(InssConstraint #new)
 		}
 
 		Interrupt interrupt() { ^ INTERRUPT }  
@@ -1213,46 +1218,46 @@ In the Jolk architecture, the behavior of a closure is dictated by the selector 
 
 *Intrinsic Selectors* (Structural Primitives) These are hard-coded building blocks known to the compiler (e.g., `?`, `#catch`). They undergo Flattening, projecting directly to native Java constructs like if statements or try-catch blocks. They support non-local returns (`^`) and require no imports.
 
-	user #isActive ? {
+	user #isActive ? [
 		Log #info("Access Granted");
 		^ true // Non-local return: exits the parent method
-	} #catch { Error e -> 
+	] #catch [ Error e -> 
 		log #error(e #message);
 		^ false
-	}
+	]
 
 *Transparent Selectors* (Custom Control Templates) Library methods marked with `@Inline`. The transpiler performs Lexical Inlining, injecting the method body directly into the call site. This allows developers to create custom control structures (like #`withLock`) that support non-local returns, extending the language without modifying the compiler.
 
 	@Inline
 	T #withLock(Closure<T> logic) {
 		self #lock;
-		{ ^ logic #call } #finally { self #unlock }
+		[ ^ logic #call ] #finally [ self #unlock ]
 	}
 
 	// Usage
-	#withLock {
+	#withLock [
 		item #isExpired ? ^ false; // Exits the parent method via inlining
 		item #process
-	}
+	]
 
 *Opaque Selectors* (Functional Messages) Standard methods (e.g., `#map`) where the closure is treated as a self-contained unit of work. The transpiler applies Boxing, converting the closure into a Java Lambda. To ensure thread safety and logical consistency, the Semantic Guard forbids non-local returns in this context.
 
-	Thread #async { 
+	Thread #async [ 
 		Log #info("Running in background");
 		^ false; // ERROR: Cannot escape a thread boundary.
-	}
+	]
 
 In the JoMoo model, placing a closure within a parenthetical argument list—such as #`do(param, { logic })`—is a diagnostic signal of Procedural Bias. This pattern forces a collision between static data and deferred logic. To maintain fluidity, Jolk adopts the Selector Refining Protocol: logic must never be a secondary passenger; it must be the primary payload of a Refining Selector. Instead of saturating a single message, the choreography is split into Contextualisation and Application.
 
 	// Anti-Pattern: anonym parameter
-	db #query(sql, { row -> ... });
+	db #query(sql, [ row -> ... ]);
 
 	// Allowed Pattern: identified parameter
-	rowHandler = { row -> ... };
+	rowHandler = [ row -> ... ];
 	db #query(sql, rowHandler);
 
 	// Recommended Pattern: Selector Refining
-	db #query(sql) #each { row -> ... };
+	db #query(sql) #each [ row -> ... ];
 
 ## Jolk Desing Patterns
 
@@ -1272,7 +1277,7 @@ The defining characteristic of the JoMoo Pivot is *Automatic Identity Reversion*
 	// Master Manuscript: Linear and Precise
 	ValidationSuite #new
 		#add(PresenceConstraint #new)               // Sovereign Context
-		#subject { f -> f #email } #add(Email #new) // Pivot -> Fulfilment -> Reversion
+		#subject [ f -> f #email ] #add(Email #new) // Pivot -> Fulfilment -> Reversion
 		#add(NextConstraint #new)                   // Automatic Sovereign Recovery
 
 The Pivot Pattern adheres to *Nominalised Precision* by ensuring every message has a singular, absolute responsibility:
@@ -1659,7 +1664,7 @@ The primary objective of the Phase 1 Proof of Concept (PoC) is the rigorous vali
 
 #### *Manual Identity Promotion and Reference Wrapping*
 
-To reconcile Jolk’s fluid lexical scope with the Java substrate’s "effectively final" requirement for boxed closures, developers must manually implement *Identity Promotion*. When a terminal is destined for mutation within an *Opaque* closure—such as those used in `#map`, `#each`, or `#async`—it must be declared using a single-element array. This *Reference Wrapping* ensures the substrate reference remains constant, satisfying the JVM, while the internal state remains mutable for the Jolk logic. For example, a standard definition like `Int counter = 0` is promoted to `Int[] counter = {0}`, allowing a message chain like `list #each { e -> counter[0] = counter[0] + 1 }` to execute without a compilation failure in the underlying Java host.
+To reconcile Jolk’s fluid lexical scope with the Java substrate’s "effectively final" requirement for boxed closures, developers must manually implement *Identity Promotion*. When a terminal is destined for mutation within an *Opaque* closure—such as those used in `#map`, `#each`, or `#async`—it must be declared using a single-element array. This *Reference Wrapping* ensures the substrate reference remains constant, satisfying the JVM, while the internal state remains mutable for the Jolk logic. For example, a standard definition like `Int counter = 0` is promoted to `Int[] counter = {0}`, allowing a message chain like `list #each [ e -> counter[0] = counter[0] + 1 ]` to execute without a compilation failure in the underlying Java host.
 
 #### *Concurrency and the Atomic Archetype*
 

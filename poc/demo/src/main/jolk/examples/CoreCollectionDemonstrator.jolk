@@ -48,14 +48,14 @@ final class CoreCollectionDemonstrator {
     String runFor() {
         constant Array[String] colors = Array #new("red", "green", "blue");
         StringBuffer result = StringBuffer #new;
-        colors #forEach {color -> result #append(color) };
+        colors #forEach[color -> result #append(color) ];
         ^ result #toString
     }
 
     String runForEach() {
         constant Array[String] colors = Array #new("red", "green", "blue");
         constant AtomicReference[String] result = AtomicReference #new("");
-        colors #forEach { color -> result #set(result #get + color) };
+        colors #forEach[color -> result #set(result #get + color)];
         ^ result #get
     }
 }

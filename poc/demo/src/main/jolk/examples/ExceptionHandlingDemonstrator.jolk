@@ -17,33 +17,27 @@ final class ExceptionHandlingDemonstrator {
     
     String runCatch() {
         String status = "Running";
-        {
-            RuntimeException #new("Boom") #throw
-        } 
-        #catch { RuntimeException e -> 
-            status = "Caught: " + e #getMessage 
-        };
+        [ RuntimeException #new("Boom") #throw ] 
+            #catch [ RuntimeException e ->  status = "Caught: " + e #getMessage  ];
         ^ status
     }
 
     String runMultiCatch(Boolean first) {
         String status = "Start";
-        {
-            first ? { IllegalArgumentException #new("First") #throw }
-                  : { IllegalStateException #new("Second") #throw }
-        }
-        #catch { IllegalArgumentException e -> status = "Caught First" }
-        #catch { IllegalStateException e -> status = "Caught Second" };
+        [
+            first ? [ IllegalArgumentException #new("First") #throw ]
+                  : [ IllegalStateException #new("Second") #throw ]
+        ]
+            #catch [ IllegalArgumentException e -> status = "Caught First" ]
+            #catch [ IllegalStateException e -> status = "Caught Second" ];
         ^ status
     }
 
     String runFinally() {
         String status = "Start";
-        {
-            RuntimeException #new("Error") #throw
-        }
-        #catch { RuntimeException e -> status = status + " -> Catch" }
-        #finally { status = status + " -> Finally" };
+        [ RuntimeException #new("Error") #throw ]
+            #catch [ RuntimeException e -> status = status + " -> Catch" ]
+            #finally [ status = status + " -> Finally" ];
         ^ status
     }
 }

@@ -16,7 +16,7 @@ final class ClosureDemonstrator {
     /// Demonstrates passing a closure as a parameter.
     Array[String] runClosureParam() {
         Array[String] strings = #["a", "b", "c"];
-        ^ strings #map { String s -> s + s }
+        ^ strings #map [ String s -> s + s ]
     }
 
     /// Demonstrates using a method reference.

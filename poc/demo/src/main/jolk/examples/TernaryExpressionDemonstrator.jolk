@@ -28,7 +28,7 @@ final class TernaryExpressionDemonstrator {
     }
 
     String runOneBranch(Boolean condition) {
-        condition ? { ^ "Hit" };
+        condition ? [ ^ "Hit" ];
         ^ "Miss"
     }
 
@@ -38,21 +38,16 @@ final class TernaryExpressionDemonstrator {
     }
 
     Boolean runIfNotThen(Boolean cond) {
-        cond ?! { ^ false };
+        cond ?! [ ^ false ];
         ^ true
     }
 
     Boolean runIfNotThenElse(Boolean cond) {
-        cond ?! { ^ false } : { ^ true }
+        cond ?! [ ^ false ] : [ ^ true ]
     }
 
     Integer runBlockAssignment(Boolean condition) {
-        condition ? {
-            Integer x = 1;
-            ^x
-        } : {
-            Integer x = 2;
-            ^x
-        }
+        condition ? [ Integer x = 1; ^x ]
+            : [ Integer x = 2; ^x ]
     }
 }

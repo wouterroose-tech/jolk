@@ -210,7 +210,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **Generic Type Brackets** While the final specification adopts `< >` to achieve alignment with Java and the Strongtalk lineage, the current version utilises `[ ]` to minimize lexical complexity.
 
-**Closures** are bracket-delimited [] and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
+**Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
 
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
@@ -220,7 +220,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **lazy**: The temporality lazy directive designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
 
-**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Syntactic Overload*, ensuring the semantic intent of every symbol remains absolute and singular. By assigning a unique geometry to each architectural fact—`{}` for *Scope*, `[]` for *Deferred Identity*, and `()` for *Realised Identity*—the code achieves a state of structural buoyancy.
+**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Syntactic Overload*, ensuring the semantic intent of every symbol remains absolute and singular. By assigning a unique geometry to each architectural fact—`{ }` for *Scope*, `[ ]` for *Deferred Identity*, and `( )` for *Realised Identity*—the code achieves a state of structural buoyancy.
 
 	List<Result> process(List<Signal> signals) {
 		^ signals #map [ s -> Result #new(s #id) ]
@@ -238,9 +238,9 @@ Jolk is built on Unified Message-Passing, where every interaction follows the *R
 
 By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts control flow from a structural language constraint to an emergent property of object interaction. Logic is implemented as a library feature rather than a compiler construct, ensuring that even fundamental branching obeys the same rules of encapsulation as user-defined code.
 
-*Branching*: Traditional if-else blocks are replaced by the ternary pattern `condition ? [closure] : (expression | [closure])`. Here, `?` and `:` are classified as Structural Selectors—grammatical delimiters that are semantically resolved as messages sent to Boolean identities to determine which branch is reified.  
+*Branching*: Traditional if-else blocks are replaced by the ternary pattern `condition ? expression : expression`; with `?` and `:` as grammatical delimiters that are semantically resolved as messages sent to Boolean identities.  
 *Looping*: Native while and for statements are superseded by messages sent to Closures or Integers, such as `[cond] #while [body] or 10 #times [n -> ...]`.  
-*Error Handling*: Exception logic is unified with the messaging model, replacing try/catch with `#catch` and `#finally` messages sent directly to closures.
+*Error Handling*: Exception logic is unified with the messaging model, replacing try/catch with `#catch` and `#finally` messages sent to closures.
 
 ### Type System
 
@@ -423,8 +423,8 @@ Structurally, enum constants use a shorthand notation for public meta constant d
 	    // meta level valueOf(String name) {} 
 
         // default accessor for enum fields
-		// Int index() { ^index }
-        // String label() { ^label }
+		// Int index() [ ^index ]
+        // String label() [ ^label ]
 	
 	}
 
@@ -442,9 +442,9 @@ Jolk's system leverages extensions to provide behavioural augmentation to existi
 	extension JolkStringExtension extends String {
 	
 	    /// Iterate over each character.  
-	    String forEach(Closure action) {  
-	        self #toCharArray #forEach { c -> action #apply(c) }  
-	    }
+	    String forEach(Closure action) [
+	        self #toCharArray #forEach [ c -> action #apply(c) ]
+		]
 
 	}
 
@@ -670,7 +670,7 @@ While the Jolk grammar facilitates recursive expression branching through both p
 
 **Control loops** 
 
-Control loops are implemented as polymorphic dispatch messages sent to objects. By removing procedural keywords such as while and for, Jolk achieves a minimalist grammar where looping is an emergent protocol. This design allows for highly readable, message-based iterations: a fixed count is handled by an Integer receiving the `#times` message (e.g., `10 \times { ... }`), while conditional logic is expressed through chains like `#repeat` and `#until` and the `#forEach` loop is implemented as a polymorphic message send to a collection object.
+Control loops are implemented as polymorphic dispatch messages sent to objects. By removing procedural keywords such as while and for, Jolk achieves a minimalist grammar where looping is an emergent protocol. This design allows for highly readable, message-based iterations: a fixed count is handled by an Integer receiving the `#times` message (e.g., `10 #times [ ... ]`), while conditional logic is expressed through chains like `#repeat` and `#until` and the `#forEach` loop is implemented as a polymorphic message send to a collection object.
 
     // A while  loop  
     counter = 0;  
@@ -800,7 +800,7 @@ Safety is enforced at the Lexical Fence via a structural type system. By utilisi
 	}
 
     // Usage  
-    5 #repeat { System #log("This is a human-readable loop.") };
+    5 #repeat [ System #log("This is a human-readable loop.") ];
 
 **Closure**
 
@@ -809,7 +809,7 @@ In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Re
 *   *Transparent Scope (Intrinsic & Inline)*: When a closure is passed to a structural selector (like `#if`, `#while`) or a library template marked `@Inline` (like `#withLock`), it is treated as a structural extension of the method. The boundary is *Transparent*. In this context, the closure enjoys *Scope Permeability*: it can mutate local variables without overhead and, crucially, use the return terminal (`^`) to perform a *Non-Local Return*, exiting the parent method immediately.
 *   *Opaque Scope (Functional)*: When a closure is passed to a standard functional selector (like `#map`, `#filter`, or `#async`), it operates as an encapsulated unit of logic. The boundary is *Opaque*. While the closure can still capture and mutate state (managed via *Identity Promotion*), it is strictly forbidden from using the return terminal (`^`) to exit the parent method. The compiler enforces this via the *Semantic Guard* to prevent invalid stack manipulation.
 
-Syntactically, closures are defined by a brace-centric `{}` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk enforces the *Functional Exclusion Principle*. Closures must not be embedded within a parenthesized argument list (e.g., `#do(param, { ... })`). Instead, the language mandates *Selector Refining*, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do { ... }`). This *Pivot Pattern* ensures that logic is never a secondary attribute but always the sovereign focus of the interaction.
+Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk enforces the *Functional Exclusion Principle*. Closures must not be embedded within a parenthesized argument list (e.g., `#do(param, [ ... ] )`). Instead, the language mandates *Selector Refining*, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do [ ... ]`). This *Pivot Pattern* ensures that logic is never a secondary attribute but always the sovereign focus of the interaction.
 
 	@Intrinsic  
 	class Closure<T> {
@@ -1012,7 +1012,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 ## Heritage & Foundation
 
-*Smalltalk-80 Heritage*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic flow of messages" rather than procedural calls. It utilizes Keyword Selectors (using a hashtag anchor) and Closures (Blocks) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately.
+*Smalltalk-80 Heritage*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic flow of messages" rather than procedural calls. It utilizes Keyword Selectors (using a `#` hashtag anchor) and Closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately.
 
 *Strongtalk Heritage*: Jolk incorporates a rigorous static type system inspired by Strongtalk, which enforces a formal separation between the subtype and subclass lattices. This ensures behavioural protocols are verified independently of an object's implementation lineage.
 
@@ -1247,7 +1247,7 @@ In the Jolk architecture, the behavior of a closure is dictated by the selector 
 		^ false; // ERROR: Cannot escape a thread boundary.
 	]
 
-In the JoMoo model, placing a closure within a parenthetical argument list—such as #`do(param, { logic })`—is a diagnostic signal of Procedural Bias. This pattern forces a collision between static data and deferred logic. To maintain fluidity, Jolk adopts the Selector Refining Protocol: logic must never be a secondary passenger; it must be the primary payload of a Refining Selector. Instead of saturating a single message, the choreography is split into Contextualisation and Application.
+In the JoMoo model, placing a closure within a parenthetical argument list—such as #`do(param, [ logic ] )`—is a diagnostic signal of Procedural Bias. This pattern forces a collision between static data and deferred logic. To maintain fluidity, Jolk adopts the Selector Refining Protocol: logic must never be a secondary passenger; it must be the primary payload of a Refining Selector. Instead of saturating a single message, the choreography is split into Contextualisation and Application.
 
 	// Anti-Pattern: anonym parameter
 	db #query(sql, [ row -> ... ]);
@@ -1263,7 +1263,7 @@ In the JoMoo model, placing a closure within a parenthetical argument list—suc
 
 ### The Pivot Pattern
 
-In the JoMoo (Jolk Message-Oriented Object) architecture, the *Pivot Pattern* is the primary mechanism for managing hierarchical transitions without compromising the Unified Messaging Syntax. It resolves the "Saturated Message" anti-pattern—where a single selector is forced to accept multiple, disparate arguments (e.g., `#add(Email #new, { f -> f #email })`))—by reifying a context shift into a transitional identity.
+In the JoMoo (Jolk Message-Oriented Object) architecture, the *Pivot Pattern* is the primary mechanism for managing hierarchical transitions without compromising the Unified Messaging Syntax. It resolves the "Saturated Message" anti-pattern—where a single selector is forced to accept multiple, disparate arguments (e.g., `#add(Email #new, [ f -> f #email ] )`))—by reifying a context shift into a transitional identity.
 
 The Pivot Pattern allows an identity to temporarily delegate its messaging protocol to a *Subject-Oriented Proxy*. This ensures that the manuscript remains linear and declarative, avoiding the syntactic noise of nested closures or multi-argument procedural calls. It transforms a command into a choreography. The pattern is composed of four distinct participants that maintain Industrial Sovereignty through role separation:
 
@@ -1335,7 +1335,7 @@ Multi-environment and test configurations are managed through Specialization and
 		Service service = Service #new(ConfigurationProvider #CONFIG #database);
 
 		// Register the module's shutdown with the Substrate  
-		Runtime #onShutdown { config #shutdown }
+		Runtime #onShutdown [ config #shutdown ]
 
 		// ...  
 	}
@@ -1479,7 +1479,7 @@ When a `#while` message is dispatched to a closure, the compiler avoids loop-obj
 
 Source:
 
-	{ count < 10 } #while { count #+ 1 }
+	[ count < 10 ] #while [ ... ; count #increment ]
 
 Pseudo-Bytecode Projection:
 
@@ -1545,11 +1545,11 @@ Jolk creation methods transpile directly into standard Java `<init>` methods. Th
 
 The projection of a ternary expression in _Jolk_ is governed by _Structural Displacement_, necessitated by the divergence between Jolk’s expression-oriented grammar and the statement-bound nature of the JVM. This deterministic transformation ensures the preservation of side-effects through _Statement Lifting_.
 
-When targeting Java source code, the transpiler must reconcile Jolk’s _high-density blocks_ with Java’s syntactic limitations. In an assignment context, such as `Closure b = c ? {a; b} : {b; a}`, the visitor performs _Variable Promotion_. It lifts the declaration of the identifier `b` and converts the ternary into a standard `if-else` block, where the final expression of each Jolk branch is promoted to an explicit assignment. For complex nesting, such as `a = (c ? {x} : {y}) + z`, the transpiler implements _Synthetic Variable Injection_. By generating a named intermediate variable, such as `_tmp1`, to capture the branch result before the addition occurs, the transpiler bridges the gap between fluid ergonomics and rigid Java structure, adding a specific slot to the Java method scope.
+In an assignment context, such as `Closure b = c ? [a; b] : [b; a]`, the visitor performs _Variable Promotion_. It lifts the declaration of the identifier `b` and converts the ternary into a standard `if-else` block, where the final expression of each Jolk branch is promoted to an explicit assignment. For complex nesting, such as `a = (c ? [x] : [y]) + z`, the transpiler implements _Synthetic Variable Injection_. By generating a named intermediate variable, such as `_tmp1`, to capture the branch result before the addition occurs, the transpiler bridges the gap between fluid ergonomics and rigid Java structure, adding a specific slot to the Java method scope.
 
-The direct-to-bytecode compiler achieves higher _structural density_ by bypassing named intermediate storage in favour of the JVM Operand Stack. During the evaluation of `a = (c ? {x} : {y}) + z`, the compiler treats the ternary not as a statement to be unrolled, but as a sequence of jump and push operations. The condition `c` triggers a branch via `ifeq` or `goto` instructions; regardless of the path taken, the resulting value is pushed directly onto the operand stack. The subsequent loading of `z` and the execution of the addition occur on these stack-resident values. This _Direct Projection_ maintains high structural density by treating the stack as a continuous, anonymous buffer for intermediate results, operating strictly within the stack height limit.
+The direct-to-bytecode compiler achieves higher _structural density_ by bypassing named intermediate storage in favour of the JVM Operand Stack. During the evaluation of `a = (c ? [x] : [y]) + z`, the compiler treats the ternary not as a statement to be unrolled, but as a sequence of jump and push operations. The condition `c` triggers a branch via `ifeq` or `goto` instructions; regardless of the path taken, the resulting value is pushed directly onto the operand stack. The subsequent loading of `z` and the execution of the addition occur on these stack-resident values. This _Direct Projection_ maintains high structural density by treating the stack as a continuous, anonymous buffer for intermediate results, operating strictly within the stack height limit.
 
-The _VoidPathDetector_ ensures a unified terminal state across both strategies. In a return context, such as `^ c ? {a} : {b}`, the transpiler applies _Return Promotion_, prefixing each lifted branch with a Java `return` keyword within the generated `if-else` structure. Conversely, the compiler ensures that the appropriate return instruction, such as `ireturn` or `areturn`, immediately follows the stack resolution. While the transpiler must re-assemble a split expression into multiple lines of source, the compiler simply executes the final operation on the stack head.
+The _VoidPathDetector_ ensures a unified terminal state across both strategies. In a return context, such as `^ c ? [a] : [b]`, the transpiler applies _Return Promotion_, prefixing each lifted branch with a Java `return` keyword within the generated `if-else` structure. Conversely, the compiler ensures that the appropriate return instruction, such as `ireturn` or `areturn`, immediately follows the stack resolution. While the transpiler must re-assemble a split expression into multiple lines of source, the compiler simply executes the final operation on the stack head.
 
 Regardless of whether the outcome is a named synthetic variable or an anonymous stack transition, the transformation remains a strictly mechanical mapping of the _Abstract Syntax Tree_, ensuring the _Self-Return Contract_ is satisfied in every architectural context.
 

@@ -11,17 +11,17 @@ import java.util.function.Function;
 ///
 /// @author woro
 
-package final class ChildRequirementBridge[T, R] implements ChildRequirement[T, R] {
+package final class ChildRequirementBridge<T, R> implements ChildRequirement<T, R> {
 
-    ValidationSuite[T] master;
-    Function[T, R] supplier;
+    ValidationSuite<T> master;
+    Function<T, R> supplier;
 
-    meta package ChildRequirementBridge[T, R] new(ValidationSuite[T] master, Function[T, R] supplier) {
+    meta package ChildRequirementBridge<T, R> new(ValidationSuite<T> master, Function<T, R> supplier) {
         ^ super #new #master(master) #supplier(supplier)
     }
 
-    final ValidationSuite[T] add(Validation[R] validation) {
+    final ValidationSuite<T> add(Validation<R> validation) {
         // Construct the internal node and revert to master
-        master #add(ChildValidation[T, R] #new(supplier, validation))
+        master #add(ChildValidation<T, R> #new(supplier, validation))
     }
 }

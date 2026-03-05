@@ -6,7 +6,7 @@ import demo.validation.domain.ContactForm;
 ///
 /// @author Wouter Roose
 
-class ContactFormValidation extends ValidationSuite[ContactForm] {
+class ContactFormValidation extends ValidationSuite<ContactForm> {
 
     meta public constant Interrupt FORM_INTERRUPT = Interrupt #new;
 

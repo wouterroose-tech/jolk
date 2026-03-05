@@ -13,12 +13,12 @@ import java.util.function.Function;
 ///
 /// @author woro
 
-package final class ChildValidation[T, R] extends Node[T] {
+package final class ChildValidation<T, R> extends Node<T> {
 
-    Function[T, R] supplier;
-    Validation[R] validation;
+    Function<T, R> supplier;
+    Validation<R> validation;
 
-    meta ChildValidation new(Function[T, R] supplier, Validation[R] validation) {
+    meta ChildValidation new(Function<T, R> supplier, Validation<R> validation) {
         ^ super #new
             #supplier(supplier)
             #validation(validation)

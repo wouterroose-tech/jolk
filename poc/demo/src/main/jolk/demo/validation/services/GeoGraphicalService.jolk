@@ -5,7 +5,7 @@ package demo.validation.services;
 
 final class GeoGraphicalService {
     
-    meta public constant Array[Integer] Mechelen = #[2800, 2801, 2811, 2812];
+    meta public constant Array<Integer> Mechelen = #[2800, 2801, 2811, 2812];
 
     meta private GeoGraphicalService new() {
         ^ super #new

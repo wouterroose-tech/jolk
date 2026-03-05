@@ -12,7 +12,7 @@ package demo.validation.engine;
 ///
 /// @author woro
 
-abstract class Constraint[T] extends Validation[T] {
+abstract class Constraint<T> extends Validation<T> {
 
     @Override
     package final Self doAccept(T subject, ExecutionContext executionContext) {

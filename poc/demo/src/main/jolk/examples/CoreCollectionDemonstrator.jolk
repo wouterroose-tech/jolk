@@ -16,45 +16,45 @@ import jolk.lang.Array;
 
 final class CoreCollectionDemonstrator {
 
-    Array[String] runNew() {
+    Array<String> runNew() {
         ^ Array #new("red", "green", "blue")
     }
 
-    Array[String] runLiteral() {
+    Array<String> runLiteral() {
         ^ #["red", "green", "blue"]
     }
 
     String runAt() {
-        constant Array[String] colors = Array #new("red", "green", "blue");
+        constant Array<String> colors = Array #new("red", "green", "blue");
         ^ colors #at(1)
     }
 
-    Array[String] runPut() {
-        Array[String] colors = Array #new("red", "green", "blue");
+    Array<String> runPut() {
+        Array<String> colors = Array #new("red", "green", "blue");
         colors #put(1, "yellow");
         ^ colors
     }
 
     Integer runSize() {
-        constant Array[String] colors = Array #new("red", "green", "blue");
+        constant Array<String> colors = Array #new("red", "green", "blue");
         ^ colors #size
     }
 
     String runToString() {
-        constant Array[String] colors = Array #new("red", "green", "blue");
+        constant Array<String> colors = Array #new("red", "green", "blue");
         ^ colors #toString
     }
     
     String runFor() {
-        constant Array[String] colors = Array #new("red", "green", "blue");
+        constant Array<String> colors = Array #new("red", "green", "blue");
         StringBuffer result = StringBuffer #new;
         colors #forEach[color -> result #append(color) ];
         ^ result #toString
     }
 
     String runForEach() {
-        constant Array[String] colors = Array #new("red", "green", "blue");
-        constant AtomicReference[String] result = AtomicReference #new("");
+        constant Array<String> colors = Array #new("red", "green", "blue");
+        constant AtomicReference<String> result = AtomicReference #new("");
         colors #forEach[color -> result #set(result #get + color)];
         ^ result #get
     }

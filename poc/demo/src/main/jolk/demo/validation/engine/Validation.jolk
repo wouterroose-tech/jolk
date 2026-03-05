@@ -13,7 +13,7 @@ package demo.validation.engine;
 ///
 /// @author Wouter Roose
 
-package abstract class Validation[T] extends Node[T] {
+package abstract class Validation<T> extends Node<T> {
 
     /// Checks if the precondition for executing this validation is satisfied.
     ///

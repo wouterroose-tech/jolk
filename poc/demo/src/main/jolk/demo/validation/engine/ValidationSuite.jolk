@@ -14,23 +14,23 @@ import java.util.function.Function;
 ///
 /// @author woro
 
-abstract class ValidationSuite[T] extends Validation[T] {
+abstract class ValidationSuite<T> extends Validation<T> {
 
-    constant Array[Node[T]] nodes = Array #new;
+    constant Array[Node<T>] nodes = Array #new;
 
     /// Adds a validation constraint to this ruleset.
-    final Self add(Constraint[T] constraint) {
+    final Self add(Constraint<T> constraint) {
         nodes #add(constraint)
     }
 
     /// Adds a nested ruleset, allowing hierarchical composition of validations.
-    package final [R] Self add(ChildValidation[T, R] suite) {
+    package final <R> Self add(ChildValidation<T, R> suite) {
         nodes #add(suite)
     }
 
     // The Refinement Pivot: Creates the requirement identity
-    final [R] ChildRequirement[T, R] subject(Function[T, R] supplier) {
-        ^ ChildRequirementBridge[T, R] #new(this, supplier)
+    final <R> ChildRequirement<T, R> subject(Function<T, R> supplier) {
+        ^ ChildRequirementBridge<T, R> #new(this, supplier)
     }
 
     /// Validates the subject by recursively visiting each element in the ruleset.

@@ -9,7 +9,7 @@ package demo.validation.engine;
 ///
 /// @author woro
 
-protocol ChildRequirement[T, R] {
+protocol ChildRequirement<T, R> {
 
-    ValidationSuite[T] add(Validation[R] validation);
+    ValidationSuite<T> add(Validation<R> validation);
 }

@@ -7,7 +7,7 @@ import demo.validation.services.GeoGraphicalService;
 ///
 /// @author Wouter Roose
 
-final class ZipConstraint extends Constraint[ContactForm] {
+final class ZipConstraint extends Constraint<ContactForm> {
 
     Boolean satisfiesPreCondition(ContactForm form, ExecutionContext executionContext) {
         ^ form #zipCode #isPresent

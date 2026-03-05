@@ -14,24 +14,24 @@ import jolk.lang.Array;
 final class ClosureDemonstrator {
 
     /// Demonstrates passing a closure as a parameter.
-    Array[String] runClosureParam() {
-        Array[String] strings = #["a", "b", "c"];
+    Array<String> runClosureParam() {
+        Array<String> strings = #["a", "b", "c"];
         ^ strings #map [ String s -> s + s ]
     }
 
     /// Demonstrates using a method reference.
-    Array[String] runMethodReference_class() {
-        Array[String] strings = #["x", "y", "z"];
+    Array<String> runMethodReference_class() {
+        Array<String> strings = #["x", "y", "z"];
         ^ strings #map(ClosureDemonstrator ##staticDoubleValue)
     }
 
-    Array[String] runMethodReference_self() {
-        Array[String] strings = #["x", "y", "z"];
+    Array<String> runMethodReference_self() {
+        Array<String> strings = #["x", "y", "z"];
         ^ strings #map(self ##doubleValue)
     }
 
-    Array[String] runMethodReference_instance() {
-        Array[String] strings = #["x", "y", "z"];
+    Array<String> runMethodReference_instance() {
+        Array<String> strings = #["x", "y", "z"];
         ClosureDemonstrator demo = ClosureDemonstrator #new;
         ^ strings #map(demo ##doubleValue)
     }

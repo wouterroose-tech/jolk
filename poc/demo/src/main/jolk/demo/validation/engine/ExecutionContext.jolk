@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 class ExecutionContext {
 
-    constant Array[Issue] issues = Array #new;
+    constant Array<Issue> issues = Array #new;
 
     /// Adds an issue for the given subject.
     Self add(Object subject, Issue issue) {

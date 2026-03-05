@@ -10,11 +10,11 @@ package demo.validation.engine;
 ///
 /// Package protected because internal to the engine.
 ///
-/// @param [T] the type of the validation subject
+/// @param <T> the type of the validation subject
 ///
 /// @author Wouter Roose
 
-package abstract class Node[T] {
+package abstract class Node<T> {
 
     /// Visits this node with the given subject and execution context.
     package abstract Self accept(T subject, ExecutionContext executionContext);

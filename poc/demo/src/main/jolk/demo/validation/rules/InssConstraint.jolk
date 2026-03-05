@@ -6,7 +6,7 @@ import demo.validation.domain.Person;
 ///
 /// @author Wouter Roose
 
-final class InssConstraint extends Constraint[Person] {
+final class InssConstraint extends Constraint<Person> {
 
     Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
         ^ person #ssn #isPresent

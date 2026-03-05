@@ -46,7 +46,7 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
                 "private Self supplier(Type<T> supplier) {\n" +
                 "this.supplier = supplier;\n" +
                 "return (Self) this;\n" +
-                "}\n", "Type[T] supplier;");
+                "}\n", "Type<T> supplier;");
     }
 
     @Test
@@ -58,7 +58,7 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
                 "private Self supplier(Type<T> supplier) {\n" +
                 "this.supplier = supplier;\n" +
                 "return (Self) this;\n" +
-                "}\n", "Type[T] supplier = Type #new;");
+                "}\n", "Type<T> supplier = Type #new;");
     }
 
     @Test
@@ -147,7 +147,7 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
                 "private Self list(java.util.ArrayList<String> list) {\n" +
                 "this.list = list;\n" +
                 "return (Self) this;\n" +
-                "}\n", "java.util.ArrayList[String] list = java.util.ArrayList #new;");
+                "}\n", "java.util.ArrayList<String> list = java.util.ArrayList #new;");
     }
 
     @Test
@@ -222,6 +222,6 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
         assertTranspilation("private final List<String> NAMES = new ArrayList();\n" +
                 "private List<String> NAMES() {\n" +
                 "return NAMES;\n" +
-                "}\n", "constant List[String] NAMES = ArrayList #new;");
+                "}\n", "constant List<String> NAMES = ArrayList #new;");
     }
 }

@@ -19,7 +19,7 @@ variability     : ABSTRACT | FINAL ;
 archetype       : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
 type_bound      : type type_contracts? ;
 type            : self_type | (identifier DOT)* MetaId type_args? ;
-type_args       : LBRACK type_bound (COMMA type_bound)* RBRACK ;
+type_args       : LT type_bound (COMMA type_bound)* GT ;
 type_contracts  : EXTENDS type (IMPLEMENTS type (AMP type)*)?
                 | IMPLEMENTS type (AMP type)* ;
 

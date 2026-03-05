@@ -106,8 +106,8 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
    @Test
     public void visit_protocol() {
         String source = """
-            protocol ChildRequirement[T, R] {
-                ValidationSuite[T] add(Validation[R] validation);
+            protocol ChildRequirement<T, R> {
+                ValidationSuite<T> add(Validation<R> validation);
             }
             """;
         String expected = """
@@ -126,7 +126,7 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
    @Test
     public void visit_protocol_2() {
         String source = """
-            final class ChildRequirementBridge[T, R] implements ChildRequirement[T, R] {
+            final class ChildRequirementBridge<T, R> implements ChildRequirement<T, R> {
             }
             """;
         String expected = """
@@ -272,12 +272,12 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
             package examples;
             import jolk.lang.Array;
             class ClosureDemonstrator {
-                Array[String] runClosureParam() {
-                    Array[String] strings = #["a", "b", "c"];
+                Array<String> runClosureParam() {
+                    Array<String> strings = #["a", "b", "c"];
                     ^ strings #map [ String s -> s + s ]
                 }
-                Array[String] runMethodReference() {
-                    Array[String] strings = #["x", "y", "z"];
+                Array<String> runMethodReference() {
+                    Array<String> strings = #["x", "y", "z"];
                     ^ strings #map(self ##doubleValue)
                 }
                 String doubleValue(String s) {

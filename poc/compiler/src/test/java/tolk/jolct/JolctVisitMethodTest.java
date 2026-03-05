@@ -26,7 +26,7 @@ public class JolctVisitMethodTest extends JolctVisitorTest {
     @Test
     void testMethod() {
         String source = """
-            class Test[T] {
+            class Test<T> {
                 public Self do(T subject) {
                     !(self #isValid(subject)) ? [^ self];
                     ^ self
@@ -109,8 +109,7 @@ public class JolctVisitMethodTest extends JolctVisitorTest {
 
     @Test
     public void testMethodGenerics() {
-        // convert the type param brackits [] to <>
-        String source = "class Test { [T] Object method() {} }";
+        String source = "class Test { <T> Object method() {} }";
         String expected = "public class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {\npublic <T extends jolk.lang.Object<T>> jolk.lang.Object<?> method() {\nreturn null;\n}\n}\n";
         assertMethod(expected, source);
     }
@@ -133,7 +132,7 @@ public class JolctVisitMethodTest extends JolctVisitorTest {
 
     @Test
     public void testMethodWithAnnotatedParams() {
-        String source = "class ChildValidation[T] { Self accept(@NotNull T subject, @NotNull Object context) {} }";
+        String source = "class ChildValidation<T> { Self accept(@NotNull T subject, @NotNull Object context) {} }";
         String expected = "public class ChildValidation<T extends jolk.lang.Object<T>, Self extends ChildValidation<T, Self>> extends jolk.lang.Object<Self> {\npublic Self accept(@NotNull T subject, @NotNull jolk.lang.Object<?> context) {\nreturn (Self) this;\n}\n}\n";
         assertMethod(expected, source);
     }
@@ -171,7 +170,7 @@ public class JolctVisitMethodTest extends JolctVisitorTest {
 
     @Test
     public void testGenericFinalClassMethod() {
-        String source = "final class ChildValidation[T, R] extends Node[T] { Self accept(T subject) {} }";
+        String source = "final class ChildValidation<T, R> extends Node<T> { Self accept(T subject) {} }";
         String expected = "public final class ChildValidation<T extends jolk.lang.Object<T>, R extends jolk.lang.Object<R>> extends Node<T, ChildValidation<T, R>> {\npublic ChildValidation<T, R> accept(T subject) {\nreturn this;\n}\n}\n";
         JolkContext context = new JolkContext();
         context.addJolkType("Node");

@@ -98,7 +98,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	archetype       = "class" | "value" | "record" | "enum" | "protocol"
 	type_bound      = type [ type_contracts ]
 	type            = "Self" | [ namespace ] meta_id [ type_args ]
-	type_args       = "[" type_bound { "," type_bound } "]"
+	type_args       = "<" type_bound { "," type_bound } ">"
 	type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
 	type_mbr        = { annotation } ( [ "meta" ] [ visibility ] member | enum ";" )
 	member          = state | [ variability ] method
@@ -164,7 +164,7 @@ The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupl
 
 The syntax for structural anchors like package, import, and class is designed to be almost identical to Java. This syntax allows Jolk to closely integrate with the existing Java ecosystem and ensures 100% interoperability with existing enterprise systems.
 
-Furthermore, Jolk retains specific Java-like structures for record, enum, and value types to maintain strict compatibility with modern JVM features such as Project Valhalla. The decision to keep bracketed syntax for generics was made to ensure parsing stability and prevent recursive descent issues when the compiler processes complex nested types.
+Furthermore, Jolk retains specific Java-like structures for record, enum, and value types to maintain strict compatibility with modern JVM features such as Project Valhalla. The syntax for generics adopts angle brackets (`<>`) to align with Java and the Strongtalk lineage, ensuring parsing stability and preventing recursive descent issues when the compiler processes complex nested types.
 
 Jolk includes explicit modifiers such as public, abstract, and final because they are considered necessary in large-scale engineering.  By combining the structural safety of the C-family with Smalltalk’s message-passing soul, Jolk’s syntax provides a bridge between expressiveness and high-performance.
 
@@ -207,11 +207,11 @@ The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexic
 
 ### Structural Anchors
 
-Syntactic elements act as structural anchors for the parser. 
+Syntactic elements act as structural anchors for the parser.
 
 **& Operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a mathematically precise intersection of multiple algebras while reinforcing the architectural separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
-**Generic Type Brackets** While the final specification adopts `< >` to achieve alignment with Java and the Strongtalk lineage, the current version utilises `[ ]` to minimize lexical complexity.
+**Generic Type Brackets** The syntax adopts `<>` for generics.
 
 **Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
 
@@ -223,7 +223,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **lazy**: The temporality lazy directive designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
 
-**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Syntactic Overload*, ensuring the semantic intent of every symbol remains absolute and singular. By assigning a unique geometry to each architectural fact—`{ }` for *Scope*, `[ ]` for *Deferred Identity*, and `( )` for *Realised Identity*—the code achieves a state of structural buoyancy.
+**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Syntactic Overload*, ensuring the semantic intent of every symbol remains absolute and singular. By assigning a unique geometry to each architectural fact—`< >` for *Generics*, `{ }` for *Scope*, `[ ]` for *Deferred Identity*, and `( )` for *Realised Identity*—the code achieves a state of structural buoyancy.
 
 	List<Result> process(List<Signal> signals) {
 		^ signals #map [ s -> Result #new(s #id) ]
@@ -313,7 +313,7 @@ By the application of Implicit Field Encapsulation and standardising Root Capabi
 
 ### Generics
 
-Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that provides a separation of the subtype and subclass lattices, ensuring that an object's behavioral protocol is verified independently of its implementation lineage. Jolk maintains structural parity with the JVM type erasure model and sustains full compatibility with the Java generic implementation for complex type arguments. The architecture adopts square bracket notation `[]` as the primary lexical anchor to ensure deterministic parsing and visual simplification.
+Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that provides a separation of the subtype and subclass lattices, ensuring that an object's behavioral protocol is verified independently of its implementation lineage. Jolk maintains structural parity with the JVM type erasure model and sustains full compatibility with the Java generic implementation for complex type arguments. The architecture adopts angle bracket notation `<>` as the primary lexical anchor to ensure deterministic parsing and visual simplification.
 
 ### Fields
 
@@ -510,13 +510,13 @@ The Creation Displacement Rule: If a Type defines an explicit creation method, t
 
 **Collection creation methods**
 
-In Jolk, literal collection creation methods utilize the `#` anchor as a shorthand for message-based instantiation. This notation allows for the concise creation of collections, such as `Array[String] colors = #["red", "green", "blue"]`, serving as a minimalist alternative to the variadic new with the varargs pattern: `Array #new("red", "green", "blue")`.
+In Jolk, literal collection creation methods utilize the `#` anchor as a shorthand for message-based instantiation. This notation allows for the concise creation of collections, such as `Array<String> colors = #["red", "green", "blue"]`, serving as a minimalist alternative to the variadic new with the varargs pattern: `Array #new("red", "green", "blue")`.
 
     // variadic creation method  
-    Array[String] colors = Array #new("red", "green", "blue");
+    Array<String> colors = Array #new("red", "green", "blue");
 
     // literal anchor shortcut  
-    Array[String] colors = #["red", "green", "blue"];
+    Array<String> colors = #["red", "green", "blue"];
 
 By implementing these as literal anchors, Jolk remains "bracket-light" while upholding the Unified Messaging principle. Because these literals are treated as sugar for underlying messages, the resulting collection is immediately ready to participate in a message chain. This ensures that every interaction remains a formal message send rather than an opaque compiler secret, maintaining the fluid messaging architecture.
 
@@ -685,7 +685,7 @@ Pattern Matching is not based on language keywords or a switch statement. Instea
 
 The Type-Gate message chain replaces pattern-matching syntax with a pipeline that uses an Intrinsic  Match container to refine untrusted inputs into safe, typed executions.
 
-    ^ String #isInstance(x)                     //Returns Match[String] with the value or Nothing  
+    ^ String #isInstance(x)                     //Returns Match<String> with the value or Nothing  
         #filter [ s -> !(s #isEmpty) ]          // If false the content of Selection is dropped  
         #map [ s -> System #out #println(s) ]  // It was a non-empty String so it gets printed
 
@@ -696,7 +696,7 @@ The `#case` selector acts as a logic gate that evaluates a closure only if the r
         #case(404) #do ["Not Found"]       /// Returns if 404, or passes along  
         #default ["Unknown Error"]         /// default
 
-Pattern Matching results in a `Match[T]` to drive logic flow through a message chain, whereas `Optional[T]` is used to represent the state of a value that may be absent over time..
+Pattern Matching results in a `Match<T>` to drive logic flow through a message chain, whereas `Optional<T>` is used to represent the state of a value that may be absent over time..
 
 ### Exceptions
 
@@ -860,14 +860,14 @@ Jolk provides three fundamental collection archetypes, each defined by a unique 
 The **Array** is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at:`) and stack-based operations (`#push:`, `#pop:`).
 
 	@Intrinsic
-	public final class Array[T] {
+	public final class Array<T> {
 	
-	    meta Array[T] new(T... elements) { }
+	    meta Array<T> new(T... elements) { }
 	
 	    T at(Int index) { }
 	    Self put(Int index, T element) { }
 	    T first() { }
-	    [R] Array[R] map(Closure[R] mapper) { }
+	    <R> Array<R> map(Closure<R> mapper) { }
 	    T pop() { }
 	    Self push(T element) { }
 	}
@@ -892,7 +892,7 @@ Jolk reifies each class as a first-class Meta-Object. While standard Java resolv
 This architecture allows the MetaClass intrinsic to govern Identity-level logic through a formal hierarchy. When a subclass invokes `super #new()`, the system routes the message to the Parent Identity’s meta-stratum rather than a static pointer. Consequently, class-level behaviours like Mechanical Birth participate in a rigorous inheritance model, ensuring instantiation is a flexible, message-driven process rather than a rigid JVM constraint.
 
 	@Intrinsic("java.lang.Class")  
-	class MetaClass[T extends Object] {
+	class MetaClass<T extends Object> {
 	
 	    /// The default creation method  
 	    T new() {  
@@ -907,7 +907,7 @@ This architecture allows the MetaClass intrinsic to govern Identity-level logic 
 	    }
 	
 	    /// Returns the Type Identity that this one extends  
-	    [S extends MetaClass[T]] S superclass() {  
+	    <S extends MetaClass<T>> S superclass() {  
 	        // java pseudocode  
 	        // return T.getSuperclass();  
 	    }  
@@ -938,12 +938,12 @@ The jolk.lang.Object class acts as the root Meta-Object Descriptor. It defines t
 	    Self ifEmpty(Closure action) { }
 	
 	    // Context-aware type reference  
-	    Metaclass[Self] getClass() { /* this.getClass() */ }
+	    Metaclass<Self> getClass() { /* this.getClass() */ }
 	
 	    // The Jolk Type pattern match.   
 	    // At runtime, this flattens into an INSTANCEOF check and a conditional branch.  
 	    // At compile-time, the selector returns a Selection[T], enabling execution in the fluent chain.  
-	    Selection[T] instanceOf(Type[T] type) { }
+	    Selection<T> instanceOf(Type<T> type) { }
 	
 	    Self #project(Map[String, Object] fields) { 
 	        fields #forEach [ String key, Object value -> self #put(key, value) ];  
@@ -1017,17 +1017,15 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Smalltalk-80 Heritage*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic flow of messages" rather than procedural calls. It utilizes Keyword Selectors (using a `#` hashtag anchor) and Closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately.
 
-*Strongtalk Heritage*: Jolk incorporates a rigorous static type system inspired by Strongtalk, which enforces a formal separation between the subtype and subclass lattices. This ensures behavioural protocols are verified independently of an object's implementation lineage.
+*Strongtalk Heritage*: Jolk incorporates a rigorous static type system inspired by Strongtalk with `< >` delimiters for generic type parameters, which enforces a formal separation between the subtype and subclass lattices. This ensures behavioural protocols are verified independently of an object's implementation lineage.
 
 *The Self Language*: The Tolk compiler’s strategy of "Semantic Flattening" is the spiritual successor to the optimization techniques developed for the Self language[10].
-
-*Square brackets* `[]` for generic parameterisation adhere to Scala(6) and Python. This ensures a deterministic, single-pass Tolk Engine parser.
 
 *Java and JVM Integration*: The syntax for Structural Scaffolding—including package, import, and class—is intentionally aligned with Java to reduce cognitive load. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
 
 *Kotlin Influences*: Following Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks. It adopts Trailing Closure Syntax for logic-driven messages.
 
- *The Null Object Pattern* in Jolk is a direct architectural evolution of concepts from both Smalltalk-80 and Kotlin, designed to handle "nothingness" as a first-class participant in the messaging flow rather than a system-collapsing failure. Jolk takes the reified identity of Smalltalk and the type-safe constraints of Kotlin, then applies Identity Restitution to preserve a pure object-oriented "World View" on the high-performant JVM.
+*The Null Object Pattern* in Jolk is a direct architectural evolution of concepts from both Smalltalk-80 and Kotlin, designed to handle "nothingness" as a first-class participant in the messaging flow rather than a system-collapsing failure. Jolk takes the reified identity of Smalltalk and the type-safe constraints of Kotlin, then applies Identity Restitution to preserve a pure object-oriented "World View" on the high-performant JVM.
 
 *Predicate Assertion*: in Jolk is a reconciliatory synthesis that takes the philosophical purity of Smalltalk, the syntactic ergonomics of Kotlin, and the high-performance execution of Java to create a unified messaging protocol for control flow.
 
@@ -1062,15 +1060,15 @@ The framework provides a set of abstract & final classes that are the basis for 
 Demonstrated language concepts: generics, Self Type alias, message chaining for control and exception flow, null object pattern
 
 	//  
-	package abstract class Node[T] {
+	package abstract class Node<T> {
 		package abstract Self accept(T subject, ExecutionContext context);
 	}
 
 	//  
-	package final class ChildValidation[T, R] extends Node[T] {
+	package final class ChildValidation<T, R> extends Node<T> {
 
-		Function[T, R] supplier;  
-		Validation[R] validation;
+		Function<T, R> supplier;  
+		Validation<R> validation;
 
 		package Self accept(T subject, ExecutionContext context) {  
 			supplier #value(subject) #ifPresent [ child -> validation #accept(child, context) ]  
@@ -1078,7 +1076,7 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 	}
 
 	//  
-	package abstract class Validation[T] extends Node[T] {
+	package abstract class Validation<T> extends Node<T> {
 
 		package final Self accept(T subject, ExecutionContext context) {  
 			(self #satisfiesPreCondition(subject, context)) ? [ self #doAccept(subject, context) ]  
@@ -1092,7 +1090,7 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 	}
 
 	//  
-	abstract class Constraint[T] extends Validation[T] {
+	abstract class Constraint<T> extends Validation<T> {
 
 		package final Self doAccept(T subject, ExecutionContext context) {  
 			self #isValid(subject) ? [ ^self ];  
@@ -1106,15 +1104,15 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 	}
 
 	//  
-	abstract class ValidationSuite[T] extends Validation[T] {
+	abstract class ValidationSuite<T> extends Validation<T> {
 
-		constant Array[Node[T]] nodes = Array #new;
+		constant Array<Node<T>> nodes = Array #new;
 
-		final Self add(Constraint[T] constraint) {
+		final Self add(Constraint<T> constraint) {
         	nodes #add(constraint)
     	}
 
-		package final [R] Self add(ChildValidation[T, R] suite) {
+		package final <R> Self add(ChildValidation<T, R> suite) {
         	nodes #add(suite)
     	}
 
@@ -1187,7 +1185,7 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 	}
 
 	//  
-	final class InssConstraint extends Constraint[Person] {
+	final class InssConstraint extends Constraint<Person> {
 
 		// singleton in DI configuration  
 		meta lazy InssConstraint new() {  
@@ -1289,13 +1287,13 @@ The Pivot Pattern adheres to *Nominalised Precision* by ensuring every message h
 
 By decoupling these concerns, the Sovereign remains "data-blind." It never interacts with the raw extraction logic; it only receives the resulting Identity Node provided by the Bridge upon completion. To implement the pattern, the Sovereign delegates to a hidden Bridge that encapsulates the parent reference and the extraction logic.
 
-	// inside Sovereign[T]
-	final [R] Requirement[T, R] subject(Closure[T, R] supplier) {
+	// inside Sovereign<T>
+	final <R> Requirement<T, R> subject(Closure<T, R> supplier) {
 		^ RequirementBridge #new(this, supplier)
 	}
 
-	// inside RequirementBridge[T, R]
-	final [T] Sovereign[T] add(Constraint[R] node) {
+	// inside RequirementBridge<T, R>
+	final <T> Sovereign<T> add(Constraint<R> node) {
 		// Construct internal mapping and update the master aggregate
 		master #nodes #add(MappingNode #new(supplier, node))
 		^ master // Terminal Reversion
@@ -1708,8 +1706,6 @@ The industrialisation roadmap follows an iterative progression, prioritising the
 [6]: Schärli, Nathanael; Ducasse, Stéphane; Nierstrasz, Oscar; Black, Andrew P. (2003). Traits: Composable Units of Behaviour. ECOOP 2003.
 
 [7]: Canning, Peter S.; Cook, William R.; Hill, Walter L.; Mitchell, John C.; Olthoff, William (1989). F-bounded polymorphism for object-oriented programming. In Conference on Functional Programming Languages and Computer Architecture.
-
-[8]: Scala, Generics, ([https://docs.scala-lang.org/tour/generic-classes.html](https://docs.scala-lang.org/tour/generic-classes.html))
 
 [9]: Woolf, Bobby (1998). Null Object. Pattern Languages of Program Design 3. Addison-Wesley.
 

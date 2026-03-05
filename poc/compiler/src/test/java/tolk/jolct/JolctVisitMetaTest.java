@@ -57,7 +57,7 @@ public class JolctVisitMetaTest extends JolctVisitorTest {
     public void testGenericClassExtension() {
         // Generic class: CRTP with generics
         // class Box<T, Self extends Box<T, Self>> extends jolk.lang.Object<Self>
-        String source = "class Box[T] { }";
+        String source = "class Box<T> { }";
         String expected = "public class Box<T extends jolk.lang.Object<T>, Self extends Box<T, Self>> extends jolk.lang.Object<Self> {\n}\n";
         this.assertFullTranspilation(expected, source);
     }

@@ -118,7 +118,7 @@ public class JolctVisitExpressionTest extends JolctVisitorTest {
 
     @Test
     public void testNewInstanceWithGenerics() {
-        String source = "class Test { Object o = List[String] #new; }";
+        String source = "class Test { Object o = List<String> #new; }";
         String expected = """
             public class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {
             private jolk.lang.Object<?> o = new List<String>();

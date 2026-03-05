@@ -8,9 +8,9 @@ public class PersonTest {
     @Test
     public void testPersonCreation() {
         // You are testing the Java class generated from Person.jolk
-        Person p = new Person(1L, "FirstName", "LastName");
+        Person p = new Person(1, "FirstName", "LastName");
         assertNotNull(p);
-        assertEquals(1L, p.ssn());
+        assertEquals(1, p.ssn());
         assertEquals("FirstName", p.firstName());
         assertEquals("LastName", p.lastName());
     }

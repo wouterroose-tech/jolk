@@ -15,13 +15,13 @@ package jolk.lang;
 /// @author Wouter Roose
 
 @Intrinsic
-public final class Array[T] {
+public final class Array<T> {
 
     /// Creates a new Array containing the provided elements.
     ///
     /// @param elements the elements to be contained in the array
     /// @return a new Array containing the elements
-    meta Array[T] new(T... elements) {
+    meta Array<T> new(T... elements) {
         // Intrinsic implementation maps to Array.of
     }
 
@@ -60,5 +60,5 @@ public final class Array[T] {
     /// @param mapper a non-interfering, stateless function to apply to each element
     /// @param <R> The element type of the new array
     /// @return the new array
-    [R] Array[R] map(Closure[R] mapper) { }
+    <R> Array<R> map(Closure<T, R> mapper) { }
 }

@@ -12,10 +12,10 @@ package jolk.lang;
 /// @author Wouter Roose
 
 @Intrinsic
-public final class Set[T] {
+public final class Set<T> {
 
     /// Creates a new Set containing the provided elements.
-    meta Set[T] new(T... elements) { }
+    meta Set<T> new(T... elements) { }
 
     /// Returns true if this set contains the specified element.
     Boolean includes(T element) { }

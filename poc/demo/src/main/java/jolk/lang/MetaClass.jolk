@@ -8,7 +8,7 @@ package jolk.lang;
 /// @author Wouter Roose
 
 @Intrinsic("java.lang.Class")
-public class MetaClass[T extends Object] {
+public class MetaClass<T extends Object> {
 
     /// Creates a new instance of the type `T`.
     public T new() {
@@ -23,13 +23,13 @@ public class MetaClass[T extends Object] {
     }
 
     /// Returns the `MetaClass` of the superclass.
-    public [S extends MetaClass[T]] S superclass() {
+    public <S extends MetaClass<T>> S superclass() {
         // java pseudocode
         // return T.getSuperclass()
     }
 
     /// Checks if an object is an instance of this `MetaClass`'s type.
-    public boolean isInstance(Object[T] object) {
+    public boolean isInstance(Object<T> object) {
         // java pseudocode
         // return T.class.isInstance(obj)
     }

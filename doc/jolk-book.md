@@ -1170,7 +1170,7 @@ Validation
 Demonstrated language concepts: creation methods, message chaining, DI, import lens, expression evaluation
 
 	//  
-	class ContactFormValidation extends ValidationSuite[ContactForm] {
+	class ContactFormValidation extends ValidationSuite<ContactForm> {
 
 		constant Interrupt INTERRUPT = Interrupt #new;
 

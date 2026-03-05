@@ -42,7 +42,7 @@ Jolk is architected as a minimalist language for the JVM, an exploration of Java
 
 **Data Confinement**: The strict isolation of state that restricts an object’s methods to accessing only its own instance fields or meta-variables for use in assignments, expressions, and method chains, while limiting all mutation to the local internal context.
 
-**Strong Typing:** Jolk's type system is inspired by Strongtalk, bringing rigorous static typing to a message-based model. Jolk retains the use of brackets for generics primarily to ensure parsing stability and to provide a deterministic grammar.
+**Strong Typing:** Jolk's type system is inspired by Strongtalk, bringing rigorous static typing to a message-based model.
 
 **Minimalist Syntax:** A reduced keyword set.
 
@@ -122,7 +122,10 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	statement       = constant | field | binding | [ "^" ] expression
 	expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ]
 	logic_or        = logic_and { "||" logic_and }
-	logic_and       = equality { "&&" equality }
+	logic_and       = inclusive_or { "&&" inclusive_or }
+	inclusive_or    = exclusive_or { "|" exclusive_or }
+	exclusive_or    = bitwise_and { "|!" bitwise_and }
+	bitwise_and     = equality { "&" equality }
 	equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
 	comparison      = term { ( ">" | ">=" | "<" | "<=" ) term } 
 	term            = factor { ( "+" | "-" ) factor }
@@ -191,7 +194,7 @@ In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Id
 
 **Selectors**: Identified by an anchor hashtag (`#`) followed by a string (e.g., `#print`, `#PI`). This approach treats logic as a fluent, pipe-like chain (e.g., `this #name #uppercase #print`, `Math #PI`). Anchored by the double-hash (`##`), method references reify a specific method on a receiver into a `Closure` identity, enabling functional composition without the verbosity of a block wrapper.
 
-**Returns**: Jolk uses the caret `^` as an explicit return symbol. If a return type is Self in a method declaration and no explicit return is specified, it implicitly returns self to facilitate fluent API 
+**Return**: In Jolk the caret `^` denotes the explicit return symbol. To prevent collision, the symbol `|!` is designated for the bitwise XOR operation; this uses the pipe (`|`) for "OR" and the bang (`!`) for "NOT" to visually denote "OR but NOT both," aligning with the mathematical definition of XOR. 
 
 The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexical rule in the Jolk language where the first-letter casing of an identifier determines its semantic category and role:
 

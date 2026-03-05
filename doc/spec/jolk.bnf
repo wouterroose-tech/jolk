@@ -39,7 +39,10 @@ statements      = statement { ";" statement } [ ";" ]
 statement       = constant | field | binding | [ "^" ] expression
 expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ]
 logic_or        = logic_and { "||" logic_and }
-logic_and       = equality { "&&" equality }
+logic_and       = inclusive_or { "&&" inclusive_or }
+inclusive_or    = exclusive_or { "|" exclusive_or }
+exclusive_or    = bitwise_and { "|!" bitwise_and }
+bitwise_and     = equality { "&" equality }
 equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
 comparison      = term { ( ">" | ">=" | "<" | "<=" ) term } 
 term            = factor { ( "+" | "-" ) factor }

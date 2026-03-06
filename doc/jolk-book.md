@@ -164,7 +164,7 @@ The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupl
 
 The syntax for structural anchors like package, import, and class is designed to be almost identical to Java. This syntax allows Jolk to closely integrate with the existing Java ecosystem and ensures 100% interoperability with existing enterprise systems.
 
-Furthermore, Jolk retains specific Java-like structures for record, enum, and value types to maintain strict compatibility with modern JVM features such as Project Valhalla. The syntax for generics adopts angle brackets (`<>`) to align with Java and the Strongtalk lineage, ensuring parsing stability and preventing recursive descent issues when the compiler processes complex nested types.
+Furthermore, Jolk retains specific Java-like structures for record, enum, and value types to maintain strict compatibility with modern JVM features such as Project Valhalla. The syntax for generics adopts angle brackets (`< >`) to align with Java and the Strongtalk lineage, ensuring parsing stability and preventing recursive descent issues when the compiler processes complex nested types.
 
 Jolk includes explicit modifiers such as public, abstract, and final because they are considered necessary in large-scale engineering.  By combining the structural safety of the C-family with Smalltalk’s message-passing soul, Jolk’s syntax provides a bridge between expressiveness and high-performance.
 
@@ -211,13 +211,13 @@ Syntactic elements act as structural anchors for the parser.
 
 **& Operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a mathematically precise intersection of multiple algebras while reinforcing the architectural separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
-**Generic Type Brackets** The syntax adopts `<>` for generics.
+**Generic Type Brackets** The syntax adopts `< >` for generics.
 
 **Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the message arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
 
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
-**Collection Literals**: A collection literal (Array, Set or Map) is a shorthand for the underlying message-based variadic creation of a primary object, ready to participate in the message chain. 
+**Collection Literals**: A collection literal (Array `[ ]`, Set `{ }` or Map `( )`) is a shorthand for the underlying message-based variadic creation of a primary object, ready to participate in the message chain. 
 
 **meta**: The meta stratum anchor designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta Strata.
 
@@ -255,7 +255,7 @@ Primitives are absent from the syntax because Jolk follows a pure object-oriente
 
 ### Mathematical and Equality Operators
 
-Jolk distinguishes between Identity (`==` and the negation `!=`), which executes a JVM reference parity check, and Equivalence (`~~` and the negation `!~`), which executes a structural state comparison (`Objects.equals`). All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives.
+Jolk distinguishes between Identity (`==` and the negation `!=`), which executes a JVM reference parity check, and Equivalence (`~~` and the negation `!~`), which executes a structural state comparison. All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives.
 
 In accordance with the principle of Engineered Integrity, Jolk prioritises source code clarity over the brevity of general type inference. While operators provide fluidity, the language mandates explicit type signatures and the use of the Caret (`^`) operator for Query Methods. This ensures Protocol Transparency, preventing "Inference Fog" by requiring that the "Contract of the Message" remains visible at every step of the execution flow. This discipline ensures that the developer always understands the state of the message chain without relying on external IDE tooling to resolve implicit types.
 
@@ -309,11 +309,11 @@ Jolk harmonises Classes, Records, Enums, and Value Types under a unified, "brack
 
 This alignment is anchored by Semantic Casing, where uppercase names signal that these types are first-class Meta-Objects. By automating boilerplate methods, Jolk allows developers to choose based on intent: complex logic (Classes), data transparency (Records), fixed sets (Enums), or high-performance memory locality (Value Types). Value types specifically offer the same "bracket-light" accessor protocol as records but are optimised for flat memory layouts and reduced heap overhead, treating the JVM as a high-performance substrate while maintaining a fluid object-oriented discipline.
 
-By the application of Implicit Field Encapsulation and standardising Root Capabilities like equivalence across every archetype, the language achieves Nominal Integrity, shifting the developmental focus from internal mechanics to the external capabilities of the Protocol Layer. Jolk supports parameterized types through generics for both unbounded (simple type parameters like `[T]` or a wildcard `[?]`) and (F-)bounded quantification[7] (keyword extends e.g., `[T extends Number]`). Finally, Jolk utilizes extension protocols to solve common industrial pain points by allowing behavior to be "bolted on" to existing final types without modifying source code, effectively moving logic into the library layer.
+By the application of Implicit Field Encapsulation and standardising Root Capabilities like equivalence across every archetype, the language achieves Nominal Integrity, shifting the developmental focus from internal mechanics to the external capabilities of the Protocol Layer. Jolk supports parameterized types through generics for both unbounded (simple type parameters like `<T>` or a wildcard `<?>`) and (F-)bounded quantification[7] (keyword extends e.g., `<T extends Number>`). Finally, Jolk utilizes extension protocols to solve common industrial pain points by allowing behavior to be "bolted on" to existing final types without modifying source code, effectively moving logic into the library layer.
 
 ### Generics
 
-Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that provides a separation of the subtype and subclass lattices, ensuring that an object's behavioral protocol is verified independently of its implementation lineage. Jolk maintains structural parity with the JVM type erasure model and sustains full compatibility with the Java generic implementation for complex type arguments. The architecture adopts angle bracket notation `<>` as the primary lexical anchor to ensure deterministic parsing and visual simplification.
+Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that provides a separation of the subtype and subclass lattices, ensuring that an object's behavioral protocol is verified independently of its implementation lineage. Jolk maintains structural parity with the JVM type erasure model and sustains full compatibility with the Java generic implementation for complex type arguments. The architecture adopts angle bracket notation `< >` as the primary lexical anchor to ensure deterministic parsing and visual simplification.
 
 ### Fields
 
@@ -629,7 +629,7 @@ This feature is fundamental to the _Self-Return Contract_. It guarantees that a 
 
 Operator overloading is achieved by treating symbols as unified message selectors. By including operators within the selector grammar, the language ensures that every operation is semantically resolved as a message send. This allows custom types—like ComplexNumber—to respond to standard symbols such as `+`, `-`, or `*`, providing them with the syntactic fluidness of native primitives.
 
-To implement an operator, developers define a method using the symbol as the identifier, which the Tolk engine then maps to standard JVM method names (e.g., `+` becomes `_plus()` and `~~` becomes `isEqual()`). While these interactions are pure message sends, Jolk retains standard mathematical precedence to ensure a familiar and predictable experience for developers.
+To implement an operator, developers define a method using the symbol as the identifier, which the Tolk engine then maps to standard JVM operations. While these interactions are pure message sends, Jolk retains standard mathematical precedence to ensure a familiar and predictable experience for developers.
 
 ### Keyword Selectors
 
@@ -807,10 +807,11 @@ Safety is enforced at the Lexical Fence via a structural type system. By utilisi
 
 **Closure**
 
-In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Reified Identity*. It represents a block of deferred logic that maintains a sovereign link to its defining environment. The closure is a first-class object governed by the *Transparency Contract*. The capability of a closure to interact with its parent scope depends on the nature of the message selector it serves.
+In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Reified Identity*. Defined by `[ [params] -> [statements] ]`, it represents a block of deferred logic that maintains a sovereign link to its defining environment. The closure is a first-class object, and its interaction with the surrounding scope is governed by the *Closure Contract*, which depends on the selector that receives it. This contract determines whether the closure's boundary is transparent or opaque, which is the foundation of structural safety in Jolk.
 
-*   *Transparent Scope (Intrinsic & Inline)*: When a closure is passed to a structural selector (like `#if`, `#while`) or a library template marked `@Inline` (like `#withLock`), it is treated as a structural extension of the method. The boundary is *Transparent*. In this context, the closure enjoys *Scope Permeability*: it can mutate local variables without overhead and, crucially, use the return terminal (`^`) to perform a *Non-Local Return*, exiting the parent method immediately.
-*   *Opaque Scope (Functional)*: When a closure is passed to a standard functional selector (like `#map`, `#filter`, or `#async`), it operates as an encapsulated unit of logic. The boundary is *Opaque*. While the closure can still capture and mutate state (managed via *Identity Promotion*), it is strictly forbidden from using the return terminal (`^`) to exit the parent method. The compiler enforces this via the *Semantic Guard* to prevent invalid stack manipulation.
+*   ***Intrinsic Selectors***: When a closure is passed to a structural selector that is part of the language's core (like `#while` or `?`), the compiler flattens the interaction into native JVM constructs. The boundary is fully transparent, allowing the closure to operate directly on the caller’s stack. This enables *Scope Permeability*: it can mutate local variables without overhead and, crucially, use the return terminal (`^`) to perform a *Non-Local Return*, exiting the parent method immediately.
+*   ***Transparent Selectors***: For library methods marked with `@Inline` (like `#withLock`), the compiler performs inlining, treating the closure as a structural extension of the method. The boundary is also transparent, granting the same *Scope Permeability* and support for non-local returns as intrinsic selectors. This allows developers to create custom, zero-overhead control structures.
+*   ***Opaque Selectors***: When a closure is passed to a standard functional selector (like `#map`), it operates as an encapsulated unit of logic. The boundary is *Opaque*. The closure is a self-contained unit, typically projected as a Java lambda. While it can still capture and mutate state from its defining environment (managed via *Identity Promotion*), it is forbidden from using the return terminal (`^`) to exit the parent method. The compiler enforces this via the *Semantic Guard* to prevent invalid stack manipulation.
 
 Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk enforces the *Functional Exclusion Principle*. Closures must not be embedded within a parenthesized argument list (e.g., `#do(param, [ ... ] )`). Instead, the language mandates *Selector Refining*, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do [ ... ]`). This *Pivot Pattern* ensures that logic is never a secondary attribute but always the sovereign focus of the interaction.
 
@@ -824,12 +825,7 @@ Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameter
 	    Self finally(Closure finalAction) { }  
 	}
 
-In Jolk, a closure is a *Reified Identity*, not a function pointer. Defined by [ [params] -> [statements] ], it represents deferred logic governed by *Scope Permeability*:
-
-*   *Transparent Scope (Intrinsic & Inline)*: When passed to structural selectors (e.g., `#if`, `#while`) or `@Inline` templates (e.g., `#withLock`), the closure acts as a structural extension. It enjoys *Scope Permeability*, allowing direct variable mutation and *Non-Local Returns* (`^`) that exit the parent method.
-*   *Opaque Scope (Functional)*: When passed to standard selectors (e.g., `#map`, `#async`), the closure is an encapsulated unit. While it can capture state (via Identity Promotion), it is strictly forbidden from using `^` to exit the parent method.
-
-To enable custom control structures, the `Closure` archetype provides `@Inline` selectors that pull logic into the caller's scope:
+To enable custom control structures, the `Closure` archetype provides `@Intrinsic` selectors that pull logic into the caller's scope:
 
 *   `#call`: Executes the closure, acting as the "hole" for user logic.
 *   `#finally(cleanup)`: Guarantees execution during stack unwinding.
@@ -843,13 +839,6 @@ This architecture allows developers to define templates like `#withResource` tha
 		[ ^ logic#call // The "Hole" where user logic is injected ]
 			#finally [ R #close ]
 	}
-
-The relationship between a Jolk closure and its environment is defined by the *Closure Contract*, which is governed by the transparency of the receiving selector. This distinction is the foundation of structural safety in Jolk.
-
-*   *The Transparent Contract (Inline/Intrinsic)*: When a closure is passed to an `@Intrinsic` or `@Inline` selector, the boundary is transparent. The closure operates directly on the caller’s stack, permitting direct variable mutation and non-local returns (`^`) that exit the parent method.
-*   *The Opaque Contract (Standard)*: For standard selectors, the boundary is opaque. The closure is a self-contained unit. While variable mutation is managed via compiler-driven *Identity Promotion*, non-local returns are forbidden to maintain state integrity.
-
-To preserve *Nominalised Precision*, Jolk enforces the *Functional Exclusion Principle*. This architectural guardrail forbids raw closure literals within a message's parenthesized argument list, preventing "procedural leakage." Instead, Jolk mandates the *Pivot Pattern*, where a closure is the sovereign payload of its own dedicated message. This ensures every message remains a singular, crystalline intent and that logic is never a secondary, nested attribute. This discipline elevates anonymous logic to its own stage in the choreography, maintaining a clean sequence of identities.
 
 In Jolk the distinction between Intrinsic, Transparent, and Opaque selectors defines the boundary between structural control and functional data. This division allows the Jolk developer to extend the language with custom control structures (Transparent).
 
@@ -942,7 +931,7 @@ The jolk.lang.Object class acts as the root Meta-Object Descriptor. It defines t
 	
 	    // The Jolk Type pattern match.   
 	    // At runtime, this flattens into an INSTANCEOF check and a conditional branch.  
-	    // At compile-time, the selector returns a Selection[T], enabling execution in the fluent chain.  
+	    // At compile-time, the selector returns a Selection<T>, enabling execution in the fluent chain.  
 	    Selection<T> instanceOf(Type<T> type) { }
 	
 	    Self #project(Map[String, Object] fields) { 
@@ -1151,18 +1140,27 @@ The domain types are a set of data records and validation classes implementing a
 Data
 
 	//  
-	enum Level { ERROR; WARNING; INFO }
-	record ContactForm {  
+	class ContactForm {  
 		Person person;  
 		String description  
 	}
 
 	//  
-	enum Level { ERROR; WARNING; INFO }
-	record Person {  
-		Long ssn;  
+	class Person {  
+		Int ssn;  
 		String firsName;  
-		String lastName;  
+		String lastName;
+
+		Boolean ~~(Object other) {
+			(self == other) ? [ ^true ];
+			other #as(Person) #ifPresent [ p ->
+				^ (self #ssn == p #ssn)
+					&& (self #firstName ~~ p #firstName)
+					&& (self #lastName ~~ p #lastName)
+			];
+			^ false
+		}
+
 	}
 
 Validation
@@ -1260,7 +1258,7 @@ In the JoMoo model, placing a closure within a parenthetical argument list—suc
 	// Recommended Pattern: Selector Refining
 	db #query(sql) #each [ row -> ... ];
 
-## Jolk Desing Patterns
+## Jolk Design Patterns
 
 ### The Pivot Pattern
 

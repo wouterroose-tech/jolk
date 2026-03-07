@@ -1,7 +1,6 @@
 package tolk.jolct;
 
 import com.google.googlejavaformat.java.Formatter;
-import com.google.googlejavaformat.java.FormatterException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import tolk.grammar.jolkLexer;

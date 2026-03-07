@@ -87,8 +87,7 @@ public class JolctVisitMethod {
             if ("Self".equals(ctx.type().getText())) {
                 Type_declContext typeDecl = (Type_declContext) ctx.getParent().getParent()
                         .getParent();
-                boolean isFinal = typeDecl.variability() != null
-                        && "final".equals(typeDecl.variability().getText());
+                boolean isFinal = isFinal(typeDecl);
    
                 sb.append("return ");
                 if (isFinal) {
@@ -109,7 +108,7 @@ public class JolctVisitMethod {
             if (ctx.getParent().getParent().getParent() instanceof Type_declContext) {
                 Type_declContext typeDecl = (Type_declContext) ctx.getParent().getParent()
                         .getParent();
-                if (typeDecl.variability() != null && "final".equals(typeDecl.variability().getText())) {
+                if (isFinal(typeDecl)) {
                     String typeName = typeDecl.type_bound().type().MetaId().getText();
                     if (typeDecl.type_bound().type().type_args() != null) {
                         typeName += "<" + visitor.visit(typeDecl.type_bound().type().type_args()) + ">";
@@ -119,6 +118,17 @@ public class JolctVisitMethod {
             }
         }
         return returnType;
+    }
+
+    private boolean isFinal(Type_declContext typeDecl) {
+        if (typeDecl.modifiers().variability() != null) {
+            return "final".equals(typeDecl.modifiers().variability().getText());
+        }
+        if (typeDecl.modifiers().vis_mod() != null && typeDecl.modifiers().vis_mod().MODIFIER() != null) {
+            String[] mods = visitor.parseModifier(typeDecl.modifiers().vis_mod().MODIFIER().getText());
+            return "final".equals(mods[1]);
+        }
+        return false;
     }
 
     private boolean isMeta(MethodContext ctx) {

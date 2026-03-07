@@ -22,7 +22,16 @@ public class JolkSymbolVisitor extends jolkBaseVisitor<Void> {
         String name = ctx.type_bound().type().MetaId().getText();
         String fqn = currentPackage.isEmpty() ? name : currentPackage + "." + name;
         String archetype = ctx.archetype().getText();
-        String variability = ctx.variability() != null ? ctx.variability().getText() : "";
+        String variability = "";
+        if (ctx.modifiers() != null) {
+            if (ctx.modifiers().variability() != null) {
+                variability = ctx.modifiers().variability().getText();
+            } else if (ctx.modifiers().vis_mod() != null
+                        && ctx.modifiers().vis_mod().MODIFIER() != null
+                        && ctx.modifiers().vis_mod().MODIFIER().getText().endsWith("!")) {
+                variability = "final";
+            }
+        }
         boolean isProtocol = "protocol".equals(archetype);
         boolean isNonFinalClass = "class".equals(archetype) && !"final".equals(variability);
 

@@ -5,7 +5,6 @@ import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.tree.ParseTree;
 import tolk.grammar.jolkParser;
-import tolk.grammar.jolkParser.MessageContext;
 
 public class JolctVisitorMessage {
 

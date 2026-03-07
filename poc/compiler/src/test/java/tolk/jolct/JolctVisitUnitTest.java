@@ -238,14 +238,6 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
         String expected = """
             public class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {
             private jolk.lang.Object<?> h1 = this::method;
-            private jolk.lang.Object<?> h2 = other::method;
-            // ... default accessors omitted for brevity in this check, but they would be generated
-            """;
-        // Note: We only check the field generation part logic here implicitly via the visitor output
-        // For exact string match including accessors:
-        String fullExpected = """
-            public class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {
-            private jolk.lang.Object<?> h1 = this::method;
             private jolk.lang.Object<?> h1() {
             return h1;
             }
@@ -263,7 +255,7 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
             }
             }
             """;
-        assertUnit(fullExpected, source);
+        assertUnit(expected, source);
     }
 
    @Test

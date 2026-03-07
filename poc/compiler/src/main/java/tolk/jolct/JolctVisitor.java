@@ -68,14 +68,24 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
     public String visitType_decl(jolkParser.Type_declContext ctx) {
 
         String variability = "";
-        if (ctx.variability() != null) {
-            variability = ctx.variability().getText() + " ";
-        }
-
         String visibility = "public ";
-        if (ctx.visibility() != null) {
-            String v = ctx.visibility().getText();
-            visibility = "package".equals(v) ? "" : v + " ";
+
+        if (ctx.modifiers() != null) {
+            jolkParser.ModifiersContext modsCtx = ctx.modifiers();
+            if (modsCtx.variability() != null) {
+                variability = modsCtx.variability().getText() + " ";
+            }
+            if (modsCtx.vis_mod() != null) {
+                if (modsCtx.vis_mod().visibility() != null) {
+                    String v = modsCtx.vis_mod().visibility().getText();
+                    visibility = "package".equals(v) ? "" : v + " ";
+                }
+                if (modsCtx.vis_mod().MODIFIER() != null) {
+                    String[] mods = parseModifier(modsCtx.vis_mod().MODIFIER().getText());
+                    if (mods[0] != null) visibility = "package".equals(mods[0]) ? "" : mods[0] + " ";
+                    if (mods[1] != null) variability = mods[1] + " ";
+                }
+            }
         }
 
         String typeName = ctx.type_bound().type().MetaId().getText();
@@ -198,10 +208,23 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
     public String visitMember(jolkParser.MemberContext ctx) {
         StringBuilder sb = new StringBuilder();
 
-        if (ctx.visibility() != null) {
-            String v = ctx.visibility().getText();
-            if (!"package".equals(v))
-                sb.append(v).append(" ");
+        String visibility = null;
+        String variability = ctx.variability() != null ? ctx.variability().getText() : null;
+
+        if (ctx.vis_mod() != null) {
+            if (ctx.vis_mod().visibility() != null) {
+                visibility = ctx.vis_mod().visibility().getText();
+            }
+            if (ctx.vis_mod().MODIFIER() != null) {
+                String[] mods = parseModifier(ctx.vis_mod().MODIFIER().getText());
+                if (mods[0] != null) visibility = mods[0];
+                if (mods[1] != null) variability = mods[1];
+            }
+        }
+
+        if (visibility != null) {
+            if (!"package".equals(visibility))
+                sb.append(visibility).append(" ");
         } else {
             if (ctx.method() != null) {
                 sb.append("public ");
@@ -222,8 +245,8 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
             sb.append("static ");
         }
 
-        if (ctx.variability() != null) {
-            sb.append(ctx.variability().getText()).append(" ");
+        if (variability != null) {
+            sb.append(variability).append(" ");
         }
 
         boolean prevInConstructor = this.inConstructor;
@@ -716,5 +739,24 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
         if (nextResult == null)
             return aggregate;
         return aggregate + nextResult;
+    }
+
+    String[] parseModifier(String text) {
+        String vis = null;
+        String var = null;
+        int idx = 1; // skip #
+        if (idx < text.length()) {
+            char c = text.charAt(idx);
+            if (c == '<') { vis = "public"; idx++; }
+            else if (c == '~') { vis = "package"; idx++; }
+            else if (c == ':') { vis = "protected"; idx++; }
+            else if (c == '>') { vis = "private"; idx++; }
+        }
+        if (idx < text.length()) {
+            char c = text.charAt(idx);
+            if (c == '?') var = "abstract";
+            else if (c == '!') var = "final";
+        }
+        return new String[]{vis, var};
     }
 }

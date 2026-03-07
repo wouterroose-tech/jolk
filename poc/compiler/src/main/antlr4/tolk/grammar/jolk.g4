@@ -13,7 +13,9 @@ package_decl    : PACKAGE namespace ';' ;
 import_decl     : IMPORT namespace ('.' MUL)? ';' ;
 namespace       : identifier ('.' identifier)* ;
 
-type_decl       : visibility? variability? archetype type_bound LBRACE type_mbr* RBRACE ;
+type_decl       : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
+modifiers       : vis_mod? variability? ;
+vis_mod         : visibility | MODIFIER ;
 visibility      : PUBLIC | PACKAGE | PROTECTED | PRIVATE ;
 variability     : ABSTRACT | FINAL ;
 archetype       : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
@@ -24,7 +26,7 @@ type_contracts  : EXTENDS type (IMPLEMENTS type (AMP type)*)?
                 | IMPLEMENTS type (AMP type)* ;
 
 type_mbr        : annotation* (member | enum_constant) ;
-member          : visibility? ( META? state | variability? META? method ) ;
+member          : vis_mod? ( META? state | variability? META? method ) ;
 state           : ( constant | field ) SEMI ;
 constant        : CONSTANT type binding ;
 field           : type identifier assignment? ;
@@ -39,7 +41,7 @@ annotated_type  : annotation* type ;
 vararg_id	    : SPREAD InstanceId ;
 
 extension_decl  : EXTENSION MetaId EXTENDS type LBRACE extension_mbr* RBRACE ;
-extension_mbr   : annotation* visibility? variability? method ;
+extension_mbr   : annotation* modifiers method ;
 
 annotation      : AT identifier (LPAREN annotation_args? RPAREN)? ;
 annotation_args : annotation_val | annotation_arg (COMMA annotation_arg)* ;
@@ -161,6 +163,7 @@ DIV: '/';
 MOD: '%';
 POW: '**';
 CARET: '^';
+MODIFIER: '#' ( ('<'|'~'|':'|'>') ('?'|'!')? | ('?'|'!') );
 HASH: '#';
 HASH_HASH: '##';
 AT: '@';

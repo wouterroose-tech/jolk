@@ -86,5 +86,5 @@ line_comment    = "//" { "/" } { char_except_nl } nl    (* /// for markdown comm
 block_comment   = "/*" { char_except_star_slash } "*/"
 escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "'" | "\" )
 modifier        = "#" (visibility_ops)? (variability_ops)?
-visibility_ops  = "<" | "~" | "v" | ">"
+visibility_ops  = "<" | "~" | ":" | ">"
 variability_ops = "?" | "!"

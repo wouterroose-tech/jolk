@@ -158,8 +158,8 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	string_literal  = "\"" { char } "\""
 	char_literal    = "'" char "'"
 
-	modifier        = "#" (visibility_ops)? (variability_ops)
-	visibility_ops  = "<" | "~" | "v" | ">"
+	modifier        = "#" (visibility_ops)? (variability_ops)?
+	visibility_ops  = "<" | "~" | ":" | ">"
 	variability_ops = "?" | "!"
 
 The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like sp (space) and nl (newline) from higher-level abstractions like w (mandatory whitespace for message sends) and `s` (optional separation for blocks), the specification enforces strict syntactic signatures—such as the required space between objects and selectors—while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both compiler performance and human readability.
@@ -203,7 +203,7 @@ The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexic
 * Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., `String`, `PI`, `#PI`)  
 * Variables, Parameters Properties & instance selectors: start with a lowercase letter (e.g., `name`, `#name`).
 
-**Visibility**; The anchors (`#<` , `#~` , `#v`,  `#>`, `#?` , `#!`) designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity.
+**Visibility**; The anchors (`#<` , `#~` , `#:`,  `#>`, `#?` , `#!`) designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity.
 
 **Annotations**: These are anchored by the at-symbol (`@`). When the Tolk lexer sees this character, it immediately tags the token as an annotation.
 
@@ -410,7 +410,7 @@ Structurally, enum constants use a shorthand notation for public meta constant d
 	
 	    // Semicolon separates constants  
 	    // shorthand notation for the synthesised canonical creation method  
-	    // public meta constant Day MO = Day #new("Monday", 1);  
+	    // #< meta constant Day MO = Day #new("Monday", 1);  
 	    MO("Monday", 1);  
 	    TU("Tuesday", 2);
 	
@@ -463,14 +463,14 @@ A Jolk protocol acts as a contract. It defines a set of messages (methods) that 
 
 The Lexical Anchors designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity. These symbols function as absolute structural coordinates, maintaining Semantic Parity with their Java counterparts; for convenience Jolk permits the use of Java keywords as aliases for the Lexical Anchors.
 
-Visibility :`#<` (`public`), `#~` (`package`), `#v` (`protected`), `#>` (`private`)  
+Visibility :`#<` (`public`), `#~` (`package`), `#:` (`protected`), `#>` (`private`)  
 Structural Variability: `#?` (`abstract`) , `#!` (`final`)  
 
-Or combinations like `#~?` (`package abstract`) and `#<!` (`public constant`)
+Or combinations like `#~?` (`package abstract`) and `#<!` (`public final`)
 
 By defaulting to public for types and methods, the language encourages open message passing, requiring explicit intent only when a boundary must be enforced. This convention increases Structural Density as the majority of members require no prefix, thereby reducing the cognitive load for the human reader. The package alias ensures lexical resemblance for developers accustomed to Java, providing an explicit token for modular restriction. 
 
-To maintain Strict Encapsulation, fields default to private visibility, requiring a meta public (`#^<`) declaration to enable Lens Projection. The constant modifier establishes a unified contract of immutability across all architectural strata, distinct from the final structural constraint. At the Meta level, it enables shared access; at the Instance level, it ensures fields remain reassign-proof post-Primary Initialisation. Locally, it projects this stability into the execution scope as a fixed stack constant.
+To maintain Strict Encapsulation, fields default to private visibility, requiring a public (`#<`) meta declaration to enable Lens Projection. The constant modifier establishes a unified contract of immutability across all architectural strata, distinct from the final structural constraint. At the Meta level, it enables shared access; at the Instance level, it ensures fields remain reassign-proof post-Primary Initialisation. Locally, it projects this stability into the execution scope as a fixed stack constant.
 
 ### Meta-Layer
 
@@ -496,7 +496,7 @@ In Jolk, object creation is a unified message send following the `Receiver #mess
 	    // ...  
 	}
 
-The Creation Displacement Rule: If a Type defines an explicit creation method, the visibility of the generic `#new` protocols is restricted to `#private`. This ensures that Identity creation remains a governed process.
+The Creation Displacement Rule: If a Type defines an explicit creation method, the visibility of the generic `#new` protocols is restricted to `#>` (`private`). This ensures that Identity creation remains a governed process.
 
 	class Person {
 	
@@ -526,8 +526,8 @@ In Jolk, class-level constants are reified as Meta-Objects within the Meta-Objec
 
 	class Math {
 	
-	    // shorthand symbolic notation: #^<! Double PI  
-	    meta public constant Double PI = 3.141592653589793;
+	    // public  
+	    #< meta constant Double PI = 3.141592653589793;
 	
 	    // ...  
 	}
@@ -1073,10 +1073,10 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 		}
 
 		// protected
-		#v Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
+		#: Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
 
 		// protected
-		#v Interrupt interrupt() { ^ null }
+		#: Interrupt interrupt() { ^ null }
 
 		// package abstact
 		#~? Self doAccept(T subject, ExecutionContext context);  
@@ -1198,7 +1198,7 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 			^ person #ssn #isPresent
 		}
 
-		#v Boolean isValid(Person person) {  
+		#: Boolean isValid(Person person) {  
 			^ self #isValid(person #ssn)  
 		}
 
@@ -1206,11 +1206,11 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 			^ (inss / 97) != (ssn % 97)  
 		}
 
-		#v Issue getIssue(Person person,  ExecutionContext context) {  
+		#: Issue getIssue(Person person,  ExecutionContext context) {  
 			^ Issue #new(person, "INSS_INVALID", Level #ERROR)  
 		}
 
-		#v Interrupt interrupt() { ^ ContactFormValidation #INTERRUPT }  
+		#: Interrupt interrupt() { ^ ContactFormValidation #INTERRUPT }  
 	}
 
 ## Fragments

@@ -158,7 +158,9 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	string_literal  = "\"" { char } "\""
 	char_literal    = "'" char "'"
 
-	visibility_ops  = "#" { "<" | "~" | "v" | ">" | "?" | "!" } 
+	modifier        = "#" (visibility_ops)? (variability_ops)
+	visibility_ops  = "<" | "~" | "v" | ">"
+	variability_ops = "?" | "!"
 
 The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like sp (space) and nl (newline) from higher-level abstractions like w (mandatory whitespace for message sends) and `s` (optional separation for blocks), the specification enforces strict syntactic signatures—such as the required space between objects and selectors—while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both compiler performance and human readability.
 
@@ -408,7 +410,7 @@ Structurally, enum constants use a shorthand notation for public meta constant d
 	
 	    // Semicolon separates constants  
 	    // shorthand notation for the synthesised canonical creation method  
-	    // meta public constant Day MO = Day #new("Monday", 1);  
+	    // public meta constant Day MO = Day #new("Monday", 1);  
 	    MO("Monday", 1);  
 	    TU("Tuesday", 2);
 	
@@ -463,10 +465,8 @@ The Lexical Anchors designate the Membership Scope of an identifier, establishin
 
 Visibility :`#<` (`public`), `#~` (`package`), `#v` (`protected`), `#>` (`private`)  
 Structural Variability: `#?` (`abstract`) , `#!` (`final`)  
-Data Variability: `#!` (`constant`)   
-Stratum: `#^` (`meta`)
 
-Or combinations like `#<?` (`package protected abstract`) and `#^<!` (`meta public constant`)
+Or combinations like `#~?` (`package abstract`) and `#<!` (`public constant`)
 
 By defaulting to public for types and methods, the language encourages open message passing, requiring explicit intent only when a boundary must be enforced. This convention increases Structural Density as the majority of members require no prefix, thereby reducing the cognitive load for the human reader. The package alias ensures lexical resemblance for developers accustomed to Java, providing an explicit token for modular restriction. 
 
@@ -611,7 +611,7 @@ Active Coercion (Narrowing): The loss of precision is treated as a semantic boun
 
     // Result: 19 (The .99 is truncated)
 
-**Numeric Operation Evaluation Rule**: The numerical type ranking is Int \< Long \< Float \< Double; Ascent is automatic, Descent is explicit, and operations between types of the same rank remain at that rank.
+**Numeric Operation Evaluation Rule**: The numerical type ranking is `Int` \< `Long` \< `Float` \< `Double`; Ascent is automatic, Descent is explicit, and operations between types of the same rank remain at that rank.
 
 ### Null-Coalescing Operator
 
@@ -849,7 +849,7 @@ Jolk provides three fundamental collection archetypes, each defined by a unique 
 The **Array** is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at:`) and stack-based operations (`#push:`, `#pop:`).
 
 	@Intrinsic
-	public final class Array<T> {
+	#! class Array<T> {
 	
 	    meta Array<T> new(T... elements) { }
 	
@@ -1024,7 +1024,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Null-Coalescing*: Jolk adopts the `??` operator from C#[11], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
 
-*Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in Ruby[12] and Perl[13].
+*Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[12], Ruby[13] and Perl[14].
 
 ---
 
@@ -1048,69 +1048,73 @@ The framework provides a set of abstract & final classes that are the basis for 
 
 Demonstrated language concepts: generics, Self Type alias, message chaining for control and exception flow, null object pattern
 
-	//  
-	package abstract class Node<T> {
+	//
+	#~? class Node<T> {
 		package abstract Self accept(T subject, ExecutionContext context);
 	}
 
-	//  
-	package final class ChildValidation<T, R> extends Node<T> {
+	//
+	#~! class ChildValidation<T, R> extends Node<T> {
 
 		Function<T, R> supplier;  
 		Validation<R> validation;
 
-		package Self accept(T subject, ExecutionContext context) {  
+		#~ Self accept(T subject, ExecutionContext context) {  
 			supplier #value(subject) #ifPresent [ child -> validation #accept(child, context) ]  
 		}  
 	}
 
-	//  
-	package abstract class Validation<T> extends Node<T> {
+	// package abstract
+	#~? class Validation<T> extends Node<T> {
 
-		package final Self accept(T subject, ExecutionContext context) {  
+		// package final
+		#~! Self accept(T subject, ExecutionContext context) {  
 			(self #satisfiesPreCondition(subject, context)) ? [ self #doAccept(subject, context) ]  
 		}
 
-		protected Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
+		// protected
+		#v Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
 
-		protected Interrupt interrupt() { ^ null }
+		// protected
+		#v Interrupt interrupt() { ^ null }
 
-		package abstract Self doAccept(T subject, ExecutionContext context);  
+		// package abstact
+		#~? Self doAccept(T subject, ExecutionContext context);  
 	}
 
-	//  
-	abstract class Constraint<T> extends Validation<T> {
+	//
+	#? class Constraint<T> extends Validation<T> {
 
-		package final Self doAccept(T subject, ExecutionContext context) {  
+		#~! Self doAccept(T subject, ExecutionContext context) {  
 			self #isValid(subject) ? [ ^self ];  
 			context #add(subject, self #getIssue(subject, context));  
 			self #interrupt #ifPresent [ e -> e #throw ]  
 		}
 
-		protected abstract Boolean isValid(T subject);
+		#~? Boolean isValid(T subject);
 
-		protected abstract Issue getIssue(T subject,ExecutionContext context);  
+		#~? Issue getIssue(T subject,ExecutionContext context);  
 	}
 
-	//  
-	abstract class ValidationSuite<T> extends Validation<T> {
+	//
+	#? class ValidationSuite<T> extends Validation<T> {
 
 		constant Array<Node<T>> nodes = Array #new;
 
-		final Self add(Constraint<T> constraint) {
+		#! Self add(Constraint<T> constraint) {
         	nodes #add(constraint)
     	}
 
-		package final <R> Self add(ChildValidation<T, R> suite) {
+		#! <R> Self add(ChildValidation<T, R> suite) {
         	nodes #add(suite)
     	}
 
-		final Self validate(T subject, ExecutionContext executionContext) {
+		#! Self validate(T subject, ExecutionContext executionContext) {
 			[ self #accept(subject, executionContext) ]
 				#catch [ Interrupt e -> /* ignore */ ]
 		}
 
-		package final Self doAccept(T subject, ExecutionContext executionContext) {
+		#~! Self doAccept(T subject, ExecutionContext executionContext) {
 			[ nodes #forEach [node -> node #accept(subject, executionContext)] ]
 				#catch [ 
 					// the further validation of this ruleset is ignored on an interrupt
@@ -1120,8 +1124,8 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 		}
 	}
 
-	//  
-	final class Interrupt extends Exception { }
+	//
+	#! class Interrupt extends Exception { }
 
 	//  
 	record Issue {  
@@ -1170,7 +1174,7 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 	//  
 	class ContactFormValidation extends ValidationSuite<ContactForm> {
 
-		constant Interrupt INTERRUPT = Interrupt #new;
+		meta constant Interrupt INTERRUPT = Interrupt #new;
 
 		// singleton in DI configuration  
 		meta lazy ContactFormValidation new() {  
@@ -1182,10 +1186,10 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 		Interrupt interrupt() { ^ INTERRUPT }  
 	}
 
-	//  
-	final class InssConstraint extends Constraint<Person> {
+	//
+	#! class InssConstraint extends Constraint<Person> {
 
-		// singleton in DI configuration  
+		// singleton in DI configuration
 		meta lazy InssConstraint new() {  
 			^ super #new;  
 		}
@@ -1194,19 +1198,19 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 			^ person #ssn #isPresent
 		}
 
-		protected Boolean isValid(Person person) {  
+		#v Boolean isValid(Person person) {  
 			^ self #isValid(person #ssn)  
 		}
 
-		private Boolean isValid(Long ssn) {  
+		#> Boolean isValid(Long ssn) {  
 			^ (inss / 97) != (ssn % 97)  
 		}
 
-		protected Issue getIssue(Person person,  ExecutionContext context) {  
+		#v Issue getIssue(Person person,  ExecutionContext context) {  
 			^ Issue #new(person, "INSS_INVALID", Level #ERROR)  
 		}
 
-		protected Interrupt interrupt() { ^ ContactFormValidation #INTERRUPT }  
+		#v Interrupt interrupt() { ^ ContactFormValidation #INTERRUPT }  
 	}
 
 ## Fragments
@@ -1285,13 +1289,13 @@ The Pivot Pattern adheres to *Nominalised Precision* by ensuring every message h
 
 By decoupling these concerns, the Sovereign remains "data-blind." It never interacts with the raw extraction logic; it only receives the resulting Identity Node provided by the Bridge upon completion. To implement the pattern, the Sovereign delegates to a hidden Bridge that encapsulates the parent reference and the extraction logic.
 
-	// inside Sovereign<T>
-	final <R> Requirement<T, R> subject(Closure<T, R> supplier) {
+	// final inside Sovereign<T>
+	#! <R> Requirement<T, R> subject(Closure<T, R> supplier) {
 		^ RequirementBridge #new(this, supplier)
 	}
 
-	// inside RequirementBridge<T, R>
-	final <T> Sovereign<T> add(Constraint<R> node) {
+	// final inside RequirementBridge<T, R>
+	#! <T> Sovereign<T> add(Constraint<R> node) {
 		// Construct internal mapping and update the master aggregate
 		master #nodes #add(MappingNode #new(supplier, node))
 		^ master // Terminal Reversion
@@ -1705,23 +1709,25 @@ The industrialisation roadmap follows an iterative progression, prioritising the
 
 [7]: Canning, Peter S.; Cook, William R.; Hill, Walter L.; Mitchell, John C.; Olthoff, William (1989). F-bounded polymorphism for object-oriented programming. In Conference on Functional Programming Languages and Computer Architecture.
 
+[8]: Kotlin. Exceptions. ([https://kotlinlang.org/docs/exceptions.html\#exception-classes](https://kotlinlang.org/docs/exceptions.html#exception-classes)). 
+
 [9]: Woolf, Bobby (1998). Null Object. Pattern Languages of Program Design 3. Addison-Wesley.
 
 [10]: Chambers, C., & Ungar, D. (1989). Customization: Optimizing Compiler Technology for Self, a Dynamically-Typed Object-Oriented Programming Language. In PLDI '89 (pp. 146–160).
 
 [11]: Microsoft. (2005). C# Language Specification 2.0. The Null Coalescing Operator. ([https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator))
 
-[12]: Ruby,  Syntax Assignments ([https://docs.ruby-lang.org/en/master/syntax/assignment\_rdoc.html](https://docs.ruby-lang.org/en/master/syntax/assignment_rdoc.html))
+[12]:  Unified Modeling Language 2.5.1. Object Management Group Document Number formal/2017-12-05. Object Management Group Standards Development Organization. December 2017. ([https://www.omg.org/spec](https://www.omg.org/spec))
 
-[13]: Perl, Naming Conventions, ([https://en.wikibooks.org/wiki/Perl\_Programming/Scalar\_variables\#Naming\_Conventions](https://en.wikibooks.org/wiki/Perl_Programming/Scalar_variables#Naming_Conventions))
+[13]: Ruby,  Syntax Assignments ([https://docs.ruby-lang.org/en/master/syntax/assignment\_rdoc.html](https://docs.ruby-lang.org/en/master/syntax/assignment_rdoc.html))
+
+[14]: Perl, Naming Conventions, ([https://en.wikibooks.org/wiki/Perl\_Programming/Scalar\_variables\#Naming\_Conventions](https://en.wikibooks.org/wiki/Perl_Programming/Scalar_variables#Naming_Conventions))
 
 Consulted Documentation 
 
 Oracle. Java SE. The Java Virtual Machine Instruction Set. [https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html](https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-6.html)).
 
 OpenJDK. Building. ([jdk/doc/building.md at master · openjdk/jdk · GitHub](https://github.com/openjdk/jdk/blob/master/doc/building.md)).
-
-Kotlin. Exceptions﻿. ([https://kotlinlang.org/docs/exceptions.html\#exception-classes](https://kotlinlang.org/docs/exceptions.html#exception-classes)). 
 
 Dan Banay. by the Bluebook, GitHuB. ([https://github.com/dbanay/Smalltalk/blob/master/README.md](https://github.com/dbanay/Smalltalk/blob/master/README.md)).
 

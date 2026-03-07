@@ -179,41 +179,13 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
         if (ctx.member() == null)
             return "";
 
-        boolean isMethod = ctx.member().method() != null;
-        boolean isConstructor = false;
-        if (isMethod) {
-            String name = ctx.member().method().selector_id().getText();
-            boolean isMeta = ctx.children.stream().anyMatch(c -> "meta".equals(c.getText()));
-            if (isMeta && "new".equals(name))
-                isConstructor = true;
-        }
-
-        boolean prevInConstructor = this.inConstructor;
-        this.inConstructor = isConstructor;
         String memberCode = visit(ctx.member());
-        this.inConstructor = prevInConstructor;
 
         if (memberCode == null || memberCode.trim().isEmpty()) {
             return "";
         }
 
         StringBuilder sb = new StringBuilder();
-
-        if (ctx.visibility() != null) {
-            String v = ctx.visibility().getText();
-            if (!"package".equals(v))
-                sb.append(v).append(" ");
-        } else {
-            if (isMethod) {
-                sb.append("public ");
-            } else {
-                sb.append("private ");
-            }
-        }
-
-        if (ctx.children.stream().anyMatch(c -> "meta".equals(c.getText())) && !isConstructor) {
-            sb.append("static ");
-        }
 
         sb.append(memberCode);
         if (!memberCode.endsWith("\n")) {
@@ -224,17 +196,43 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
 
     @Override
     public String visitMember(jolkParser.MemberContext ctx) {
-        if (ctx.state() != null)
-            return visit(ctx.state());
-        if (ctx.method() != null) {
-            StringBuilder sb = new StringBuilder();
-            if (ctx.variability() != null) {
-                sb.append(ctx.variability().getText()).append(" ");
+        StringBuilder sb = new StringBuilder();
+
+        if (ctx.visibility() != null) {
+            String v = ctx.visibility().getText();
+            if (!"package".equals(v))
+                sb.append(v).append(" ");
+        } else {
+            if (ctx.method() != null) {
+                sb.append("public ");
+            } else {
+                sb.append("private ");
             }
-            sb.append(visit(ctx.method()));
-            return sb.toString();
         }
-        return "";
+
+        boolean isMeta = ctx.META() != null;
+        boolean isConstructor = false;
+        if (ctx.method() != null) {
+            String name = ctx.method().selector_id().getText();
+            if (isMeta && "new".equals(name))
+                isConstructor = true;
+        }
+
+        if (isMeta && !isConstructor) {
+            sb.append("static ");
+        }
+
+        if (ctx.variability() != null) {
+            sb.append(ctx.variability().getText()).append(" ");
+        }
+
+        boolean prevInConstructor = this.inConstructor;
+        this.inConstructor = isConstructor;
+        if (ctx.state() != null) sb.append(visit(ctx.state()));
+        else sb.append(visit(ctx.method()));
+        this.inConstructor = prevInConstructor;
+
+        return sb.toString();
     }
 
     @Override

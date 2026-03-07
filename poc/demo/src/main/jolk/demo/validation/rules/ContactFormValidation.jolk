@@ -8,10 +8,10 @@ import demo.validation.domain.ContactForm;
 
 class ContactFormValidation extends ValidationSuite<ContactForm> {
 
-    meta public constant Interrupt FORM_INTERRUPT = Interrupt #new;
+    public meta constant Interrupt FORM_INTERRUPT = Interrupt #new;
 
     // singleton in DI configuration
-    meta public lazy ContactFormValidation new() {
+    meta lazy ContactFormValidation new() {
         ^ super #new
             //#add basic constraint
             #add(ZipConstraint #new)

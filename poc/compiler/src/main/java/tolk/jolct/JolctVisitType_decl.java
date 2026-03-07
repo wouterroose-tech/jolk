@@ -245,10 +245,10 @@ public class JolctVisitType_decl {
                 // Generate default accessors for fields/constants
                 {
                     String vMod = "private ";
-                    if (m.visibility() != null) {
-                        vMod = "package".equals(m.visibility().getText()) ? "" : m.visibility().getText() + " ";
+                    if (m.member().visibility() != null) {
+                        vMod = "package".equals(m.member().visibility().getText()) ? "" : m.member().visibility().getText() + " ";
                     }
-                    boolean isMeta = m.children.stream().anyMatch(c -> "meta".equals(c.getText()));
+                    boolean isMeta = m.member().META() != null;
                     String staticMod = isMeta ? "static " : "";
                     
                     if (m.member().state() != null && m.member().state().field() != null) {

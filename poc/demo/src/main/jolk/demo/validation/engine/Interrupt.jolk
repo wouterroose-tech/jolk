@@ -19,7 +19,7 @@ package demo.validation.engine;
 final class Interrupt extends RuntimeException {
 
     /// The Sentinel: A unique instance internal to the valdation.
-    meta public constant Interrupt HALT = Interrupt #new;
+    public meta constant Interrupt HALT = Interrupt #new;
 
     meta Interrupt HALT() { ^ HALT }
     

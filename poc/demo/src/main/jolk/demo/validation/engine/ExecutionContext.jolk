@@ -32,8 +32,8 @@ class ExecutionContext {
         ^ self #hasMatch [i -> i #concerns(subject)]
     }
 
-    private Boolean hasMatch(Predicate[Issue] p) {
-        ^ issues #stream #anyMatch(p)
+    private Boolean hasMatch(Predicate<Issue> p) {
+        ^ issues #anyMatch(p)
     }
 
 }

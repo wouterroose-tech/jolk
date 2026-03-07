@@ -23,8 +23,8 @@ type_args       : LT type_bound (COMMA type_bound)* GT ;
 type_contracts  : EXTENDS type (IMPLEMENTS type (AMP type)*)?
                 | IMPLEMENTS type (AMP type)* ;
 
-type_mbr        : annotation* (META? visibility? member | enum_constant) ;
-member          : state | variability? method ;
+type_mbr        : annotation* (member | enum_constant) ;
+member          : visibility? ( META? state | variability? META? method ) ;
 state           : ( constant | field ) SEMI ;
 constant        : CONSTANT type binding ;
 field           : type identifier assignment? ;

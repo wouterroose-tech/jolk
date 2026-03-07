@@ -135,7 +135,7 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
         assertTranspilation("public static final Type VERSION = \"1.0\";\n" +
                 "public static Type VERSION() {\n" +
                 "return VERSION;\n" +
-                "}\n", "meta public constant Type VERSION = \"1.0\";");
+                "}\n", "public meta constant Type VERSION = \"1.0\";");
     }
 
     @Test
@@ -188,7 +188,7 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
                 "}\n" +
                 "public static void timeout(Int timeout) {\n" +
                 "Test.timeout = timeout;\n" +
-                "}\n", "meta public Int timeout;");
+                "}\n", "public meta Int timeout;");
     }
 
     @Test

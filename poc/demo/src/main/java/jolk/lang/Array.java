@@ -3,6 +3,7 @@ package jolk.lang;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /// # Array
@@ -81,5 +82,13 @@ public final class Array<T> extends ArrayList<T> {
     /// @return the new array
     public <R> Array<R> map(Function<? super T, ? extends R> mapper) {
         return stream().map(mapper).collect(Collectors.toCollection(Array::new));
+    }
+
+    /// Returns whether any elements of this array match the provided predicate.
+    ///
+    /// @param predicate a non-interfering, stateless predicate to apply to each element
+    /// @return true if any elements match the predicate, otherwise false
+    public boolean anyMatch(Predicate<? super T> predicate) {
+        return stream().anyMatch(predicate);
     }
 }

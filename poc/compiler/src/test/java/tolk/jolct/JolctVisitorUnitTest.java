@@ -267,7 +267,7 @@ public class JolctVisitorUnitTest extends JolctVisitorTest {
     void testClassExtendsRuntimeException() {
         String source = """
                 final class Interrupt extends RuntimeException {
-                meta public constant Interrupt HALT = Interrupt #new;
+                public meta constant Interrupt HALT = Interrupt #new;
                 meta Interrupt HALT() { ^ HALT }
                 }
                 """;;

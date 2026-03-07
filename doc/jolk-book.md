@@ -100,8 +100,8 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	type            = "Self" | [ namespace ] meta_id [ type_args ]
 	type_args       = "<" type_bound { "," type_bound } ">"
 	type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
-	type_mbr        = { annotation } ( [ "meta" ] [ visibility ] member | enum ";" )
-	member          = state | [ variability ] method
+	type_mbr        = { annotation } ( member | enum )
+	member          = [ visibility ] ( [ "meta" ] state | [ variability ] [ "meta" ] method )
 	state           = ( constant | field ) ";"
 	constant        = "constant" type binding
 	binding         = identifier assignment
@@ -1174,7 +1174,7 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 	//  
 	class ContactFormValidation extends ValidationSuite<ContactForm> {
 
-		meta constant Interrupt INTERRUPT = Interrupt #new;
+		#< meta constant Interrupt INTERRUPT = Interrupt #new;
 
 		// singleton in DI configuration  
 		meta lazy ContactFormValidation new() {  

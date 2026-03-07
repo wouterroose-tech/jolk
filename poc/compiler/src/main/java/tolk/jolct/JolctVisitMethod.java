@@ -123,9 +123,9 @@ public class JolctVisitMethod {
 
     private boolean isMeta(MethodContext ctx) {
         boolean isMeta = false;
-        if (ctx.getParent().getParent() instanceof Type_mbrContext) {
-            Type_mbrContext mbr = (Type_mbrContext) ctx.getParent().getParent();
-            isMeta = mbr.children.stream().anyMatch(c -> "meta".equals(c.getText()));
+        if (ctx.getParent() instanceof MemberContext) {
+            MemberContext mbr = (MemberContext) ctx.getParent();
+            isMeta = mbr.META() != null;
         }
         return isMeta;
     }

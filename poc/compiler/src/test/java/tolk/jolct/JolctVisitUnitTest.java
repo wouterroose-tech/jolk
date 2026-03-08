@@ -27,20 +27,6 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
         assertUnit(expected, source, new JolkContext());
     } 
 
-    @Test
-    public void visit_import_decl_1() {
-        String source = "import com.example.MyClass;";
-        String expected = "import com.example.MyClass;\n\n";
-        assertUnit(expected, source);
-    }
-    
-    @Test
-    public void visit_import_decl_2() {
-        String source = "import com.example.MyClassA;\n import com.example.MyClassB;";
-        String expected = "import com.example.MyClassA;\nimport com.example.MyClassB;\n\n";
-        assertUnit(expected, source);
-    }
-
    @Test
     public void visit_type_decl() {
         String source = "class Test { }";
@@ -262,7 +248,7 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
     public void visit_closure_demonstrator() {
         String source = """
             package examples;
-            import jolk.lang.Array;
+            using jolk.lang.Array;
             class ClosureDemonstrator {
                 Array<String> runClosureParam() {
                     Array<String> strings = #["a", "b", "c"];
@@ -279,9 +265,7 @@ public class JolctVisitUnitTest extends JolctVisitorTest {
             """;
         String expected = """
             package examples;
-            
             import jolk.lang.Array;
-            
             public class ClosureDemonstrator<Self extends ClosureDemonstrator<Self>> extends jolk.lang.Object<Self> {
             public jolk.lang.Array<String> runClosureParam() {
             jolk.lang.Array<String> strings = jolk.lang.Array.of("a", "b", "c");

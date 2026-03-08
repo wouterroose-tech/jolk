@@ -2,13 +2,13 @@ package tolk.jolct;
 
 import org.junit.jupiter.api.Test;
 
-public class JolctVisitorUnitTest extends JolctVisitorTest {
+public class JolctVisitFileTest extends JolctVisitorTest {
 
     @Test
     public void testVisitUnitContext() {
         String source = """
                 package com.example;
-                import java.util.List;
+                using java.util.List;
                 class MyClass { }
                 """;
 
@@ -20,9 +20,7 @@ public class JolctVisitorUnitTest extends JolctVisitorTest {
         // 5. Generates public class
         String expected = """
                 package com.example;
-
                 import java.util.List;
-
                 public class MyClass<Self extends MyClass<Self>> extends jolk.lang.Object<Self> {
                 }
                 """;
@@ -35,7 +33,6 @@ public class JolctVisitorUnitTest extends JolctVisitorTest {
         String source = "package jolk.lang; class MyClass { }";
         String expected = """
                 package jolk.lang;
-
                 public class MyClass<Self extends MyClass<Self>> extends jolk.lang.Object<Self> {
                 }
                 """;
@@ -48,7 +45,6 @@ public class JolctVisitorUnitTest extends JolctVisitorTest {
         String source = "package com.test; class MyClass {}";
         String expected = """
                 package com.test;
-
                 public class MyClass<Self extends MyClass<Self>> extends jolk.lang.Object<Self> {
                 }
                 """;

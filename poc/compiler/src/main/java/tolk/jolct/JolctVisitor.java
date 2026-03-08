@@ -34,21 +34,27 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
     @Override
     public String visitUnit(jolkParser.UnitContext ctx) {
         StringBuilder sb = new StringBuilder();
+        this.currentImports.clear(); // Clear at the start of a new unit
+
+        boolean isJolkLangPackage = false;
         if (ctx.package_decl() != null) {
             sb.append(visit(ctx.package_decl()));
+            if (ctx.package_decl().namespace() != null && "jolk.lang".equals(ctx.package_decl().namespace().getText())) {
+                isJolkLangPackage = true;
+            }
         }
-        this.currentImports = ctx.import_decl().stream()
-                .map(ic -> ic.namespace().getText() + (ic.getText().contains(".*") ? ".*" : ""))
-                .collect(Collectors.toList());
-        for (jolkParser.Import_declContext ic : ctx.import_decl()) {
-            sb.append(visit(ic));
+        // The visit methods will add to currentImports
+        for (jolkParser.ExpansionContext ec : ctx.expansion()) {
+            sb.append(visit(ec));
         }
-        if (!ctx.import_decl().isEmpty()) {
-            sb.append("\n");
+        for (jolkParser.ProjectionContext pc : ctx.projection()) {
+            sb.append(visit(pc));
         }
 
         if (ctx.type_decl() != null) {
             sb.append(visit(ctx.type_decl()));
+        } else if (ctx.extension_decl() != null) {
+            sb.append(visit(ctx.extension_decl()));
         }
         return sb.toString();
     }
@@ -56,24 +62,40 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
     @Override
     public String visitPackage_decl(jolkParser.Package_declContext ctx) {
         this.currentPackage = ctx.namespace().getText();
-        return "package " + this.currentPackage + ";\n\n";
+        return "package " + this.currentPackage + ";\n";
     }
 
     @Override
-    public String visitImport_decl(jolkParser.Import_declContext ctx) {
-        return "import " + ctx.namespace().getText() + (ctx.getText().contains(".*") ? ".*" : "") + ";\n";
+    public String visitExpansion(jolkParser.ExpansionContext ctx) {
+        jolkParser.InclusionContext inclusion = ctx.inclusion();
+        String namespace = inclusion.namespace().getText();
+        boolean isWildcard = inclusion.MUL() != null;
+        String imp = "import " + namespace + (isWildcard ? ".*" : "") + ";\n";
+        this.currentImports.add(namespace + (isWildcard ? ".*" : ""));
+        return imp;
+    }
+
+    @Override
+    public String visitProjection(jolkParser.ProjectionContext ctx) {
+        jolkParser.InclusionContext inclusion = ctx.inclusion();
+        String namespace = inclusion.namespace().getText();
+        boolean isWildcard = inclusion.MUL() != null;
+        // Lensing will be translated to import static.
+        String imp = "import static " + namespace + (isWildcard ? ".*" : "") + ";\n";
+        this.currentImports.add("static " + namespace + (isWildcard ? ".*" : ""));
+        return imp;
     }
 
     @Override
     public String visitType_decl(jolkParser.Type_declContext ctx) {
 
-        String variability = "";
+        String finality = "";
         String visibility = "public ";
 
         if (ctx.modifiers() != null) {
             jolkParser.ModifiersContext modsCtx = ctx.modifiers();
-            if (modsCtx.variability() != null) {
-                variability = modsCtx.variability().getText() + " ";
+            if (modsCtx.finality() != null) {
+                finality = modsCtx.finality().getText() + " ";
             }
             if (modsCtx.vis_mod() != null) {
                 if (modsCtx.vis_mod().visibility() != null) {
@@ -83,7 +105,7 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
                 if (modsCtx.vis_mod().MODIFIER() != null) {
                     String[] mods = parseModifier(modsCtx.vis_mod().MODIFIER().getText());
                     if (mods[0] != null) visibility = "package".equals(mods[0]) ? "" : mods[0] + " ";
-                    if (mods[1] != null) variability = mods[1] + " ";
+                    if (mods[1] != null) finality = mods[1] + " ";
                 }
             }
         }
@@ -102,7 +124,7 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
         } else if ("protocol".equals(archetype)) {
             visitType_decl.visitProtocol(ctx, visibility, typeName, sb);
         } else {
-            visitType_decl.visitClass(ctx, variability, visibility, typeName, sb);
+            visitType_decl.visitClass(ctx, finality, visibility, typeName, sb);
         }
 
         sb.append("}\n");
@@ -209,7 +231,7 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
         StringBuilder sb = new StringBuilder();
 
         String visibility = null;
-        String variability = ctx.variability() != null ? ctx.variability().getText() : null;
+        String finality = ctx.finality() != null ? ctx.finality().getText() : null;
 
         if (ctx.vis_mod() != null) {
             if (ctx.vis_mod().visibility() != null) {
@@ -218,7 +240,7 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
             if (ctx.vis_mod().MODIFIER() != null) {
                 String[] mods = parseModifier(ctx.vis_mod().MODIFIER().getText());
                 if (mods[0] != null) visibility = mods[0];
-                if (mods[1] != null) variability = mods[1];
+                if (mods[1] != null) finality = mods[1];
             }
         }
 
@@ -245,8 +267,8 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
             sb.append("static ");
         }
 
-        if (variability != null) {
-            sb.append(variability).append(" ");
+        if (finality != null) {
+            sb.append(finality).append(" ");
         }
 
         boolean prevInConstructor = this.inConstructor;

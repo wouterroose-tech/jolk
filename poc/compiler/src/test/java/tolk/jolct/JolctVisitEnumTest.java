@@ -31,7 +31,7 @@ public class JolctVisitEnumTest extends JolctVisitorTest {
     @Test
     public void testVisitEnum_Level() {
         String source = "package demo.validation.engine; enum Level { ERROR; WARNING; INFO; }";
-        String expected = "package demo.validation.engine;\n\npublic enum Level {\nERROR, WARNING, INFO;\n}\n";
+        String expected = "package demo.validation.engine;\npublic enum Level {\nERROR, WARNING, INFO;\n}\n";
 
         this.assertFullTranspilation(expected, source);
     }
@@ -41,7 +41,6 @@ public class JolctVisitEnumTest extends JolctVisitorTest {
         String source = "package com.test; enum Color { RED; GREEN; BLUE; }";
         String expected = """
                 package com.test;
-
                 public enum Color {
                 RED, GREEN, BLUE;
                 }

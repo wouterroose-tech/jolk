@@ -1,6 +1,6 @@
 package examples;
 
-import jolk.lang.Array;
+using jolk.lang.Array;
 
 /// # ClosureDemonstrator
 ///

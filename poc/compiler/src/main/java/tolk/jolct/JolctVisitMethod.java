@@ -121,8 +121,8 @@ public class JolctVisitMethod {
     }
 
     private boolean isFinal(Type_declContext typeDecl) {
-        if (typeDecl.modifiers().variability() != null) {
-            return "final".equals(typeDecl.modifiers().variability().getText());
+        if (typeDecl.modifiers().finality() != null) {
+            return "final".equals(typeDecl.modifiers().finality().getText());
         }
         if (typeDecl.modifiers().vis_mod() != null && typeDecl.modifiers().vis_mod().MODIFIER() != null) {
             String[] mods = visitor.parseModifier(typeDecl.modifiers().vis_mod().MODIFIER().getText());

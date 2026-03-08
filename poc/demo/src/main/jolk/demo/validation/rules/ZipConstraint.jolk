@@ -1,8 +1,11 @@
 package demo.validation.rules;
 
-import demo.validation.engine.*;
-import demo.validation.domain.ContactForm;
-import demo.validation.services.GeoGraphicalService;
+using demo.validation.engine.*;
+using demo.validation.domain.ContactForm;
+using demo.validation.services.GeoGraphicalService;
+
+using meta demo.validation.services.GeoGraphicalService.MECHELEN;
+using meta demo.validation.rules.ContactFormValidation.FORM_INTERRUPT;
 
 ///
 /// @author Wouter Roose
@@ -18,7 +21,7 @@ final class ZipConstraint extends Constraint<ContactForm> {
     }
 
     private Boolean isMalinesArea(Integer zipCode) {
-        ^ GeoGraphicalService #GGS #exists(zipCode) && GeoGraphicalService #Mechelen #contains(zipCode)
+        ^ GeoGraphicalService #GGS #exists(zipCode) && MECHELEN #contains(zipCode)
     }
 
     protected Issue getIssue(ContactForm form,  ExecutionContext executionContext) {
@@ -26,6 +29,6 @@ final class ZipConstraint extends Constraint<ContactForm> {
     }
 
     protected Interrupt interrupt() {
-        ^ ContactFormValidation #FORM_INTERRUPT
+        ^ FORM_INTERRUPT
     }
 }

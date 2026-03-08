@@ -1,8 +1,8 @@
 package examples;
 
-import java.lang.RuntimeException;
-import java.lang.IllegalArgumentException;
-import java.lang.IllegalStateException;
+using java.lang.RuntimeException;
+using java.lang.IllegalArgumentException;
+using java.lang.IllegalStateException;
 
 /// Demonstrates Jolk's unified message-passing syntax for exception handling.
 ///

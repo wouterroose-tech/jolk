@@ -2,21 +2,23 @@
 (* Jolk Grammar *)
 (* ============ *)
 
-unit            = [ package ] { import } { annotation } ( type_decl | extension_decl)
+unit            = [ package ] { expansion } { projection } { annotation } ( type_decl | extension_decl)
 package         = "package" namespace  ";"
-import          = "import" namespace [ ".*" ] ";"
+expansion       = ("using" | "#+") inclusion
+projection      = ("using meta" | "#@") inclusion
+inclusion       = [meta_id "="] namespace  [ ".*" ] ";"
 namespace       = identifier { "." identifier }
 
-type_decl       = [ visibility ] [ variability ] archetype type_bound "{" { type_mbr } "}"
+type_decl       = [ visibility ] [ finality ] archetype type_bound "{" { type_mbr } "}"
 visibility      = "public" | "package" | "protected" | "private"
-variability     = "abstract" | "final"
+finality        = "abstract" | "final"
 archetype       = "class" | "value" | "record" | "enum" | "protocol"
 type_bound      = type [ type_contracts ]
 type            = self_type | [ namespace ] meta_id [ type_args ]
 type_args       = "<" type_bound { "," type_bound } ">"
 type_contracts  = "extends" type [ "implements" type { "&" type } ] | "implements" type { "&" type }
 type_mbr        = { annotation } ( member | enum )
-member          = [ visibility ] ( [ "meta" ] state | [ variability ] [ "meta" ] method )
+member          = [ visibility ] ( [ "meta" ] state | [ finality ] [ "meta" ] method )
 state           = ( constant | field ) ";"
 constant        = "constant" type binding
 field           = type identifier [ assignment ]
@@ -28,7 +30,7 @@ typed_params    = annotated_type ( instance_id { "," annotated_type instance_id 
 annotated_type  = { annotation } type
 vararg_id	    = "..." instance_id
 extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
-extension_mbr   = { annotation } [ visibility ] [ variability ] method
+extension_mbr   = { annotation } [ visibility ] [ finality ] method
 annotation      = "@" identifier [ "(" [ annotation_args ] ")" ]
 annotation_args = annotation_arg { "," annotation_arg } | annotation_val
 annotation_arg  = identifier "=" annotation_val
@@ -85,6 +87,6 @@ comment         = line_comment |  block_comment
 line_comment    = "//" { "/" } { char_except_nl } nl    (* /// for markdown comment *)
 block_comment   = "/*" { char_except_star_slash } "*/"
 escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "'" | "\" )
-modifier        = "#" (visibility_ops)? (variability_ops)?
+modifier        = "#" (visibility_ops)? (finality_ops)?
 visibility_ops  = "<" | "~" | ":" | ">"
-variability_ops = "?" | "!"
+finality_ops = "?" | "!"

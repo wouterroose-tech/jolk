@@ -7,17 +7,19 @@ grammar jolk;
 */
 
 // Parser rules
-unit            : package_decl? import_decl* annotation* ( type_decl | extension_decl)? EOF;
+unit            : package_decl? expansion* projection* annotation* ( type_decl | extension_decl)? EOF;
 
 package_decl    : PACKAGE namespace ';' ;
-import_decl     : IMPORT namespace ('.' MUL)? ';' ;
+expansion       : (USING | SHARP_PLUS) inclusion ;
+projection      : (USING META | SHARP_AT) inclusion ;
+inclusion       : (MetaId ASSIGN)? namespace ('.' MUL)? ';' ;
 namespace       : identifier ('.' identifier)* ;
 
 type_decl       : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
-modifiers       : vis_mod? variability? ;
+modifiers       : vis_mod? finality? ;
 vis_mod         : visibility | MODIFIER ;
 visibility      : PUBLIC | PACKAGE | PROTECTED | PRIVATE ;
-variability     : ABSTRACT | FINAL ;
+finality        : ABSTRACT | FINAL ;
 archetype       : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
 type_bound      : type type_contracts? ;
 type            : self_type | (identifier DOT)* MetaId type_args? ;
@@ -26,7 +28,7 @@ type_contracts  : EXTENDS type (IMPLEMENTS type (AMP type)*)?
                 | IMPLEMENTS type (AMP type)* ;
 
 type_mbr        : annotation* (member | enum_constant) ;
-member          : vis_mod? ( META? state | variability? META? method ) ;
+member          : vis_mod? ( META? state | finality? META? method ) ;
 state           : ( constant | field ) SEMI ;
 constant        : CONSTANT type binding ;
 field           : type identifier assignment? ;
@@ -64,7 +66,15 @@ factor          : unary (mulOp unary)* ;
 unary           : (NOT | negOp) unary | power ;
 power           : message (powOp unary)? (NULL_COALESCE power)? ;
 message         : primary (selector payload?)* ;
-primary         : reserved | type | identifier | literal | list_literal | LPAREN expression RPAREN | closure | method_reference ;
+primary         : { _input.LT(2).getType() == HASH_HASH }? method_reference
+                | reserved
+                | { _input.LT(1).getType() == MetaId || (_input.LT(1).getType() == InstanceId && _input.LT(2).getType() == DOT) }? type
+                | identifier
+                | literal
+                | list_literal
+                | LPAREN expression RPAREN
+                | closure
+                | method_reference ;
 closure         : LBRACK (stat_params LAMBDA)? statements? RBRACK ;
 method_reference : ( identifier | reserved ) HASH_HASH identifier ;
 payload         : arguments | closure ;
@@ -101,8 +111,10 @@ relOp           : GT | GE | LT | LE;
 // Lexer rules
 
 // Keywords
+ALIAS: 'alias';
 PACKAGE: 'package';
-IMPORT: 'import';
+USING: 'using';
+LENS: 'lens';
 CLASS: 'class';
 VALUE: 'value';
 RECORD: 'record';
@@ -146,6 +158,8 @@ COLON: ':';
 AMP: '&';
 
 // Compound Symbols
+SHARP_PLUS: '#+';
+SHARP_AT: '#@';
 EQ: '==';
 LE: '<=';
 GE: '>=';

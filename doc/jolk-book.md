@@ -87,21 +87,23 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
     (* Jolk Grammar *)
     (* ============ *)
 	
-	unit            = [ package ] { import } { annotation } ( type_decl | extension_decl)  
-	package         = "package" namespace  ";"  
-	import          = "import" namespace [ ".*" ] ";"  
+	unit            = [ package ] { expansion } { projection } { annotation } ( type_decl | extension_decl)
+	package         = "package" namespace  ";"
+	expansion       = ("using" | "#+") inclusion
+	projection      = ("using meta" | "#@") inclusion
+	inclusion       = [meta_id "="] namespace  [ ".*" ] ";"
 	namespace       = identifier { "." identifier }
 
-	type_decl       = [ visibility ] [ variability ] archetype type_bound "{" { type_mbr } "}"
+	type_decl       = [ visibility ] [ finality ] archetype type_bound "{" { type_mbr } "}"
 	visibility      = "public" | "package" | "protected" | "private"
-	variability     = "abstract" | "final"
+	finality        = "abstract" | "final"
 	archetype       = "class" | "value" | "record" | "enum" | "protocol"
 	type_bound      = type [ type_contracts ]
 	type            = "Self" | [ namespace ] meta_id [ type_args ]
 	type_args       = "<" type_bound { "," type_bound } ">"
 	type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
 	type_mbr        = { annotation } ( member | enum )
-	member          = [ visibility ] ( [ "meta" ] state | [ variability ] [ "meta" ] method )
+	member          = [ visibility ] ( [ "meta" ] state | [ finality ] [ "meta" ] method )
 	state           = ( constant | field ) ";"
 	constant        = "constant" type binding
 	binding         = identifier assignment
@@ -115,7 +117,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	annotation      = "@" identifier [ "(" ... ")" ]
 	vararg_id       = "..." instance_id
 	extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
-	extension_mbr   = { annotation } [ visibility ] [variability] method
+	extension_mbr   = { annotation } [ visibility ] [finality] method
 
 	block           = "{" [ statements ] "}"
 	statements      = statement { ";" statement } [ ";" ]
@@ -158,9 +160,9 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	string_literal  = "\"" { char } "\""
 	char_literal    = "'" char "'"
 
-	modifier        = "#" (visibility_ops)? (variability_ops)?
+	modifier        = "#" (visibility_ops)? (finality_ops)?
 	visibility_ops  = "<" | "~" | ":" | ">"
-	variability_ops = "?" | "!"
+	finality_ops    = "?" | "!"
 
 The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like sp (space) and nl (newline) from higher-level abstractions like w (mandatory whitespace for message sends) and `s` (optional separation for blocks), the specification enforces strict syntactic signatures—such as the required space between objects and selectors—while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both compiler performance and human readability.
 
@@ -186,9 +188,11 @@ In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Id
 
 **Structural Scaffolding** (Architectural Metadata): These markers tell the compiler how to organise the code into the JVM ecosystem, but they do not participate in the message-passing flow.
 
-* *Structure / Metadata*: package, import, class, value, record, enum, protocol, extension  
-* *Relations / Hierarchy*: extends &  implements are hierarchy markers  
-* *Access / Visibility*: meta, public, protected, private, package, abstract, final , constant
+* *Structure / Metadata*: package, class, value, record, enum, protocol, extension  
+* *Relations / Hierarchy*: extends, implements are hierarchy markers  
+* *Access / Visibility & Finality*: public, protected, private, package, abstract, final
+* *Directives / Projections*: using, using meta
+* *Directives / Projections*: using, lens
 
 ### Lexical Anchors
 
@@ -203,7 +207,7 @@ The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexic
 * Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., `String`, `PI`, `#PI`)  
 * Variables, Parameters Properties & instance selectors: start with a lowercase letter (e.g., `name`, `#name`).
 
-**Visibility**; The anchors (`#<` , `#~` , `#:`,  `#>`, `#?` , `#!`) designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity.
+**Visibility & Finality**; The anchors (`#<` , `#~` , `#:`,  `#>`, `#?` , `#!`) establish the Lexical Fence that regulates message reception and the valid reach of the Identity. These anchors function as structural constraints, defining the boundaries within the platforms.
 
 **Annotations**: These are anchored by the at-symbol (`@`). When the Tolk lexer sees this character, it immediately tags the token as an annotation.
 
@@ -224,6 +228,8 @@ Syntactic elements act as structural anchors for the parser.
 **meta**: The meta stratum anchor designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta Strata.
 
 **lazy**: The temporality lazy directive designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
+
+**constant**: Establishes a value as an immutable, non-variable fact within the Source.
 
 **Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Syntactic Overload*, ensuring the semantic intent of every symbol remains absolute and singular. By assigning a unique geometry to each architectural fact—`< >` for *Generics*, `{ }` for *Scope*, `[ ]` for *Deferred Identity*, and `( )` for *Realised Identity*—the code achieves a state of structural buoyancy.
 
@@ -282,6 +288,9 @@ In Jolk, Self (PascalCase) serves as a dynamic reference to the current type def
 Jolk enforces a rigorous semantic model designed to protect the Metaboundary—the absolute line between an object’s internal state and the external message-passing environment. This shift ensures that system stability and security are inherent properties of the language rather than secondary considerations.
 
 Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "backdoor" access to private fields or runtime method overrides, Jolk prioritises system-wide security. By making reflection a semantic impossibility, the language guarantees that no external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Rather than focusing on the mutation of static structures, Jolk concentrates on the "Ma"—the interstitial space where communication occurs. In this model, computation is viewed as a deterministic emergent protocol rather than a set of mutable definitions. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
+
+### Meta-Directives
+Meta-Directives establish the context that governs the relationship between the source and the platform. *Structural Expansion* via the `#+` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Contextual Projection* through the `#@` lens, which isolates platform facts—whether static constants or functional methods—and projects them as immutable local symbols. *Visibility* (e.g., `#>`) and *Finality* (e.g., `#!`) are structural properties which mandate the state of access and identity.
 
 ### Language Specification Summary
 
@@ -464,7 +473,7 @@ A Jolk protocol acts as a contract. It defines a set of messages (methods) that 
 The Lexical Anchors designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity. These symbols function as absolute structural coordinates, maintaining Semantic Parity with their Java counterparts; for convenience Jolk permits the use of Java keywords as aliases for the Lexical Anchors.
 
 Visibility :`#<` (`public`), `#~` (`package`), `#:` (`protected`), `#>` (`private`)  
-Structural Variability: `#?` (`abstract`) , `#!` (`final`)  
+Structural Finality: `#?` (`abstract`) , `#!` (`final`)  
 
 Or combinations like `#~?` (`package abstract`) and `#<!` (`public final`)
 
@@ -1024,7 +1033,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Null-Coalescing*: Jolk adopts the `??` operator from C#[11], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
 
-*Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[12], Ruby[13] and Perl[14].
+*Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[12], Ruby[13] and Perl[14].
 
 ---
 
@@ -1384,7 +1393,7 @@ The minimalistic syntax and semantics of Jolk allow the parser to distinguish be
 
 The Jolk architecture employs Lexical Semantic Anchoring to eliminate "bracket noise" and syntactic redundancy by shifting the burden of identification from the parser to the lexer. By utilising a deterministic lexer, the system classifies tokens through immediate character-based triggers: a `@` prefix identifies an annotation, `#` denotes a selector, and an uppercase leading character signifies a type. This strategy bypasses the complex, recursive symbol-table lookups typical of languages with ambiguous syntax, allowing structural anchors to act as deterministic "fences" that guide the parser through logic streams with no backtracking required.
 
-Within this framework, the Lexer’s Reserved Map triages keywords into distinct functional categories. Reserved Structural Keywords (such as class, import, and private) define the structural boundaries of the scope, while Reserved Literals (true, false, null) are treated as "Absolute Constants" with immutable, universal values. Conversely, Reserved Identifiers such as self, super, and Self are classified as "Contextual References," as their resolution is dependent on the active receiver or type context. To bridge the Jolk and Java ecosystems, Jolk provides annotation aliasing (e.g., `@Alias(source = "javaType", target = "JavaType")`) to reconcile Java’s case-flexible identifiers with Jolk’s strict semantic requirements.
+Within this framework, the Lexer’s Reserved Map triages keywords into distinct functional categories. Reserved Structural Keywords (such as class, import, and private) define the structural boundaries of the scope, while Reserved Literals (true, false, null) are treated as "Absolute Constants" with immutable, universal values. Conversely, Reserved Identifiers such as self, super, and Self are classified as "Contextual References," as their resolution is dependent on the active receiver or type context. To bridge the Jolk and Java ecosystems, Jolk aliasing (e.g., `using MyClass = com.example.myclass`) can be appied to reconcile Java’s case-flexible identifiers with Jolk’s strict semantic requirements.
 
 The transition from keyword-based "modifiers" to symbol-based "anchors" facilitates Structural Density. The use of `#` as a prefix for the Lexical Fence allows the parser to resolve the visibility and reach of a member in O(1) time before the identifier is even processed, eliminating the overhead of keyword-heavy grammars. Jolk maps these visibility anchors directly to the access flags like ACC\_PUBLIC of the JVM Specification. This ensures that the boundaries defined at the grammar level are enforced during runtime.
 

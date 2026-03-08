@@ -163,7 +163,7 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
     @Test
     public void testSamePackageJolkClassField() {
         String source = "package com.test; class Test { SiblingType field; }";
-        String expected = "package com.test;\n\npublic class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {\nprivate SiblingType<?> field;\nprivate SiblingType<?> field() {\nreturn field;\n}\nprivate Self field(SiblingType<?> field) {\nthis.field = field;\nreturn (Self) this;\n}\n}\n";
+        String expected = "package com.test;\npublic class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {\nprivate SiblingType<?> field;\nprivate SiblingType<?> field() {\nreturn field;\n}\nprivate Self field(SiblingType<?> field) {\nthis.field = field;\nreturn (Self) this;\n}\n}\n";
         
         JolkContext context = new JolkContext();
         context.addJolkClass("com.test.SiblingType");
@@ -172,8 +172,8 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
 
     @Test
     public void testExplicitlyImportedJolkClassField() {
-        String source = "import com.other.OtherType; class Test { OtherType field; }";
-        String expected = "import com.other.OtherType;\n\npublic class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {\nprivate OtherType<?> field;\nprivate OtherType<?> field() {\nreturn field;\n}\nprivate Self field(OtherType<?> field) {\nthis.field = field;\nreturn (Self) this;\n}\n}\n";
+        String source = "using com.other.OtherType; class Test { OtherType field; }";
+        String expected = "import com.other.OtherType;\npublic class Test<Self extends Test<Self>> extends jolk.lang.Object<Self> {\nprivate OtherType<?> field;\nprivate OtherType<?> field() {\nreturn field;\n}\nprivate Self field(OtherType<?> field) {\nthis.field = field;\nreturn (Self) this;\n}\n}\n";
         
         JolkContext context = new JolkContext();
         context.addJolkClass("com.other.OtherType");

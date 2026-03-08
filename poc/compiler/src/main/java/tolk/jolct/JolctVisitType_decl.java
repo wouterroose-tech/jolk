@@ -107,9 +107,9 @@ public class JolctVisitType_decl {
         }
     }
 
-    void visitClass(jolkParser.Type_declContext ctx, String variability, String visibility,
+    void visitClass(jolkParser.Type_declContext ctx, String finality, String visibility,
             String typeName, StringBuilder sb) {
-        boolean isFinal = "final ".equals(variability);
+        boolean isFinal = "final ".equals(finality);
         
         // Determine superclass and if it is Jolk
         String superType = null;
@@ -212,7 +212,7 @@ public class JolctVisitType_decl {
             }
         }
 
-        sb.append(visibility).append(variability).append("class ").append(typeName).append(typeParams);
+        sb.append(visibility).append(finality).append("class ").append(typeName).append(typeParams);
         if (!extendsClause.isEmpty()) {
             sb.append(" ").append(extendsClause);
         }

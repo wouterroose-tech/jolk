@@ -1,7 +1,7 @@
 package demo.validation.rules;
 
-import demo.validation.engine.*;
-import demo.validation.domain.Person;
+using demo.validation.engine.*;
+using demo.validation.domain.Person;
 
 ///
 /// @author Wouter Roose

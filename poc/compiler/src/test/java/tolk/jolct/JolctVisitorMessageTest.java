@@ -139,7 +139,7 @@ public class JolctVisitorMessageTest  extends JolctVisitorTest {
 
     @Test
     void testCatch() {
-        String source = "[ x #do ] #catch [ Interrupt e -> // ignore ]";
+        String source = "[ x #do ] #catch [ Interrupt e -> ]";
         String expected = """
                 try {
                 x.do();
@@ -151,8 +151,8 @@ public class JolctVisitorMessageTest  extends JolctVisitorTest {
 
     @Test
     void testClosureParam() {
-        String source = "self #hasMatch [i -> subject == i.subject]";
-        String expected = "this.hasMatch(i -> subject == i.subject)";
+        String source = "self #hasMatch [i -> subject == i #subject]";
+        String expected = "this.hasMatch(i -> subject == i.subject())";
         assertMessage(expected, source);
     }
 
@@ -165,15 +165,15 @@ public class JolctVisitorMessageTest  extends JolctVisitorTest {
 
     @Test
     void testClosureTypedParam() {
-        String source = "self #hasMatch [Int i -> subject == i.subject]";
-        String expected = "this.hasMatch((Int i) -> subject == i.subject)";
+        String source = "self #hasMatch [Int i -> subject == i #subject]";
+        String expected = "this.hasMatch((Int i) -> subject == i.subject())";
         assertMessage(expected, source);
     }
 
     @Test
     void testClosureTypedParam_2() {
-        String source = "self #hasMatch [Int i, Value v -> subject == i.subject]";
-        String expected = "this.hasMatch((Int i, Value v) -> subject == i.subject)";
+        String source = "self #hasMatch [Int i, Value v -> subject == i #subject]";
+        String expected = "this.hasMatch((Int i, Value v) -> subject == i.subject())";
         assertMessage(expected, source);
     }
 }

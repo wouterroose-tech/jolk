@@ -1,7 +1,7 @@
 package examples;
 
-import java.util.concurrent.atomic.AtomicReference;
-import jolk.lang.Array;
+using java.util.concurrent.atomic.AtomicReference;
+using jolk.lang.Array;
 
 /// Demonstrates Jolk's Core Collection `Array` and its shim-less integration with the Java Collections Framework.
 ///

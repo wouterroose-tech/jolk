@@ -1,6 +1,6 @@
 package examples;
 
-import demo.validation.domain.Person;
+using demo.validation.domain.Person;
 
 /// Demonstrates Jolk's equivalence operators (`~~` and `!~`).
 ///

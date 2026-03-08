@@ -1024,6 +1024,10 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Kotlin Influences*: Following Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks. It adopts Trailing Closure Syntax for logic-driven messages.
 
+*C# Null-Coalescing*: Jolk adopts the `??` operator from C#[11], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
+
+*C# using Directive*: Jolk adopts the `C#` using directive[15] for vocabulary expansion, aliasing and constant projection.
+
 *The Null Object Pattern* in Jolk is a direct architectural evolution of concepts from both Smalltalk-80 and Kotlin, designed to handle "nothingness" as a first-class participant in the messaging flow rather than a system-collapsing failure. Jolk takes the reified identity of Smalltalk and the type-safe constraints of Kotlin, then applies Identity Restitution to preserve a pure object-oriented "World View" on the high-performant JVM.
 
 *Predicate Assertion*: in Jolk is a reconciliatory synthesis that takes the philosophical purity of Smalltalk, the syntactic ergonomics of Kotlin, and the high-performance execution of Java to create a unified messaging protocol for control flow.
@@ -1032,11 +1036,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Receiver Retention*: while the behavior is identical to Smalltalk's ergonomics, Receiver Retention is a sanitization layer designed to preserve the "message-passing soul" of the language when operating as a "polite citizen" within the procedural constraints of the Java Virtual Machine
 
-*Null-Coalescing*: Jolk adopts the `??` operator from C#[11], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
-
 *Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[12], Ruby[13] and Perl[14].
-
-*Expansion & Projection* (Meta-Inclusion): Jolk adopts the `C#` using directive[15] for vocabulary expansion, aliasing and constant projection.
 
 ---
 
@@ -1200,7 +1200,7 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 
 	//
 	#@ demo.validation.rules.ContactFormValidation.INTERRUPT;
-	
+
 	#! class InssConstraint extends Constraint<Person> {
 
 		// singleton in DI configuration

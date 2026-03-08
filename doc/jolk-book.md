@@ -176,7 +176,7 @@ The Jolk syntax is defined by its pure object-oriented minimalism, aiming to red
 
 ### Keywords
 
-In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Identifiers* is essential for highlighting the language's minimal core. By classifying Reserved Object Identifiers as the fundamental operators that define an object’s identity and awareness, while treating structural keywords as architectural metadata, the language's primary vocabulary remains focused.  
+In Jolk, distinguishing between *Reserved Object Identifiers* and *Structural Scaffolding* is essential for highlighting the language's minimal core. By classifying Reserved Object Identifiers as the fundamental operators that define an object’s identity and awareness, while treating structural keywords as architectural metadata, the language's primary vocabulary remains focused. 
 
 **Reserved Object Identifiers:** These keywords represent the fundamental mechanics of the object model: Identity, Awareness, and Literals.They are pre-defined identifiers for First-class Identities.
 
@@ -188,10 +188,11 @@ In Jolk, distinguishing between *Structural Scaffolding* and *Reserved Object Id
 
 **Structural Scaffolding** (Architectural Metadata): These markers tell the compiler how to organise the code into the JVM ecosystem, but they do not participate in the message-passing flow.
 
-* *Structure / Metadata*: package, class, value, record, enum, protocol, extension
 * *Directives / Projections*: using, using meta
+* *Structure / Metadata*: package, class, value, record, enum, protocol, extension
 * *Relations / Hierarchy*: extends, implements are hierarchy markers  
 * *Access / Visibility & Finality*: public, protected, private, package, abstract, final
+* *State & Behavior Modifiers*: meta, constant, lazy
 
 ### Lexical Anchors
 
@@ -228,12 +229,6 @@ Syntactic elements act as structural anchors for the parser.
 
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
-**meta**: The meta stratum anchor designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta Strata.
-
-**constant**: Establishes a value as an immutable, non-variable fact within the Source.
-
-**lazy**: The temporality lazy directive designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
-
 ## Semantics
 
 In the Jolk ecosystem, reserved words are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid language keywords like class, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
@@ -247,8 +242,8 @@ Jolk is built on Unified Message-Passing, where every interaction follows the *R
 By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts control flow from a structural language constraint to an emergent property of object interaction. Logic is implemented as a library feature rather than a compiler construct, ensuring that even fundamental branching obeys the same rules of encapsulation as user-defined code.
 
 *Branching*: Traditional if-else blocks are replaced by the ternary pattern `condition ? expression : expression`; with `?` and `:` as grammatical delimiters that are semantically resolved as messages sent to Boolean identities.  
-*Looping*: Native while and for statements are superseded by messages sent to Closures or Integers, such as `[cond] #while [body] or 10 #times [n -> ...]`.  
-*Error Handling*: Exception logic is unified with the messaging model, replacing try/catch with `#catch` and `#finally` messages sent to closures.
+*Looping*: Native while and for statements are superseded by messages sent to Closures or Integers, such as `[cond] #while [body] or 10 #times [n -> ...]`.   
+*Error Handling*: Exception logic is unified with the messaging model, with `#catch` and `#finally` messages sent to closures.
 
 ### Type System
 
@@ -257,6 +252,10 @@ The Jolk type system fully aligns with the Java generics syntax. The grammar dis
 Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent a mathematically precise intersection of contracts. Aligning with the concept of Traits[6], this allows for the composition of behavior without the state problems of multiple inheritance. This isn't just syntactic sugar; it is a structural guarantee that ensures the Identity of the participant and the Contract of the Message remain visible and secure, preventing semantically incompatible objects from accidentally matching based on syntax alone. Finally, the syntax enables extensions that permits augmentation of types with new messages.
 
 Primitives are absent from the syntax because Jolk follows a pure object-oriented model where everything—including numbers, truth values, and the absence of a value (`null` a singleton instance of the `Nothing` class) —is a first-class object. This removal of the primitive/object distinction maintains a minimalist syntax while ensuring that every entity maintains a non-nullable identity.
+
+`meta`: Designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta layer.   
+`constant`: Establishes a value as an immutable, non-variable fact within the source.   
+`lazy`*: Designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
 
 ### Mathematical and Equality Operators
 

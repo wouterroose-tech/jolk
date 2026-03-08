@@ -541,9 +541,10 @@ In Jolk, class-level constants are reified as Meta-Objects within the Meta-Objec
 	    // ...  
 	}
 
-In Jolk, an import of a meta field acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains Semantic Integrity by preserving the link to the parent object (e.g., Math) while removing the syntactic noise of explicit message selectors. Though it appears as a bare variable, the Tolk engine recognises the lens and applies Semantic Flattening, "intrinsifying" the access.
+In Jolk, the use of a meta field acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains Semantic Integrity by preserving the link to the parent object (e.g., Math) while removing the syntactic noise of explicit message selectors. Though it appears as a bare variable, the Tolk engine recognises the lens and applies Semantic Flattening, "intrinsifying" the access.
 
-	import jolk.lang.Math.PI;
+	// symbolic directive for "using meta"
+	#@ jolk.lang.Math.PI;
 
     // standard message send  
     x = 2 * r * Math #PI;
@@ -1035,6 +1036,8 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[12], Ruby[13] and Perl[14].
 
+*Expansion & Projection* (Meta-Inclusion): Jolk adopts the `C#` using directive[15] for vocabulary expansion, aliasing and constant projection.
+
 ---
 
 # Part Three
@@ -1196,6 +1199,8 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 	}
 
 	//
+	#@ demo.validation.rules.ContactFormValidation.INTERRUPT;
+	
 	#! class InssConstraint extends Constraint<Person> {
 
 		// singleton in DI configuration
@@ -1219,7 +1224,7 @@ Demonstrated language concepts: creation methods, message chaining, DI, import l
 			^ Issue #new(person, "INSS_INVALID", Level #ERROR)  
 		}
 
-		#: Interrupt interrupt() { ^ ContactFormValidation #INTERRUPT }  
+		#: Interrupt interrupt() { ^ INTERRUPT }  
 	}
 
 ## Fragments
@@ -1724,13 +1729,15 @@ The industrialisation roadmap follows an iterative progression, prioritising the
 
 [10]: Chambers, C., & Ungar, D. (1989). Customization: Optimizing Compiler Technology for Self, a Dynamically-Typed Object-Oriented Programming Language. In PLDI '89 (pp. 146–160).
 
-[11]: Microsoft. (2005). C# Language Specification 2.0. The Null Coalescing Operator. ([https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator))
+[11]: Microsoft. (2005). C# Language Specification 2.0. ([The Null Coalescing Operator](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator))
 
 [12]:  Unified Modeling Language 2.5.1. Object Management Group Document Number formal/2017-12-05. Object Management Group Standards Development Organization. December 2017. ([https://www.omg.org/spec](https://www.omg.org/spec))
 
 [13]: Ruby,  Syntax Assignments ([https://docs.ruby-lang.org/en/master/syntax/assignment\_rdoc.html](https://docs.ruby-lang.org/en/master/syntax/assignment_rdoc.html))
 
 [14]: Perl, Naming Conventions, ([https://en.wikibooks.org/wiki/Perl\_Programming/Scalar\_variables\#Naming\_Conventions](https://en.wikibooks.org/wiki/Perl_Programming/Scalar_variables#Naming_Conventions))
+
+[15]: Microsoft. (2026). C# language reference ([C# The using directive](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive))
 
 Consulted Documentation 
 

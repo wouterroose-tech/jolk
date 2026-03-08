@@ -1,11 +1,11 @@
 package demo.validation.rules;
 
-using demo.validation.engine.*;
-using demo.validation.domain.ContactForm;
-using demo.validation.services.GeoGraphicalService;
+#+ demo.validation.engine.*;
+#+ demo.validation.domain.ContactForm;
+#+ demo.validation.services.GeoGraphicalService;
 
-using meta demo.validation.services.GeoGraphicalService.MECHELEN;
-using meta demo.validation.rules.ContactFormValidation.FORM_INTERRUPT;
+#@ demo.validation.services.GeoGraphicalService.MECHELEN;
+#@ demo.validation.rules.ContactFormValidation.FORM_INTERRUPT;
 
 ///
 /// @author Wouter Roose

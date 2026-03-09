@@ -204,7 +204,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	visibility_ops  = "<" | "~" | ":" | ">"
 	finality_ops    = "?" | "!"
 
-The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like selector (prefixed with `#`for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both compiler performance and human readability.
+The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like selector (prefixed with `#` for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both compiler performance and human readability.
 
 The syntax for structural anchors like package, public and class is designed to be similar to Java. While symbolic anchors (`#~`, `#<`) represent the idiomatic, high-density Jolk style, the grammar provides keyword aliases (`package`, `public`) to reduce cognitive load.
 
@@ -233,6 +233,7 @@ In Jolk, distinguishing between *Reserved Object Identifiers* and *Structural Sc
 * *Relations / Hierarchy*: extends, implements are hierarchy markers  
 * *Access / Visibility & Finality*: public, protected, private, package, abstract, final
 * *State & Behavior Modifiers*: meta, constant, lazy
+* *Annotations*: anchored by the at-symbol (`@`).
 
 ### Lexical Anchors
 
@@ -246,10 +247,6 @@ The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexic
 
 * Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., `String`, `PI`, `#PI`)  
 * Variables, Parameters Properties & instance selectors: start with a lowercase letter (e.g., `name`, `#name`).
-
-**Visibility & Finality**; The anchors (`#<` , `#~` , `#:`,  `#>`, `#?` , `#!`) establish the Lexical Fence that regulates message reception and the valid reach of the Identity. These anchors function as structural constraints, defining the boundaries within the platforms.
-
-**Annotations**: These are anchored by the at-symbol (`@`).
 
 ### Structural Anchors
 
@@ -327,7 +324,7 @@ Jolk prohibits intrusive reflection to ensure that an object’s internal struct
 
 ### Meta-Directives
 
-Meta-Directives establish the context that governs the relationship between the source and the platform. *Structural Expansion* via the `+` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Contextual Projection* through the `&` lens, which isolates platform facts—whether static constants or functional methods—and projects them as immutable local symbols. *Visibility* (e.g., `#>`) and *Finality* (e.g., `#!`) are structural properties which mandate the state of access and identity.
+Meta-Directives establish the context that governs the relationship between the source and the platform. *Structural Expansion* via the `+` / `using` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Contextual Projection* through the `&` / `using meta` lens, which isolates platform facts—whether static constants or functional methods—and projects them as immutable local symbols. *Visibility* (e.g., `private`/ `#>`) and *Finality* (e.g., `final` / `#!`) are structural properties which mandate the state of access and identity.
 
 ## Language Specification Summary
 
@@ -456,7 +453,7 @@ Structurally, enum constants use a shorthand notation for public meta constant d
 	
 	    // Semicolon separates constants  
 	    // shorthand notation for the synthesised canonical creation method  
-	    // #< meta constant Day MO = Day #new("Monday", 1);  
+	    // public meta constant Day MO = Day #new("Monday", 1);  
 	    MO("Monday", 1);  
 	    TU("Tuesday", 2);
 	
@@ -507,16 +504,15 @@ A Jolk protocol acts as a contract. It defines a set of messages (methods) that 
 
 ### Modifiers
 
-The Lexical Anchors designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity. These symbols function as absolute structural coordinates, maintaining Semantic Parity with their Java counterparts; for convenience Jolk permits the use of Java keywords as aliases for the Lexical Anchors.
+The Lexical Anchors designate the Membership Scope of an identifier, establishing the Lexical Fence that regulates message reception and the valid reach of the identity. These symbols function as absolute structural coordinates, maintaining Semantic Parity with their Java counterparts; for convenience Jolk permits the use of keywords as aliases for the Lexical Anchors.
 
 Visibility :`#<` (`public`), `#~` (`package`), `#:` (`protected`), `#>` (`private`)  
 Structural Finality: `#?` (`abstract`) , `#!` (`final`)  
-
-Or combinations like `#~?` (`package abstract`) and `#<!` (`public final`)
+Or combinations like: `#~?` (`package abstract`) and `#<!` (`public final`)
 
 By defaulting to public for types and methods, the language encourages open message passing, requiring explicit intent only when a boundary must be enforced. This convention increases Structural Density as the majority of members require no prefix, thereby reducing the cognitive load for the human reader. The package alias ensures lexical resemblance for developers accustomed to Java, providing an explicit token for modular restriction. 
 
-To maintain Strict Encapsulation, fields default to private visibility, requiring a public (`#<`) meta declaration to enable Lens Projection. The constant modifier establishes a unified contract of immutability across all architectural strata, distinct from the final structural constraint. At the Meta level, it enables shared access; at the Instance level, it ensures fields remain reassign-proof post-Primary Initialisation. Locally, it projects this stability into the execution scope as a fixed stack constant.
+To maintain Strict Encapsulation, fields default to `private` visibility, requiring a `public meta` declaration to enable Lens Projection. The constant modifier establishes a unified contract of immutability across all architectural strata, distinct from the `final` structural constraint. At the Meta level, it enables shared access; at the Instance level, it ensures fields remain reassign-proof post-Primary Initialisation. Locally, it projects this stability into the execution scope as a fixed stack constant.
 
 ### Meta-Layer
 
@@ -572,7 +568,8 @@ In Jolk, class-level constants are reified as Meta-Objects within the Meta-Objec
 
 	class Math {
 	
-	    // public  
+	    // symbolic directive for
+		// public meta constant Double PI = 3.141592653589793;
 	    #< meta constant Double PI = 3.141592653589793;
 	
 	    // ...  
@@ -580,7 +577,8 @@ In Jolk, class-level constants are reified as Meta-Objects within the Meta-Objec
 
 In Jolk, the use of a meta field acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains Semantic Integrity by preserving the link to the parent object (e.g., Math) while removing the syntactic noise of explicit message selectors. Though it appears as a bare variable, the Tolk engine recognises the lens and applies Semantic Flattening, "intrinsifying" the access.
 
-	// symbolic directive for "using meta"
+	// symbolic directive for
+	// using meta jolk.lang.Math.PI;
 	& jolk.lang.Math.PI;
 
     // standard message send  
@@ -896,7 +894,7 @@ Jolk provides three fundamental collection archetypes, each defined by a unique 
 The **Array** is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at:`) and stack-based operations (`#push:`, `#pop:`).
 
 	@Intrinsic
-	#! class Array<T> {
+	final class Array<T> {
 	
 	    meta Array<T> new(T... elements) { }
 	
@@ -959,7 +957,9 @@ This architecture leverages Dual-Stratum Resolution to resolve class-level super
 
 The jolk.lang.Object class acts as the root Meta-Object Descriptor. It defines the fundamental messaging protocol.
 
-	package jolk.lang;
+	// symbolic directive for
+	// package jolk.lang
+	~ jolk.lang;
 	
 	// Root identity for the Unified Messaging Model
 	
@@ -1098,72 +1098,67 @@ The framework provides a set of abstract & final classes that are the basis for 
 Demonstrated language concepts: generics, Self Type alias, message chaining for control and exception flow, null object pattern
 
 	//
-	#~? class Node<T> {
+	package abstract class Node<T> {
 		package abstract Self accept(T subject, ExecutionContext context);
 	}
 
 	//
-	#~! class ChildValidation<T, R> extends Node<T> {
+	package final class ChildValidation<T, R> extends Node<T> {
 
 		Function<T, R> supplier;  
 		Validation<R> validation;
 
-		#~ Self accept(T subject, ExecutionContext context) {  
+		package Self accept(T subject, ExecutionContext context) {  
 			supplier #value(subject) #ifPresent [ child -> validation #accept(child, context) ]  
 		}  
 	}
 
-	// package abstract
-	#~? class Validation<T> extends Node<T> {
+	package abstract class Validation<T> extends Node<T> {
 
-		// package final
-		#~! Self accept(T subject, ExecutionContext context) {  
+		package final Self accept(T subject, ExecutionContext context) {  
 			(self #satisfiesPreCondition(subject, context)) ? [ self #doAccept(subject, context) ]  
 		}
 
-		// protected
-		#: Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
+		protected Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
 
-		// protected
-		#: Interrupt interrupt() { ^ null }
+		protected Interrupt interrupt() { ^ null }
 
-		// package abstact
-		#~? Self doAccept(T subject, ExecutionContext context);  
+		package abstract Self doAccept(T subject, ExecutionContext context);  
 	}
 
 	//
-	#? class Constraint<T> extends Validation<T> {
+	abstract class Constraint<T> extends Validation<T> {
 
-		#~! Self doAccept(T subject, ExecutionContext context) {  
+		package final Self doAccept(T subject, ExecutionContext context) {  
 			self #isValid(subject) ? [ ^self ];  
 			context #add(subject, self #getIssue(subject, context));  
 			self #interrupt #ifPresent [ e -> e #throw ]  
 		}
 
-		#~? Boolean isValid(T subject);
+		package abstract Boolean isValid(T subject);
 
-		#~? Issue getIssue(T subject,ExecutionContext context);  
+		package abstract Issue getIssue(T subject,ExecutionContext context);  
 	}
 
 	//
-	#? class ValidationSuite<T> extends Validation<T> {
+	abstract class ValidationSuite<T> extends Validation<T> {
 
 		constant Array<Node<T>> nodes = Array #new;
 
-		#! Self add(Constraint<T> constraint) {
+		final Self add(Constraint<T> constraint) {
         	nodes #add(constraint)
     	}
 
-		#! <R> Self add(ChildValidation<T, R> suite) {
+		final <R> Self add(ChildValidation<T, R> suite) {
         	nodes #add(suite)
     	}
 
-		#! Self validate(T subject, ExecutionContext executionContext) {
+		final Self validate(T subject, ExecutionContext executionContext) {
 			[ self #accept(subject, executionContext) ]
 				#catch [ Interrupt e -> /* ignore */ ]
 		}
 
-		#~! Self doAccept(T subject, ExecutionContext executionContext) {
+		package final Self doAccept(T subject, ExecutionContext executionContext) {
 			[ nodes #forEach [node -> node #accept(subject, executionContext)] ]
 				#catch [ 
 					// the further validation of this ruleset is ignored on an interrupt
@@ -1174,7 +1169,7 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 	}
 
 	//
-	#! class Interrupt extends Exception { }
+	final class Interrupt extends Exception { ... }
 
 	//  
 	record Issue {  
@@ -1435,7 +1430,7 @@ The Jolk architecture employs Lexical Semantic Anchoring to eliminate "bracket n
 
 Within this framework, the Lexer’s Reserved Map triages keywords into distinct functional categories. Reserved Structural Keywords (such as class, import, and private) define the structural boundaries of the scope, while Reserved Literals (true, false, null) are treated as "Absolute Constants" with immutable, universal values. Conversely, Reserved Identifiers such as self, super, and Self are classified as "Contextual References," as their resolution is dependent on the active receiver or type context. To bridge the Jolk and Java ecosystems, Jolk aliasing (e.g., `using MyClass = com.example.myclass`) can be appied to reconcile Java’s case-flexible identifiers with Jolk’s strict semantic requirements.
 
-The transition from keyword-based "modifiers" to symbol-based "anchors" facilitates Structural Density. The use of `#` as a prefix for the Lexical Fence allows the parser to resolve the visibility and reach of a member in O(1) time before the identifier is even processed, eliminating the overhead of keyword-heavy grammars. Jolk maps these visibility anchors directly to the access flags like ACC\_PUBLIC of the JVM Specification. This ensures that the boundaries defined at the grammar level are enforced during runtime.
+The transition from keyword-based "modifiers" to symbol-based "anchors" facilitates Structural Density. The use of `#` as a prefix for the Lexical Fence allows the parser to resolve the visibility and reach of a member in O(1) time before the identifier is even processed, eliminating the overhead of keyword-heavy grammars.
 
 The capitalization of shared variables is a deliberate feature of Lexical Semantic Anchoring, aligning data with the Meta-layer. Any potential naming collisions are mitigated by a Dual-Stratum Symbol Table and Dual-Stratum Resolution logic within the toolchain, maintaining a deterministic state even when interacting with Java’s distinct lexical rules.
 
@@ -1447,7 +1442,7 @@ In addition to the structural rules defined in the EBNF, several semantic and co
 
 **Identifier and Type Consistency:** While the grammar distinguishes between `meta_id` (types) and `instance_id` (variables) via casing, the parser must enforce these roles contextually. For instance, the syntax analysis phase must ensure that a `meta_id` is not used where an instance is expected (like the left side of an assignment) and vice versa. Furthermore, you must validate that Self is only used within the context of a `type_decl` or `protocol`, as the grammar alone allows it to appear anywhere a type is valid.
 
-**Modifier and Annotation Validity**: The grammar allows for an arbitrary number of modifiers and annotations (e.g., { modifier }). However, there are many "illegal combinations" that the syntax analysis must catch. You cannot have a method that is both private and public, or a field that is both abstract and final. The parser should also verify that specific annotations are applied only to valid targets—for example, ensuring a @Test annotation isn't accidentally placed on a package declaration.
+**Modifier and Annotation Validity**: The grammar allows for an arbitrary combination of modifiers and annotations. However, there are many "illegal combinations" that the syntax analysis must catch. The parser should also verify that specific annotations are applied only to valid targets.
 
 **Method Signature and Return Logic**: The grammar defines the structure of a method, but it cannot enforce that a non-void method actually returns a value. During syntax analysis, you must perform "reachability analysis" to ensure every execution path in a closure ends in an expression or a return statement. Additionally, you must enforce that the `parameter_list` does not contain duplicate identifier names, as the EBNF only checks that they are valid `instance_id` tokens, not that they are unique within that specific scope.
 

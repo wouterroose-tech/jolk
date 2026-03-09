@@ -9,10 +9,11 @@ grammar jolk;
 // Parser rules
 unit            : package_decl? expansion* projection* annotation* ( type_decl | extension_decl)? EOF;
 
-package_decl    : PACKAGE namespace ';' ;
-expansion       : (USING | SHARP_PLUS) inclusion ;
-projection      : (USING META | SHARP_AT) inclusion ;
-inclusion       : (MetaId ASSIGN)? namespace ('.' MUL)? ';' ;
+package_decl    : (PACKAGE | TILDE) namespace ';' ;
+expansion       : (USING | ADD) inclusion ;
+projection      : (USING META | AMP) inclusion ;
+inclusion       : alias? namespace ('.' MUL)? ';' ;
+alias           : MetaId ASSIGN ;
 namespace       : identifier ('.' identifier)* ;
 
 type_decl       : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
@@ -111,10 +112,8 @@ relOp           : GT | GE | LT | LE;
 // Lexer rules
 
 // Keywords
-ALIAS: 'alias';
 PACKAGE: 'package';
 USING: 'using';
-LENS: 'lens';
 CLASS: 'class';
 VALUE: 'value';
 RECORD: 'record';
@@ -158,8 +157,6 @@ COLON: ':';
 AMP: '&';
 
 // Compound Symbols
-SHARP_PLUS: '#+';
-SHARP_AT: '#@';
 EQ: '==';
 LE: '<=';
 GE: '>=';

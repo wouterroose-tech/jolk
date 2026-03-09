@@ -3,10 +3,11 @@
 (* ============ *)
 
 unit            = [ package ] { expansion } { projection } { annotation } ( type_decl | extension_decl)
-package         = "package" namespace  ";"
-expansion       = ("using" | "#+") inclusion
-projection      = ("using meta" | "#@") inclusion
-inclusion       = [meta_id "="] namespace  [ ".*" ] ";"
+package         = ("package" | "~") namespace  ";"
+expansion       = ("using" | "+") inclusion
+projection      = ("using meta" | "&") inclusion
+inclusion       = [ alias ] namespace  [ ".*" ] ";"
+alias           = meta_id "="
 namespace       = identifier { "." identifier }
 
 type_decl       = [ visibility ] [ finality ] archetype type_bound "{" { type_mbr } "}"

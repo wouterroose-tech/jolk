@@ -16,6 +16,45 @@ Messages in Motion is a tribute to the core philosophy of Smalltalk, a thematic 
 
 ---
 
+# Table of Contents
+
+*   [Introduction](#introduction)
+    *   [Design Philosophy](#design-philosophy)
+    *   [*Me, Myself and I*](#me-myself-and-i)
+*   [Part One: The Semantics of Motion](#part-one)
+    *   [Grammar](#grammar)
+    *   [Semantics](#semantics)
+    *   [Language Specification Summary](#language-specification-summary)
+*   [Part Two: Structural Minimalism](#part-two)
+    *   [Types](#types)
+    *   [Messaging](#messaging)
+    *   [Reflection & Meta-programming](#reflection-meta-programming)
+    *   [Core Type System](#core-type-system)
+    *   [Language Highlights](#language-highlights)
+    *   [Heritage & Foundation](#heritage-foundation)
+*   [Part Three: The Choreography](#part-three)
+    *   [Example](#example)
+    *   [Fragments](#fragments)
+    *   [Jolk Design Patterns](#jolk-design-patterns)
+    *   [Dependency Injection](#dependency-injection)
+    *   [Industrial Potential](#industrial-potential)
+*   [Part Four: The Art of Tolk](#part-four)
+    *   [Implementation](#implementation)
+    *   [Tolk Parser](#tolk-parser)
+    *   [Semantic Analysis](#semantic-analysis)
+    *   [Tolk Transpiler](#tolk-transpiler)
+    *   [Tolk Compiler](#tolk-compiler)
+    *   [Engineered Integrity: A Future-Proof JVM Synthesis](#engineered-integrity-a-future-proof-jvm-synthesis)
+*   [Roadmap](#roadmap)
+    *   [The Bootstrap](#the-bootstrap)
+    *   [Tolk - jolct the transpiler](#tolk---jolct-the-transpiler)
+    *   [Tolk - jolc the compiler](#tolk---jolc-the-compiler)
+    *   [Industrialisation](#industrialisation)
+*   [References](#references)
+*   [Copyright](#copyright)
+
+---
+
 # Introduction
 
 **Jolk: Fluidity &  Integrity**
@@ -88,10 +127,11 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
     (* ============ *)
 	
 	unit            = [ package ] { expansion } { projection } { annotation } ( type_decl | extension_decl)
-	package         = "package" namespace  ";"
-	expansion       = ("using" | "#+") inclusion
-	projection      = ("using meta" | "#@") inclusion
-	inclusion       = [meta_id "="] namespace  [ ".*" ] ";"
+	package         = ("package" | "~") namespace  ";"
+	expansion       = ("using" | "+") inclusion
+	projection      = ("using meta" | "&") inclusion
+	inclusion       = [ alias ] namespace  [ ".*" ] ";"
+	alias           = meta_id "="
 	namespace       = identifier { "." identifier }
 
 	type_decl       = [ visibility ] [ finality ] archetype type_bound "{" { type_mbr } "}"
@@ -166,7 +206,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 
 The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like selector (prefixed with `#`for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both compiler performance and human readability.
 
-The syntax for structural anchors like package and class is designed to be similar to Java. This syntax allows Jolk to closely integrate with the existing Java ecosystem and ensures interoperability with existing enterprise systems.
+The syntax for structural anchors like package, public and class is designed to be similar to Java. While symbolic anchors (`#~`, `#<`) represent the idiomatic, high-density Jolk style, the grammar provides keyword aliases (`package`, `public`) to reduce cognitive load.
 
 Furthermore, Jolk retains Java-like structures for record and enum to maintain strict compatibility with modern JVM features such as Project Valhalla. The syntax for generics adopts angle brackets (`< >`) to align with Java and the Strongtalk lineage, ensuring parsing stability and preventing recursive descent issues when the compiler processes complex nested types.
 
@@ -287,7 +327,7 @@ Jolk prohibits intrusive reflection to ensure that an object’s internal struct
 
 ### Meta-Directives
 
-Meta-Directives establish the context that governs the relationship between the source and the platform. *Structural Expansion* via the `#+` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Contextual Projection* through the `#@` lens, which isolates platform facts—whether static constants or functional methods—and projects them as immutable local symbols. *Visibility* (e.g., `#>`) and *Finality* (e.g., `#!`) are structural properties which mandate the state of access and identity.
+Meta-Directives establish the context that governs the relationship between the source and the platform. *Structural Expansion* via the `+` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Contextual Projection* through the `&` lens, which isolates platform facts—whether static constants or functional methods—and projects them as immutable local symbols. *Visibility* (e.g., `#>`) and *Finality* (e.g., `#!`) are structural properties which mandate the state of access and identity.
 
 ## Language Specification Summary
 
@@ -541,7 +581,7 @@ In Jolk, class-level constants are reified as Meta-Objects within the Meta-Objec
 In Jolk, the use of a meta field acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains Semantic Integrity by preserving the link to the parent object (e.g., Math) while removing the syntactic noise of explicit message selectors. Though it appears as a bare variable, the Tolk engine recognises the lens and applies Semantic Flattening, "intrinsifying" the access.
 
 	// symbolic directive for "using meta"
-	#@ jolk.lang.Math.PI;
+	& jolk.lang.Math.PI;
 
     // standard message send  
     x = 2 * r * Math #PI;
@@ -1194,7 +1234,7 @@ Demonstrated language concepts: creation methods, message chaining, closure, DI,
 	}
 
 	//
-	#@ demo.validation.rules.ContactFormValidation.INTERRUPT;
+	& demo.validation.rules.ContactFormValidation.INTERRUPT;
 
 	#! class InssConstraint extends Constraint<Person> {
 

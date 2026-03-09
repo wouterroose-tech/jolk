@@ -47,10 +47,12 @@ public class JolctVisitorClosureTest extends JolctVisitorTest {
     @Test
     void testPatternMatching_2() {
         String source = """
+            [
             other #instanceOf(Person) ?! [ ^false ];
             Person p = other #as(Person);
             p #work();
             ^true
+            ]
             """;
         String expected = """
             if (!((other instanceof Person))) {

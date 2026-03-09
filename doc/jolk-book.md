@@ -714,7 +714,7 @@ Branching is formalised as a recursive Message Expression sent to Boolean identi
         : (score >= 80) ? [ Grade #B ]  
         : [ Grade #F ];
 
-While the Jolk grammar facilitates recursive expression branching through both positive (?) and negative (?!) operators, Structural Integrity is best preserved by maintaining unipolar cascades. Mixed-polarity expressions introduce cognitive friction by pivoting the logical meaning of the colon (:) branch, potentially obscuring the precision of the nominal state.
+While the Jolk grammar facilitates recursive expression branching through both positive (`?`) and negative (`?!`) operators, Structural Integrity is best preserved by maintaining unipolar cascades. Mixed-polarity expressions introduce cognitive friction by pivoting the logical meaning of the colon (`:`) branch, potentially obscuring the precision of the nominal state.
 
 **Control loops** 
 

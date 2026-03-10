@@ -589,7 +589,10 @@ In Jolk, the use of a meta field acts as a "lens", creating a virtual local anch
 
 **Assignment**
 
-In the Jolk architecture, assignment (`=`) is not a standard function but a metalevel change that serves as both a structural anchor and a "fence." This symbol guards the transition from pure functional evaluation to state-altering operations. By restricting assignment to local identifiers and mandating message-passing for all other state changes, the meta-layer enforces strict local retention and encapsulation. This ensures that an Identity’s internal state remains shielded, permitting only controlled mutations that respect the established metaboundaries.
+In Jolk, the assignment symbol (`=`) demarcates the boundary between internal evaluation and Identity Definition. By restricting assignment to local identifiers and object creation but mandating message-passing for all other state changes, the meta-layer enforces local retention and encapsulation. This ensures that an Identity’s internal state remains shielded, permitting only controlled mutations.
+
+In alignment with Alan Kay’s vision to eliminate assignment altogether [8], Jolk daunts the use of assignments and encourages a transition from imperative memory-overwriting to evolutionary projection; under this protocol, the actor is excised and assignments are ideally restricted to object creation. An identity does not have its state changed but instead projects a successor via the “wither” technique [9]. This ensures that objects remain self-contained, rendering procedural mutation technically redundant. This constraint does not apply to collections, as they function as aggregators rather than representing Immutable Identities.
+
 
 ## Messaging
 
@@ -745,7 +748,7 @@ Pattern Matching results in a `Match<T>` to drive logic flow through a message c
 
 ### Exceptions
 
-While Jolk utilizes the standard Java Exception hierarchy, it eliminates checked exceptions. Following the design of languages like Kotlin[8], Jolk does not force the developer to catch exceptions, allowing them to propagate through the call hierarchy. In Jolk, exception handling is implemented through unified message passing rather than procedural keywords like `try`, `catch`, or `throw`. This approach treats error handling as a library feature where logic is executed by sending messages to closures. Closure is a primitive kernel class with provides `#catch`, `#finally` methods.
+While Jolk utilizes the standard Java Exception hierarchy, it eliminates checked exceptions. Following the design of languages like Kotlin[10], Jolk does not force the developer to catch exceptions, allowing them to propagate through the call hierarchy. In Jolk, exception handling is implemented through unified message passing rather than procedural keywords like `try`, `catch`, or `throw`. This approach treats error handling as a library feature where logic is executed by sending messages to closures. Closure is a primitive kernel class with provides `#catch`, `#finally` methods.
 
 **Exception Class**
 
@@ -824,7 +827,7 @@ Jolk transitions Booleans from binary primitives into Identities of Choice, reif
 
 *Nothing \- null*
 
-Jolk eliminates the "billion-dollar mistake" by adopting the Null Object Pattern[9] to reify the null pointer into Nothing, a first-class identity represented by the reserved literal `null`. As the meta-aware singleton of the `Nothing` type, it serves as the default state for all uninitialised references. By transforming a hardware-level void into a concrete identity, Jolk ensures every reference can receive messages, shifting failures from opaque runtime crashes to semantic, manageable MessageNotUnderstood errors.
+Jolk eliminates the "billion-dollar mistake" by adopting the Null Object Pattern[11] to reify the null pointer into Nothing, a first-class identity represented by the reserved literal `null`. As the meta-aware singleton of the `Nothing` type, it serves as the default state for all uninitialised references. By transforming a hardware-level void into a concrete identity, Jolk ensures every reference can receive messages, shifting failures from opaque runtime crashes to semantic, manageable MessageNotUnderstood errors.
 
 As an Atomic Receiver, the Nothing identity enables Fluid Message Chaining via integrated safe navigation. This "Neutral Response" model allows logic to flow seamlessly through missing values, preserving Jolk's expressive messaging architecture without the performance overhead of traditional Optional wrappers or the lexical clutter of defensive null-checks.
 
@@ -1055,15 +1058,15 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Strongtalk Heritage*: Jolk incorporates a rigorous static type system inspired by Strongtalk with `< >` delimiters for generic type parameters, which enforces a formal separation between the subtype and subclass lattices. This ensures behavioural protocols are verified independently of an object's implementation lineage.
 
-*The Self Language*: The Tolk compiler’s strategy of "Semantic Flattening" is the spiritual successor to the optimization techniques developed for the Self language[10].
+*The Self Language*: The Tolk compiler’s strategy of "Semantic Flattening" is the spiritual successor to the optimization techniques developed for the Self language[12].
 
 *Java and JVM Integration*: The syntax for Structural Scaffolding—including package, import, and class—is intentionally aligned with Java to reduce cognitive load. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
 
 *Kotlin Influences*: Following Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks. It adopts Trailing Closure Syntax for logic-driven messages.
 
-*C# Null-Coalescing*: Jolk adopts the `??` operator from C#[11], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
+*C# Null-Coalescing*: Jolk adopts the `??` operator from C#[13], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
 
-*C# using Directive*: Jolk adopts the `C#` using directive[15] for vocabulary expansion, aliasing and constant projection.
+*C# using Directive*: Jolk adopts the `C#` using directive[17] for vocabulary expansion, aliasing and constant projection.
 
 *The Null Object Pattern* in Jolk is a direct architectural evolution of concepts from both Smalltalk-80 and Kotlin, designed to handle "nothingness" as a first-class participant in the messaging flow rather than a system-collapsing failure. Jolk takes the reified identity of Smalltalk and the type-safe constraints of Kotlin, then applies Identity Restitution to preserve a pure object-oriented "World View" on the high-performant JVM.
 
@@ -1073,7 +1076,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Receiver Retention*: while the behavior is identical to Smalltalk's ergonomics, Receiver Retention is a sanitization layer designed to preserve the "message-passing soul" of the language when operating as a "polite citizen" within the procedural constraints of the Java Virtual Machine
 
-*Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[12], Ruby[13] and Perl[14].
+*Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[14], Ruby[15] and Perl[16].
 
 ---
 
@@ -1659,7 +1662,7 @@ To ensure high structural density without performance degradation, the compiler 
 
 ### Concurrency
 
-The Tolk compiler facilitates concurrency through *Semantic Flattening*, an optimization strategy pioneered by the Self Language implementation[10]. By mapping message chains directly onto the native JVM infrastructure for Structured Concurrency, Jolk delivers a fluid, receiver-centric flow of messages between autonomous objects, eliminating the need for explicit thread management. This approach leverages Self's technique of compiling dynamic logic into high-performance machine code, allowing Tolk to resolve dynamic messages into static JVM opcodes for zero-overhead execution.
+The Tolk compiler facilitates concurrency through *Semantic Flattening*, an optimization strategy pioneered by the Self Language implementation[12]. By mapping message chains directly onto the native JVM infrastructure for Structured Concurrency, Jolk delivers a fluid, receiver-centric flow of messages between autonomous objects, eliminating the need for explicit thread management. This approach leverages Self's technique of compiling dynamic logic into high-performance machine code, allowing Tolk to resolve dynamic messages into static JVM opcodes for zero-overhead execution.
 
 Under the hood, the compiler transforms asynchronous message sends into the rigorous patterns required by Java's `StructuredTaskScope` and Virtual Threads. This ensures that concurrent execution remains lightweight and architecturally bound to its defining scope, allowing the Jolk runtime to leverage the full power of the Java platform without exposing the developer to the verbose boilerplate of traditional threading models.
 
@@ -1753,21 +1756,25 @@ The industrialisation roadmap follows an iterative progression, prioritising the
 
 [7]: Canning, Peter S.; Cook, William R.; Hill, Walter L.; Mitchell, John C.; Olthoff, William (1989). F-bounded polymorphism for object-oriented programming. In Conference on Functional Programming Languages and Computer Architecture.
 
-[8]: Kotlin. Exceptions. ([https://kotlinlang.org/docs/exceptions.html\#exception-classes](https://kotlinlang.org/docs/exceptions.html#exception-classes)). 
+[8] Kay, Alan (1996). The early history of Smalltalk | History of programming languages Pages 511 - 598. ACM. ([ISBN:0201895021](https://dl.acm.org/doi/epdf/10.1145/234286.1057828))
 
-[9]: Woolf, Bobby (1998). Null Object. Pattern Languages of Program Design 3. Addison-Wesley.
+[9] Bierman, Gavin ; Goetz.Brian (2023). Derived Record- Creation ([JEP 468](https://openjdk.org/jeps/468))
 
-[10]: Chambers, C., & Ungar, D. (1989). Customization: Optimizing Compiler Technology for Self, a Dynamically-Typed Object-Oriented Programming Language. In PLDI '89 (pp. 146–160).
+[10]: Kotlin. Exceptions. ([https://kotlinlang.org/docs/exceptions.html\#exception-classes](https://kotlinlang.org/docs/exceptions.html#exception-classes)). 
 
-[11]: Microsoft. (2005). C# Language Specification 2.0. ([The Null Coalescing Operator](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator))
+[11]: Woolf, Bobby (1998). Null Object. Pattern Languages of Program Design 3. Addison-Wesley.
 
-[12]:  Unified Modeling Language 2.5.1. Object Management Group Document Number formal/2017-12-05. Object Management Group Standards Development Organization. December 2017. ([https://www.omg.org/spec](https://www.omg.org/spec))
+[12]: Chambers, C., & Ungar, D. (1989). Customization: Optimizing Compiler Technology for Self, a Dynamically-Typed Object-Oriented Programming Language. In PLDI '89 (pp. 146–160).
 
-[13]: Ruby,  Syntax Assignments ([https://docs.ruby-lang.org/en/master/syntax/assignment\_rdoc.html](https://docs.ruby-lang.org/en/master/syntax/assignment_rdoc.html))
+[13]: Microsoft. (2005). C# Language Specification 2.0. ([The Null Coalescing Operator](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator))
 
-[14]: Perl, Naming Conventions, ([https://en.wikibooks.org/wiki/Perl\_Programming/Scalar\_variables\#Naming\_Conventions](https://en.wikibooks.org/wiki/Perl_Programming/Scalar_variables#Naming_Conventions))
+[14]:  Unified Modeling Language 2.5.1. Object Management Group Document Number formal/2017-12-05. Object Management Group Standards Development Organization. December 2017. ([https://www.omg.org/spec](https://www.omg.org/spec))
 
-[15]: Microsoft. (2026). C# language reference ([C# The using directive](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive))
+[15]: Ruby,  Syntax Assignments ([https://docs.ruby-lang.org/en/master/syntax/assignment\_rdoc.html](https://docs.ruby-lang.org/en/master/syntax/assignment_rdoc.html))
+
+[16]: Perl, Naming Conventions, ([https://en.wikibooks.org/wiki/Perl\_Programming/Scalar\_variables\#Naming\_Conventions](https://en.wikibooks.org/wiki/Perl_Programming/Scalar_variables#Naming_Conventions))
+
+[17]: Microsoft. (2026). C# language reference ([C# The using directive](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive))
 
 Consulted Documentation 
 

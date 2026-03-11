@@ -16,7 +16,8 @@ public class JolctVisitorMessage {
         "#ifPresent", 
         "#ifEmpty",
         "#isPresent", 
-        "#isEmpty");
+        "#isEmpty",
+        "#instanceOf");
 
     private static final Set<String> CORE_COLLECTIONS = Set.of(
         "Array",
@@ -50,6 +51,9 @@ public class JolctVisitorMessage {
         }
         //  Identify intrinsic selector
         String intrinsicSelector = ctx.selector(terminalIndex).getText();
+        if ("#instanceOf".equals(intrinsicSelector)) {
+            return projectInstanceOf(subject, ctx, terminalIndex);
+        }
         if (isIsPresenceSelector(intrinsicSelector)) {
             return projectPresence(subject, intrinsicSelector);
         }
@@ -124,9 +128,6 @@ public class JolctVisitorMessage {
             } else if ("as".equals(selector)) {
                 String type = args.substring(1, args.length() - 1);
                 current = "((" + type + ") " + current + ")";
-            } else if ("instanceOf".equals(selector)) {
-                String type = args.substring(1, args.length() - 1);
-                current = "(" + current + " instanceof " + type + ")";
             } else if ("isInstance".equals(selector)) {
                 current = current + ".class.isInstance" + args;
             } else {
@@ -161,6 +162,17 @@ public class JolctVisitorMessage {
         return -1;
     }
 
+    private String getIfPresentParamName(jolkParser.ClosureContext blockCtx) {
+        if (blockCtx != null && blockCtx.stat_params() != null) {
+            if (blockCtx.stat_params().inferred_params() != null && !blockCtx.stat_params().inferred_params().InstanceId().isEmpty()) {
+                return blockCtx.stat_params().inferred_params().InstanceId(0).getText();
+            } else if (blockCtx.stat_params().typed_params() != null && !blockCtx.stat_params().typed_params().InstanceId().isEmpty()) {
+                return blockCtx.stat_params().typed_params().InstanceId(0).getText();
+            }
+        }
+        return null;
+    }
+
     private String projectPresenceBlock(String subject, String selector, jolkParser.MessageContext ctx,
             int selectorIndex) {
         jolkParser.PayloadContext payload = getPayloadForSelector(ctx, selectorIndex);
@@ -174,12 +186,7 @@ public class JolctVisitorMessage {
         sb.append("if (").append(tempVar).append(operator).append(") {\n");
 
         if (blockCtx != null && "#ifPresent".equals(selector) && blockCtx.stat_params() != null) {
-            String paramName = null;
-            if (blockCtx.stat_params().inferred_params() != null && !blockCtx.stat_params().inferred_params().InstanceId().isEmpty()) {
-                paramName = blockCtx.stat_params().inferred_params().InstanceId(0).getText();
-            } else if (blockCtx.stat_params().typed_params() != null && !blockCtx.stat_params().typed_params().InstanceId().isEmpty()) {
-                paramName = blockCtx.stat_params().typed_params().InstanceId(0).getText();
-            }
+            String paramName = getIfPresentParamName(blockCtx);
             if (paramName != null) {
                 sb.append("final var ").append(paramName).append(" = ").append(tempVar).append(";\n");
             }
@@ -189,6 +196,48 @@ public class JolctVisitorMessage {
         }
         sb.append("}\n");
         return sb.toString();
+    }
+
+    private String projectInstanceOf(String subject, jolkParser.MessageContext ctx, int startIndex) {
+        jolkParser.PayloadContext instanceOfPayload = getPayloadForSelector(ctx, startIndex);
+        String type = visitor.visit(instanceOfPayload.arguments());
+
+        if (startIndex + 1 < ctx.selector().size()) {
+            String nextSelector = ctx.selector(startIndex + 1).getText();
+            if ("#ifPresent".equals(nextSelector)) {
+                jolkParser.PayloadContext ifPresentPayload = getPayloadForSelector(ctx, startIndex + 1);
+                jolkParser.ClosureContext blockCtx = ifPresentPayload.closure();
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("if (").append(subject).append(" instanceof ").append(type).append(") {\n");
+
+                if (blockCtx != null) {
+                    String paramName = getIfPresentParamName(blockCtx);
+                    if (paramName != null) {
+                        sb.append("final var ").append(paramName).append(" = (").append(type).append(") ").append(subject).append(";\n");
+                    }
+                    sb.append(visitor.visitClosureBody(blockCtx));
+                }
+                sb.append("}");
+                return sb.toString();
+            } else if ("#ifEmpty".equals(nextSelector)) {
+                jolkParser.PayloadContext ifEmptyPayload = getPayloadForSelector(ctx, startIndex + 1);
+                jolkParser.ClosureContext blockCtx = ifEmptyPayload.closure();
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("if (!(").append(subject).append(" instanceof ").append(type).append(")) {\n");
+                if (blockCtx != null) {
+                    sb.append(visitor.visitClosureBody(blockCtx));
+                }
+                sb.append("}");
+                return sb.toString();
+            } else if ("#isPresent".equals(nextSelector)) {
+                return "(" + subject + " instanceof " + type + ")";
+            } else if ("#isEmpty".equals(nextSelector)) {
+                return "(!(" + subject + " instanceof " + type + "))";
+            }
+        }
+        return "(" + subject + " instanceof " + type + ")";
     }
 
     private String projectPresence(String subject, String selector) {

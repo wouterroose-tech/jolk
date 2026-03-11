@@ -53,6 +53,7 @@ public class JolctVisitorClosureTest extends JolctVisitorTest {
             p #work();
             ^true
             ]
+            ]
             """;
         String expected = """
             if (!((other instanceof Person))) {

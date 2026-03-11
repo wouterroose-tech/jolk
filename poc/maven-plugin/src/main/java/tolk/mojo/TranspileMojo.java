@@ -43,22 +43,29 @@ public class TranspileMojo extends AbstractJolkMojo {
         JolkTranspiler transpiler = new JolkTranspiler();
         JolkContext context = new JolkContext();
 
+        List<Path> jolkFiles;
         try {
-            // 1. Collect all Jolk files
-            List<Path> jolkFiles;
             try (Stream<Path> walk = Files.walk(sourcePath)) {
                 jolkFiles = walk.filter(Files::isRegularFile)
                         .filter(p -> p.toString().endsWith(".jolk"))
                         .collect(Collectors.toList());
             }
+        } catch (IOException e) {
+            throw new MojoExecutionException("Error scanning for Jolk source files", e);
+        }
 
-            // 2. Pass 1: Analyze (Populate Context)
-            for (Path jolkFile : jolkFiles) {
+        // 2. Pass 1: Analyze (Populate Context)
+        for (Path jolkFile : jolkFiles) {
+            try {
                 transpiler.analyze(jolkFile, context);
+            } catch (RuntimeException | IOException e) {
+                throw new MojoExecutionException("Error analyzing file: " + jolkFile, e);
             }
+        }
 
-            // 3. Pass 2: Transpile (Generate Code)
-            for (Path jolkFile : jolkFiles) {
+        // 3. Pass 2: Transpile (Generate Code)
+        for (Path jolkFile : jolkFiles) {
+            try {
                 String javaCode = transpiler.transpile(jolkFile, context);
 
                 Path relativePath = sourcePath.relativize(jolkFile);
@@ -67,9 +74,11 @@ public class TranspileMojo extends AbstractJolkMojo {
 
                 Files.createDirectories(javaFile.getParent());
                 Files.write(javaFile, javaCode.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new MojoExecutionException("Error writing transpiled file for: " + jolkFile, e);
+            } catch (RuntimeException e) {
+                throw new MojoExecutionException("Error transpiling file: " + jolkFile, e);
             }
-        } catch (IOException | RuntimeException e) {
-            throw new MojoExecutionException("Error transpiling Jolk sources", e);
         }
 
         // 4. Add generated sources to Maven project

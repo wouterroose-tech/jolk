@@ -115,8 +115,18 @@ public class JolctVisitFieldTest extends JolctVisitorTest {
         assertTranspilation("private final Type PI = 3.14;\n" +
                 "private Type PI() {\n" +
                 "return PI;\n" +
-                "}\n", "constant Type PI = 3.14;");
+                "}\n", "private constant Type PI = 3.14;");
     }
+
+    @Test
+    public void testConstant_2() {
+        // constant -> final. Default visibility private.
+        assertTranspilation("private final Type PI;\n" +
+                "private Type PI() {\n" +
+                "return PI;\n" +
+                "}\n", "private constant Type PI;");
+    }
+
 
     @Test
     public void testMeta() {

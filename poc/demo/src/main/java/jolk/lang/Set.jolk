@@ -1,4 +1,4 @@
-package jolk.lang;
+~ jolk.lang;
 
 /// # Set
 ///
@@ -12,7 +12,7 @@ package jolk.lang;
 /// @author Wouter Roose
 
 @Intrinsic
-public final class Set<T> {
+final class Set<T> {
 
     /// Creates a new Set containing the provided elements.
     meta Set<T> new(T... elements) { }

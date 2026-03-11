@@ -586,9 +586,14 @@ public class JolctVisitor extends jolkBaseVisitor<String> {
 
     @Override
     public String visitConstant(jolkParser.ConstantContext ctx) {
-        return "final " + visit(ctx.type()) + " " +
-                ctx.binding().identifier().getText() + " = " +
-                visit(ctx.binding().expression());
+        StringBuilder sb = new StringBuilder("final ");
+        sb.append(visit(ctx.type())).append(" ");
+        sb.append(ctx.binding().identifier().getText());
+
+        if (ctx.binding().expression() != null) {
+            sb.append(" = ").append(visit(ctx.binding().expression()));
+        }
+        return sb.toString();
     }
 
     @Override

@@ -1,4 +1,4 @@
-package jolk.lang;
+~ jolk.lang;
 
 /// # Map
 ///
@@ -12,7 +12,7 @@ package jolk.lang;
 /// @author Wouter Roose
 
 @Intrinsic
-public final class Map<K, V> {
+final class Map<K, V> {
 
     /// Creates a new Map containing the provided keys and values.
     /// Arguments are flattened: key1, value1, key2, value2...

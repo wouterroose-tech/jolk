@@ -1,4 +1,4 @@
-package jolk.lang;
+~ jolk.lang;
 
 /// # Closure
 /// A first-class representation of a block of code or function.

@@ -26,6 +26,37 @@ public class JolctVisitorMessageTest  extends JolctVisitorTest {
     }
 
     @Test
+    void testPatternMatching() {
+        String source = "other #instanceOf(Person) #ifPresent [ ^false ]";
+        String expected = """
+            if (other instanceof Person) {
+            return false;
+            }""";
+        assertMessage(expected, source);
+    }
+
+    @Test
+    void testPatternMatching_2() {
+        String source = "other #instanceOf(Person) #ifPresent [ p ->  ^p ]";
+        String expected = """
+            if (other instanceof Person) {
+            final var p = (Person) other;
+            return p;
+            }""";
+        assertMessage(expected, source);
+    }
+
+    @Test
+    void testPatternMatching_3() {
+        String source = "other #instanceOf(Person) #ifEmpty [ ^false ]";
+        String expected = """
+            if (!(other instanceof Person)) {
+            return false;
+            }""";
+        assertMessage(expected, source);
+    }
+
+    @Test
     void testMessage() {
         String source = "x #do";
         String expected = "x.do()";

@@ -268,7 +268,7 @@ Syntactic elements act as structural anchors for the parser.
 
 ## Semantics
 
-In the Jolk ecosystem, reserved words are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid language keywords like class, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
+In the Jolk ecosystem, reserved identifiers are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid language keywords like class, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
 
 ### Unified Message-Passing
 
@@ -286,13 +286,13 @@ By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts co
 
 The Jolk type system fully aligns with the Java generics syntax. The grammar distinguishes between five archetypes ( `class`, `enum`, `record`, and `value`) which serve as structural anchors in the EBNF.
 
-Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent a mathematically precise intersection of contracts. Aligning with the concept of Traits[6], this allows for the composition of behavior without the state problems of multiple inheritance. This isn't just syntactic sugar; it is a structural guarantee that ensures the Identity of the participant and the Contract of the Message remain visible and secure, preventing semantically incompatible objects from accidentally matching based on syntax alone. Finally, the syntax enables extensions that permits augmentation of types with new messages.
+Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent a mathematically precise intersection of contracts. Aligning with the concept of Traits[6], this allows for the composition of behavior without the state problems of multiple inheritance. This is a structural guarantee that ensures the Identity of the participant and the contract of the message remain visible and secure, preventing semantically incompatible objects from accidentally matching based on syntax alone. Finally, the syntax enables extensions that permits augmentation of types with new messages.
 
 Primitives are absent from the syntax because Jolk follows a pure object-oriented model where everything—including numbers, truth values, and the absence of a value (`null` a singleton instance of the `Nothing` class) —is a first-class object. This removal of the primitive/object distinction maintains a minimalist syntax while ensuring that every entity maintains a non-nullable identity.
 
 `meta`: Designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta layer.   
 `constant`: Establishes a value as an immutable, non-variable fact within the source.   
-`lazy`*: Designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
+`lazy`	: Designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
 
 ### Mathematical and Equality Operators
 
@@ -306,7 +306,7 @@ Statement Termination Logic balances structural discipline with the fluid messag
 
 ### Closure
 
-A closure's return value is governed by its lexical context, the result is the evaluation of its last expression unless an explicit return (`^`) is encountered. **Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the arguments directly. Parameters within a closure are separated from the logic by an `-`> arrow.
+A closure's return value is governed by its lexical context, the result is the evaluation of its last expression unless an explicit return (`^`) is encountered. **Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the arguments directly. Parameters within a closure are separated from the logic by an arrow `->`.
 
 ### Parameter Immutability
 
@@ -364,7 +364,7 @@ Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type sy
 
 To maintain rigorous encapsulation, direct field manipulation in Jolk is restricted to the local class scope for private fields and the inheritance hierarchy for protected fields. Even when a developer declares a field as `public`, the language does not expose the raw memory address. Instead, it constructs a *Lexical Fence*. This boundary restricts direct memory interaction—conducted via the internal terminals (`^ field` for retrieval or `field = value` for assignment)—strictly to the Archetype's internal logic.
 
-External state interaction is managed through *Implicit Field Encapsulation*, a protocol synthesised by the compiler that provides an automatic *Fluent API*. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent constants within the Identity, the generation of a setter is architecturally suppressed. By automating this fence, Jolk ensures that *State Integrity* is maintained through an immutable contract of message pivots, effectively preventing encapsulation leaks.
+External state interaction is managed through *Implicit Field Encapsulation*, a protocol synthesised by the compiler that provides an automatic *Fluent API*. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent constants within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that *State Integrity* is maintained through an immutable contract of message pivots, effectively preventing encapsulation leaks.
 
 	class Point {  
 	    public Int x;  
@@ -592,7 +592,6 @@ In Jolk, the use of a meta field acts as a "lens", creating a virtual local anch
 In Jolk, the assignment symbol (`=`) demarcates the boundary between internal evaluation and identity definition. By restricting assignment to local identifiers and object creation but mandating message-passing for all other state changes, the meta-layer enforces local retention and encapsulation. This ensures that an identity’s internal state remains shielded, permitting only controlled mutations.
 
 In alignment with Alan Kay’s vision to eliminate assignment altogether [8], Jolk daunts the use of assignments and encourages a transition from imperative memory-overwriting to evolutionary projection; under this protocol, the actor is excised and assignments are ideally restricted to object creation. An identity does not have its state changed but instead projects a successor via the “wither” technique [9]. This ensures that objects remain self-contained, rendering procedural mutation technically redundant. This constraint does not apply to collections, as they function as aggregators rather than representing immutable identities.
-
 
 ## Messaging
 
@@ -1111,6 +1110,12 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 		Function<T, R> supplier;  
 		Validation<R> validation;
 
+		meta ChildValidation new(Function<T, R> supplier, Validation<R> validation) {
+			^ super #new
+				#supplier(supplier)
+				#validation(validation)
+		}
+
 		package Self accept(T subject, ExecutionContext context) {  
 			supplier #value(subject) #ifPresent [ child -> validation #accept(child, context) ]  
 		}  
@@ -1186,7 +1191,7 @@ Demonstrated language concepts: generics, Self Type alias, message chaining for 
 
 ### Domain
 
-The domain types are a set of data records and validation classes implementing a specific form validation.
+The domain types are a set of data objects and validation classes implementing a specific form validation.
 
 	//  
 	class ContactForm {  
@@ -1509,11 +1514,7 @@ Jolk achieves full Java compatibility by acting as a "semantic envoy" that maps 
 
 **Total Static Resolution**
 
-Reserved Identifiers and literals function as immutable Meta-Objects, acting as lexical anchors for *Total Static Resolution*.
-
-	message = primary { selector [...] [ closure ] }
-
-Since every expression begins with a mandatory primary receiver, the Tolk compiler can identify the type at compile-time using a *Dual-Stratum Symbol Table*. When a message is sent to a "Kernel Type" (such as `Boolean` or `Closure`), the *Intrinsic Registry* maps selectors like `?`, `?!` or `#while` to native instructions. For arbitrary or late-bound receivers, the engine employs `invokedynamic` to maintain flexibility.
+Reserved Identifiers and literals function as immutable Meta-Objects, acting as lexical anchors for *Total Static Resolution*. Since every expression begins with a mandatory primary receiver, the Tolk compiler can identify the type at compile-time using a *Dual-Stratum Symbol Table*. When a message is sent to a "Kernel Type" (such as `Boolean` or `Closure`), the *Intrinsic Registry* maps selectors like `?`, `?!` or `#while` to native instructions. For arbitrary or late-bound receivers, the engine employs `invokedynamic` to maintain flexibility.
 
 **Extension Method Rewriting**
 
@@ -1688,7 +1689,7 @@ However, on-demand memoisation introduces the "Hidden Trap", where a circular de
 
 ## Engineered Integrity: A Future-Proof JVM Synthesis
 
-Jolk acts as a high-level choreographer for the latest advancements in the Java Virtual Machine. While the Jolk kernel maintains a fluid, message-centric "World View," it leverages Project Amber’s pattern matching and sealed types to implement industrial-strength "listening" protocols with near-instant dispatch. Project Valhalla provides the perfect substrate for this message payload; by transpiling data-heavy objects into flattened Value Objects, Jolk ensures that its "Messages in Motion" carry their cargo with zero-allocation efficiency. This synergy allows Jolk to offer the dynamic flexibility of a late-bound system while inheriting the rigorous performance and memory density of modern Java.
+Jolk acts as a high-level choreographer for the latest advancements in the Java Virtual Machine. While the Jolk kernel maintains a fluid, message-centric "World View," it leverages Project Amber’s pattern matching and sealed types to implement industrial-strength "listening" protocols with near-instant dispatch. Project Valhalla provides the perfect substrate for this message payload; by transpiling data-heavy objects into flattened Value Objects, Jolk ensures that its "Messages in Motion" carry their cargo with zero-allocation efficiency. This synergy allows Jolk to offer the dynamic flexibility of a late-bound system while inheriting the rigorous performance and memory density of modern Java. Jolk could benifit from the Valhalla JEPS Null-Restricted Value Object Storage and Null-Restricted and Nullable Types to optimize the implementation of nothing.
 
 Jolk’s approach to object creation as class-level messaging interfaces represents a pivotal shift toward predictable integrity. By treating the transition from type to identity as an atomic, guarded operation, Jolk addresses the problem of partial initialisation. This design ensures that an object’s identity never leaks before its state is fully established, aligning perfectly with the JVM’s finalisation of flexible constructor bodies. By targeting these specifications natively, the compiler allows for sophisticated logic and validation before a parent creation method is even invoked, eliminating the clunky static factory hacks that have long burdened enterprise development.
 

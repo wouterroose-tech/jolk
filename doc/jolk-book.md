@@ -291,7 +291,7 @@ Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' t
 Primitives are absent from the syntax because Jolk follows a pure object-oriented model where everything—including numbers, truth values, and the absence of a value (`null` a singleton instance of the `Nothing` class) —is a first-class object. This removal of the primitive/object distinction maintains a minimalist syntax while ensuring that every entity maintains a non-nullable identity.
 
 `meta`: Designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta layer.   
-`constant`: Establishes a value as an immutable, non-variable fact within the source.   
+`constant`: Establishes a field as non-assignable (shallow immutability)
 `lazy`	: Designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
 
 ### Mathematical and Equality Operators

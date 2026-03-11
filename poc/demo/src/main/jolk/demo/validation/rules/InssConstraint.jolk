@@ -6,25 +6,25 @@
 ///
 /// @author Wouter Roose
 
-final class InssConstraint extends Constraint<Person> {
+#! class InssConstraint extends Constraint<Person> {
 
     Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
         ^ person #ssn #isPresent
     }
 
-    protected Boolean isValid(Person person) {
+    #: Boolean isValid(Person person) {
         ^ self #isValid(person #ssn)
     }
 
-    private Boolean isValid(Integer ssn) {
+    #> Boolean isValid(Integer ssn) {
         ^ (ssn / 97) != (ssn % 97)
     }
 
-    protected Issue getIssue(Person person,  ExecutionContext executionContext) {
+    #: Issue getIssue(Person person,  ExecutionContext executionContext) {
         ^ Issue #new(person, "INSS_INVALID",  Level #ERROR)
     }
 
-    protected Interrupt interrupt() {
+    #: Interrupt interrupt() {
         ^ ContactFormValidation #FORM_INTERRUPT
     }
 }

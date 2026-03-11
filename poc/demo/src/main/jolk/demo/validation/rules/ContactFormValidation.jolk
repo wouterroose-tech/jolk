@@ -8,7 +8,7 @@
 
 class ContactFormValidation extends ValidationSuite<ContactForm> {
 
-    public meta constant Interrupt FORM_INTERRUPT = Interrupt #new;
+    #< meta constant Interrupt FORM_INTERRUPT = Interrupt #new;
 
     // singleton in DI configuration
     meta lazy ContactFormValidation new() {

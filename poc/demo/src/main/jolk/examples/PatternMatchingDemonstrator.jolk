@@ -1,6 +1,6 @@
 ~ examples;
 
-using demo.validation.domain.Person;
++ demo.validation.domain.Person;
 
 /// Demonstrates Jolk's pattern matching capabilities.
 ///

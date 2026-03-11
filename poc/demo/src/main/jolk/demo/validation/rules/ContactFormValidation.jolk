@@ -1,7 +1,7 @@
-package demo.validation.rules;
+~ demo.validation.rules;
 
-using demo.validation.engine.*;
-using demo.validation.domain.ContactForm;
++ demo.validation.engine.*;
++ demo.validation.domain.ContactForm;
 
 ///
 /// @author Wouter Roose

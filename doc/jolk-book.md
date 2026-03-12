@@ -826,11 +826,9 @@ Jolk transitions Booleans from binary primitives into Identities of Choice, reif
 
 *Nothing \- null*
 
-Jolk eliminates the "billion-dollar mistake" by adopting the Null Object Pattern[11] to reify the null pointer into Nothing, a first-class identity represented by the reserved literal `null`. As the meta-aware singleton of the `Nothing` type, it serves as the default state for all uninitialised references. By transforming a hardware-level void into a concrete identity, Jolk ensures every reference can receive messages, shifting failures from opaque runtime crashes to semantic, manageable MessageNotUnderstood errors.
+Jolk eliminates the "billion-dollar mistake" by adopting the Null Object Pattern[11] to reify the null pointer into Nothing, a first-class identity represented by the reserved literal `null`. As the meta-aware singleton of the `Nothing` type, it serves as the default state for all uninitialised references. By transforming a hardware-level void into an identity, Jolk ensures every reference can receive messages, shifting failures from opaque runtime crashes to semantic, manageable MessageNotUnderstood errors.
 
-As an Atomic Receiver, the Nothing identity enables Fluid Message Chaining via integrated safe navigation. This "Neutral Response" model allows logic to flow seamlessly through missing values, preserving Jolk's expressive messaging architecture without the performance overhead of traditional Optional wrappers or the lexical clutter of defensive null-checks.
-
-Safety is enforced at the Lexical Fence via a structural type system. By utilising Union Types (e.g., `[String | Nothing]`) and explicit typecase messages, Jolk forces developers to acknowledge undefined states at compile time. This rigorous type fencing preserves the "Security of Meaning," upholding a robust object-oriented contract that restores identity to the void.
+The Nothing identity enables Fluid Message Chaining via integrated safe navigation. This "Neutral Response" model allows logic to flow seamlessly through missing values, preserving Jolk's expressive messaging architecture without the overhead of `Optional` wrappers or the lexical clutter of defensive null-checks. Jolk facilitates Silent Absorption—a protocol within the message-dispatch cycle that neutralises subsequent operations without execution or structural failure. This mechanism of *Deterministic Omission* designates the absence of a factual result as a predictable signal, forcing the acknowledgement of undefined state. This identity-fencing preserves the object-oriented contract where the transition to a terminal state remains a stable outcome.
 
 **Primitive Numbers**
 

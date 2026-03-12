@@ -21,6 +21,12 @@ final class Interrupt extends RuntimeException {
     /// The Sentinel: A unique instance internal to the valdation.
     public meta constant Interrupt HALT = Interrupt #new;
 
+    meta Interrupt new() {
+        // Removes the overhead; the identity is now a lightweight flow-control signal.
+        // Disable stack trace (writableStackTrace' = false) for performance.
+        ^super #new("Validation Halt", null, false, false)
+    }
+
     meta Interrupt HALT() { ^ HALT }
     
 }

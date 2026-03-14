@@ -1,0 +1,39 @@
+package demo.validation.engine;
+
+using java.util.function.Predicate;
+
+/// # ExecutionContext
+///
+/// This class carries state during validation and collects issues.
+///
+/// @author Wouter Roose
+
+class ExecutionContext {
+
+    constant Array<Issue> issues = Array #new;
+
+    /// Adds an issue for the given subject.
+    Self add(Object subject, Issue issue) {
+        issues #add(issue)
+    }
+
+    /// Returns true if any issue has been reported.
+    Boolean hasIssue() {
+        ^ !issues #isEmpty
+    }
+    
+    /// Returns true if any error has been reported.
+    Boolean hasError() {
+        ^ self #hasMatch(Issue ##isError)
+    }
+
+    /// Returns true if any issue was reported for the given subject.
+    Boolean hasIssue(Object subject) {
+        ^ self #hasMatch [i -> i #concerns(subject)]
+    }
+
+    private Boolean hasMatch(Predicate<Issue> p) {
+        ^ issues #anyMatch(p)
+    }
+
+}

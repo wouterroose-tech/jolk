@@ -1,0 +1,53 @@
+package examples;
+
+/// Demonstrates Jolk's Ternary (`?` and `?!`) expressions.
+///
+/// Jolk unifies control flow into expression-based message passing.
+/// * `?` is the "if-true" operator.
+/// * `?!` is the "if-not-true" operator.
+/// * `condition ? trueVal : falseVal` is transpiled to a Java ternary expression.
+/// * `condition ? [ ... ]` is transpiled to a Java if-statement.
+///
+/// @author Wouter Roose
+
+final class TernaryExpressionDemonstrator {
+
+    String runReturn(Boolean condition) {
+        ^ condition ? "True" : "False"
+    }
+
+    String runAssignment(Boolean condition) {
+        String result = condition ? "A" : "B";
+        ^ result
+    }
+
+    String runChain(Integer val) {
+        ^ (val > 10) ? "High"
+            : (val > 5) ? "Medium"
+            : "Low"
+    }
+
+    String runOneBranch(Boolean condition) {
+        condition ? [ ^ "Hit" ];
+        ^ "Miss"
+    }
+
+    String runAssignmentIfNot(Boolean c) {
+        String x = c ?! "A" : "B";
+        ^x
+    }
+
+    Boolean runIfNotThen(Boolean cond) {
+        cond ?! [ ^ false ];
+        ^ true
+    }
+
+    Boolean runIfNotThenElse(Boolean cond) {
+        cond ?! [ ^ false ] : [ ^ true ]
+    }
+
+    Integer runBlockAssignment(Boolean condition) {
+        condition ? [ Integer x = 1; ^x ]
+            : [ Integer x = 2; ^x ]
+    }
+}

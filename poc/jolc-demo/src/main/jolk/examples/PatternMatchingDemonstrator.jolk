@@ -1,0 +1,73 @@
+~ examples;
+
++ demo.validation.domain.Person;
+
+/// Demonstrates Jolk's pattern matching capabilities.
+///
+/// Jolk replaces traditional `instanceof` checks and casts with a fluid,
+/// message-passing syntax. This ensures type-safe execution without breaking
+/// the message chain.
+///
+/// ### #instanceOf
+/// *   **Jolk**: `subject #instanceOf(Person) #ifPresent [ p -> p #... ]`
+/// *   **Java**: `if (subject instanceof Person p) { p... }`
+///
+/// ### #as
+/// *   **Jolk**: `subject #as(Person) #...`
+/// *   **Java**: `((Person) subject)...`
+///
+/// ### #isInstance
+/// *   **Jolk**: `Person #isInstance(subject)`
+/// *   **Java**: `Person.class.isInstance(subject)`
+///
+/// @author Wouter Roose
+final class PatternMatchingDemonstrator {
+
+    /// Returns true if the subject is an instance of Perso.
+    /// This is the equivalent of a simple `instanceof` check in Java.
+    Boolean runInstanceOf(Object subject) {
+        ^ subject #instanceOf(Person)
+    }
+
+    /// Uses `#instanceOf` with `#isPresent` for a boolean check.
+    Boolean runInstanceOfIsPresent(Object subject) {
+        ^ subject #instanceOf(Person) #isPresent
+    }
+
+    /// Demonstrates type-safe execution using `#instanceOf` and `#ifPresent`.
+    /// The closure is only executed if the subject is a String, and the
+    /// parameter `s` is automatically cast.
+    String runInstanceOfIfPresent(Object subject) {
+        subject #instanceOf(Person) #ifPresent [ s ->
+            ^ "Got a Person: " + s
+        ];
+        ^ "Not a Person"
+    }
+
+    /// Demonstrates a hard cast using `#as`.
+    /// This will throw a `ClassCastException` if the subject is not a Person.
+    String runAs(Object subject) {
+        ^ subject #as(Person) #toString
+    }
+
+    /// Demonstrates a safe cast using `#as` and `#ifPresent`, guarded by a `#catch`.
+    /// The closure is only executed if the subject is not null after casting.
+    /// This pattern is needed because `#as` will throw a `ClassCastException`
+    /// if the object is of an incompatible type.
+    String runAsIfPresent(Object subject) {
+        String result = "Cast failed or was null";
+        [
+            subject #as(Person) #ifPresent [ s ->
+                result = "Got a Person: " + s
+            ]
+        ] #catch [ ClassCastException e ->
+            // The cast failed, result remains "Cast failed or was null"
+        ];
+        ^ result
+    }
+
+    /// Demonstrates `#isInstance`, which is equivalent to `Class.isInstance()` in Java.
+    Boolean runIsInstance(Object subject) {
+        ^ Person #isInstance(subject)
+    }
+}

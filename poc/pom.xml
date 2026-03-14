@@ -10,16 +10,16 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>tolk-grammar</module>
-        <module>tolk-jolc</module>
-        <module>tolk-jolc-demo</module>
-        <module>tolk-jolct</module>
-        <module>tolk-jolct-demo</module>
-        <module>tolk-maven-plugin</module>
+        <module>grammar</module>
+        <module>jolc</module>
+        <module>jolc-demo</module>
+        <module>jolct</module>
+        <module>jolct-demo</module>
+        <module>maven-plugin</module>
     </modules>
 
     <properties>
-        <maven.compiler.release>25</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 

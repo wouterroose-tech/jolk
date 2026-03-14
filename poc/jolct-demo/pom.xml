@@ -34,7 +34,7 @@
                                 <pluginExecution>
                                     <pluginExecutionFilter>
                                         <groupId>jolk</groupId>
-                                        <artifactId>jolk-maven-plugin</artifactId>
+                                        <artifactId>tolk-maven-plugin</artifactId>
                                         <versionRange>[0.1.0-SNAPSHOT,)</versionRange>
                                         <goals>
                                             <goal>transpile</goal>
@@ -71,7 +71,7 @@
             </plugin>
             <plugin>
                 <groupId>jolk</groupId>
-                <artifactId>jolk-maven-plugin</artifactId>
+                <artifactId>tolk-maven-plugin</artifactId>
                 <version>0.1.0-SNAPSHOT</version>
                 <executions>
                     <execution>

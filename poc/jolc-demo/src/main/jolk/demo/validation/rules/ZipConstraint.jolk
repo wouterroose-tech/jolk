@@ -1,0 +1,34 @@
+~ demo.validation.rules;
+
++ demo.validation.engine.*;
++ demo.validation.domain.ContactForm;
++ demo.validation.services.GeoGraphicalService;
+
+& demo.validation.services.GeoGraphicalService.MECHELEN;
+& demo.validation.rules.ContactFormValidation.FORM_INTERRUPT;
+
+///
+/// @author Wouter Roose
+
+#! class ZipConstraint extends Constraint<ContactForm> {
+
+    Boolean satisfiesPreCondition(ContactForm form, ExecutionContext executionContext) {
+        ^ form #zipCode #isPresent
+    }
+
+    #: Boolean isValid(ContactForm form) {
+        ^ self #isMalinesArea(form #zipCode)
+    }
+
+    #> Boolean isMalinesArea(Integer zipCode) {
+        ^ GeoGraphicalService #GGS #exists(zipCode) && MECHELEN #contains(zipCode)
+    }
+
+    #: Issue getIssue(ContactForm form,  ExecutionContext executionContext) {
+        ^ Issue #new(form, "ZIP_INVALID",  Level #ERROR)
+    }
+
+    #: Interrupt interrupt() {
+        ^ FORM_INTERRUPT
+    }
+}

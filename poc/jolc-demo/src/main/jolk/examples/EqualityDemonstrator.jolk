@@ -1,0 +1,22 @@
+package examples;
+
+using demo.validation.domain.Person;
+
+/// Demonstrates Jolk's equivalence operators (`~~` and `!~`).
+///
+/// Jolk distinguishes between identity (`==`) and equivalence (`~~`).
+/// * Jolk `a ~~ b` -> Java `Objects.equals(a, b)`
+/// * Jolk `a !~ b` -> Java `!Objects.equals(a, b)`
+///
+/// @author Wouter Roose
+
+final class EqualityDemonstrator {
+
+    Boolean runEquals(java.lang.Object o1, java.lang.Object o2) {
+        ^ o1 ~~ o2
+    }
+
+    Boolean runNotEquals(java.lang.Object o1, java.lang.Object o2) {
+        ^ o1 !~ o2
+    }
+}

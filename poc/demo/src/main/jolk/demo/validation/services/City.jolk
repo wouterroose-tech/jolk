@@ -1,7 +1,0 @@
-package demo.validation.services;
-
-record City {
-    Integer zipcode;
-    String name;
-    String province;
-}

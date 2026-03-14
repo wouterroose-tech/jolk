@@ -10,9 +10,12 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>compiler</module>
-        <module>demo</module>
-        <module>maven-plugin</module>
+        <module>tolk-grammar</module>
+        <module>tolk-jolc</module>
+        <module>tolk-jolc-demo</module>
+        <module>tolk-jolct</module>
+        <module>tolk-jolct-demo</module>
+        <module>tolk-maven-plugin</module>
     </modules>
 
     <properties>

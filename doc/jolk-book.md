@@ -264,7 +264,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **Collection Literals**: A collection literal (Array `#[ ]`, Set `#{ }` or Map `#( )`) is a shorthand for the underlying message-based variadic creation of a primary object. 
 
-**Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
+**Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire expression chain to the right is evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
 ## Semantics
 
@@ -302,11 +302,11 @@ In accordance with the principle of Engineered Integrity, Jolk prioritises sourc
 
 ### Statement Termination 
 
-Statement Termination Logic balances structural discipline with the fluid message-passing ergonomics. The semicolon is mandatory for structural metadata, such as package and import declarations, as well as instance state declarations like fields and enums. Within method bodies, standard statements including variables, assignments, and expressions are firmly anchored by the semicolon to ensure clarity and structural integrity. 
+Statement Termination Logic balances structural discipline with message-passing fluidity. The semicolon is mandatory for structural metadata, such as package and import declarations, as well as instance state declarations like fields and enums. Within method bodies, standard statements including variables, assignments, and expressions are firmly anchored by the semicolon to ensure clarity and structural integrity, but it is optional for the final statement of a block.
 
 ### Closure
 
-A closure's return value is governed by its lexical context, the result is the evaluation of its last expression unless an explicit return (`^`) is encountered. **Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize trailing closure syntax, where the logic block follows the arguments directly. Parameters within a closure are separated from the logic by an arrow `->`.
+A closure's return value is governed by its lexical context, the result is the evaluation of its last expression unless an explicit return (`^`) is encountered. **Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize a bracket-light syntax where parentheses are omitted when the closure is the sole argument. Parameters within a closure are separated from the logic by an arrow `->`.
 
 ### Parameter Immutability
 
@@ -324,7 +324,7 @@ Jolk prohibits intrusive reflection to ensure that an object’s internal struct
 
 ### Meta-Directives
 
-Meta-Directives establish the context that governs the relationship between the source and the platform. *Structural Expansion* via the `+` / `using` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Contextual Projection* through the `&` / `using meta` lens, which isolates platform facts—whether static constants or functional methods—and projects them as immutable local symbols. *Visibility* (e.g., `private`/ `#>`) and *Finality* (e.g., `final` / `#!`) are structural properties which mandate the state of access and identity.
+Meta-Directives establish the context that governs the relationship between the source and the platform. * Expansion* via the `+` / `using` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Projection* through the `&` / `using meta` lens, which projects platform facts—whether static constants or functional methods—and as local symbols. *Visibility* (e.g., `private`/ `#>`) and *Finality* (e.g., `final` / `#!`) are structural properties which mandate the state of access and identity.
 
 ## Design Synopsis
 
@@ -1059,7 +1059,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Java and JVM Integration*: The syntax for Structural Scaffolding—including package, import, and class—is intentionally aligned with Java to reduce cognitive load. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
 
-*Kotlin Influences*: Following Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks. It adopts Trailing Closure Syntax for logic-driven messages.
+*Kotlin Influences*: Following Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks, and adopts a strict form of Trailing Closure Syntax.
 
 *C# Null-Coalescing*: Jolk adopts the `??` operator from C#[13], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
 

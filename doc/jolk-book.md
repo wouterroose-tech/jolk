@@ -24,7 +24,7 @@ Messages in Motion is a tribute to the core philosophy of Smalltalk, a thematic 
 *   [Part One: The Semantics of Motion](#part-one)
     *   [Grammar](#grammar)
     *   [Semantics](#semantics)
-    *   [Language Specification Summary](#language-specification-summary)
+    *   [Design Synopsis](#design-synopsis)
 *   [Part Two: Structural Minimalism](#part-two)
     *   [Types](#types)
     *   [Messaging](#messaging)
@@ -241,34 +241,34 @@ In Jolk, distinguishing between *Reserved Object Identifiers* and *Structural Sc
 
 **Selectors**: Identified by an anchor hashtag (`#`) followed by a string (e.g., `#print`, `#PI`). This approach treats logic as a fluent, pipe-like chain (e.g., `this #name #uppercase #print`, `Math #PI`). Anchored by the double-hash (`##`), method references reify a specific method on a receiver into a `Closure` identity, enabling functional composition without the verbosity of a block wrapper.
 
-**Return**: In Jolk the caret `^` denotes the explicit return symbol. To prevent collision, the symbol `|!` is designated for the bitwise XOR operation; this uses the pipe (`|`) for "OR" and the bang (`!`) for "NOT" to visually denote "OR but NOT both," aligning with the mathematical definition of XOR. 
+**Return**: In Jolk the caret `^` denotes the explicit return symbol. To ensure lexical uniqueness, the symbol `|!` is designated for the bitwise XOR operation; this uses the pipe (`|`) for "OR" and the bang (`!`) for "NOT" to visually denote "OR but NOT both," aligning with the mathematical definition of XOR. 
 
 The Capitalisation Rule, also referred to as **Semantic Casing** is a core lexical rule in the Jolk language where the first-letter casing of an identifier determines its semantic category and role:
 
 * Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., `String`, `PI`, `#PI`)  
-* Variables, Parameters Properties & instance selectors: start with a lowercase letter (e.g., `name`, `#name`).
+* Variables, parameters, properties & instance selectors: start with a lowercase letter (e.g., `name`, `#name`).
 
 ### Structural Anchors
 
 Syntactic elements act as structural anchors for the parser.
 
-**& Operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a mathematically precise intersection of multiple algebras while reinforcing the architectural separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
+**& Operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a mathematically precise intersection of multiple algebras while reinforcing the separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
 **Generic Type Brackets** The syntax adopts `< >` for generics.
 
-**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Syntactic Overload*, ensuring the semantic intent of every symbol remains absolute and singular. By assigning a unique geometry to each architectural fact—`< >` for *Generics*, `{ }` for *Scope*, `[ ]` for *Deferred Identity*, and `( )` for *Realised Identity*—the code achieves a state of structural buoyancy.
+**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Symbolic Overloading*, ensuring the semantic intent of every symbol remains absolute and singular. Each structural fact is assigned a unique geometry:`< >` for *Generics*, `{ }` for *Scope*, `[ ]` for *Deferred Identity*, and `( )` for *Realised Identity*.
 
 	List<Result> process(List<Signal> signals) {
 		^ signals #map [ s -> Result #new(s #id) ]
 	}
 
-**Collection Literals**: A collection literal (Array `[ ]`, Set `{ }` or Map `( )`) is a shorthand for the underlying message-based variadic creation of a primary object, ready to participate in the message chain. 
+**Collection Literals**: A collection literal (Array `#[ ]`, Set `#{ }` or Map `#( )`) is a shorthand for the underlying message-based variadic creation of a primary object. 
 
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire logic chain to the right is fully evaluated before the result is bound to an identifier. Assignments are viewed as a metalevel change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
 ## Semantics
 
-In the Jolk ecosystem, reserved identifiers are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid language keywords like class, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
+In the Jolk, reserved identifiers are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid language keywords like class, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
 
 ### Unified Message-Passing
 
@@ -286,7 +286,7 @@ By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts co
 
 The Jolk type system fully aligns with the Java generics syntax. The grammar distinguishes between five archetypes ( `class`, `enum`, `record`, and `value`) which serve as structural anchors in the EBNF.
 
-Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent a mathematically precise intersection of contracts. Aligning with the concept of Traits[6], this allows for the composition of behavior without the state problems of multiple inheritance. This is a structural guarantee that ensures the Identity of the participant and the contract of the message remain visible and secure, preventing semantically incompatible objects from accidentally matching based on syntax alone. Finally, the syntax enables extensions that permits augmentation of types with new messages.
+Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent a mathematically precise intersection of contracts. Aligning with the concept of Traits[6], this allows for the composition of behavior without the state problems of multiple inheritance. This is a structural guarantee that ensures the Identity of the participant and the contract of the message remain visible and secure, preventing semantically incompatible objects from accidentally matching based on syntax alone. Finally, the syntax supports extensions, permitting type augmentation via new message protocols.
 
 Primitives are absent from the syntax because Jolk follows a pure object-oriented model where everything—including numbers, truth values, and the absence of a value (`null` a singleton instance of the `Nothing` class) —is a first-class object. This removal of the primitive/object distinction maintains a minimalist syntax while ensuring that every entity maintains a non-nullable identity.
 
@@ -296,13 +296,13 @@ Primitives are absent from the syntax because Jolk follows a pure object-oriente
 
 ### Mathematical and Equality Operators
 
-Jolk distinguishes between Identity (`==` and the negation `!=`), which executes a JVM reference parity check, and Equivalence (`~~` and the negation `!~`), which executes a structural state comparison. All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives.
+Jolk distinguishes between Identity (`==` and the negation `!=`), which executes a reference parity check, and Equivalence (`~~` and the negation `!~`), which executes a structural state comparison. All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives.
 
 In accordance with the principle of Engineered Integrity, Jolk prioritises source code clarity over the brevity of general type inference. While operators provide fluidity, the language mandates explicit type signatures and the use of the Caret (`^`) operator for Query Methods. This ensures Protocol Transparency, preventing "Inference Fog" by requiring that the "Contract of the Message" remains visible at every step of the execution flow. This discipline ensures that the developer always understands the state of the message chain without relying on external IDE tooling to resolve implicit types.
 
 ### Statement Termination 
 
-Statement Termination Logic balances structural discipline with the fluid message-passing ergonomics. The semicolon is mandatory for architectural metadata, such as package and import declarations, as well as instance state declarations like fields and enums. Within method bodies, standard statements including variables, assignments, and expressions are firmly anchored by the semicolon to ensure clarity and structural integrity. 
+Statement Termination Logic balances structural discipline with the fluid message-passing ergonomics. The semicolon is mandatory for structural metadata, such as package and import declarations, as well as instance state declarations like fields and enums. Within method bodies, standard statements including variables, assignments, and expressions are firmly anchored by the semicolon to ensure clarity and structural integrity. 
 
 ### Closure
 
@@ -326,11 +326,11 @@ Jolk prohibits intrusive reflection to ensure that an object’s internal struct
 
 Meta-Directives establish the context that governs the relationship between the source and the platform. *Structural Expansion* via the `+` / `using` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Contextual Projection* through the `&` / `using meta` lens, which isolates platform facts—whether static constants or functional methods—and projects them as immutable local symbols. *Visibility* (e.g., `private`/ `#>`) and *Finality* (e.g., `final` / `#!`) are structural properties which mandate the state of access and identity.
 
-## Language Specification Summary
+## Design Synopsis
 
-The Jolk specification defines an industrial-grade, pure object-oriented evolution for the JVM that fuses the "message-passing soul" of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send, the language architecturally eliminates the "Complexity Gap" inherent in traditional industrial languages. This model is supported by a "DRY" architecture that decouples lexical primitives from functional layout rules, achieving a Syntax Minimum through a lean keyword palette and a strict Semantic Casing rule.
+The Jolk specification defines an industrial-grade, pure object-oriented evolution for the JVM that fuses the "message-passing soul" of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send, the language fundamentally eliminates the "Complexity Gap" inherent in traditional industrial languages. This model is supported by a "DRY" design that decouples lexical primitives from functional layout rules, achieving a Syntax Minimum through a lean keyword palette and a strict Semantic Casing rule.
 
-Encapsulation is enforced via a strict Metaboundary that separates an object’s internal state from the external environment, rendering intrusive reflection a semantic impossibility. To ensure total structural clarity, the architecture utilizes "lexical fences"—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve Zero Token Ambiguity. This enables $O(1)$ parsing efficiency and prevents architectural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
+Encapsulation is enforced via a strict Metaboundary that separates an object’s internal state from the external environment, rendering intrusive reflection a semantic impossibility. To ensure total structural clarity, the language utilizes "lexical fences"—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve Zero Token Ambiguity. This enables $O(1)$ parsing efficiency and prevents structural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
 
 Computation in Jolk transcends rigid procedural calls to become a Protocol-Driven Flow where logic is an emergent property of object interaction. Control flow is implemented as a library feature rather than a compiler construct; branching and looping are reified through messages sent to Booleans, Integers, or Closures. Furthermore, Jolk replaces procedural interface lists with Protocol Conjunctions (`&`), representing a mathematically precise intersection of behavioural contracts. This ensures that while the developer experiences the fluid "Moving Target" philosophy of late-bound messaging, the Tolk Compiler performs "Semantic Flattening" to deliver zero-overhead, high-performance execution.
 
@@ -358,7 +358,7 @@ By the application of Implicit Field Encapsulation and standardising Root Capabi
 
 ### Generics
 
-Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that provides a separation of the subtype and subclass lattices, ensuring that an object's behavioral protocol is verified independently of its implementation lineage. Jolk maintains structural parity with the JVM type erasure model and sustains full compatibility with the Java generic implementation for complex type arguments. The architecture adopts angle bracket notation `< >` as the primary lexical anchor to ensure deterministic parsing and visual simplification.
+Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that distinguishes the protocol from the implementation lattice. This ensures that an object’s behavioural protocol is verified independently of its implementation lineage. Jolk employs a protocol specification that treats type arguments as first-class, reified components of an identity’s behavioural contract. The architecture utilizes angle bracket notation `< >` as the primary Lexical Anchor to define these generic protocols.
 
 ### Fields
 
@@ -1687,7 +1687,7 @@ However, on-demand memoisation introduces the "Hidden Trap", where a circular de
 
 ## Engineered Integrity: A Future-Proof JVM Synthesis
 
-Jolk acts as a high-level choreographer for the latest advancements in the Java Virtual Machine. While the Jolk kernel maintains a fluid, message-centric "World View," it leverages Project Amber’s pattern matching and sealed types to implement industrial-strength "listening" protocols with near-instant dispatch. Project Valhalla provides the perfect substrate for this message payload; by transpiling data-heavy objects into flattened Value Objects, Jolk ensures that its "Messages in Motion" carry their cargo with zero-allocation efficiency. This synergy allows Jolk to offer the dynamic flexibility of a late-bound system while inheriting the rigorous performance and memory density of modern Java. Jolk could benifit from the Valhalla JEPS Null-Restricted Value Object Storage and Null-Restricted and Nullable Types to optimize the implementation of nothing.
+Jolk acts as a high-level choreographer for the latest advancements in the Java Virtual Machine. While the Jolk kernel maintains a fluid, message-centric "World View," it leverages Project Amber’s pattern matching and sealed types to implement industrial-strength "listening" protocols with near-instant dispatch. Project Valhalla provides the perfect substrate for this message payload; by transpiling data-heavy objects into flattened Value Objects, Jolk ensures that its "Messages in Motion" carry their cargo with zero-allocation efficiency. This synergy allows Jolk to offer the dynamic flexibility of a late-bound system while inheriting the rigorous performance and memory density of modern Java. The language’s architecture is forward-compatible with advanced JVM implementations like GraalVM; a Truffle-based implementation would represent the ultimate synthesis of Jolk’s dynamic nature with native machine performance. Jolk could benifit from the Valhalla JEPS Null-Restricted Value Object Storage and Null-Restricted and Nullable Types to optimize the implementation of nothing.
 
 Jolk’s approach to object creation as class-level messaging interfaces represents a pivotal shift toward predictable integrity. By treating the transition from type to identity as an atomic, guarded operation, Jolk addresses the problem of partial initialisation. This design ensures that an object’s identity never leaks before its state is fully established, aligning perfectly with the JVM’s finalisation of flexible constructor bodies. By targeting these specifications natively, the compiler allows for sophisticated logic and validation before a parent creation method is even invoked, eliminating the clunky static factory hacks that have long burdened enterprise development.
 

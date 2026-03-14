@@ -1,0 +1,43 @@
+package examples;
+
+using java.lang.RuntimeException;
+using java.lang.IllegalArgumentException;
+using java.lang.IllegalStateException;
+
+/// Demonstrates Jolk's unified message-passing syntax for exception handling.
+///
+/// This class showcases:
+/// * Catching a single exception with `#catch`.
+/// * Handling multiple, distinct exceptions with chained `#catch` messages.
+/// * Ensuring cleanup logic execution with `#finally`.
+///
+/// @author Wouter Roose
+
+final class ExceptionHandlingDemonstrator {
+    
+    String runCatch() {
+        String status = "Running";
+        [ RuntimeException #new("Boom") #throw ] 
+            #catch [ RuntimeException e ->  status = "Caught: " + e #getMessage  ];
+        ^ status
+    }
+
+    String runMultiCatch(Boolean first) {
+        String status = "Start";
+        [
+            first ? [ IllegalArgumentException #new("First") #throw ]
+                  : [ IllegalStateException #new("Second") #throw ]
+        ]
+            #catch [ IllegalArgumentException e -> status = "Caught First" ]
+            #catch [ IllegalStateException e -> status = "Caught Second" ];
+        ^ status
+    }
+
+    String runFinally() {
+        String status = "Start";
+        [ RuntimeException #new("Error") #throw ]
+            #catch [ RuntimeException e -> status = status + " -> Catch" ]
+            #finally [ status = status + " -> Finally" ];
+        ^ status
+    }
+}

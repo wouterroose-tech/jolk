@@ -1,0 +1,29 @@
+~ demo.validation.rules;
+
++ demo.validation.engine.*;
++ demo.validation.domain.ContactForm;
+
+///
+/// @author Wouter Roose
+
+class ContactFormValidation extends ValidationSuite<ContactForm> {
+
+    #< meta constant Interrupt FORM_INTERRUPT = Interrupt #new;
+
+    // singleton in DI configuration
+    meta lazy ContactFormValidation new() {
+        ^ super #new
+            //#add basic constraint
+            #add(ZipConstraint #new)
+
+            //#add ChildValidation via pivot pattern
+            #subject[f -> f #person] #add(InssConstraint #new)
+
+            //#add nested ruleset 
+    }
+
+    meta Interrupt FORM_INTERRUPT() {
+        ^ FORM_INTERRUPT
+    }
+
+}

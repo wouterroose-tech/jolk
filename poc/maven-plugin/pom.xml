@@ -10,10 +10,9 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>jolk-maven-plugin</artifactId>
+    <artifactId>tolk-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-
-    <name>Jolk Maven Plugin</name>
+    <name>Tolk Transpiler Maven Plugin</name>
 
     <dependencies>
         <!-- Maven Plugin API -->
@@ -66,7 +65,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <release>21</release>
+                    <release>25</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -74,7 +73,7 @@
                 <artifactId>maven-plugin-plugin</artifactId>
                 <version>3.15.1</version>
                 <configuration>
-                    <requiredJavaVersion>21</requiredJavaVersion>
+                    <requiredJavaVersion>25</requiredJavaVersion>
                 </configuration>
                 <dependencies>
                     <dependency>

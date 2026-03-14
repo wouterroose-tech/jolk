@@ -1,0 +1,21 @@
+package demo.validation.engine;
+
+/// # Issue
+/// 
+/// @author Wouter Roose
+
+record Issue {
+    Object subject;
+    String message;
+    Level level;
+
+    /// The severity level of an issue.
+    Boolean isError() {
+        ^ self #level == Level #ERROR
+    }
+
+    /// Returns true if the issue concerns the given subject.
+    Boolean concerns(Object subject) {
+        ^ self #subject == subject
+    }
+}

@@ -18,7 +18,9 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
 
     @Override
     protected JolkContext createContext(Env env) {
-        return new JolkContext(this, env);
+        JolkContext context = new JolkContext(this, env);
+        env.exportSymbol("jolkContext", env.asGuestValue(context));
+        return context;
     }
 
     @Override

@@ -12,12 +12,14 @@ public final class JolkContext {
     private final TruffleLanguage.Env env;
     private final Map<String, TruffleObject> typeRegistry;
     private final Map<String, TruffleObject> javaTypeCache;
+    private final Map<String, Object> topLevelBindings;
 
     public JolkContext(JolkLanguage language, TruffleLanguage.Env env) {
         this.language = language;
         this.env = env;
         this.typeRegistry = new ConcurrentHashMap<>();
         this.javaTypeCache = new ConcurrentHashMap<>();
+        this.topLevelBindings = new ConcurrentHashMap<>();
     }
 
     public TruffleLanguage.Env getEnv() {
@@ -32,5 +34,12 @@ public final class JolkContext {
     /// @return The cache for Java types that have been resolved and wrapped for Jolk.
     public Map<String, TruffleObject> getJavaTypeCache() {
         return javaTypeCache;
+    }
+
+    /**
+     * @return The map for top-level variable bindings.
+     */
+    public Map<String, Object> getTopLevelBindings() {
+        return topLevelBindings;
     }
 }

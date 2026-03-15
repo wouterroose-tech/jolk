@@ -13,7 +13,7 @@ class Object {
     /// The default constructor
     ///
     /// - **Returns**: A new instance of the class.
-    meta <O extends Object> O #new {
+    meta <O extends Object> O new {
         ^ this #class #new
     }  
 

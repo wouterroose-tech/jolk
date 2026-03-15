@@ -1,0 +1,46 @@
+package tolk;
+
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import tolk.language.JolkLanguage;
+
+import java.io.ByteArrayOutputStream;
+
+public abstract class JolcTestBase {
+
+    protected Engine engine;
+    protected Context context;
+    protected ByteArrayOutputStream out;
+    protected ByteArrayOutputStream err;
+
+    @BeforeEach
+    public void setUp() {
+        out = new ByteArrayOutputStream();
+        err = new ByteArrayOutputStream();
+        engine = Engine.newBuilder()
+                .out(out)
+                .err(err)
+                .build();
+        context = Context.newBuilder(JolkLanguage.ID)
+                .engine(engine)
+                .allowAllAccess(true)
+                .build();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        if (context != null) { // context can be null if setUp fails
+            context.close();
+        }
+        if (engine != null) { // engine can be null if setUp fails
+            engine.close();
+        }
+    }
+
+    protected Value eval(String source) {
+        return context.eval(JolkLanguage.ID, source);
+    }
+}

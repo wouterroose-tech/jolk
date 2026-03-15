@@ -17,7 +17,7 @@ class MetaClass<T extends Object> {
     } 
 
     /// Returns the name of this type.
-    String getName() {
+    String name() {
         // java pseudocode
         // return T.getName()
     }
@@ -29,7 +29,7 @@ class MetaClass<T extends Object> {
     }
 
     /// Checks if an object is an instance of this `MetaClass`'s type.
-    boolean isInstance(Object<T> object) {
+    Boolean isInstance(Object object) {
         // java pseudocode
         // return T.class.isInstance(obj)
     }

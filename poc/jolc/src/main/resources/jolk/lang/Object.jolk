@@ -1,0 +1,79 @@
+~ jolk.lang;
+
+/// # Object
+///
+/// The root class of the Jolk object hierarchy for the Unified Messaging Model.
+/// It defines the fundamental protocol for identity, equality, and string representation.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+class Object {
+
+    /// ## ~~
+    /// Performs a semantic equivalent check.
+    ///
+    /// This is the core message for the semantic equivalent operator.
+    /// By default, it falls back to identity (`==`).
+    ///
+    /// - **other**: The Object to compare against.
+    /// - **Returns**: True if the objects are semantically equivalent.
+    Boolean ~~(Object other) { }
+
+    /// ## ifPresent
+    /// Executes a functional block if the receiver is not null.
+    /// This is the primary industrial alternative to explicit null checks.
+    ///
+    /// - **action**: A Closure that receives the current object as an argument.
+    Self ifPresent(Closure action) {
+        action #apply(self)
+    }
+    
+    /// ## ifEmpty
+    /// Executes a- functional block if the receiver is null (Nothing).
+    /// This is the primary industrial alternative to explicit null checks.
+    ///
+    /// - **action**: A Closure that receives the current object as an argument.
+    Self ifEmpty(Closure action) { }
+    
+    /// ## isPresent
+    /// Checks if the receiver is a valid, non-null identity.
+    ///
+    /// - **Returns**: `true` for all objects except `null` (Nothing).
+    Boolean isPresent() {
+        ^ true
+    }
+    
+    /// ## isEmpty
+    /// Checks if the receiver represents the absence of a value.
+    ///
+    /// - **Returns**: `false` for all objects except `null` (Nothing).
+    Boolean isEmpty() {
+        ^ false
+    }
+
+    /// ## class
+    /// Returns the class object representing the type of the receiver.
+    ///
+    /// - **Returns**: The Class of the instance.
+    MetaClass<Self> getClass() { }
+
+    /// ## instanceOf
+    /// The Jolk Type pattern match.
+    ///
+    /// At runtime, this flattens into an INSTANCEOF check and a conditional branch.
+    /// At compile-time, the selector returns a Selection<T>, enabling execution in the fluent chain.
+    ///
+    /// - **type**: The type to check against.
+    /// - **Returns**: A Selection containing the object if it is an instance of the type, otherwise an empty Selection.
+    Selection<T> instanceOf(Type<T> type) { }
+
+    /// ## project
+    /// Projects a map of dynamic values onto the receiver's state.
+    /// This facilitates bulk-assignment and dynamic population from data structures.
+    ///
+    /// - **fields**: A Map of property names and values to apply.
+    Self project(Map<String, Object> fields) {
+        fields #forEach [ String key, Object value -> self #put(key, value) ]
+    }
+}

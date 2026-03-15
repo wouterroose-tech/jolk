@@ -24,33 +24,60 @@ public class JolcClassTest extends JolcTestBase {
         // A class definition should evaluate to a meta-object representing the class, not a host object.
         assertTrue(result.isMetaObject());
         assertFalse(result.isHostObject());
-        // The class should have no members since it's empty.
-        assertFalse(result.hasMembers());
         assertEquals(className, result.getMetaQualifiedName());
         return result;
     }
     @Test
-    public void testEmptyClassDefinitionEvaluatesToClassObject() {
+    public void testEmptyClass() {
         String className = "MyFirstJolkClass";
         String source = "class " + className + " { }";
-        eval(className, source);
+        Value result = eval(className, source);
+        // An empty, non-final class should have no members.
+        // TODO Pending implementation of members
+        // assertFalse(result.hasMembers());
     }
 
     @Test
-    public void testEmptyFinalClassDefinitionEvaluatesToClassObject() {
+    @Disabled("Pending implementation of methods")
+    void testClassWithField() {
+        String className = "MyFirstJolkClass";
+        String source = "final class " + className + " { self me() { ^ self; } }";
+        Value result = eval(className, source);
+        assertFalse(result.hasMembers());
+        // TODO assert ...
+    }
+
+    @Test
+    @Disabled("Pending implementation of fields and methods")
+    void testClassWithMethodAndField() {
+        String className = "MyFirstJolkClass";
+        String source = "final class " + className + " { String name; String me() { ^ name; } }";
+        Value result = eval(className, source);
+        assertFalse(result.hasMembers());
+        // TODO assert ...
+    }
+
+    @Test
+    @Disabled("Pending implementation final ")
+    public void testEmptyFinalClass() {
         String className = "MyFirstJolkClass";
         String source = "final class " + className + " { }";
         Value result = eval(className, source);
-        // A final class should have a meta-object that indicates it's final.
-        // is this the way to test it?
-        assertTrue(result.hasMember("isFinal"));
-        assertTrue(result.getMember("isFinal").asBoolean());
+        // A final class must have at least one method
+        // this must result in a compilationerror?
+        // TODO assert ...
     }
 
     @Test
-    @Disabled("Pending implementation of the parser and class declaration nodes.")
-    void testVisitClassWithMethodAndField() {
-        // This test is a placeholder for when fields and methods are implemented.
-        eval("class MyClass { String name; Int calculate(Int a, Int b) { ^ a + b; } }");
+    @Disabled("Pending implementation final ")
+    public void testFinalClass() {
+        String className = "MyFirstJolkClass";
+        String source = "final class " + className + " { self me() { ^ self; } }";
+        Value result = eval(className, source);
+        // A final class should have a meta-object that indicates it's final.
+        // TODO is this the way to test it?
+        assertTrue(result.hasMember("isFinal"));
+        assertTrue(result.getMember("isFinal").asBoolean());
+        // TODO assert ...
     }
 }

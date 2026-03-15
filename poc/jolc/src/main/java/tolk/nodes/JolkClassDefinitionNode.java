@@ -11,14 +11,16 @@ import tolk.runtime.JolkType;
 public class JolkClassDefinitionNode extends JolkExpressionNode {
 
     private final String className;
+    private final boolean isFinal;
 
-    public JolkClassDefinitionNode(String className) {
+    public JolkClassDefinitionNode(String className, boolean isFinal) {
         this.className = className;
+        this.isFinal = isFinal;
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         // In a full implementation, this would also register the type in the language context.
-        return new JolkType(className);
+        return new JolkType(className, isFinal);
     }
 }

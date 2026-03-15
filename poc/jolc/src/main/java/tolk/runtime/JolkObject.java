@@ -2,8 +2,8 @@ package tolk.runtime;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 
-///
 /// # JolkObject
+/// 
 /// The base class for all objects in the Jolk Object Model (JoMoo).
 /// This includes instances of classes defined in the language, as well as any built-in objects.
 /// Currently, this is just a placeholder to establish the object model structure.

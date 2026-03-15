@@ -5,7 +5,8 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
-///
+/// # JolkNothing
+/// 
 /// Represents the `null` or `Nothing` value in Jolk.
 ///
 /// This is a singleton `TruffleObject` that implements the `isNull` message from the

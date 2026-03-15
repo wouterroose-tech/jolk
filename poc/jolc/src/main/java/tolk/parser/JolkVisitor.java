@@ -46,10 +46,23 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // which aligns with the grammar (`meta_id`, not `MetaId`). This prevents a
         // NullPointerException if the parse tree structure is not what's expected.
         if (ctx.type_bound() != null && ctx.type_bound().type() != null) {
+            boolean isFinal = false;
+            // Iterate children to robustly check for 'final' keyword, handling potential
+            // grammar variations (e.g. grouped modifiers vs direct finality rule).
+            for (int i = 0; i < ctx.getChildCount(); i++) {
+                var child = ctx.getChild(i);
+                if (child == ctx.archetype()) {
+                    break;
+                }
+                if (child.getText().contains("final")) {
+                    isFinal = true;
+                    break;
+                }
+            }
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
                 String className = typeContext.MetaId().getText();
-                return new JolkClassDefinitionNode(className);
+                return new JolkClassDefinitionNode(className, isFinal);
             }
         }
         return new JolkEmptyNode();

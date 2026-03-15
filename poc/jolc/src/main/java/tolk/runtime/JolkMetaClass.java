@@ -20,11 +20,11 @@ import com.oracle.truffle.api.library.ExportMessage;
 public final class JolkMetaClass implements TruffleObject {
 
     private final String name;
-    private final boolean isFinal;
+    private final JolkFinality finality;
 
-    public JolkMetaClass(String name, boolean isFinal) {
+    public JolkMetaClass(String name, JolkFinality finality) {
         this.name = name;
-        this.isFinal = isFinal;
+        this.finality = finality;
     }
 
     @ExportMessage
@@ -50,23 +50,28 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     boolean hasMembers() throws UnsupportedMessageException {
-        throw UnsupportedMessageException.create();
+        return finality == JolkFinality.FINAL;
     }
 
     @ExportMessage
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
+        if (finality == JolkFinality.FINAL) {
+            return new MemberNames(new String[]{"isFinal"});
+        }
         throw UnsupportedMessageException.create();
     }
 
     @ExportMessage
     boolean isMemberReadable(String member) throws UnsupportedMessageException {
-        throw UnsupportedMessageException.create();
+        return finality == JolkFinality.FINAL && "isFinal".equals(member);
     }
 
     @ExportMessage
     Object readMember(String member) throws UnknownIdentifierException {
-        if (isMemberReadable(member)) {
-            return this.isFinal;
+        // We expose the internal enum state as the boolean 'isFinal' property
+        // to satisfy the object protocol.
+        if ("isFinal".equals(member) && finality == JolkFinality.FINAL) {
+            return true;
         }
         throw UnknownIdentifierException.create(member);
     }

@@ -3,6 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkMetaClass;
+import tolk.runtime.JolkFinality;
 
 /// An AST node that represents the definition of a Jolk class. When executed,
 /// it produces a [JolkMetaClass] meta-object.
@@ -11,16 +12,16 @@ import tolk.runtime.JolkMetaClass;
 public class JolkClassDefinitionNode extends JolkExpressionNode {
 
     private final String className;
-    private final boolean isFinal;
+    private final JolkFinality finality;
 
-    public JolkClassDefinitionNode(String className, boolean isFinal) {
+    public JolkClassDefinitionNode(String className, JolkFinality finality) {
         this.className = className;
-        this.isFinal = isFinal;
+        this.finality = finality;
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         // In a full implementation, this would also register the type in the language context.
-        return new JolkMetaClass(className, isFinal);
+        return new JolkMetaClass(className, finality);
     }
 }

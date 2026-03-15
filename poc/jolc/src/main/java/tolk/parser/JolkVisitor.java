@@ -5,6 +5,7 @@ import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkNode;
+import tolk.runtime.JolkFinality;
 
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
@@ -46,7 +47,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // which aligns with the grammar (`meta_id`, not `MetaId`). This prevents a
         // NullPointerException if the parse tree structure is not what's expected.
         if (ctx.type_bound() != null && ctx.type_bound().type() != null) {
-            boolean isFinal = false;
+            JolkFinality finality = JolkFinality.OPEN;
             // Iterate children to robustly check for 'final' keyword, handling potential
             // grammar variations (e.g. grouped modifiers vs direct finality rule).
             for (int i = 0; i < ctx.getChildCount(); i++) {
@@ -54,15 +55,19 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 if (child == ctx.archetype()) {
                     break;
                 }
-                if (child.getText().contains("final")) {
-                    isFinal = true;
+                String text = child.getText();
+                if (text.contains("final")) {
+                    finality = JolkFinality.FINAL;
+                    break;
+                } else if (text.contains("abstract")) {
+                    finality = JolkFinality.ABSTRACT;
                     break;
                 }
             }
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
                 String className = typeContext.MetaId().getText();
-                return new JolkClassDefinitionNode(className, isFinal);
+                return new JolkClassDefinitionNode(className, finality);
             }
         }
         return new JolkEmptyNode();

@@ -1,8 +1,10 @@
 ~ jolk.lang;
 
+/// # MetaClass
+///
 /// Represents the class of an object as a first-class identity.
 ///
-/// The MetaClass enables meta-level messaging, such as object creation (`#new`)
+/// The `MetaClass` enables meta-level messaging, such as object creation (`#new`)
 /// and type introspection.
 ///
 /// @author Wouter Roose
@@ -10,25 +12,38 @@
 @Intrinsic("java.lang.Class")
 class MetaClass<T extends Object> {
 
+    /// ## new
     /// Creates a new instance of the type `T`.
-    public T new() {
+    ///
+    /// - **Returns**: A new instance of type `T`.
+    T new() {
         // java pseudocode
         // return new T()
     } 
 
+    /// ## name
     /// Returns the name of this type.
+    ///
+    /// - **Returns**: The name of the type.
     String name() {
         // java pseudocode
         // return T.getName()
     }
 
+    /// ## superclass
     /// Returns the `MetaClass` of the superclass.
+    ///
+    /// - **Returns**: The `MetaClass` of the superclass.
     <S extends MetaClass<T>> S superclass() {
         // java pseudocode
         // return T.getSuperclass()
     }
 
+    /// ## isInstance
     /// Checks if an object is an instance of this `MetaClass`'s type.
+    ///
+    /// - **object**: The object to check.
+    /// - **Returns**: `true` if the object is an instance of this type, otherwise `false`.
     Boolean isInstance(Object object) {
         // java pseudocode
         // return T.class.isInstance(obj)

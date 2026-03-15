@@ -19,12 +19,27 @@ class Object {
     /// - **other**: The Object to compare against.
     /// - **Returns**: True if the objects are semantically equivalent.
     Boolean ~~(Object other) { }
+    
+    /// ## hash
+    /// Returns a hash code value for the object.
+    ///
+    /// This is the core message for object identification in hash-based collections.
+    ///
+    /// - **Returns**: A hash code value for this object.
+    Int hash() { }
+
+    /// ## toString
+    /// Returns a string representation of the object.
+    ///
+    /// - **Returns**: A string representation of the object.
+    String toString() {}
 
     /// ## ifPresent
     /// Executes a functional block if the receiver is not null.
     /// This is the primary industrial alternative to explicit null checks.
     ///
     /// - **action**: A Closure that receives the current object as an argument.
+    /// - **Returns**: `self` to allow for fluent message chaining.
     Self ifPresent(Closure action) {
         action #apply(self)
     }
@@ -34,6 +49,7 @@ class Object {
     /// This is the primary industrial alternative to explicit null checks.
     ///
     /// - **action**: A Closure that receives the current object as an argument.
+    /// - **Returns**: `self` to allow for fluent message chaining.
     Self ifEmpty(Closure action) { }
     
     /// ## isPresent
@@ -56,7 +72,7 @@ class Object {
     /// Returns the class object representing the type of the receiver.
     ///
     /// - **Returns**: The Class of the instance.
-    MetaClass<Self> getClass() { }
+    MetaClass<Self> class() { }
 
     /// ## instanceOf
     /// The Jolk Type pattern match.
@@ -73,6 +89,7 @@ class Object {
     /// This facilitates bulk-assignment and dynamic population from data structures.
     ///
     /// - **fields**: A Map of property names and values to apply.
+    /// - **Returns**: `self` to allow for fluent message chaining.
     Self project(Map<String, Object> fields) {
         fields #forEach [ String key, Object value -> self #put(key, value) ]
     }

@@ -9,6 +9,11 @@ import tolk.language.JolkLanguage;
 
 import java.io.ByteArrayOutputStream;
 
+///
+/// Base class for Jolk tests that sets up a Truffle context and engine for evaluating Jolk code.
+/// This class provides common setup and teardown logic, as well as a helper method for evaluating 
+/// source code within the context of the tests.
+///
 public abstract class JolcTestBase {
 
     protected Engine engine;

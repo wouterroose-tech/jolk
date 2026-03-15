@@ -1,11 +1,68 @@
 package tolk.parser;
 
 import tolk.grammar.jolkBaseVisitor;
+import tolk.grammar.jolkParser;
+import tolk.nodes.JolkClassDefinitionNode;
+import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkNode;
 
-/**
- * Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
- */
+/// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
-    
+
+    /// ### visitUnit
+    ///
+    /// Visits the top-level rule of the grammar.
+    ///
+    /// @param ctx The parse tree context.
+    /// @return A [JolkNode] for the entire compilation unit.
+    @Override
+    public JolkNode visitUnit(jolkParser.UnitContext ctx) {
+        // A unit can contain either a type declaration or an extension declaration,
+        // according to the grammar.
+        if (ctx.type_decl() != null) {
+            return visit(ctx.type_decl());
+        }
+        if (ctx.extension_decl() != null) {
+            return visit(ctx.extension_decl());
+        }
+        return new JolkEmptyNode();
+    }
+
+    /// ### visitType_decl
+    ///
+    /// Visits a type declaration, currently handling `class`.
+    ///
+    /// @param ctx The parse tree context.
+    /// @return A [JolkClassDefinitionNode] if it's a class, otherwise an empty node.
+    @Override
+    public JolkNode visitType_decl(jolkParser.Type_declContext ctx) {
+        // We check for the token type directly rather than comparing strings for
+        // efficiency and robustness.
+        if (ctx.archetype() == null || ctx.archetype().getStart().getType() != jolkParser.CLASS) {
+            return new JolkEmptyNode();
+        }
+
+        // To robustly get the class name, we access the 'meta_id' from the parse tree,
+        // which aligns with the grammar (`meta_id`, not `MetaId`). This prevents a
+        // NullPointerException if the parse tree structure is not what's expected.
+        if (ctx.type_bound() != null && ctx.type_bound().type() != null) {
+            var typeContext = ctx.type_bound().type();
+            if (typeContext.MetaId() != null) {
+                String className = typeContext.MetaId().getText();
+                return new JolkClassDefinitionNode(className);
+            }
+        }
+        return new JolkEmptyNode();
+    }
+
+    ///
+    /// Visits an extension declaration. This is currently a placeholder.
+    ///
+    /// @param ctx The parse tree context.
+    /// @return An [JolkEmptyNode] as this feature is not yet fully implemented.
+    @Override
+    public JolkNode visitExtension_decl(jolkParser.Extension_declContext ctx) {
+        // Not implemented yet, return empty node to avoid null pointers.
+        return new JolkEmptyNode();
+    }
 }

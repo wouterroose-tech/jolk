@@ -6,12 +6,10 @@ import tolk.JolcTestBase;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * ## JolkLanguageTest
- *
- * Verifies the registration and configuration of the Jolk language within the
- * GraalVM Polyglot Engine.
- */
+///
+/// Verifies the registration and configuration of the Jolk language within the
+/// GraalVM Polyglot Engine.
+///
 public class JolkLanguageTest extends JolcTestBase {
 
     @Test

@@ -3,7 +3,12 @@ package tolk.language;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.ContextPolicy;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import tolk.grammar.jolkLexer;
+import tolk.grammar.jolkParser;
 import tolk.nodes.JolkRootNode;
+import tolk.parser.JolkVisitor;
 
 @TruffleLanguage.Registration(
     id = JolkLanguage.ID,
@@ -25,9 +30,18 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
 
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
-        // For now, we return a root node that does nothing but returns a Jolk `null`.
-        // This is the minimal implementation to make evaluation work.
-        JolkRootNode rootNode = new JolkRootNode(this);
-        return rootNode.getCallTarget();
+        // 1. Setup ANTLR Lexer and Parser
+        var lexer = new jolkLexer(CharStreams.fromReader(request.getSource().getReader()));
+        var parser = new jolkParser(new CommonTokenStream(lexer));
+
+        // 2. Parse the root rule to get the CST
+        var tree = parser.unit();
+
+        // 3. Instantiate the Visitor and convert CST to AST (This was likely missing)
+        var visitor = new JolkVisitor();
+        var rootNode = visitor.visitUnit(tree);
+
+        // 4. Wrap the AST in a RootNode and return the CallTarget
+        return new JolkRootNode(this, rootNode).getCallTarget();
     }
 }

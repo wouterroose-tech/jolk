@@ -10,13 +10,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * ## JolkContextTest
- *
- * Verifies the behavior of the Jolk execution context. These tests ensure that
- * state is correctly maintained across multiple evaluations within the same
- * context and that separate contexts remain isolated from each other.
- */
+///
+/// Verifies the behavior of the Jolk execution context. These tests ensure that
+/// state is correctly maintained across multiple evaluations within the same
+/// context and that separate contexts remain isolated from each other.
+///
 public class JolkContextTest extends JolcTestBase {
 
     private JolkContext getJolkContext() {

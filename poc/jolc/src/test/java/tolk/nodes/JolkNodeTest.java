@@ -7,13 +7,11 @@ import tolk.JolcTestBase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * ## JolkNodeTest
- *
- * Verifies the fundamental behavior of expression nodes in the Jolk AST.
- * These tests ensure that basic literals and simple expressions are evaluated
- * correctly, forming the foundation of the execution tree.
- */
+///
+/// Verifies the fundamental behavior of expression nodes in the Jolk AST.
+/// These tests ensure that basic literals and simple expressions are evaluated
+/// correctly, forming the foundation of the execution tree.
+///
 public class JolkNodeTest extends JolcTestBase {
 
     @Test

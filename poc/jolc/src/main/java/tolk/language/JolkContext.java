@@ -36,9 +36,7 @@ public final class JolkContext {
         return javaTypeCache;
     }
 
-    /**
-     * @return The map for top-level variable bindings.
-     */
+    /// @return The map for top-level variable bindings.
     public Map<String, Object> getTopLevelBindings() {
         return topLevelBindings;
     }

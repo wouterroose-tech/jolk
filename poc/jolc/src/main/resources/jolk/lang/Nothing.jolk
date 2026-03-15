@@ -1,0 +1,104 @@
+~ jolk.lang;
+
+/// # Nothing
+///
+/// The `Nothing` class is a first-class identity that represents the absence of a value.
+/// It is a singleton, and the literal `null` refers to its single instance.
+/// It enables safe navigation and fluid message chaining by providing neutral responses to messages.
+///
+/// @author Wouter Roose
+
+@Intrinsic("jolk.lang.Nothing")
+final class Nothing extends Object {
+
+    /// ## ~~
+    /// Performs a semantic equivalence check. For `Nothing`, this is true only if the other object is also `Nothing`.
+    ///
+    /// - **other**: The Object to compare against.
+    /// - **Returns**: `true` if the other object is `null`, otherwise `false`.
+    Boolean ~~(Object other) {
+        ^ self == other
+    }
+
+    /// ## hash
+    /// Returns a hash code value for `Nothing`.
+    ///
+    /// The hash code for `Nothing` is always 0.
+    ///
+    /// - **Returns**: The integer `0`.
+    Int hash() {
+        ^ 0
+    }
+
+    /// ## toString
+    /// Returns a string representation of `Nothing`.
+    ///
+    /// - **Returns**: The string literal "null".
+    String toString() {
+        ^ "null"
+    }
+
+    /// ## ifPresent
+    /// Executes a functional block if the receiver is not `null`.
+    ///
+    /// For `Nothing`, this message is absorbed and the block is never executed.
+    ///
+    /// - **action**: A Closure that is ignored.
+    /// - **Returns**: `self` to allow for fluent message chaining.
+    Self ifPresent(Closure action) {
+        ^ self
+    }
+
+    /// ## ifEmpty
+    /// Executes a functional block if the receiver is `null` (Nothing).
+    ///
+    /// - **action**: A Closure to be executed.
+    /// - **Returns**: `self` to allow for fluent message chaining.
+    Self ifEmpty(Closure action) {
+        action #call;
+        ^ self
+    }
+
+    /// ## isPresent
+    /// Checks if the receiver is a valid, non-null identity.
+    ///
+    /// - **Returns**: Always `false` for `Nothing`.
+    Boolean isPresent() {
+        ^ false
+    }
+
+    /// ## isEmpty
+    /// Checks if the receiver represents the absence of a value.
+    ///
+    /// - **Returns**: Always `true` for `Nothing`.
+    Boolean isEmpty() {
+        ^ true
+    }
+
+    /// ## class
+    /// Returns the class object representing the type of the receiver.
+    ///
+    /// - **Returns**: The `MetaClass` for `Nothing`.
+    MetaClass<Self> class() { }
+
+    /// ## instanceOf
+    /// The Jolk Type pattern match. For `Nothing`, this is only true if the type is `Nothing` itself.
+    ///
+    /// - **type**: The type to check against.
+    /// - **Returns**: A `Selection` containing `self` if the type is `Nothing`, otherwise an empty `Selection`.
+    <T> Selection<T> instanceOf(Type<T> type) {
+        ^ (type == Nothing) ? Selection #with(self) : Selection #empty
+    }
+
+    /// ## project
+    /// Projects a map of dynamic values onto the receiver's state.
+    ///
+    /// For `Nothing`, this message is absorbed and no action is taken.
+    ///
+    /// - **fields**: A Map of property names and values, which is ignored.
+    /// - **Returns**: `self` to allow for fluent message chaining.
+    Self project(Map<String, Object> fields) {
+        ^ self
+    }
+
+}

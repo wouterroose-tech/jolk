@@ -3,21 +3,26 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.language.JolkLanguage;
-import tolk.runtime.JolkNothing;
 
-/// The root of all Jolk execution trees.
 ///
-/// For this stage of development, it's a minimal implementation that simply returns
-/// the Jolk `null` singleton, allowing the language to be initialized and evaluated
-/// without a full parser.
-public class JolkRootNode extends RootNode {
-    
-    public JolkRootNode(JolkLanguage language) {
+/// The root node of a Jolk execution tree.
+///
+/// This node wraps the top-level [JolkNode] (typically the result of parsing a compilation unit)
+/// and serves as the entry point for the Truffle runtime to execute the code. It is responsible
+/// for bridging the language context with the AST execution.
+///
+public final class JolkRootNode extends RootNode {
+
+    @Child
+    private JolkNode bodyNode;
+
+    public JolkRootNode(JolkLanguage language, JolkNode bodyNode) {
         super(language);
+        this.bodyNode = bodyNode;
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return JolkNothing.NOTHING;
+        return bodyNode.executeGeneric(frame);
     }
 }

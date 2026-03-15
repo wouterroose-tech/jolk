@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * A basic sanity check to ensure the Truffle language infrastructure is correctly
- * configured and can be initialized without errors.
- */
+///
+/// A basic sanity check to ensure the Truffle language infrastructure is correctly
+/// configured and can be initialized without errors.
+///
 public class JolcSanityTest extends JolcTestBase {
 
     @Test

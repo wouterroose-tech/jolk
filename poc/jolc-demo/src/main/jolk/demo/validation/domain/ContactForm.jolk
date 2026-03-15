@@ -6,9 +6,9 @@ package demo.validation.domain;
 final class ContactForm {
     public Person person;
     public String description;
-    public Integer zipCode;
+    public Int zipCode;
 
-    meta ContactForm new(Person person, String description, Integer zipCode) {
+    meta ContactForm new(Person person, String description, Int zipCode) {
         ^ super #new
             #person(person)
             #description(description)

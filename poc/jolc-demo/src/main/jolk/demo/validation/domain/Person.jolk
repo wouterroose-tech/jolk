@@ -4,7 +4,7 @@ package demo.validation.domain;
 /// @author Wouter Roose
 
 final class Person {
-    public Integer ssn;
+    public Long ssn;
     public String firstName;
     public String lastName;
 
@@ -12,7 +12,7 @@ final class Person {
         ^ super #new
     }
 
-    meta Person new(Integer ssn, String firstName, String lastName) {
+    meta Person new(Long ssn, String firstName, String lastName) {
         ^ super #new
             #ssn(ssn)
             #firstName(firstName)

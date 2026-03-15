@@ -76,9 +76,9 @@ final class Nothing extends Object {
     /// The Jolk Type pattern match. For `Nothing`, this is only true if the type is `Nothing` itself.
     ///
     /// - **type**: The type to check against.
-    /// - **Returns**: A `Selection` containing `self` if the type is `Nothing`, otherwise an empty `Selection`.
-    <T> Selection<T> instanceOf(Type<T> type) {
-        ^ (type == Nothing) ? Selection #with(self) : Selection #empty
+    /// - **Returns**: A `Match` containing `self` if the type is `Nothing`, otherwise an empty `Match`.
+    <T> Match<T> instanceOf(Type<T> type) {
+        ^ (type == Nothing) ? Match #with(self) : Match #empty
     } 
 
     /// ## project

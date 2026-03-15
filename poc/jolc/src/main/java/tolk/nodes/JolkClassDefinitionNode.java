@@ -5,9 +5,15 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
+import tolk.runtime.JolkArchetype;
 
-/// An AST node that represents the definition of a Jolk class. When executed,
-/// it produces a [JolkMetaClass] meta-object.
+/// An AST node that represents the definition of a Jolk type.
+///
+/// This node captures the core structural properties of a type—such as its name,
+/// archetype, visibility, and finality—during parsing. When executed at runtime, it
+/// acts as a factory, instantiating a [JolkMetaClass] meta-object with these
+/// properties. This meta-object then becomes the first-class representation of the
+/// type within the Jolk interpreter.
 /// 
 @NodeInfo(language = "Jolk", description = "The node for defining a Jolk class.")
 public class JolkClassDefinitionNode extends JolkExpressionNode {
@@ -15,16 +21,18 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     private final String className;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
+    private final JolkArchetype archetype;
 
-    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility) {
+    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
         this.className = className;
         this.finality = finality;
         this.visibility = visibility;
+        this.archetype = archetype;
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         // In a full implementation, this would also register the type in the language context.
-        return new JolkMetaClass(className, finality, visibility);
+        return new JolkMetaClass(className, finality, visibility, archetype);
     }
 }

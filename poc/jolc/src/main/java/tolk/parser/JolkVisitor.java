@@ -7,6 +7,7 @@ import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
+import tolk.runtime.JolkArchetype;
 
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
@@ -38,9 +39,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     /// @return A [JolkClassDefinitionNode] if it's a class, otherwise an empty node.
     @Override
     public JolkNode visitType_decl(jolkParser.Type_declContext ctx) {
-        // We check for the token type directly rather than comparing strings for
-        // efficiency and robustness.
-        if (ctx.archetype() == null || ctx.archetype().getStart().getType() != jolkParser.CLASS) {
+        if (ctx.archetype() == null) {
             return new JolkEmptyNode();
         }
 
@@ -75,7 +74,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
                 String className = typeContext.MetaId().getText();
-                return new JolkClassDefinitionNode(className, finality, visibility);
+
+                JolkArchetype archetype = switch (ctx.archetype().getText()) {
+                    case "class" -> JolkArchetype.CLASS;
+                    case "value" -> JolkArchetype.VALUE;
+                    case "record" -> JolkArchetype.RECORD;
+                    case "enum" -> JolkArchetype.ENUM;
+                    case "protocol" -> JolkArchetype.PROTOCOL;
+                    default -> JolkArchetype.CLASS;
+                };
+
+                return new JolkClassDefinitionNode(className, finality, visibility, archetype);
             }
         }
         return new JolkEmptyNode();

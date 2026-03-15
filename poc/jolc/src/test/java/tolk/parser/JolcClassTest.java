@@ -27,6 +27,7 @@ public class JolcClassTest extends JolcTestBase {
         assertEquals(className, result.getMetaQualifiedName());
         return result;
     }
+
     @Test
     public void testEmptyClass() {
         String className = "MyFirstJolkClass";
@@ -37,11 +38,60 @@ public class JolcClassTest extends JolcTestBase {
         // assertFalse(result.hasMembers());
     }
 
+    // TODO test compilation errors for invalid class definitions
+    // -> test here or in the truffle LSP layer? 
+    // Myclass { } // missing class keyword
+    // class Myclass // missing body
+    // clazz Myclass { } // typo in class keyword
+
+    @Test
+    @Disabled("Pending implementation of methods")
+    void testCreationMethod_Default() {
+        String className = "MyFirstJolkClass";
+        String source = "final class " + className + " { self me() { ^ self; } }";
+        Value result = eval(className, source);
+        assertFalse(result.hasMembers());
+        // TODO assert ...
+    }
+
+    @Test
+    @Disabled("Pending implementation of methods")
+    void testCreationMethod_basic() {
+        String className = "MyFirstJolkClass";
+        String source = "final class " + className + " { }";
+        Value result = eval(className, source);
+        assertFalse(result.hasMembers());
+        // TODO assert ...
+        // TODO assert #new
+    }
+
+    @Test
+    @Disabled("Pending implementation of methods")
+    void testCreationMethod_basic() {
+        String className = "MyFirstJolkClass";
+        String source = "final class " + className + " { meta Self new(Object arg) { ^ super #new }  }";
+        Value result = eval(className, source);
+        assertFalse(result.hasMembers());
+        // TODO assert ...
+        // TODO assert #new
+    }
+
+    @Test
+    @Disabled("Pending implementation of methods")
+    void testCreationMethod_variadic() {
+        String className = "MyFirstJolkClass";
+        String source = "final class " + className + " { meta Self new(Object ... args) { ^ super #new } }";
+        Value result = eval(className, source);
+        assertFalse(result.hasMembers());
+        // TODO assert ...
+        // TODO assert #new
+    }
+
     @Test
     @Disabled("Pending implementation of methods")
     void testClassWithField() {
         String className = "MyFirstJolkClass";
-        String source = "final class " + className + " { self me() { ^ self; } }";
+        String source = "final class " + className + " { Self me() { ^ self; } }";
         Value result = eval(className, source);
         assertFalse(result.hasMembers());
         // TODO assert ...

@@ -22,11 +22,13 @@ public final class JolkMetaClass implements TruffleObject {
     private final String name;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
+    private final JolkArchetype archetype;
 
-    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility) {
+    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
         this.name = name;
         this.finality = finality;
         this.visibility = visibility;
+        this.archetype = archetype;
     }
 
     @ExportMessage

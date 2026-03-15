@@ -11,15 +11,6 @@
 @Intrinsic("jolk.lang.Nothing")
 final class Nothing extends Object {
 
-    /// ## ~~
-    /// Performs a semantic equivalence check. For `Nothing`, this is true only if the other object is also `Nothing`.
-    ///
-    /// - **other**: The Object to compare against.
-    /// - **Returns**: `true` if the other object is `null`, otherwise `false`.
-    Boolean ~~(Object other) {
-        ^ self == other
-    }
-
     /// ## hash
     /// Returns a hash code value for `Nothing`.
     ///
@@ -88,7 +79,7 @@ final class Nothing extends Object {
     /// - **Returns**: A `Selection` containing `self` if the type is `Nothing`, otherwise an empty `Selection`.
     <T> Selection<T> instanceOf(Type<T> type) {
         ^ (type == Nothing) ? Selection #with(self) : Selection #empty
-    }
+    } 
 
     /// ## project
     /// Projects a map of dynamic values onto the receiver's state.

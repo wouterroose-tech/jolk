@@ -1,0 +1,41 @@
+~ jolk.lang;
+
+/// # Selection
+///
+/// A container object that represents the result of a pattern match or type check.
+///
+/// It is the primary mechanism for Jolk's "Type-Gate" pattern matching, allowing
+/// logic to flow safely based on the success of an `#instanceOf` check. While it
+/// functions as a monadic container at the language level, the Tolk compiler performs
+/// "Monadic Flow Flattening," eliminating the object allocation at runtime and translating
+/// message chains into efficient, direct bytecode instructions.
+///
+/// @author Wouter Roose
+@Intrinsic
+final class Selection<T> {
+
+    /// ## with
+    /// Creates a Selection containing the given value.
+    meta Selection<T> with(T value) { }
+
+    /// ## empty
+    /// Creates an empty Selection.
+    meta Selection<T> empty() { }
+
+    /// ## ifPresent
+    /// Executes the action if the selection contains a value.
+    Self ifPresent(Closure action) { }
+
+    /// ## filter
+    /// Applies a predicate to the value. If it matches, returns self; otherwise returns empty.
+    Selection<T> filter(Closure predicate) { }
+
+    /// ## map
+    /// Transforms the value if present.
+    <U> Selection<U> map(Closure<U> mapper) { }
+    
+    /// ## or
+    /// Returns the value if present, otherwise returns the other value.
+    T or(T other) { }
+
+}

@@ -18,7 +18,9 @@ class Object {
     ///
     /// - **other**: The Object to compare against.
     /// - **Returns**: True if the objects are semantically equivalent.
-    Boolean ~~(Object other) { }
+    Boolean ~~(Object other) {
+        ^ self == other
+    }
     
     /// ## hash
     /// Returns a hash code value for the object.
@@ -82,7 +84,9 @@ class Object {
     ///
     /// - **type**: The type to check against.
     /// - **Returns**: A Selection containing the object if it is an instance of the type, otherwise an empty Selection.
-    Selection<T> instanceOf(Type<T> type) { }
+    <T> Selection<T> instanceOf(Type<T> type) {
+        ^ type #isInstance(self) ? Selection #with(self) : Selection #empty
+    }
 
     /// ## project
     /// Projects a map of dynamic values onto the receiver's state.

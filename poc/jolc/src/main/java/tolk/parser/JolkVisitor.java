@@ -6,6 +6,7 @@ import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkNode;
 import tolk.runtime.JolkFinality;
+import tolk.runtime.JolkVisibility;
 
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
@@ -48,6 +49,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // NullPointerException if the parse tree structure is not what's expected.
         if (ctx.type_bound() != null && ctx.type_bound().type() != null) {
             JolkFinality finality = JolkFinality.OPEN;
+            JolkVisibility visibility = JolkVisibility.PUBLIC; // Jolk types default to PUBLIC
             // Iterate children to robustly check for 'final' keyword, handling potential
             // grammar variations (e.g. grouped modifiers vs direct finality rule).
             for (int i = 0; i < ctx.getChildCount(); i++) {
@@ -63,11 +65,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     finality = JolkFinality.ABSTRACT;
                     break;
                 }
+                
+                // Check for visibility modifiers
+                if (text.contains("private")) visibility = JolkVisibility.PRIVATE;
+                else if (text.contains("protected")) visibility = JolkVisibility.PROTECTED;
+                else if (text.contains("package")) visibility = JolkVisibility.PACKAGE;
+                else if (text.contains("public")) visibility = JolkVisibility.PUBLIC;
             }
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
                 String className = typeContext.MetaId().getText();
-                return new JolkClassDefinitionNode(className, finality);
+                return new JolkClassDefinitionNode(className, finality, visibility);
             }
         }
         return new JolkEmptyNode();

@@ -14,6 +14,10 @@ Messages in Motion defines the fundamental experience of the language-dynamic; r
 
 Messages in Motion is a tribute to the core philosophy of Smalltalk, a thematic play on two significant concepts in computer science history, “Object” and “Message”, blended with the specific mechanics of the Jolk runtime. The industry often focused on the "Object" as a container and in traditional Java, method call execution feels very procedural. In Jolk, messages are "in motion", and drive the systems.
 
+**Acknowledgments**
+
+Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kandidaatsjaar aan de VUB de software-industrie nog maar eens hebben heruitgevonden; Michel Tilman, mentor en collega, voor al je advies door de jaren heen; en Theo D'Hondt, om mij te leren meta-nadenken. Special thanks to Gilad Bracha for his invaluable advice at the very start of this project.
+
 ---
 
 # Table of Contents
@@ -51,6 +55,7 @@ Messages in Motion is a tribute to the core philosophy of Smalltalk, a thematic 
     *   [Tolk - jolc the compiler](#tolk---jolc-the-compiler)
     *   [Industrialisation](#industrialisation)
 *   [References](#references)
+*   [Glossary of terms](#glossary-of-terms)
 *   [Copyright](#copyright)
 
 ---
@@ -804,7 +809,7 @@ To ensure industrial-tier efficiency, the Tolk Compiler employs the @Intrinsic a
 
 The industrial weight of the Jolk substrate is predicated on the replacement of runtime reflection with the Generalised Intrinsic Synthesis Protocol. In legacy environments, frameworks rely on the "Inference Fog" of dynamic discovery, where method invocation and dependency resolution incur continuous costs in CPU cycles and memory density. Jolk eliminates this qualitative overhead by treating architectural patterns as Static Archetype Projections. Through the `@Intrinsic` synthesis engine, the compiler performs Metastructural Mapping of protocol constants during the build phase, unrolling logic into a linear sequence of machine instructions.
 
-This transition from observation to construction ensures Dispatch Invariability; every JoMoo, whether synthesised as a Mock or a Serializer, is a native binary fact with a fixed VTable coordinate. By anchoring metaprogramming within the sovereign authority of the compiler, the system achieves a "Correct by Construction" state that is natively aligned with high-performance AOT environments like GraalVM, effectively rendering the complexity of runtime bytecode manipulation and reflective proxies obsolete.
+This transition from observation to construction ensures Dispatch Invariability; every JoMoo, whether synthesised as a Mock or a Serializer, is a native binary fact with a fixed VTable coordinate. By anchoring metaprogramming within the authority of the compiler, the system achieves a "Correct by Construction" state that is natively aligned with high-performance AOT environments like GraalVM, effectively rendering the complexity of runtime bytecode manipulation and reflective proxies obsolete.
 
 ## Core Type System
 
@@ -852,13 +857,13 @@ The Nothing identity enables Fluid Message Chaining via integrated safe navigati
 
 **Closure**
 
-In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Reified Identity*. Defined by `[ [params] -> [statements] ]`, it represents a block of deferred logic that maintains a sovereign link to its defining environment. The closure is a first-class object, and its interaction with the surrounding scope is governed by the *Closure Contract*, which depends on the selector that receives it. This contract determines whether the closure's boundary is transparent or opaque, which is the foundation of structural safety in Jolk.
+In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Reified Identity*. Defined by `[ [params] -> [statements] ]`, it represents a block of deferred logic that maintains a link to its defining environment. The closure is a first-class object, and its interaction with the surrounding scope is governed by the *Closure Contract*, which depends on the selector that receives it. This contract determines whether the closure's boundary is transparent or opaque, which is the foundation of structural safety in Jolk.
 
 *   ***Intrinsic Selectors***: When a closure is passed to a structural selector that is part of the language's core (like `#while` or `?`), the compiler flattens the interaction into native JVM constructs. The boundary is fully transparent, allowing the closure to operate directly on the caller’s stack. This enables *Scope Permeability*: it can mutate local variables without overhead and, crucially, use the return terminal (`^`) to perform a *Non-Local Return*, exiting the parent method immediately.
 *   ***Transparent Selectors***: For library methods marked with `@Inline` (like `#withLock`), the compiler performs inlining, treating the closure as a structural extension of the method. The boundary is also transparent, granting the same *Scope Permeability* and support for non-local returns as intrinsic selectors. This allows developers to create custom, zero-overhead control structures.
 *   ***Opaque Selectors***: When a closure is passed to a standard functional selector (like `#map`), it operates as an encapsulated unit of logic. The boundary is *Opaque*. The closure is a self-contained unit, typically projected as a Java lambda. While it can still capture and mutate state from its defining environment (managed via *Identity Promotion*), it is forbidden from using the return terminal (`^`) to exit the parent method. The compiler enforces this via the *Semantic Guard* to prevent invalid stack manipulation.
 
-Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk enforces the *Functional Exclusion Principle*. Closures must not be embedded within a parenthesized argument list (e.g., `#do(param, [ ... ] )`). Instead, the language mandates *Selector Refining*, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do [ ... ]`). This *Pivot Pattern* ensures that logic is never a secondary attribute but always the sovereign focus of the interaction.
+Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk enforces the *Functional Exclusion Principle*. Closures must not be embedded within a parenthesized argument list (e.g., `#do(param, [ ... ] )`). Instead, the language mandates *Selector Refining*, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do [ ... ]`). This *Pivot Pattern* ensures that logic is never a secondary attribute but always the focus of the interaction.
 
 	@Intrinsic  
 	class Closure<T> {
@@ -1027,7 +1032,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Predicate Assertion*: A message signifier (`?` / `?!`) that merges a state query with a logical expectation, allowing the compiler to branch execution directly from the message intent without procedural negation.
 
-*Reified Blocks*: Closures treated as sovereign blocks of execution that maintain a persistent connection to their environment of origin.
+*Reified Blocks*: Closures treated as blocks of execution that maintain a persistent connection to their environment of origin.
 
 *Receiver Retention*: A stack manipulation protocol (`DUP` instructions) that ensures self is returned after interacting with Java void methods.
 
@@ -1355,7 +1360,7 @@ The Pivot Pattern prevents *Syntactic Drift*. As architectures grow, the temptat
 
 ## Dependency Injection
 
-Dependency Injection is established as JIT-DI (Just-In-Time Dependency Injection), a language-native model that replaces reflection-heavy containers with Structural Synthesis. By treating component assembly as a fundamental application of native Object-Oriented principles, JIT-DI ensures that the dependency graph remains strictly traceable and only materialises when needed. This approach reduces DI to a transparent message-passing pattern where the developer retains full sovereign authority over the instantiation, wiring, and lifecycle of every component through explicit, statically traceable code.
+Dependency Injection is established as JIT-DI (Just-In-Time Dependency Injection), a language-native model that replaces reflection-heavy containers with Structural Synthesis. By treating component assembly as a fundamental application of native Object-Oriented principles, JIT-DI ensures that the dependency graph remains strictly traceable and only materialises when needed. This approach reduces DI to a transparent message-passing pattern where the developer retains full authority over the instantiation, wiring, and lifecycle of every component through explicit, statically traceable code.
 
 At the core of this model lies the lazy feature, acting as a compiler intrinsic for Thunk Projection to provide thread-safe, memoised instances that are only hydrated upon the reception of their primary message. This native mechanism eliminates the requirement for intrusive, overlaid frameworks by utilising JoMoos (Message-Oriented Jolk Objects) and a synthesised `#new` method. Because Jolk enforces immutable constructor parameters, this contract provides a level of structural integrity that ensures every object is "Correct by Construction," physically preventing the bypass of the dependency contract once an object is created.
 
@@ -1616,13 +1621,13 @@ To avoid the "Procedural Dead End" of Java `void` methods, the Tolk compiler app
 
 ### The Reified Block and the Architecture of Closure Projection
 
-In the *JoMoo* architectural model, a closure is defined as a *Reified Block* rather than a mere functional interface. This distinction is foundational to the Jolk-Java integration: unlike a Java lambda, which is a discrete function pointer restricted to its own local stack frame, a Jolk closure acts as a portable block of execution that maintains a sovereign link to its origin. This enables *Transparent Capture*, where closures bypass the "effectively final" constraint to maintain full, mutable access to their defining environment, and *Return Authority*, where a return statement (`^`) targets the actual defining method rather than the immediate caller.
+In the *JoMoo* architectural model, a closure is defined as a *Reified Block* rather than a mere functional interface. This distinction is foundational to the Jolk-Java integration: unlike a Java lambda, which is a discrete function pointer restricted to its own local stack frame, a Jolk closure acts as a portable block of execution that maintains a link to its origin. This enables *Transparent Capture*, where closures bypass the "effectively final" constraint to maintain full, mutable access to their defining environment, and *Return Authority*, where a return statement (`^`) targets the actual defining method rather than the immediate caller.
 
 #### *Projection Strategies: Flattening and Escaping*	
 
 The `JolctVisitor` governs the projection of these blocks through two distinct strategies. When the compiler identifies a closure used for local operations—such as synchronous collection functions or `#catch` blocks—it performs *Static Flattening*. In this state, the closure boundary is erased, and logic is unrolled into native Java structures or raw bytecode within the calling method's body. By converting return statements into native JVM jump instructions and eliminating object allocation, the compiler ensures that functional code achieves the performance density of a primitive Java loop.
 
-Conversely, when a closure is assigned to a variable or passed to an external scope, it undergoes *Variable Promotion* to become a sovereign *Reified Object* via *Dynamic Escaping*. The transpiler reconciles these high-density blocks with Java’s constraints by generating standard lambda expressions, while the direct-to-bytecode compiler utilizes the `invokedynamic` (Indy) instruction. This creates a persistent logical connection to the defining scope, enabling *Non-Local Escaping*. This "tunneling" mechanism allows a return statement executed deep within a disparate call stack to unwind safely back to the original defining method by pushing the necessary context directly onto the *Operand Stack*. The `VoidPathDetector` ensures consistency across both strategies by evaluating the terminal state of the block independently of the home method.
+Conversely, when a closure is assigned to a variable or passed to an external scope, it undergoes *Variable Promotion* to become a *Reified Object* via *Dynamic Escaping*. The transpiler reconciles these high-density blocks with Java’s constraints by generating standard lambda expressions, while the direct-to-bytecode compiler utilizes the `invokedynamic` (Indy) instruction. This creates a persistent logical connection to the defining scope, enabling *Non-Local Escaping*. This "tunneling" mechanism allows a return statement executed deep within a disparate call stack to unwind safely back to the original defining method by pushing the necessary context directly onto the *Operand Stack*. The `VoidPathDetector` ensures consistency across both strategies by evaluating the terminal state of the block independently of the home method.
 
 #### *Direct Bytecode: The Synthetic Frame and Identity Promotion*
 
@@ -1636,7 +1641,7 @@ Jolk manages closure returns through a tiered duality of *Inlining* and *Non-Loc
 
 ### Interoperability and the Reification of Nothing
 
-Jolk’s treatment of *Nothing* preserves the "Everything is an Object" principle while maintaining seamless Java interoperability. Internally, `null` is reified as a first-class *Atomic Receiver*—the singleton instance of `jolk.lang.Nothing` equipped with its own V-Table. This ensures that sending a message via the `#` selector results in a valid polymorphic dispatch rather than a `NullPointerException`. By treating `Nothing` as a sovereign entity, it can respond to messages like `#isNil` autonomously, ensuring that the *Variable Mutation Pitfall* and the friction of the substrate are solved by a consistent logic identity across all execution boundaries.
+Jolk’s treatment of *Nothing* preserves the "Everything is an Object" principle while maintaining seamless Java interoperability. Internally, `null` is reified as a first-class *Atomic Receiver*—the singleton instance of `jolk.lang.Nothing` equipped with its own V-Table. This ensures that sending a message via the `#` selector results in a valid polymorphic dispatch rather than a `NullPointerException`. By treating `Nothing` as an entity, it can respond to messages like `#isNil` autonomously, ensuring that the *Variable Mutation Pitfall* and the friction of the substrate are solved by a consistent logic identity across all execution boundaries.
 
 ### Exception Handling
 
@@ -1644,7 +1649,7 @@ Exception handling “flattening” is more difficult than a `#while` loop becau
 
 The Tolk engine recognizes these message chains as specific syntactic structures rather than a series of standard method dispatches. The compiler treats the provided blocks as code paths rather than heap-allocated Closure objects, intrinsifying the logic by inlining it directly into native JVM exception-handling constructs. This "flattening" effectively bypasses the "Closure Trap," allowing the JVM to execute the flattened logic with zero-allocation overhead, matching the efficiency of a native Java try-catch-finally statement.
 
-The Transpilation Mapping for Jolk exceptions is a direct translation into the Java Runtime Environment. By transpiling every custom Jolk exception into a Java class that extends java.lang.RuntimeException, Jolk remains unchecked by default. This ensures that "Sovereign" interfaces stay clean and free of "throws" signatures, avoiding the exception pollution common in Java codebases.
+The Transpilation Mapping for Jolk exceptions is a direct translation into the Java Runtime Environment. By transpiling every custom Jolk exception into a Java class that extends java.lang.RuntimeException, Jolk remains unchecked by default. This ensures that interfaces stay clean and free of "throws" signatures, avoiding the exception pollution common in Java codebases.
 
 ### Null-Coalescing
 
@@ -1677,7 +1682,7 @@ The Tolk compiler enforces a strict metaboundary by restricting the application 
 
 ### Lifecycle and Integrity
 
-The dependency lifecycle starts with a configuration implemented by a standard Class. The Configuration serves as the sovereign assembler, utilizing lazy methods to provide thread-safe, memoised instances. These instances are injected via the consumer’s constructor. Because Jolk enforces immutable constructor parameters, the contract is impossible to bypass once an object is instantiated, ensuring a level of structural integrity beyond the capabilities of runtime frameworks.
+The dependency lifecycle starts with a configuration implemented by a standard Class. The Configuration serves as the assembler, utilizing lazy methods to provide thread-safe, memoised instances. These instances are injected via the consumer’s constructor. Because Jolk enforces immutable constructor parameters, the contract is impossible to bypass once an object is instantiated, ensuring a level of structural integrity beyond the capabilities of runtime frameworks.
 
 To manage the initialisation and teardown of these dependencies, Jolk adheres to a philosophy of Industrial Simplicity. Components track their own "heavy" resources, eliminating "Context Poisoning" and complex interface contamination. The developer retains total authority over the exit strategy, either by explicitly invoking a `#shutdown` method or registering the resource with a `Runtime #onShutdown` hook—an intrinsic Jolk system class. To mitigate tail-latency risks associated with laziness, Jolk encourages "Eager Warming" at the system entry point, while the substrate employs Linearised Locking to prevent initialisation deadlocks. This results in a system that is statically traceable, performant, and devoid of "Inference Fog".
 
@@ -1794,6 +1799,37 @@ jdk 25 documentation: [https://docs.oracle.com/en/java/javase/25/](https://docs.
 [https://github.com/ahinchman1/Kotlin-Compiler-Crash-Course](https://github.com/ahinchman1/Kotlin-Compiler-Crash-Course)
 
 [https://kotlinlang.org/docs/k2-compiler-migration-guide.html\#performance-improvements](https://kotlinlang.org/docs/k2-compiler-migration-guide.html#performance-improvements)
+
+
+---
+
+# Glossary of terms
+The terminology and recontextualized concepts of the Jolk language:
+
+**Archetype**: A structural template (`class`, `record`, `enum`, or `value`) that defines the nature of an identity, harmonized under a single, consistent messaging protocol.  
+**Atomic Receiver**: A terminal, first-class identity (such as `true`, `false`, `Nothing`or Value Objects) that participates in the messaging protocol as a recipient rather than a primitive literal.  
+**Contextual Encapsulation**: The principle that an identity’s visibility is an inherent property of its functional role; methods default to public (external), while state fields default to private (internal).  
+**Deferred Identity**: A block of logic (Closure) that maintains a link to its environment and is only realized when it receives a message.  
+**Deterministic Omission**: The mechanism where the absence of a factual result is treated as a predictable signal, allowing the engine to prune execution branches without triggering structural failure.  
+**Fluid Messaging**: A keyword-less computational model where logic and arithmetic are implemented as formal message sends rather than hardcoded procedural keywords.  
+**Guided Coercion**: The active, type-aware alignment of differing numerical identities to a common protocol, requiring explicit guidance (e.g., `#asInt`) for any lossy transition.  
+**Identity Congruence**: The architectural mandate ensuring a singular logical representation for all entities—including complex objects, primitives, and absence—regardless of their physical storage format.  
+**Identity Erasure**: A performance strategy where the engine physically strips away object structures and headers at the machine level, replacing them with raw CPU registers or bit-patterns.  
+**Identity Restitution**: A metaboundary protocol that "lifts" raw JVM `null` pointers into the `Nothing` singleton to ensure they can safely receive messages.  
+**Industrial Sovereignty**: The state where a language maintains absolute authority over its execution path and memory layout, ensuring intent is never compromised by the "inference fog" of external frameworks.  
+**JIT-DI (Just-In-Time Dependency Injection)**: A grammar-integrated pattern where dependencies are resolved as machine-code constants during the JIT phase, rendering reflection-heavy runtime containers redundant.  
+**JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a  message coordinate in an interstitial communicative field rather than a passive data container.  
+**Lexical Fence**: An absolute structural boundary (conducted via terminals like `^ field`) that prohibits direct field access and enforces message-only interaction.  
+**Ma**: Inspired by the Japanese concept referring to the "interstitial space" or the communication protocols between objects rather than their internal properties.  
+**Manuscript**: The Jolk source code, viewed as a formal record of intent that exists independently of its physical execution state.  
+**Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.   
+**Nominalised Precision**: The requirement to use nouns and architectural outcomes over procedural verbs to ensure the "Security of Meaning" across the codebase.  
+**Nothing**: A reified, first-class identity and Atomic Receiver representing the fact of absence and referred to by the reserved object identifier `null`.  
+**Receiver Retention**: A metaboundary protocol using JVM `DUP` instructions to ensure the receiver (`self`) is returned for chaining after interacting with Java `void` methods.  
+**Semantic Casing**: A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  
+**Semantic Flattening**: The process where the Tolk engine identifies "Logic Idioms" and collapses high-level message chains into raw hardware instructions or JVM opcodes.  
+**Silent Absorption**: The protocol where the `Nothing` identity consumes an incoming message and returns itself, allowing message chains to collapse gracefully without error.  
+**Substrate**: The physical execution layer (typically the JVM or GraalVM) where high-level symbolic identities are projected onto machine-level realities.  
 
 ---
 

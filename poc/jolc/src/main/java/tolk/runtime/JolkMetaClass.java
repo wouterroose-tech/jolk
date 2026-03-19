@@ -1,5 +1,6 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -53,30 +54,38 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     @ExportMessage
-    boolean hasMembers() throws UnsupportedMessageException {
-        return finality == JolkFinality.FINAL;
+    boolean hasMembers() {
+        return true;
     }
 
     @ExportMessage
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
-        if (finality == JolkFinality.FINAL) {
-            return new MemberNames(new String[]{"isFinal"});
-        }
-        throw UnsupportedMessageException.create();
+        return new MemberNames(new String[]{"new"});
     }
 
     @ExportMessage
-    boolean isMemberReadable(String member) throws UnsupportedMessageException {
-        return finality == JolkFinality.FINAL && "isFinal".equals(member);
+    boolean isMemberReadable(String member) {
+        return false;
+    }
+
+    @ExportMessage
+    boolean isMemberInvocable(String member) {
+        return "new".equals(member);
+    }
+
+    @ExportMessage
+    Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException {
+        if ("new".equals(member)) {
+            if (arguments.length != 0) {
+                throw ArityException.create(0, 0, arguments.length);
+            }
+            return new JolkObjectTest();
+        }
+        throw UnknownIdentifierException.create(member);
     }
 
     @ExportMessage
     Object readMember(String member) throws UnknownIdentifierException {
-        // We expose the internal enum state as the boolean 'isFinal' property
-        // to satisfy the object protocol.
-        if ("isFinal".equals(member) && finality == JolkFinality.FINAL) {
-            return true;
-        }
         throw UnknownIdentifierException.create(member);
     }
 

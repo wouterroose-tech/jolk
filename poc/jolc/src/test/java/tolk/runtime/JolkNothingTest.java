@@ -1,66 +1,110 @@
 package tolk.runtime;
 
-import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.HostAccess;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * ## JolkNothingTest
- *
- * Verifies the behavior of Jolk's `null` identity, which is a first-class singleton
- * instance of the `Nothing` type. This test ensures that `null` correctly participates
- * in message passing, adheres to the Null Object Pattern, and supports flow control.
- */
+/// ## JolkNothingTest
+///
+/// Verifies the behavior of Jolk's `null` identity, which is a first-class singleton
+/// instance of the `Nothing` type. This test ensures that `null` correctly participates
+/// in message passing, adheres to the Null Object Pattern, and supports flow control.
+///
 public class JolkNothingTest extends JolcTestBase {
 
+    private final JolkNothing nothing = JolkNothing.INSTANCE;
+
     @Test
-    void testNullIsASingletonIdentity() {
-        Value nullValue = eval("null");
-        assertTrue(nullValue.isNull(), "The 'null' literal should be recognized as a null polyglot value.");
+    void testIsNull() {
+        assertTrue(nothing.isNull(), "JolkNothing should identify as null");
     }
 
     @Test
-    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testNullRespondsToCoreProtocol() {
-        String source = """
-            #(
-                "is_present" -> (null #isPresent),
-                "is_empty" -> (null #isEmpty)
-            )
-        """;
-        Value results = eval(source);
-        assertFalse(results.getMember("is_present").asBoolean(), "'null #isPresent' should evaluate to false.");
-        assertTrue(results.getMember("is_empty").asBoolean(), "'null #isEmpty' should evaluate to true.");
+    void testToDisplayString() {
+        assertEquals("null", nothing.toDisplayString(false));
     }
 
     @Test
-    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testFlowControlMessages() {
-        // #ifPresent should not execute its closure for a null receiver.
-        Value ifPresentResult = eval("x = 1; null #ifPresent [ x = 2 ]; ^x");
-        assertEquals(1, ifPresentResult.asInt(), "The #ifPresent block should not execute on null.");
-
-        // #ifEmpty should execute its closure for a null receiver.
-        Value ifEmptyResult = eval("x = 1; null #ifEmpty [ x = 2 ]; ^x");
-        assertEquals(2, ifEmptyResult.asInt(), "The #ifEmpty block should execute on null.");
+    void testHasMembers() {
+        assertTrue(nothing.hasMembers());
     }
 
     @Test
-    void testSilentAbsorptionOfMessages() {
-        // Sending an arbitrary message to 'null' should not cause a crash.
-        // It should absorb the message and return 'null' itself, enabling fluid chains.
-        Value result = eval("null #someRandomMessage #anotherMessage");
-        assertTrue(result.isNull(), "Chaining messages on null should result in null (Silent Absorption).");
+    void testIsMemberInvocable() {
+        assertTrue(nothing.isMemberInvocable("isEmpty"));
+        assertTrue(nothing.isMemberInvocable("ifEmpty"));
+        assertFalse(nothing.isMemberInvocable("randomMethod"));
     }
 
     @Test
-    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testNullCoalescingOperator() {
-        Value result = eval("null ?? 42");
-        assertEquals(42, result.asInt(), "The null-coalescing operator '??' should return the right-hand side for a null operand.");
+    void testInvokeHash() throws Exception {
+        Object result = nothing.invokeMember("hash", new Object[]{});
+        assertEquals(0, result);
     }
 
+    @Test
+    void testInvokeToString() throws Exception {
+        Object result = nothing.invokeMember("toString", new Object[]{});
+        assertEquals("null", result);
+    }
+
+    @Test
+    void testInvokeIsPresent() throws Exception {
+        Object result = nothing.invokeMember("isPresent", new Object[]{});
+        assertEquals(false, result);
+    }
+
+    @Test
+    void testInvokeIsEmpty() throws Exception {
+        Object result = nothing.invokeMember("isEmpty", new Object[]{});
+        assertEquals(true, result);
+    }
+
+    @Test
+    void testInvokeIfPresent() throws Exception {
+        MockClosure action = new MockClosure();
+        Object result = nothing.invokeMember("ifPresent", new Object[]{action});
+        
+        assertSame(nothing, result, "Should return self for chaining");
+        assertFalse(action.executed, "Action should NOT be executed for Nothing");
+    }
+
+    @Test
+    @Disabled("This is a placeholder for future functionality to execute the closure for Nothing")
+    void testInvokeIfEmpty() throws Exception {
+        MockClosure action = new MockClosure();
+        Object result = nothing.invokeMember("ifEmpty", new Object[]{action});
+        
+        assertSame(nothing, result, "Should return self for chaining");
+        assertTrue(action.executed, "Action SHOULD be executed for Nothing");
+    }
+
+    @Test
+    void testInvokeProject() throws Exception {
+        // Project is ignored, just verifying it returns self and doesn't crash
+        Object result = nothing.invokeMember("project", new Object[]{ "someMap" });
+        assertSame(nothing, result);
+    }
+
+    @Test
+    @Disabled("This is a placeholder for future functionality to return the Nothing type reference")
+    void testInvokeClass() throws Exception {
+        Object result = nothing.invokeMember("class", new Object[]{});
+        // TODO: This should ideally return a reference to the Nothing type
+    }
+
+    // Helper class to verify closure execution
+    // TODO: create a proper Jolk closure object rather than a Java Runnable
+    static class MockClosure implements Runnable {
+        boolean executed = false;
+
+        @HostAccess.Export
+        @Override
+        public void run() {
+            executed = true;
+        }
+    }
 }

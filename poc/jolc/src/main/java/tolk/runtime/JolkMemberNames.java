@@ -8,7 +8,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 /// Helper class to expose member names as a TruffleObject.
 @ExportLibrary(InteropLibrary.class)
-public final class JolkMemberNames implements TruffleObject {
+final class JolkMemberNames implements TruffleObject {
     private final String[] members;
 
     public JolkMemberNames(String[] members) {

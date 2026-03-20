@@ -109,31 +109,7 @@ public class JolcClassTest extends JolcTestBase {
         // TODO assert ...
         // TODO assert #new
     }
-
-    @Test
-    @Disabled("Pending implementation final ")
-    public void testEmptyFinalClass() {
-        String className = "MyClass";
-        String source = "final class " + className + " { }";
-        Value result = eval(className, source);
-        // A final class must have at least one method
-        // this must result in a compilationerror?
-        // TODO assert ...
-    }
-
-    @Test
-    @Disabled("Pending implementation final ")
-    public void testFinalClass() {
-        String className = "MyClass";
-        String source = "final class " + className + " { self me() { ^ self; } }";
-        Value result = eval(className, source);
-        // A final class should have a meta-object that indicates it's final.
-        // TODO is this the way to test it?
-        assertTrue(result.hasMember("isFinal"));
-        assertTrue(result.getMember("isFinal").asBoolean());
-        // TODO assert ...
-    }
-
+    
     @Test
     void testOverriddenEquivalence() {
         // Define a class that overrides the equivalence operator '~~'.

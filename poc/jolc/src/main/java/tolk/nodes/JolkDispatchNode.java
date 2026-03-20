@@ -1,5 +1,6 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -20,16 +21,52 @@ import com.oracle.truffle.api.nodes.Node;
 /// dispatch logic, leveraging the Truffle DSL to inline caches (ICs) for performance.
 /// It primarily uses the `InteropLibrary` to interact with objects, ensuring strict
 /// adherence to the defined protocols (including those of `JolkNothing`).
+/// 
+/// ### Specialization for `JolkNothing`
+///
+/// The `doNothing` specialization provides a high-performance, monomorphic "fast path" for
+/// messages sent to the `JolkNothing.INSTANCE` singleton. In a message-passing system, the
+/// absence of a value (`null`) is a common receiver, and optimizing for it is critical.
+///
+/// This specialization works by caching the `InteropLibrary` specific to the `JolkNothing`
+/// type. Since `JolkNothing` is a singleton, this cache is always hit after the first
+/// invocation, making subsequent dispatches extremely fast. The node simply delegates the
+/// message (`invokeMember`) to the `JolkNothing` object itself, which defines how it
+/// should respond to various selectors (typically by returning itself, absorbing the message).
+///
+/// ### Generic Dispatch and Polymorphic Inline Caches
+///
+/// The `doDispatch` specialization is the general-purpose, polymorphic fallback for any
+/// object that is not `JolkNothing`. It leverages Truffle's Polymorphic Inline Caches (PICs)
+/// to maintain high performance across different receiver types.
+///
+/// The `limit = "3"` directive instructs the Truffle DSL to create an inline cache that can
+/// specialize for up to three distinct receiver types. Here's how it works:
+///
+/// 1.  **Monomorphic State**: On the first invocation with a new type (e.g., `JolkMetaClass`),
+///     the node rewrites itself to include a fast `instanceof JolkMetaClass` check and caches
+///     the appropriate `InteropLibrary`.
+/// 2.  **Polymorphic State**: When a second or third new type is encountered, the node adds
+///     more `instanceof` checks, creating a chain of fast paths.
+/// 3.  **Megamorphic State**: If a fourth type is seen, the cache is considered "megamorphic."
+///     The node transitions to a more generic (and slightly slower) dispatch mechanism that
+///     can handle an unlimited number of types, typically using a hash map lookup on the
+///     receiver's class.
+///
+/// This strategy ensures that common call sites with a few receiver types remain highly
+/// optimized, while still correctly handling fully dynamic scenarios.
+///
+/// ### Node Inlining Strategy
+///
+/// Node inlining is currently explicitly disabled (`@GenerateInline(false)`) for this PoC.
+/// While inlining reduces memory footprint and improves performance by combining nodes,
+/// it requires the consuming nodes (like `JolkMessageSendNode`) to be refactored to use
+/// the Truffle DSL's `@Cached` injection rather than manual `@Child` fields.
+///
+/// To prioritize architectural clarity and simplicity during the initial implementation phase,
+/// we defer this optimization. It can be easily enabled later as part of the industrialization phase.
+@GenerateInline(false)
 public abstract class JolkDispatchNode extends Node {
-
-    /* TODO
-    This node is a candidate for node object inlining. 
-    The memory footprint is estimated to be reduced from 28 to 9 byte(s). 
-    Add @GenerateInline(true) to enable object inlining for this node or 
-    @GenerateInline(false) to disable this warning. 
-    Also consider disabling cached node generation with @GenerateCached(false) if all usages will be inlined. 
-    This warning may be suppressed using @SuppressWarnings("truffle-inlining").
-    */
 
     /// Executes the message dispatch.
     ///

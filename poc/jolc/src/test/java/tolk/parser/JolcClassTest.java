@@ -42,14 +42,13 @@ public class JolcClassTest extends JolcTestBase {
         Value result = eval(className, source);
         // An empty, non-final class should have no members.
         // TODO Pending implementation of members
-        //assertFalse(result.hasMembers());
+        assertTrue(result.hasMembers());
     }
 
     @Test
-    @Disabled("Pending implementation of methods")
-    void testCreationMethod_Default() {
-        String className = "MyFirstJolkClass";
-        String source = "final class " + className + " { self me() { ^ self; } }";
+    void testClassWithMethod() {
+        String className = "MyClass";
+        String source = "final class " + className + " { Self me() { ^ self; } }";
         Value result = eval(className, source);
         assertTrue(result.hasMembers());
         assertNotNull(result.getMember("me"));
@@ -57,62 +56,42 @@ public class JolcClassTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending implementation of methods")
-    void testCreationMethod_basic() {
-        String className = "MyFirstJolkClass";
-        String source = "final class " + className + " { }";
-        Value result = eval(className, source);
-        assertFalse(result.hasMembers());
-        // TODO assert ...
-        // TODO assert #new
-    }
-
-    @Test
-    @Disabled("Pending implementation of methods")
-    void testCreationMethod_basic() {
-        String className = "MyFirstJolkClass";
-        String source = "final class " + className + " { meta Self new(Object arg) { ^ super #new }  }";
-        Value result = eval(className, source);
-        assertFalse(result.hasMembers());
-        // TODO assert ...
-        // TODO assert #new
-    }
-
-    @Test
-    @Disabled("Pending implementation of methods")
-    void testCreationMethod_variadic() {
-        String className = "MyFirstJolkClass";
-        String source = "final class " + className + " { meta Self new(Object ... args) { ^ super #new } }";
-        Value result = eval(className, source);
-        assertFalse(result.hasMembers());
-        // TODO assert ...
-        // TODO assert #new
-    }
-
-    @Test
-    @Disabled("Pending implementation of methods")
     void testClassWithField() {
-        String className = "MyFirstJolkClass";
-        String source = "final class " + className + " { Self me() { ^ self; } }";
+        String className = "MyClass";
+        String source = "class " + className + " { String name; }";
         Value result = eval(className, source);
-        assertFalse(result.hasMembers());
+        assertTrue(result.hasMembers());
+        assertNotNull(result.getMember("name"));
         // TODO assert ...
     }
 
     @Test
-    @Disabled("Pending implementation of fields and methods")
     void testClassWithMethodAndField() {
-        String className = "MyFirstJolkClass";
-        String source = "final class " + className + " { String name; String me() { ^ name; } }";
+        String className = "MyClass";
+        String source = "final class " + className + " { String name; String name() { ^ name; } }";
         Value result = eval(className, source);
-        assertFalse(result.hasMembers());
+        assertTrue(result.hasMembers());
+        assertEquals(2, result.getMemberKeys().size());
+        assertNotNull(result.getMember("name"));
+        // TODO assert ...
+    }
+
+    @Test
+    void testClassWithMethodAndField_2() {
+        String className = "MyClass";
+        String source = "final class " + className + " { String name; String myName() { ^ name; } }";
+        Value result = eval(className, source);
+        assertTrue(result.hasMembers());
+        assertEquals(3, result.getMemberKeys().size());
+        assertNotNull(result.getMember("name"));
+        assertNotNull(result.getMember("myName"));
         // TODO assert ...
     }
 
     @Test
     @Disabled("Pending implementation final ")
     public void testEmptyFinalClass() {
-        String className = "MyFirstJolkClass";
+        String className = "MyClass";
         String source = "final class " + className + " { }";
         Value result = eval(className, source);
         // A final class must have at least one method
@@ -121,9 +100,31 @@ public class JolcClassTest extends JolcTestBase {
     }
 
     @Test
+    @Disabled("Pending implementation of meta methods")
+    void testCreationMethod_basic() {
+        String className = "MyClass";
+        String source = "final class " + className + " { meta Self new(Object arg) { ^ super #new }  }";
+        Value result = eval(className, source);
+        assertTrue(result.hasMembers());
+        // TODO assert ...
+        // TODO assert #new
+    }
+
+    @Test
+    @Disabled("Pending implementation of methods")
+    void testCreationMethod_variadic() {
+        String className = "MyClass";
+        String source = "final class " + className + " { meta Self new(Object ... args) { ^ super #new } }";
+        Value result = eval(className, source);
+        assertTrue(result.hasMembers());
+        // TODO assert ...
+        // TODO assert #new
+    }
+
+    @Test
     @Disabled("Pending implementation final ")
     public void testFinalClass() {
-        String className = "MyFirstJolkClass";
+        String className = "MyClass";
         String source = "final class " + className + " { self me() { ^ self; } }";
         Value result = eval(className, source);
         // A final class should have a meta-object that indicates it's final.

@@ -1,9 +1,12 @@
 package tolk.parser;
 
+import java.util.HashMap;
+import java.util.Map;
 import tolk.grammar.jolkBaseVisitor;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkEmptyNode;
+import tolk.nodes.JolkMemberNode;
 import tolk.nodes.JolkNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
@@ -84,7 +87,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     default -> JolkArchetype.CLASS;
                 };
 
-                return new JolkClassDefinitionNode(className, finality, visibility, archetype);
+                Map<String, Object> members = new HashMap<>();
+                for (var mbr : ctx.type_mbr()) {
+                    if (mbr.member() != null) {
+                        JolkNode node = visit(mbr.member());
+                        if (node instanceof JolkMemberNode memberNode) {
+                            members.put(memberNode.getName(), memberNode);
+                        }
+                    }
+                }
+
+                return new JolkClassDefinitionNode(className, finality, visibility, archetype, members);
             }
         }
         return new JolkEmptyNode();
@@ -99,5 +112,27 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitExtension_decl(jolkParser.Extension_declContext ctx) {
         // Not implemented yet, return empty node to avoid null pointers.
         return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitMember(jolkParser.MemberContext ctx) {
+        if (ctx.method() != null) {
+            return visit(ctx.method());
+        } else if (ctx.state() != null && ctx.state().field() != null) {
+            return visit(ctx.state().field());
+        }
+        return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitField(jolkParser.FieldContext ctx) {
+        String name = ctx.identifier().getText();
+        return new JolkMemberNode(name);
+    }
+
+    @Override
+    public JolkNode visitMethod(jolkParser.MethodContext ctx) {
+        String name = ctx.selector_id().getText();
+        return new JolkMemberNode(name);
     }
 }

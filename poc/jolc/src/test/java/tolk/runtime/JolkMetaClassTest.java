@@ -4,6 +4,9 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+
+import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +23,7 @@ public class JolkMetaClassTest {
 
     @BeforeEach
     void setUp() {
-        metaClass = new JolkMetaClass("MyClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS);
+        metaClass = new JolkMetaClass("MyClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
     }
 
     @Test
@@ -63,10 +66,10 @@ public class JolkMetaClassTest {
     }
 
     @Test
-    void testInvokeNew() throws UnknownIdentifierException, ArityException {
+    void testInvokeNew() throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         Object result = metaClass.invokeMember("new", new Object[]{});
         assertNotNull(result, "The result of #new should not be null");
-        assertTrue(result instanceof JolkObjectTest, "The result should be an instance of JolkObject");
+        assertTrue(result instanceof JolkObject, "The result should be an instance of JolkObject");
     }
 
     @Test

@@ -2,6 +2,8 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import java.util.Collections;
+import java.util.Map;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
@@ -22,17 +24,23 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     private final JolkFinality finality;
     private final JolkVisibility visibility;
     private final JolkArchetype archetype;
+    private final Map<String, Object> members;
 
-    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
+    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> members) {
         this.className = className;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
+        this.members = members;
+    }
+
+    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
+        this(className, finality, visibility, archetype, Collections.emptyMap());
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         // In a full implementation, this would also register the type in the language context.
-        return new JolkMetaClass(className, finality, visibility, archetype);
+        return new JolkMetaClass(className, finality, visibility, archetype, members);
     }
 }

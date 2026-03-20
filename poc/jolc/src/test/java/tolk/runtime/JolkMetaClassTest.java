@@ -6,6 +6,8 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,8 +56,16 @@ public class JolkMetaClassTest {
         JolkMemberNames members = (JolkMemberNames) membersObj;
 
         assertTrue(members.hasArrayElements());
-        assertEquals(1, members.getArraySize());
-        assertEquals("new", members.readArrayElement(0));
+        assertEquals(4, members.getArraySize());
+
+        Set<String> names = new HashSet<>();
+        for (long i = 0; i < members.getArraySize(); i++) {
+            names.add((String) members.readArrayElement(i));
+        }
+        assertTrue(names.contains("new"));
+        assertTrue(names.contains("name"));
+        assertTrue(names.contains("superclass"));
+        assertTrue(names.contains("isInstance"));
     }
 
     @Test

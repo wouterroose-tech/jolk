@@ -69,6 +69,9 @@ public final class JolkMetaClass implements TruffleObject {
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
         Set<String> keys = new HashSet<>(members.keySet());
         keys.add("new");
+        keys.add("name");
+        keys.add("superclass");
+        keys.add("isInstance");
         return new JolkMemberNames(keys.toArray(new String[0]));
     }
 
@@ -79,7 +82,10 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     boolean isMemberInvocable(String member) {
-        return "new".equals(member) || members.containsKey(member);
+        return members.containsKey(member) || switch (member) {
+            case "new", "name", "superclass", "isInstance" -> true;
+            default -> false;
+        };
     }
 
     @ExportMessage
@@ -88,13 +94,24 @@ public final class JolkMetaClass implements TruffleObject {
             Object memberObj = members.get(member);
             return InteropLibrary.getUncached().execute(memberObj, arguments);
         }
-        if ("new".equals(member)) {
-            if (arguments.length != 0) {
-                throw ArityException.create(0, 0, arguments.length);
-            }
-            return new JolkObject(this);
+        switch (member) {
+            case "new":
+                if (arguments.length != 0) {
+                    throw ArityException.create(0, 0, arguments.length);
+                }
+                return new JolkObject(this);
+            case "name":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return name;
+            case "superclass":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return JolkNothing.INSTANCE;
+            case "isInstance":
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                return isMetaInstance(arguments[0]);
+            default:
+                throw UnknownIdentifierException.create(member);
         }
-        throw UnknownIdentifierException.create(member);
     }
 
     @ExportMessage

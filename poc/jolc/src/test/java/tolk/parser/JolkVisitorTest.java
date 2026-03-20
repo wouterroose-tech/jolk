@@ -99,4 +99,63 @@ public class JolkVisitorTest extends JolcTestBase {
         eval(source);
     }
 
+    @Test
+    void testVisitMessage() {
+        // Unary
+        eval("obj #selector");
+        // With arguments
+        eval("obj #selector(arg1, arg2)");
+        // Chained
+        eval("obj #one #two(arg)");
+    }
+
+    @Test
+    void testVisitClosureVariations() {
+        // Empty
+        eval("[]");
+        // No parameters
+        eval("[ 1 + 2 ]");
+        // Inferred parameters
+        eval("[ a, b -> a + b ]");
+        // Typed parameters
+        eval("[ Int a, Int b -> a + b ]");
+    }
+
+    @Test
+    void testVisitReserved() {
+        eval("self");
+        eval("super");
+        eval("Self");
+        eval("true");
+        eval("false");
+        eval("null");
+    }
+
+    @Test
+    void testVisitLiteral() {
+        // Numbers
+        eval("123");
+        eval("12.34");
+        // Strings & Chars
+        eval("\"String Literal\"");
+        eval("'c'");
+        // Collections
+        eval("#[1, 2, 3]"); // Array
+        eval("#{1, 2, 3}"); // Set
+        eval("#(key -> value)"); // Map
+    }
+
+    @Test
+    void testVisitBlock() {
+        String source = """
+            class BlockTest { 
+                Void run() { 
+                    x = 1; 
+                    y = 2; 
+                    ^ x + y 
+                } 
+            }
+        """;
+        eval(source);
+    }
 }

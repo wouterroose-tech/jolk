@@ -9,17 +9,23 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 /// # JolkMetaClass
 /// 
-/// Represents a Jolk Type (meta-object) at runtime.
+/// Represents a Jolk Type (a meta-object) at runtime.
 ///
 /// This is the Java implementation of the `MetaClass` concept defined in Jolk.
-/// It acts as the first-class identity for Classes, Records, and Enums, enabling
-/// meta-level messaging such as `#new` and type introspection.
+/// It acts as the first-class identity for Classes, Records, and Enums. As a
+/// meta-object, it is responsible for handling meta-level messages such as
+/// `#new` (instance creation) and type introspection (`#name`, `#superclass`).
 /// 
+/// It also serves as a container for the definitions of members (fields and methods)
+/// that belong to instances of this type. However, it does not execute instance-level
+/// messages itself; that is the responsibility of {@link JolkObject}.
+///
 @ExportLibrary(InteropLibrary.class)
 public final class JolkMetaClass implements TruffleObject {
 
@@ -27,14 +33,22 @@ public final class JolkMetaClass implements TruffleObject {
     private final JolkFinality finality;
     private final JolkVisibility visibility;
     private final JolkArchetype archetype;
-    private final Map<String, Object> members;
+    // Instance members (fields and methods) for instances of this class.
+    private final Map<String, Object> instanceMembers;
+    // Meta members (e.g. user-defined meta methods).
+    private final Map<String, Object> metaMembers;
 
-    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> members) {
+    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
+        this(name, finality, visibility, archetype, instanceMembers, Collections.emptyMap());
+    }
+
+    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
         this.name = name;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
-        this.members = members;
+        this.instanceMembers = instanceMembers;
+        this.metaMembers = metaMembers;
     }
 
     @ExportMessage
@@ -67,7 +81,8 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
-        Set<String> keys = new HashSet<>(members.keySet());
+        // This returns the members of the META-OBJECT, not the instance.
+        Set<String> keys = new HashSet<>(metaMembers.keySet());
         keys.add("new");
         keys.add("name");
         keys.add("superclass");
@@ -77,12 +92,14 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     boolean isMemberReadable(String member) {
-        return members.containsKey(member);
+        // Meta-members are not readable by default. This could change for meta-constants.
+        return false;
     }
 
     @ExportMessage
     boolean isMemberInvocable(String member) {
-        return members.containsKey(member) || switch (member) {
+        // This checks if a message can be sent TO THE META-OBJECT itself.
+        return metaMembers.containsKey(member) || switch (member) {
             case "new", "name", "superclass", "isInstance" -> true;
             default -> false;
         };
@@ -90,8 +107,8 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        if (members.containsKey(member)) {
-            Object memberObj = members.get(member);
+        if (metaMembers.containsKey(member)) {
+            Object memberObj = metaMembers.get(member);
             return InteropLibrary.getUncached().execute(memberObj, arguments);
         }
         switch (member) {
@@ -116,10 +133,42 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     Object readMember(String member) throws UnknownIdentifierException {
-        if (members.containsKey(member)) {
-            return members.get(member);
-        }
+        // Reading members from a meta-object could be for constants.
+        // TODO: Implement meta-level constants.
         throw UnknownIdentifierException.create(member);
     }
 
+    // --- Instance member lookup (for JolkObject) ---
+
+    /**
+     * ## hasInstanceMember
+     *
+     * Checks if a member with the given name exists on instances of this class.
+     * This is used by `JolkObject` to determine if it can respond to an
+     * instance-level message.
+     *
+     * @param name The name of the member.
+     * @return `true` if an instance member with that name exists.
+     */
+    public boolean hasInstanceMember(String name) {
+        return instanceMembers.containsKey(name);
+    }
+
+    /**
+     * ## lookupInstanceMember
+     *
+     * Looks up an instance member (e.g., a `JolkClosure`) by name.
+     */
+    public Object lookupInstanceMember(String name) {
+        return instanceMembers.get(name);
+    }
+
+    /**
+     * ## getInstanceMemberKeys
+     *
+     * @return A set of all instance member names.
+     */
+    public Set<String> getInstanceMemberKeys() {
+        return instanceMembers.keySet();
+    }
 }

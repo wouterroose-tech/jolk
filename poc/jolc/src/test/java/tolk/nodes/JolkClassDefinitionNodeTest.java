@@ -1,7 +1,10 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import org.junit.jupiter.api.Test;
 import tolk.runtime.JolkArchetype;
 import tolk.runtime.JolkFinality;
@@ -40,7 +43,7 @@ public class JolkClassDefinitionNodeTest {
     }
 
     @Test
-    void testExecuteGenericWithMembers() {
+    void testExecuteGenericWithMembers() throws UnsupportedMessageException, ArityException, UnknownIdentifierException, UnsupportedTypeException {
         String className = "MemberClass";
         Map<String, Object> members = new HashMap<>();
         String memberName = "testMember";
@@ -57,8 +60,16 @@ public class JolkClassDefinitionNodeTest {
         Object result = node.executeGeneric(null);
 
         assertTrue(result instanceof JolkMetaClass);
-        assertTrue(InteropLibrary.getUncached().isMemberReadable(result, memberName));
+
         // Verify intrinsic 'new' is also present (handled by JolkMetaClass)
         assertTrue(InteropLibrary.getUncached().isMemberInvocable(result, "new"));
+
+        // Verify that the instance created from the meta class has the member
+        Object instance = InteropLibrary.getUncached().invokeMember(result, "new");
+        // The `hasMember` method exists on the polyglot `Value` API, but not directly on
+        // InteropLibrary. The polyglot API implements this check by testing if the member
+        // is either readable or invocable. We replicate that logic here.
+        InteropLibrary interop = InteropLibrary.getUncached();
+        assertTrue(interop.isMemberInvocable(instance, memberName) || interop.isMemberReadable(instance, memberName), "Instance should have member '" + memberName + "'");
     }
 }

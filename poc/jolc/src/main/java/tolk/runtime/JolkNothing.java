@@ -30,7 +30,7 @@ public final class JolkNothing implements TruffleObject {
 
     static {
         Map<String, Object> members = Collections.singletonMap("new", new NothingNew());
-        NOTHING_TYPE = new JolkMetaClass("Nothing", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+        NOTHING_TYPE = new JolkMetaClass("Nothing", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), members);
     }
 
     private JolkNothing() {

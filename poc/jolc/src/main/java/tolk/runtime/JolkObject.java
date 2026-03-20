@@ -3,6 +3,8 @@ package tolk.runtime;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import java.util.HashSet;
+import java.util.Set;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
@@ -36,28 +38,30 @@ public class JolkObject implements TruffleObject {
 
     @ExportMessage
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
-        // In a real implementation, this would return the union of instance fields/methods
-        // and the meta-class methods. For now, delegating to the meta-class.
-        return metaClass.getMembers(includeInternal);
+        Set<String> keys = new HashSet<>(metaClass.getInstanceMemberKeys());
+        keys.add("==");
+        keys.add("!=");
+        keys.add("~~");
+        keys.add("hash");
+        keys.add("toString");
+        keys.add("ifPresent");
+        keys.add("ifEmpty");
+        keys.add("isPresent");
+        keys.add("isEmpty");
+        keys.add("class");
+        keys.add("instanceOf");
+        return new JolkMemberNames(keys.toArray(new String[0]));
     }
 
     @ExportMessage
     boolean isMemberInvocable(String member) {
-        // Check intrinsic members first or fallback to meta-class
-        return switch (member) {
-            case "==", "!=", "~~", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
-            default -> metaClass.isMemberInvocable(member);
-        };
+        // An instance can invoke a member if it's an Object intrinsic or an instance member on its class.
+        return metaClass.hasInstanceMember(member) || isObjectIntrinsic(member);
     }
 
     @ExportMessage
     Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        // 1. Try to find the member in the meta-class (method lookup/override)
-        if (metaClass.isMemberInvocable(member)) {
-            return metaClass.invokeMember(member, arguments);
-        }
-
-        // 2. Handle Object.jolk intrinsics
+        // 1. Handle Object.jolk intrinsics
         switch (member) {
             case "==" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -111,6 +115,21 @@ public class JolkObject implements TruffleObject {
             }
         }
 
+        // 2. If not an intrinsic, look for a member on the instance.
+        Object instanceMember = metaClass.lookupInstanceMember(member);
+        if (instanceMember != null) {
+            // The member is a JolkClosure (or similar executable TruffleObject).
+            // We execute it with the provided arguments.
+            return InteropLibrary.getUncached().execute(instanceMember, arguments);
+        }
+
         throw UnknownIdentifierException.create(member);
+    }
+
+    private boolean isObjectIntrinsic(String member) {
+        return switch (member) {
+            case "==", "!=", "~~", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
+            default -> false;
+        };
     }
 }

@@ -39,19 +39,40 @@ public class JolcClassTest extends JolcTestBase {
     public void testEmptyClass() {
         String className = "MyFirstJolkClass";
         String source = "class " + className + " { }";
+
         Value result = eval(className, source);
-        // An empty, non-final class should have no members.
-        // TODO Pending implementation of members
+        // An empty class should still have the default members from Object, as well as the class-specific members.
         assertTrue(result.hasMembers());
+        assertEquals(4, result.getMemberKeys().size());
+        assertTrue(result.hasMember("new"));
+        assertTrue(result.hasMember("name"));
+        assertTrue(result.hasMember("superclass"));
+        assertTrue(result.hasMember("isInstance"));
+        
+        Value instance = result.invokeMember("new");
+        // An instance of an empty class should still have the default members from Object.
+        assertTrue(instance.hasMembers());
+        assertTrue(instance.hasMember("=="));
+        assertTrue(instance.hasMember("!="));
+        assertTrue(instance.hasMember("~~"));
+        assertTrue(instance.hasMember("hash"));
+        assertTrue(instance.hasMember("toString"));
+        assertTrue(instance.hasMember("ifPresent"));
+        assertTrue(instance.hasMember("ifEmpty"));  
+        assertTrue(instance.hasMember("isPresent"));
+        assertTrue(instance.hasMember("isEmpty"));
+        assertTrue(instance.hasMember("class"));
+        assertTrue(instance.hasMember("instanceOf"));
     }
 
     @Test
     void testClassWithMethod() {
         String className = "MyClass";
         String source = "final class " + className + " { Self me() { ^ self; } }";
-        Value result = eval(className, source);
-        assertTrue(result.hasMembers());
-        assertNotNull(result.getMember("me"));
+        Value meta = eval(className, source);
+        Value instance = meta.invokeMember("new");
+        assertTrue(instance.hasMembers());
+        assertTrue(instance.hasMember("me"));
         // TODO assert ...
     }
 
@@ -59,9 +80,10 @@ public class JolcClassTest extends JolcTestBase {
     void testClassWithField() {
         String className = "MyClass";
         String source = "class " + className + " { String name; }";
-        Value result = eval(className, source);
-        assertTrue(result.hasMembers());
-        assertNotNull(result.getMember("name"));
+        Value meta = eval(className, source);
+        Value instance = meta.invokeMember("new");
+        assertTrue(instance.hasMembers());
+        assertTrue(instance.hasMember("name"), "Instance should have member 'name' from its field.");
         // TODO assert ...
     }
 
@@ -69,10 +91,11 @@ public class JolcClassTest extends JolcTestBase {
     void testClassWithMethodAndField() {
         String className = "MyClass";
         String source = "final class " + className + " { String name; String name() { ^ name; } }";
-        Value result = eval(className, source);
-        assertTrue(result.hasMembers());
-        assertEquals(2, result.getMemberKeys().size());
-        assertNotNull(result.getMember("name"));
+        Value meta = eval(className, source);
+        assertEquals(4, meta.getMemberKeys().size());
+
+        Value instance = meta.invokeMember("new");
+        assertTrue(instance.hasMember("name"));
         // TODO assert ...
     }
 
@@ -80,34 +103,32 @@ public class JolcClassTest extends JolcTestBase {
     void testClassWithMethodAndField_2() {
         String className = "MyClass";
         String source = "final class " + className + " { String name; String myName() { ^ name; } }";
-        Value result = eval(className, source);
-        assertTrue(result.hasMembers());
-        assertEquals(3, result.getMemberKeys().size());
-        assertNotNull(result.getMember("name"));
-        assertNotNull(result.getMember("myName"));
+        Value meta = eval(className, source);
+        Value instance = meta.invokeMember("new");
+        assertTrue(instance.hasMembers());
+        assertTrue(instance.hasMember("name"));
+        assertTrue(instance.hasMember("myName"));
         // TODO assert ...
     }
 
     @Test
-    @Disabled("Pending implementation of meta new methods")
     void testCreationMethod_basic() {
         String className = "MyClass";
         String source = "final class " + className + " { meta Self new(Object arg) { ^ super #new }  }";
         Value result = eval(className, source);
         assertTrue(result.hasMembers());
-        // TODO assert ...
-        // TODO assert #new
+        assertEquals(4, result.getMemberKeys().size());
+        assertTrue(result.hasMember("new"));
     }
 
     @Test
-    @Disabled("Pending implementation of meta new methods")
     void testCreationMethod_variadic() {
         String className = "MyClass";
         String source = "final class " + className + " { meta Self new(Object ... args) { ^ super #new } }";
         Value result = eval(className, source);
         assertTrue(result.hasMembers());
-        // TODO assert ...
-        // TODO assert #new
+        assertEquals(4, result.getMemberKeys().size());
+        assertTrue(result.hasMember("new"));
     }
     
     @Test
@@ -128,11 +149,10 @@ public class JolcClassTest extends JolcTestBase {
             }
         """;
         Value meta = eval(source);
-        assertTrue(meta.hasMembers());
-        assertEquals(4, meta.getMemberKeys().size());
-        assertTrue(meta.hasMember("~~"));
-        assertTrue(meta.hasMember("x"));
-        assertTrue(meta.hasMember("y"));
-        // TODO assert that the operator behaves as expected
+        Value instance = meta.invokeMember("new");
+        assertTrue(instance.hasMembers());
+        assertTrue(instance.hasMember("~~"));
+        assertTrue(instance.hasMember("x"));
+        assertTrue(instance.hasMember("y"));
     }
 }

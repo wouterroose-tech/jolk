@@ -90,8 +90,7 @@ public final class JolkNothing implements TruffleObject {
                 return this;
             case "ifEmpty":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                InteropLibrary.getUncached().execute(arguments[0]);
-                return this;
+                return InteropLibrary.getUncached().execute(arguments[0]);
             case "project":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 // Project is ignored for Nothing

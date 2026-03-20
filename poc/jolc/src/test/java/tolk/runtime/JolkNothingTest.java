@@ -1,7 +1,10 @@
 package tolk.runtime;
 
-import org.graalvm.polyglot.HostAccess;
-import org.junit.jupiter.api.Disabled;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
@@ -65,21 +68,21 @@ public class JolkNothingTest extends JolcTestBase {
 
     @Test
     void testInvokeIfPresent() throws Exception {
-        MockClosure action = new MockClosure();
+        boolean[] executed = {false};
+        Consumer<Object> action = (o) -> { executed[0] = true; };
         Object result = nothing.invokeMember("ifPresent", new Object[]{action});
         
         assertSame(nothing, result, "Should return self for chaining");
-        assertFalse(action.executed, "Action should NOT be executed for Nothing");
+        assertFalse(executed[0], "Action should NOT be executed for Nothing");
     }
 
     @Test
-    @Disabled("This is a placeholder for future functionality to execute the closure for Nothing")
     void testInvokeIfEmpty() throws Exception {
-        MockClosure action = new MockClosure();
+        boolean[] executed = {false};
+        Object action = new TestExecutable(() -> { executed[0] = true; });
         Object result = nothing.invokeMember("ifEmpty", new Object[]{action});
         
-        assertSame(nothing, result, "Should return self for chaining");
-        assertTrue(action.executed, "Action SHOULD be executed for Nothing");
+        assertTrue(executed[0], "Action SHOULD be executed for Nothing");
     }
 
     @Test
@@ -106,15 +109,23 @@ public class JolkNothingTest extends JolcTestBase {
         }, "Invoking #new on Nothing should throw an exception");
     }
 
-    // Helper class to verify closure execution
-    // TODO: create a proper Jolk closure object rather than a Java Runnable
-    static class MockClosure implements Runnable {
-        boolean executed = false;
+    @ExportLibrary(InteropLibrary.class)
+    public static class TestExecutable implements TruffleObject {
+        private final Runnable runnable;
 
-        @HostAccess.Export
-        @Override
-        public void run() {
-            executed = true;
+        TestExecutable(Runnable runnable) {
+            this.runnable = runnable;
+        }
+
+        @ExportMessage
+        boolean isExecutable() {
+            return true;
+        }
+
+        @ExportMessage
+        Object execute(Object[] arguments) {
+            runnable.run();
+            return JolkNothing.INSTANCE;
         }
     }
 }

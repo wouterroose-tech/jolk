@@ -5,14 +5,17 @@ import java.util.Map;
 import tolk.grammar.jolkBaseVisitor;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
+import tolk.nodes.JolkClosureNode;
 import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkIdentityNode;
+import tolk.nodes.JolkLiteralNode;
 import tolk.nodes.JolkMemberNode;
 import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
 import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkNothing;
 
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
@@ -159,5 +162,61 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
         }
         return left;
+    }
+
+    @Override
+    public JolkNode visitMessage(jolkParser.MessageContext ctx) {
+        JolkNode receiver = visit(ctx.primary());
+        for (int i = 0; i < ctx.selector().size(); i++) {
+            String selector = ctx.selector(i).identifier().getText();
+            JolkNode[] args = new JolkNode[0];
+            if (ctx.payload(i) != null) {
+                if (ctx.payload(i).arguments() != null) {
+                    var exprs = ctx.payload(i).arguments().expression();
+                    args = new JolkNode[exprs.size()];
+                    for (int j = 0; j < exprs.size(); j++) {
+                        args[j] = visit(exprs.get(j));
+                    }
+                } else if (ctx.payload(i).closure() != null) {
+                    args = new JolkNode[] { visit(ctx.payload(i).closure()) };
+                }
+            }
+            receiver = new JolkMessageSendNode(receiver, selector, args);
+        }
+        return receiver;
+    }
+
+    @Override
+    public JolkNode visitClosure(jolkParser.ClosureContext ctx) {
+        JolkNode body = new JolkEmptyNode();
+        if (ctx.statements() != null) {
+            body = visit(ctx.statements());
+        }
+        return new JolkClosureNode(body);
+    }
+
+    @Override
+    public JolkNode visitReserved(jolkParser.ReservedContext ctx) {
+        if (ctx.getText().equals("null")) return new JolkLiteralNode(JolkNothing.INSTANCE);
+        return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitLiteral(jolkParser.LiteralContext ctx) {
+        if (ctx.NumberLiteral() != null) return new JolkLiteralNode(Integer.parseInt(ctx.NumberLiteral().getText()));
+        return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitBlock(jolkParser.BlockContext ctx) {
+        if (ctx.statements() != null) {
+            return visit(ctx.statements());
+        }
+        return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitStatements(jolkParser.StatementsContext ctx) {
+        return visit(ctx.statement(ctx.statement().size() - 1));
     }
 }

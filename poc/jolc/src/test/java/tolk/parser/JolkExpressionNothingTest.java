@@ -4,7 +4,6 @@ import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
-import tolk.runtime.JolkNothing;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -13,9 +12,19 @@ import static org.junit.jupiter.api.Assertions.*;
 ///
 public class JolkExpressionNothingTest extends JolcTestBase {
 
+    private Value eval(String className, String source) {
+        Value result = eval(source);
+        assertFalse(result.isNull());
+        assertTrue(result.isMetaObject());
+        assertEquals(className, result.getMetaQualifiedName());
+        return result;
+    }
+
     @Test
     void testNullIsASingletonIdentity() {
-        Value nullValue = eval("null");
+        String source = "class NullTest { Object run() { ^ null } }";
+        Value meta = eval("NullTest", source);
+        Value nullValue = meta.invokeMember("new").invokeMember("run");
         assertTrue(nullValue.isNull(), "The 'null' literal should be recognized as a null polyglot value.");
     }
 
@@ -34,15 +43,28 @@ public class JolkExpressionNothingTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("Pending implementation of the core protocol in JolkNothing.") 
     void testIfPresent() {
+        String source = """
+            class IfEmptyTest {
+                Object run() {
+                    ^ null #ifPresent [ ^1 ]
+                }
+                Object runEmpty() {
+                    ^ null #ifEmpty [ ^1 ]
+                }
+            }
+        """;
+        Value meta = eval("IfEmptyTest", source);
+        Value instance = meta.invokeMember("new");
+
         // #ifPresent should not execute its closure for a null receiver.
-        Value ifPresentResult = eval("null #ifPresent [ ^1 ]");
-        assertEquals(null, ifPresentResult);
+        Value ifPresentResult = instance.invokeMember("run");
+        assertTrue(ifPresentResult.isNull());
 
         // #ifEmpty should execute its closure for a null receiver.
-        Value ifEmptyResult = eval("null #ifEmpty [ ^ 1 ];");
-        assertEquals(1, ifEmptyResult);
+        Value ifEmptyResult = instance.invokeMember("runEmpty");
+        assertFalse(ifEmptyResult.isNull());
+        assertEquals(1, ifEmptyResult.asInt());
     }
 
     @Test

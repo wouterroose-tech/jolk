@@ -22,6 +22,15 @@ import com.oracle.truffle.api.nodes.Node;
 /// adherence to the defined protocols (including those of `JolkNothing`).
 public abstract class JolkDispatchNode extends Node {
 
+    /* TODO
+    This node is a candidate for node object inlining. 
+    The memory footprint is estimated to be reduced from 28 to 9 byte(s). 
+    Add @GenerateInline(true) to enable object inlining for this node or 
+    @GenerateInline(false) to disable this warning. 
+    Also consider disabling cached node generation with @GenerateCached(false) if all usages will be inlined. 
+    This warning may be suppressed using @SuppressWarnings("truffle-inlining").
+    */
+
     /// Executes the message dispatch.
     ///
     /// @param receiver The object receiving the message.

@@ -2,7 +2,6 @@ package tolk.runtime;
 
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -55,7 +54,9 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     boolean isMetaInstance(Object instance) {
-        // TODO: Implement instance checking
+        if (instance instanceof JolkObject jolkObject) {
+            return jolkObject.getJolkMetaClass() == this;
+        }
         return false;
     }
 
@@ -68,7 +69,7 @@ public final class JolkMetaClass implements TruffleObject {
     Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
         Set<String> keys = new HashSet<>(members.keySet());
         keys.add("new");
-        return new MemberNames(keys.toArray(new String[0]));
+        return new JolkMemberNames(keys.toArray(new String[0]));
     }
 
     @ExportMessage
@@ -83,15 +84,15 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+        if (members.containsKey(member)) {
+            Object memberObj = members.get(member);
+            return InteropLibrary.getUncached().execute(memberObj, arguments);
+        }
         if ("new".equals(member)) {
             if (arguments.length != 0) {
                 throw ArityException.create(0, 0, arguments.length);
             }
-            return new JolkObject();
-        }
-        if (members.containsKey(member)) {
-            Object memberObj = members.get(member);
-            return InteropLibrary.getUncached().execute(memberObj, arguments);
+            return new JolkObject(this);
         }
         throw UnknownIdentifierException.create(member);
     }
@@ -104,34 +105,4 @@ public final class JolkMetaClass implements TruffleObject {
         throw UnknownIdentifierException.create(member);
     }
 
-    /// Helper class to expose member names as a TruffleObject.
-    @ExportLibrary(InteropLibrary.class)
-    static final class MemberNames implements TruffleObject {
-        private final String[] members;
-
-        MemberNames(String[] members) {
-            this.members = members;
-        }
-
-        @ExportMessage
-        boolean hasArrayElements() {
-            return true;
-        }
-
-        @ExportMessage
-        long getArraySize() {
-            return members.length;
-        }
-
-        @ExportMessage
-        Object readArrayElement(long index) throws InvalidArrayIndexException {
-            if (index < 0 || index >= members.length) throw InvalidArrayIndexException.create(index);
-            return members[(int) index];
-        }
-
-        @ExportMessage
-        boolean isArrayElementReadable(long index) {
-            return index >= 0 && index < members.length;
-        }
-    }
 }

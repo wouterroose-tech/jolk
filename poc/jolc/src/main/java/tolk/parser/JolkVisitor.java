@@ -6,7 +6,9 @@ import tolk.grammar.jolkBaseVisitor;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkEmptyNode;
+import tolk.nodes.JolkIdentityNode;
 import tolk.nodes.JolkMemberNode;
+import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
@@ -133,6 +135,29 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
         String name = ctx.selector_id().getText();
-        return new JolkMemberNode(name);
+        JolkNode body = new JolkEmptyNode();
+        if (ctx.block() != null) {
+            body = visit(ctx.block());
+        }
+        return new JolkMemberNode(name, body);
+    }
+
+    @Override
+    public JolkNode visitEquality(jolkParser.EqualityContext ctx) {
+        // Visit the first term
+        JolkNode left = visit(ctx.comparison(0));
+
+        // Iterate over the rest of the terms (if any)
+        for (int i = 1; i < ctx.comparison().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText(); // Operators are at odd indices: term op term
+            JolkNode right = visit(ctx.comparison(i));
+
+            switch (op) {
+                case "==" -> left = new JolkIdentityNode(left, right, false);
+                case "!=" -> left = new JolkIdentityNode(left, right, true);
+                default   -> left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            }
+        }
+        return left;
     }
 }

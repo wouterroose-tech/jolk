@@ -13,6 +13,44 @@ import tolk.JolcTestBase;
 public class JolkVisitorTest extends JolcTestBase {
 
     @Test
+    void testVisitDeclArchetype() {
+        eval("class MyClass { }");
+        eval("record MyRecord { }");
+        eval("enum MyEnum { }");
+        eval("protocol MyProtocol { }");
+    }
+
+    @Test
+    void testVisitDeclVisibility() {
+        eval("class MyClass { }");
+        eval("private class MyClass { }");
+        eval("protected class MyClass { }");
+        eval("package class MyClass { }");
+        eval("public class MyClass { }");
+        eval("#> class MyClass { }");
+        eval("#: class MyClass { }");
+        eval("#~ class MyClass { }");
+        eval("#< class MyClass { }");
+    }
+
+    @Test
+    void testVisitDeclVariability() {
+        eval("class MyClass { }");
+        eval("abstract class MyClass { }");
+        eval("final class MyClass { }");
+        eval("#? class MyClass { }");
+        eval("#! class MyClass { }");
+    }
+
+    @Test
+    void testVisitEquality() {
+        String source = "a == b";
+        eval(source);
+        source = "a != b";
+        eval(source);
+    }
+
+    @Test
     void testVisitAssignment() {
         String source = "a = b";
         eval(source);
@@ -41,8 +79,6 @@ public class JolkVisitorTest extends JolcTestBase {
         String source = "final class MyClass { self me() { ^ self; } }";
         eval(source);
     }
-
-
     
     @Test
     void testVisitClass_2() {

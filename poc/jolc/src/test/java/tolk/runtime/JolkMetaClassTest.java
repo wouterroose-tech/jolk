@@ -50,9 +50,8 @@ public class JolkMetaClassTest {
     @Test
     void testGetMembers() throws UnsupportedMessageException, InvalidArrayIndexException {
         Object membersObj = metaClass.getMembers(true);
-        // JolkMetaClass.MemberNames is package-private, so we can cast and test it directly
-        assertTrue(membersObj instanceof JolkMetaClass.MemberNames);
-        JolkMetaClass.MemberNames members = (JolkMetaClass.MemberNames) membersObj;
+        assertTrue(membersObj instanceof JolkMemberNames);
+        JolkMemberNames members = (JolkMemberNames) membersObj;
 
         assertTrue(members.hasArrayElements());
         assertEquals(1, members.getArraySize());

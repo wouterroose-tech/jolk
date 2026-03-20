@@ -90,10 +90,20 @@ public class JolkNothingTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("This is a placeholder for future functionality to return the Nothing type reference")
     void testInvokeClass() throws Exception {
         Object result = nothing.invokeMember("class", new Object[]{});
-        // TODO: This should ideally return a reference to the Nothing type
+        
+        assertTrue(result instanceof JolkMetaClass, "Nothing #class should return a MetaClass");
+        JolkMetaClass meta = (JolkMetaClass) result;
+        assertEquals("Nothing", meta.getMetaSimpleName());
+    }
+
+    @Test
+    void testInvokeNewThrowsException() throws Exception {
+        JolkMetaClass nothingClass = (JolkMetaClass) nothing.invokeMember("class", new Object[]{});
+        assertThrows(RuntimeException.class, () -> {
+            nothingClass.invokeMember("new", new Object[]{});
+        }, "Invoking #new on Nothing should throw an exception");
     }
 
     // Helper class to verify closure execution

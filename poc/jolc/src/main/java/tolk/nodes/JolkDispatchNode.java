@@ -35,7 +35,7 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Fast Path for `Nothing`
     /// This specialization creates a high-speed path for messages sent to `JolkNothing.INSTANCE`.
     /// By handling this singleton type directly, we avoid the overhead of a full dynamic dispatch.
-    @Specialization
+    @Specialization(limit = "1")
     protected Object doNothing(JolkNothing receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         try {
@@ -60,6 +60,4 @@ public abstract class JolkDispatchNode extends Node {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }
     }
-}
-
 }

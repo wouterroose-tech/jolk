@@ -4,6 +4,7 @@ import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
+import tolk.runtime.JolkNothing;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,6 +31,18 @@ public class JolkExpressionNothingTest extends JolcTestBase {
         Value results = eval(source);
         assertFalse(results.getMember("is_present").asBoolean(), "'null #isPresent' should evaluate to false.");
         assertTrue(results.getMember("is_empty").asBoolean(), "'null #isEmpty' should evaluate to true.");
+    }
+
+    @Test
+    //@Disabled("Pending implementation of the core protocol in JolkNothing.") 
+    void testIfPresent() {
+        // #ifPresent should not execute its closure for a null receiver.
+        Value ifPresentResult = eval("null #ifPresent [ ^1 ]");
+        assertEquals(null, ifPresentResult);
+
+        // #ifEmpty should execute its closure for a null receiver.
+        Value ifEmptyResult = eval("null #ifEmpty [ ^ 1 ];");
+        assertEquals(1, ifEmptyResult);
     }
 
     @Test

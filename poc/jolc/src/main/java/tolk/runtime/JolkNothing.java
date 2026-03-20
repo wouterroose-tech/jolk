@@ -2,13 +2,14 @@ package tolk.runtime;
 
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import java.util.Collections;
+import java.util.Map;
 
 /// # JolkNothing
 /// 
@@ -24,6 +25,13 @@ public final class JolkNothing implements TruffleObject {
 
     /// The singleton instance of the `Nothing` value.
     public static final JolkNothing INSTANCE = new JolkNothing();
+
+    public static final JolkMetaClass NOTHING_TYPE;
+
+    static {
+        Map<String, Object> members = Collections.singletonMap("new", new NothingNew());
+        NOTHING_TYPE = new JolkMetaClass("Nothing", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+    }
 
     private JolkNothing() {
         // private constructor to enforce singleton pattern
@@ -50,7 +58,7 @@ public final class JolkNothing implements TruffleObject {
 
     @ExportMessage
     Object getMembers(boolean includeInternal) {
-        return new MemberNames(new String[]{"hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf"});
+        return new JolkMemberNames(new String[]{"hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf"});
     }
 
     @ExportMessage
@@ -90,44 +98,28 @@ public final class JolkNothing implements TruffleObject {
                 return this;
             case "instanceOf":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                // Defaulting to Match.empty as Nothing is a singleton.
+                Object type = arguments[0];
+                if (type == NOTHING_TYPE) {
+                    return JolkMatch.with(this);
+                }
                 return JolkMatch.empty();
             case "class":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                // MetaClass for Nothing not yet available in this context, returning self as placeholder
-                return this;
+                return NOTHING_TYPE;
             default:
                 throw UnknownIdentifierException.create(member);
         }
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class MemberNames implements TruffleObject {
-        private final String[] members;
-
-        MemberNames(String[] members) {
-            this.members = members;
-        }
-
+    public static final class NothingNew implements TruffleObject {
         @ExportMessage
-        boolean hasArrayElements() {
+        boolean isExecutable() {
             return true;
         }
-
         @ExportMessage
-        long getArraySize() {
-            return members.length;
-        }
-
-        @ExportMessage
-        Object readArrayElement(long index) throws InvalidArrayIndexException {
-            if (index < 0 || index >= members.length) throw InvalidArrayIndexException.create(index);
-            return members[(int) index];
-        }
-
-        @ExportMessage
-        boolean isArrayElementReadable(long index) {
-            return index >= 0 && index < members.length;
+        Object execute(Object[] arguments) {
+            throw new RuntimeException("Nothing cannot be instantiated. Use 'null' literal.");
         }
     }
 }

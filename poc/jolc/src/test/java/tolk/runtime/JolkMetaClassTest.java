@@ -7,6 +7,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,7 +26,8 @@ public class JolkMetaClassTest {
 
     @BeforeEach
     void setUp() {
-        metaClass = new JolkMetaClass("MyClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        Map<String, Object> metaMembers = Collections.singletonMap("VERSION", 1);
+        metaClass = new JolkMetaClass("MyClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), metaMembers);
     }
 
     @Test
@@ -40,8 +42,16 @@ public class JolkMetaClassTest {
     }
 
     @Test
-    void testIsMetaInstance() {
-        assertFalse(metaClass.isMetaInstance("someInstance"), "Instance checking is not yet implemented");
+    void testIsMetaInstanceHierarchy() {
+        JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+        JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+        
+        JolkObject instance = new JolkObject(child);
+
+        assertTrue(child.isMetaInstance(instance), "Instance should match its class");
+        assertTrue(parent.isMetaInstance(instance), "Instance should match its superclass");
+        assertFalse(metaClass.isMetaInstance(instance), "Instance should not match unrelated class");
+        assertFalse(metaClass.isMetaInstance("string"), "String should not be a meta instance");
     }
 
     @Test
@@ -56,7 +66,7 @@ public class JolkMetaClassTest {
         JolkMemberNames members = (JolkMemberNames) membersObj;
 
         assertTrue(members.hasArrayElements());
-        assertEquals(4, members.getArraySize());
+        assertEquals(5, members.getArraySize());
 
         Set<String> names = new HashSet<>();
         for (long i = 0; i < members.getArraySize(); i++) {
@@ -66,6 +76,7 @@ public class JolkMetaClassTest {
         assertTrue(names.contains("name"));
         assertTrue(names.contains("superclass"));
         assertTrue(names.contains("isInstance"));
+        assertTrue(names.contains("VERSION"));
     }
 
     @Test
@@ -97,9 +108,20 @@ public class JolkMetaClassTest {
 
     @Test
     void testReadMemberThrowsException() {
-        // JolkMetaClass currently does not expose readable properties (only invocable "new")
         assertThrows(UnknownIdentifierException.class, () -> {
             metaClass.readMember("new");
         });
+    }
+
+    @Test
+    void testReadMetaConstant() throws UnknownIdentifierException {
+        Object value = metaClass.readMember("VERSION");
+        assertEquals(1, value);
+    }
+
+    @Test
+    void testIsMetaMemberReadable() {
+        assertTrue(metaClass.isMemberReadable("VERSION"));
+        assertFalse(metaClass.isMemberReadable("new"));
     }
 }

@@ -30,6 +30,7 @@ import java.util.Set;
 public final class JolkMetaClass implements TruffleObject {
 
     private final String name;
+    private final JolkMetaClass superclass;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
     private final JolkArchetype archetype;
@@ -39,11 +40,16 @@ public final class JolkMetaClass implements TruffleObject {
     private final Map<String, Object> metaMembers;
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
-        this(name, finality, visibility, archetype, instanceMembers, Collections.emptyMap());
+        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap());
     }
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
+        this(name, null, finality, visibility, archetype, instanceMembers, metaMembers);
+    }
+
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
         this.name = name;
+        this.superclass = superclass;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
@@ -76,8 +82,12 @@ public final class JolkMetaClass implements TruffleObject {
             return this == JolkNothing.NOTHING_TYPE;
         }
         if (instance instanceof JolkObject jolkObject) {
-            // TODO: This should check the class hierarchy, not just the direct class.
-            return jolkObject.getJolkMetaClass() == this;
+            JolkMetaClass current = jolkObject.getJolkMetaClass();
+            while (current != null) {
+                if (current == this) return true;
+                current = current.superclass;
+            }
+            return false;
         }
         return false;
     }
@@ -100,8 +110,7 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     boolean isMemberReadable(String member) {
-        // Meta-members are not readable by default. This could change for meta-constants.
-        return false;
+        return metaMembers.containsKey(member);
     }
 
     @ExportMessage
@@ -130,7 +139,7 @@ public final class JolkMetaClass implements TruffleObject {
                 return name;
             case "superclass":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return JolkNothing.INSTANCE;
+                return superclass != null ? superclass : JolkNothing.INSTANCE;
             case "isInstance":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return isMetaInstance(arguments[0]);
@@ -141,8 +150,9 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     Object readMember(String member) throws UnknownIdentifierException {
-        // Reading members from a meta-object could be for constants.
-        // TODO: Implement meta-level constants.
+        if (metaMembers.containsKey(member)) {
+            return metaMembers.get(member);
+        }
         throw UnknownIdentifierException.create(member);
     }
 

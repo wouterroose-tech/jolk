@@ -58,13 +58,13 @@ public final class JolkNothing implements TruffleObject {
 
     @ExportMessage
     Object getMembers(boolean includeInternal) {
-        return new JolkMemberNames(new String[]{"hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf"});
+        return new JolkMemberNames(new String[]{"~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf"});
     }
 
     @ExportMessage
     boolean isMemberInvocable(String member) {
         return switch (member) {
-            case "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf" -> true;
+            case "~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf" -> true;
             default -> false;
         };
     }
@@ -72,6 +72,12 @@ public final class JolkNothing implements TruffleObject {
     @ExportMessage
     Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         switch (member) {
+            case "~~":
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                return this == arguments[0];
+            case "!~":
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                return this != arguments[0];
             case "hash":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return 0;

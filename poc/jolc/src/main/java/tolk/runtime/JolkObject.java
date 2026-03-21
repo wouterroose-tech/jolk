@@ -42,6 +42,7 @@ public class JolkObject implements TruffleObject {
         keys.add("==");
         keys.add("!=");
         keys.add("~~");
+        keys.add("!~");
         keys.add("hash");
         keys.add("toString");
         keys.add("ifPresent");
@@ -61,7 +62,13 @@ public class JolkObject implements TruffleObject {
 
     @ExportMessage
     Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        // 1. Handle Object.jolk intrinsics
+        // 1. Prioritize user-defined members for overridable selectors.
+        if (metaClass.hasInstanceMember(member)) {
+            Object instanceMember = metaClass.lookupInstanceMember(member);
+            return InteropLibrary.getUncached().execute(instanceMember, arguments);
+        }
+
+        // 2. Handle Object.jolk intrinsics and fallbacks.
         switch (member) {
             case "==" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -73,8 +80,12 @@ public class JolkObject implements TruffleObject {
             }
             case "~~" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                // Default equivalence is identity
+                // Default equivalence (fallback) is identity.
                 return this == arguments[0];
+            }
+            case "!~" -> {
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                return !InteropLibrary.getUncached().asBoolean(this.invokeMember("~~", arguments));
             }
             case "hash" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -115,20 +126,12 @@ public class JolkObject implements TruffleObject {
             }
         }
 
-        // 2. If not an intrinsic, look for a member on the instance.
-        Object instanceMember = metaClass.lookupInstanceMember(member);
-        if (instanceMember != null) {
-            // The member is a JolkClosure (or similar executable TruffleObject).
-            // We execute it with the provided arguments.
-            return InteropLibrary.getUncached().execute(instanceMember, arguments);
-        }
-
         throw UnknownIdentifierException.create(member);
     }
 
     private boolean isObjectIntrinsic(String member) {
         return switch (member) {
-            case "==", "!=", "~~", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
+            case "==", "!=", "~~", "!~", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
             default -> false;
         };
     }

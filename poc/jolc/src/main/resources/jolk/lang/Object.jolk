@@ -21,6 +21,17 @@ class Object {
     Boolean ~~(Object other) {
         ^ self == other
     }
+
+    /// ## !~
+    /// Performs a semantic non-equivalence check.
+    ///
+    /// This is the logical negation of the equivalence operator (`~~`).
+    ///
+    /// - **other**: The Object to compare against.
+    /// - **Returns**: True if the objects are NOT semantically equivalent.
+    Boolean !~(Object other) {
+        ^ !(self ~~ other)
+    }
     
     /// ## hash
     /// Returns a hash code value for the object.

@@ -38,6 +38,10 @@ public class JolkObjectTest extends JolcTestBase {
         // By default, equivalence (~~) should fall back to identity (==).
         assertTrue(x.invokeMember("~~", x).asBoolean(), "An object must be equivalent to itself.");
         assertFalse(x.invokeMember("~~", y).asBoolean(), "Two distinct objects should not be equivalent by default.");
+
+        // Non-equivalence (!~) should be the logical opposite.
+        assertFalse(x.invokeMember("!~", x).asBoolean(), "An object must not be non-equivalent to itself.");
+        assertTrue(x.invokeMember("!~", y).asBoolean(), "Two distinct objects should be non-equivalent by default.");
     }
 
     @Test

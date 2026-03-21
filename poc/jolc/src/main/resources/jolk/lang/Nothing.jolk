@@ -9,7 +9,29 @@
 /// @author Wouter Roose
 
 @Intrinsic("jolk.lang.Nothing")
-final class Nothing extends Object {
+final class Nothing {
+
+    /// ## ~~
+    /// Performs a semantic equivalence check.
+    ///
+    /// For `Nothing`, this is true only if the other object is also `null`.
+    ///
+    /// - **other**: The Object to compare against.
+    /// - **Returns**: `true` if `other` is `null`, otherwise `false`.
+    Boolean ~~(Object other) {
+        ^ self == other
+    }
+
+    /// ## !~
+    /// Performs a semantic non-equivalence check.
+    ///
+    /// This is the logical negation of the equivalence operator (`~~`).
+    ///
+    /// - **other**: The Object to compare against.
+    /// - **Returns**: `true` if `other` is not `null`, otherwise `false`.
+    Boolean !~(Object other) {
+        ^ !(self ~~ other)
+    }
 
     /// ## hash
     /// Returns a hash code value for `Nothing`.

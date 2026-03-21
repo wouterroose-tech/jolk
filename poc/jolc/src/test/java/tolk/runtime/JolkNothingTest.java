@@ -5,6 +5,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import java.util.function.Consumer;
+import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
@@ -40,6 +41,20 @@ public class JolkNothingTest extends JolcTestBase {
         assertTrue(nothing.isMemberInvocable("isEmpty"));
         assertTrue(nothing.isMemberInvocable("ifEmpty"));
         assertFalse(nothing.isMemberInvocable("randomMethod"));
+    }
+
+    @Test
+    void testEquivalenceOperators() throws Exception {
+        // Get another object to compare against
+        Value otherObject = eval("class Other{};").invokeMember("new");
+
+        // Test equivalence (~~)
+        assertTrue((Boolean) nothing.invokeMember("~~", new Object[]{nothing}), "Nothing should be equivalent to itself.");
+        assertFalse((Boolean) nothing.invokeMember("~~", new Object[]{otherObject}), "Nothing should not be equivalent to another object.");
+
+        // Test non-equivalence (!~)
+        assertFalse((Boolean) nothing.invokeMember("!~", new Object[]{nothing}), "Nothing should not be non-equivalent to itself.");
+        assertTrue((Boolean) nothing.invokeMember("!~", new Object[]{otherObject}), "Nothing should be non-equivalent to another object.");
     }
 
     @Test

@@ -9,6 +9,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,10 @@ public final class JolkMetaClass implements TruffleObject {
     private final Map<String, Object> instanceMembers;
     // Instance fields (Sovereign Coordinate Map).
     private final Map<String, Object> instanceFields;
+    // Map field names to their array index for O(1) access
+    private final Map<String, Integer> fieldIndices;
+    // Total number of fields including hierarchy
+    private final int totalFieldCount;
     // Meta members (e.g. user-defined meta methods).
     private final Map<String, Object> metaMembers;
 
@@ -61,6 +66,14 @@ public final class JolkMetaClass implements TruffleObject {
         this.archetype = archetype;
         this.instanceMembers = instanceMembers;
         this.instanceFields = instanceFields;
+        this.fieldIndices = new HashMap<>();
+        
+        // Calculate field layout: Start after superclass fields to support inheritance
+        int currentIndex = (superclass != null) ? superclass.getFieldCount() : 0;
+        for (String fieldName : instanceFields.keySet()) {
+            fieldIndices.put(fieldName, currentIndex++);
+        }
+        this.totalFieldCount = currentIndex;
         this.metaMembers = metaMembers;
     }
 
@@ -203,6 +216,17 @@ public final class JolkMetaClass implements TruffleObject {
         Set<String> keys = new HashSet<>(instanceMembers.keySet());
         keys.addAll(instanceFields.keySet());
         return keys;
+    }
+
+    public int getFieldCount() {
+        return totalFieldCount;
+    }
+
+    public int getFieldIndex(String name) {
+        Integer index = fieldIndices.get(name);
+        if (index != null) return index;
+        if (superclass != null) return superclass.getFieldIndex(name);
+        return -1;
     }
 
     ///

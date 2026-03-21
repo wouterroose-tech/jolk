@@ -3,9 +3,7 @@ package tolk.runtime;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -24,10 +22,11 @@ import com.oracle.truffle.api.library.ExportMessage;
 public class JolkObject implements TruffleObject {
 
     private final JolkMetaClass metaClass;
-    private final Map<String, Object> fields = new HashMap<>();
+    private final Object[] data;
 
     public JolkObject(JolkMetaClass metaClass) {
         this.metaClass = metaClass;
+        this.data = new Object[metaClass.getFieldCount()];
     }
 
     JolkMetaClass getJolkMetaClass() {
@@ -35,11 +34,18 @@ public class JolkObject implements TruffleObject {
     }
 
     Object getFieldValue(String name) {
-        return fields.get(name);
+        int index = metaClass.getFieldIndex(name);
+        if (index >= 0 && index < data.length) {
+            return data[index];
+        }
+        return null;
     }
 
     void setFieldValue(String name, Object value) {
-        fields.put(name, value);
+        int index = metaClass.getFieldIndex(name);
+        if (index >= 0 && index < data.length) {
+            data[index] = value;
+        }
     }
 
     @ExportMessage

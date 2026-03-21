@@ -35,6 +35,10 @@ public class JolkObject implements TruffleObject {
 
     Object getFieldValue(String name) {
         int index = metaClass.getFieldIndex(name);
+        return getFieldValue(index);
+    }
+
+    Object getFieldValue(int index) {
         if (index >= 0 && index < data.length) {
             return data[index];
         }
@@ -43,6 +47,10 @@ public class JolkObject implements TruffleObject {
 
     void setFieldValue(String name, Object value) {
         int index = metaClass.getFieldIndex(name);
+        setFieldValue(index, value);
+    }
+
+    void setFieldValue(int index, Object value) {
         if (index >= 0 && index < data.length) {
             data[index] = value;
         }

@@ -202,7 +202,7 @@ public final class JolkMetaClass implements TruffleObject {
         if (member != null) return member;
         // Virtual Field Strategy: Hydrate a specialized node if the field exists.
         if (instanceFields.containsKey(name)) {
-            return new JolkSyntheticAccessor(name);
+            return new JolkSyntheticAccessor(name, getFieldIndex(name));
         }
         return null;
     }
@@ -239,9 +239,11 @@ public final class JolkMetaClass implements TruffleObject {
     @ExportLibrary(InteropLibrary.class)
     public static final class JolkSyntheticAccessor implements TruffleObject {
         private final String fieldName;
+        private final int index;
 
-        public JolkSyntheticAccessor(String fieldName) {
+        public JolkSyntheticAccessor(String fieldName, int index) {
             this.fieldName = fieldName;
+            this.index = index;
         }
 
         @ExportMessage
@@ -260,11 +262,11 @@ public final class JolkMetaClass implements TruffleObject {
 
             if (arguments.length == 1) {
                 // Getter: x() -> returns value
-                return receiver.getFieldValue(fieldName);
+                return receiver.getFieldValue(index);
             } else if (arguments.length == 2) {
                 // Setter: x(value) -> returns Self (for fluent chaining)
                 Object value = arguments[1];
-                receiver.setFieldValue(fieldName, value);
+                receiver.setFieldValue(index, value);
                 return receiver;
             }
             throw ArityException.create(1, 2, arguments.length);

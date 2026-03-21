@@ -27,9 +27,17 @@ public class JolkObject implements TruffleObject {
     private final Object[] data;
 
     public JolkObject(JolkMetaClass metaClass) {
+        this(metaClass, null);
+    }
+
+    public JolkObject(JolkMetaClass metaClass, Object[] args) {
         this.metaClass = metaClass;
         this.data = new Object[metaClass.getFieldCount()];
-        Arrays.fill(this.data, JolkNothing.INSTANCE);
+        if (args != null && args.length == data.length) {
+            System.arraycopy(args, 0, data, 0, data.length);
+        } else {
+            Arrays.fill(this.data, JolkNothing.INSTANCE);
+        }
     }
 
     JolkMetaClass getJolkMetaClass() {

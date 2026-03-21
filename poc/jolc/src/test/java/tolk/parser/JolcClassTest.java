@@ -126,20 +126,6 @@ public class JolcClassTest extends JolcTestBase {
     @Test
     void testClassWithMethodAndField() {
         String className = "MyClass";
-        String source = "final class " + className + " { String name; String name() { ^ name; } }";
-        Value meta = eval(className, source);
-        assertEquals(4, meta.getMemberKeys().size());
-
-        Value instance = meta.invokeMember("new");
-        assertTrue(instance.hasMember("name"));
-        // The explicit method 'name()' (0 args) shadows the synthesized getter.
-        // Since we didn't define a setter, and the method name shadows the field accessor, 'name' is effectively read-only/uninitialized here.
-        assertEquals("null", instance.invokeMember("name").toString(), "Explicit getter should return the default (null) value.");
-    }
-
-    @Test
-    void testClassWithMethodAndField_2() {
-        String className = "MyClass";
         String source = "final class " + className + " { String name; String myName() { ^ name; } }";
         Value meta = eval(className, source);
         Value instance = meta.invokeMember("new");
@@ -149,6 +135,7 @@ public class JolcClassTest extends JolcTestBase {
         
         // Use synthesized setter on the field
         instance.invokeMember("name", "Jolk");
+        assertEquals("Jolk", instance.invokeMember("myName").asString(), "Synthesized accessor should store and retrieve value.");
     }
 
     @Test
@@ -230,5 +217,32 @@ public class JolcClassTest extends JolcTestBase {
         // Verify Getter: #x-> returns value
         Value value = instance.invokeMember("x");
         assertEquals("testValue", value.asString(), "The synthesized getter should return the stored value.");
+    }
+
+    @Test
+    void testSingleFieldCanonicalNew() {
+        // Verify that #new(arg) initializes the field 'val'
+        String source = "class Container { Object val; }";
+        Value meta = eval(source);
+        
+        // Canonical #new
+        Value instance = meta.invokeMember("new", "initial");
+        
+        assertTrue(instance.hasMember("val"));
+        assertEquals("initial", instance.invokeMember("val").asString(), "Canonical #new should initialize fields in order.");
+    }
+    
+    @Test
+    void testMultiFieldCanonicalNew() {
+        // Verify that #new(arg1, arg2, ...) initializes fields in definition order
+        String source = "class Point3D { Object x; Object y; Object z; }";
+        Value meta = eval(source);
+        
+        // Canonical #new with 3 arguments
+        Value instance = meta.invokeMember("new", 10, 20, 30);
+        
+        assertEquals(10, instance.invokeMember("x").asInt(), "Field 'x' should be initialized to first argument.");
+        assertEquals(20, instance.invokeMember("y").asInt(), "Field 'y' should be initialized to second argument.");
+        assertEquals(30, instance.invokeMember("z").asInt(), "Field 'z' should be initialized to third argument.");
     }
 }

@@ -158,7 +158,11 @@ public final class JolkMetaClass implements TruffleObject {
         switch (member) {
             case "new":
                 if (arguments.length != 0) {
-                    throw ArityException.create(0, 0, arguments.length);
+                    // Support Canonical #new if arguments match field count
+                    if (arguments.length == totalFieldCount) {
+                        return new JolkObject(this, arguments);
+                    }
+                    throw ArityException.create(totalFieldCount, totalFieldCount, arguments.length);
                 }
                 return new JolkObject(this);
             case "name":

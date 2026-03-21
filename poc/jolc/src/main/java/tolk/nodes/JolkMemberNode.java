@@ -1,28 +1,47 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;
 
-@ExportLibrary(InteropLibrary.class)
-public final class JolkMemberNode extends JolkNode implements TruffleObject {
+/// Represents a member (field or method) definition in a class.
+@NodeInfo(language = "Jolk", description = "The abstract syntax tree node for a class member definition.")
+public class JolkMemberNode extends JolkNode {
 
     private final String name;
     private final JolkNode body;
+    private final String[] parameters;
+    private final boolean isVariadic;
 
-    public JolkMemberNode(String name, JolkNode body) {
+    public JolkMemberNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
         this.name = name;
         this.body = body;
+        this.parameters = parameters;
+        this.isVariadic = isVariadic;
     }
 
     public JolkMemberNode(String name) {
-        this(name, null);
+        this(name, new JolkEmptyNode(), new String[0], false);
     }
+    
+    public JolkMemberNode(String name, JolkNode body) {
+        this(name, body, new String[0], false);
+    }
+
     public String getName() {
         return name;
+    }
+
+    public JolkNode getBody() {
+        return body;
+    }
+
+    public String[] getParameters() {
+        return parameters;
+    }
+
+    public boolean isVariadic() {
+        return isVariadic;
     }
 
     @Override
@@ -30,20 +49,15 @@ public final class JolkMemberNode extends JolkNode implements TruffleObject {
         return this;
     }
 
-    @ExportMessage
-    boolean isExecutable() {
+    public Object execute(Object[] arguments) {
+        Object result = body.executeGeneric(null);
+        return result == null ? JolkNothing.INSTANCE : result;
+    }
+
+    public boolean isExecutable() {
         return true;
     }
 
-    @ExportMessage
-    Object execute(Object[] arguments) {
-        if (body != null) {
-            Object result = body.executeGeneric(null);
-            if (result != null) return result;
-        }
-        return JolkNothing.INSTANCE;
-    }
-    
     @Override
     public String toString() {
         return "Member(" + name + ")";

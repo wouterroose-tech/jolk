@@ -1,6 +1,8 @@
 package tolk.parser;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import tolk.grammar.jolkBaseVisitor;
 import tolk.grammar.jolkParser;
@@ -11,6 +13,7 @@ import tolk.nodes.JolkIdentityNode;
 import tolk.nodes.JolkLiteralNode;
 import tolk.nodes.JolkMemberNode;
 import tolk.nodes.JolkMessageSendNode;
+import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
@@ -92,8 +95,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     default -> JolkArchetype.CLASS;
                 };
 
-                Map<String, Object> instanceMembers = new HashMap<>();
-                Map<String, Object> instanceFields = new HashMap<>();
+                Map<String, Object> instanceMembers = new LinkedHashMap<>();
+                Map<String, Object> instanceFields = new LinkedHashMap<>();
 
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
@@ -148,7 +151,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.block() != null) {
             body = visit(ctx.block());
         }
-        return new JolkMemberNode(name, body);
+
+        String[] params = new String[0];
+        boolean isVariadic = false;
+        if (ctx.typed_params() != null) {
+            ParameterSpec spec = parseTypedParams(ctx.typed_params());
+            params = spec.names;
+            isVariadic = spec.isVariadic;
+        }
+        return new JolkMemberNode(name, body, params, isVariadic);
     }
 
     @Override
@@ -198,13 +209,32 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.statements() != null) {
             body = visit(ctx.statements());
         }
-        return new JolkClosureNode(body);
+
+        String[] params = new String[0];
+        boolean isVariadic = false;
+        if (ctx.stat_params() != null) {
+            if (ctx.stat_params().typed_params() != null) {
+                ParameterSpec spec = parseTypedParams(ctx.stat_params().typed_params());
+                params = spec.names;
+                isVariadic = spec.isVariadic;
+            } else if (ctx.stat_params().inferred_params() != null) {
+                params = parseInferredParams(ctx.stat_params().inferred_params());
+            }
+        }
+        return new JolkClosureNode(body, params, isVariadic);
     }
 
     @Override
     public JolkNode visitReserved(jolkParser.ReservedContext ctx) {
-        if (ctx.getText().equals("null")) return new JolkLiteralNode(JolkNothing.INSTANCE);
+        String text = ctx.getText();
+        if (text.equals("null")) return new JolkLiteralNode(JolkNothing.INSTANCE);
+        if (text.equals("self")) return new JolkSelfNode();
         return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
+        return new JolkMessageSendNode(new JolkSelfNode(), ctx.getText(), new JolkNode[0]);
     }
 
     @Override
@@ -222,7 +252,42 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     }
 
     @Override
+    public JolkNode visitStatement(jolkParser.StatementContext ctx) {
+        if (ctx.expression() != null) {
+            return visit(ctx.expression());
+        }
+        return new JolkEmptyNode();
+    }
+
+    @Override
     public JolkNode visitStatements(jolkParser.StatementsContext ctx) {
         return visit(ctx.statement(ctx.statement().size() - 1));
+    }
+
+    // --- Parameter Parsing Helpers ---
+
+    private record ParameterSpec(String[] names, boolean isVariadic) {}
+
+    private ParameterSpec parseTypedParams(jolkParser.Typed_paramsContext ctx) {
+        List<String> names = new ArrayList<>();
+        boolean isVariadic = false;
+        if (ctx.InstanceId() != null) {
+            for (var id : ctx.InstanceId()) {
+                names.add(id.getText());
+            }
+        }
+        if (ctx.vararg_id() != null) {
+            names.add(ctx.vararg_id().InstanceId().getText());
+            isVariadic = true;
+        }
+        return new ParameterSpec(names.toArray(new String[0]), isVariadic);
+    }
+
+    private String[] parseInferredParams(jolkParser.Inferred_paramsContext ctx) {
+        List<String> names = new ArrayList<>();
+        for (var id : ctx.instance_id()) {
+            names.add(id.getText());
+        }
+        return names.toArray(new String[0]);
     }
 }

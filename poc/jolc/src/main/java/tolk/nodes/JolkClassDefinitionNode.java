@@ -3,11 +3,14 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import tolk.language.JolkLanguage;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
 import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkClosure;
 
 /// An AST node that represents the definition of a Jolk type.
 ///
@@ -42,7 +45,21 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        // In a full implementation, this would also register the type in the language context.
-        return new JolkMetaClass(className, null, finality, visibility, archetype, instanceMembers, instanceFields, Collections.emptyMap());
+        JolkLanguage language = null;
+        if (getRootNode() != null) {
+            language = getRootNode().getLanguage(JolkLanguage.class);
+        }
+        Map<String, Object> runtimeMembers = new LinkedHashMap<>();
+        
+        for (Map.Entry<String, Object> entry : instanceMembers.entrySet()) {
+            if (entry.getValue() instanceof JolkMemberNode member) {
+                JolkRootNode root = new JolkRootNode(language, member.getBody(), member.getName());
+                runtimeMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
+            } else {
+                runtimeMembers.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, instanceFields, Collections.emptyMap());
     }
 }

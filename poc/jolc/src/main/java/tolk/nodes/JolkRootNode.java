@@ -15,14 +15,25 @@ public final class JolkRootNode extends RootNode {
 
     @Child
     private JolkNode bodyNode;
+    private final String name;
 
-    public JolkRootNode(JolkLanguage language, JolkNode bodyNode) {
+    public JolkRootNode(JolkLanguage language, JolkNode bodyNode, String name) {
         super(language);
         this.bodyNode = bodyNode;
+        this.name = name;
+    }
+
+    public JolkRootNode(JolkLanguage language, JolkNode bodyNode) {
+        this(language, bodyNode, "root");
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
         return bodyNode.executeGeneric(frame);
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 }

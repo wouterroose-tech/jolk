@@ -95,12 +95,12 @@ final class Nothing extends Object {
     MetaClass<Self> class() { }
 
     /// ## instanceOf
-    /// The Jolk Type pattern match. For `Nothing`, this is only true if the type is `Nothing` itself.
+    /// The Jolk Type pattern match.
     ///
     /// - **type**: The type to check against.
-    /// - **Returns**: A `Match` containing `self` if the type is `Nothing`, otherwise an empty `Match`.
+    /// - **Returns**: A `Match` containing `self` if the type is `Nothing` or `Object`, otherwise an empty `Match`.
     <T> Match<T> instanceOf(Type<T> type) {
-        ^ (type == Nothing) ? Match #with(self) : Match #empty
+        ^ super #instanceOf(type)
     } 
 
     /// ## project

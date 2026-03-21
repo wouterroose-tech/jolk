@@ -68,7 +68,15 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     boolean isMetaInstance(Object instance) {
+        // In Jolk, everything is an Object, including Nothing.
+        if ("Object".equals(this.name)) {
+            return instance instanceof JolkObject || instance == JolkNothing.INSTANCE;
+        }
+        if (instance == JolkNothing.INSTANCE) {
+            return this == JolkNothing.NOTHING_TYPE;
+        }
         if (instance instanceof JolkObject jolkObject) {
+            // TODO: This should check the class hierarchy, not just the direct class.
             return jolkObject.getJolkMetaClass() == this;
         }
         return false;

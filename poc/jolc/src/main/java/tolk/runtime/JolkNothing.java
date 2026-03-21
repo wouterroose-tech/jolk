@@ -15,10 +15,9 @@ import java.util.Map;
 /// 
 /// Represents the `null` or `Nothing` value in Jolk.
 ///
-/// This is a singleton `TruffleObject` that implements the `isNull` message from the
-/// `InteropLibrary` to correctly represent the absence of a value to the polyglot engine
-/// and other languages. It aligns with Jolk's philosophy of treating `null` as a
-/// first-class identity.
+/// This is a singleton `TruffleObject` that aligns with Jolk's philosophy of treating
+/// `null` as a first-class identity. It does NOT implement `isNull` from `InteropLibrary`
+/// to ensure it remains a valid receiver for messages within the polyglot environment.
 ///
 @ExportLibrary(InteropLibrary.class)
 public final class JolkNothing implements TruffleObject {
@@ -35,15 +34,6 @@ public final class JolkNothing implements TruffleObject {
 
     private JolkNothing() {
         // private constructor to enforce singleton pattern
-    }
-
-    ///
-    /// Reports that this object represents a `null` value.
-    /// @return Always `true`.
-    ///
-    @ExportMessage
-    public boolean isNull() {
-        return true;
     }
 
     @ExportMessage
@@ -63,10 +53,8 @@ public final class JolkNothing implements TruffleObject {
 
     @ExportMessage
     boolean isMemberInvocable(String member) {
-        return switch (member) {
-            case "~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf" -> true;
-            default -> false;
-        };
+        // Silent Absorption: JolkNothing accepts all messages.
+        return true;
     }
 
     @ExportMessage
@@ -102,9 +90,9 @@ public final class JolkNothing implements TruffleObject {
                 // Project is ignored for Nothing
                 return this;
             case "instanceOf":
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);                
                 Object type = arguments[0];
-                if (type == NOTHING_TYPE) {
+                if (InteropLibrary.getUncached().isMetaInstance(type, this)) {
                     return JolkMatch.with(this);
                 }
                 return JolkMatch.empty();
@@ -112,7 +100,8 @@ public final class JolkNothing implements TruffleObject {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return NOTHING_TYPE;
             default:
-                throw UnknownIdentifierException.create(member);
+                // Silent Absorption: Return self for any unknown message
+                return this;
         }
     }
 

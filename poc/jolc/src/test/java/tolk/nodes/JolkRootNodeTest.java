@@ -4,7 +4,7 @@ import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 ///
 /// Verifies the behavior of the root execution node for the Jolk language.
@@ -16,7 +16,7 @@ public class JolkRootNodeTest extends JolcTestBase {
     @Test
     void testEmptyProgramReturnsNull() {
         Value result = eval("");
-        assertTrue(result.isNull(), "Executing an empty program should result in a null value.");
+        assertEquals("null", result.toString(), "Executing an empty program should result in a null value.");
     }
 
 }

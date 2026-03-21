@@ -25,7 +25,8 @@ public class JolkExpressionNothingTest extends JolcTestBase {
         String source = "class NullTest { Object run() { ^ null } }";
         Value meta = eval("NullTest", source);
         Value nullValue = meta.invokeMember("new").invokeMember("run");
-        assertTrue(nullValue.isNull(), "The 'null' literal should be recognized as a null polyglot value.");
+        // JolkNothing is a first-class object that supports messaging, so it is not a polyglot null.
+        assertEquals("null", nullValue.toString());
     }
 
     @Test
@@ -59,7 +60,7 @@ public class JolkExpressionNothingTest extends JolcTestBase {
 
         // #ifPresent should not execute its closure for a null receiver.
         Value ifPresentResult = instance.invokeMember("run");
-        assertTrue(ifPresentResult.isNull());
+        assertEquals("null", ifPresentResult.toString());
 
         // #ifEmpty should execute its closure for a null receiver.
         Value ifEmptyResult = instance.invokeMember("runEmpty");
@@ -84,7 +85,7 @@ public class JolkExpressionNothingTest extends JolcTestBase {
         // Sending an arbitrary message to 'null' should not cause a crash.
         // It should absorb the message and return 'null' itself, enabling fluid chains.
         Value result = eval("null #someRandomMessage #anotherMessage");
-        assertTrue(result.isNull(), "Chaining messages on null should result in null (Silent Absorption).");
+        assertEquals("null", result.toString(), "Chaining messages on null should result in null (Silent Absorption).");
     }
 
     @Test

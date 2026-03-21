@@ -92,17 +92,23 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     default -> JolkArchetype.CLASS;
                 };
 
-                Map<String, Object> members = new HashMap<>();
+                Map<String, Object> instanceMembers = new HashMap<>();
+                Map<String, Object> instanceFields = new HashMap<>();
+
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
                         JolkNode node = visit(mbr.member());
                         if (node instanceof JolkMemberNode memberNode) {
-                            members.put(memberNode.getName(), memberNode);
+                            if (mbr.member().state() != null && mbr.member().state().field() != null) {
+                                instanceFields.put(memberNode.getName(), null);
+                            } else {
+                                instanceMembers.put(memberNode.getName(), memberNode);
+                            }
                         }
                     }
                 }
 
-                return new JolkClassDefinitionNode(className, finality, visibility, archetype, members);
+                return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMembers, instanceFields);
             }
         }
         return new JolkEmptyNode();

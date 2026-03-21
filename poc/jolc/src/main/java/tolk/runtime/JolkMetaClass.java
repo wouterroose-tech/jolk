@@ -36,24 +36,31 @@ public final class JolkMetaClass implements TruffleObject {
     private final JolkArchetype archetype;
     // Instance members (fields and methods) for instances of this class.
     private final Map<String, Object> instanceMembers;
+    // Instance fields (Sovereign Coordinate Map).
+    private final Map<String, Object> instanceFields;
     // Meta members (e.g. user-defined meta methods).
     private final Map<String, Object> metaMembers;
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap());
+        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), Collections.emptyMap());
     }
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, metaMembers);
+        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), metaMembers);
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
+        this(name, superclass, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), metaMembers);
+    }
+
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
         this.name = name;
         this.superclass = superclass;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
         this.instanceMembers = instanceMembers;
+        this.instanceFields = instanceFields;
         this.metaMembers = metaMembers;
     }
 
@@ -169,7 +176,7 @@ public final class JolkMetaClass implements TruffleObject {
      * @return `true` if an instance member with that name exists.
      */
     public boolean hasInstanceMember(String name) {
-        return instanceMembers.containsKey(name);
+        return instanceMembers.containsKey(name) || instanceFields.containsKey(name);
     }
 
     /**
@@ -178,7 +185,13 @@ public final class JolkMetaClass implements TruffleObject {
      * Looks up an instance member (e.g., a `JolkClosure`) by name.
      */
     public Object lookupInstanceMember(String name) {
-        return instanceMembers.get(name);
+        Object member = instanceMembers.get(name);
+        if (member != null) return member;
+        // Virtual Field Strategy: Hydrate a specialized node if the field exists.
+        if (instanceFields.containsKey(name)) {
+            return new JolkSyntheticAccessor(name);
+        }
+        return null;
     }
 
     /**
@@ -187,6 +200,50 @@ public final class JolkMetaClass implements TruffleObject {
      * @return A set of all instance member names.
      */
     public Set<String> getInstanceMemberKeys() {
-        return instanceMembers.keySet();
+        Set<String> keys = new HashSet<>(instanceMembers.keySet());
+        keys.addAll(instanceFields.keySet());
+        return keys;
+    }
+
+    ///
+    /// ## JolkSyntheticAccessor
+    ///
+    /// Implements the "Virtual Field Strategy" by acting as a dynamic accessor node.
+    /// It handles both read (getter) and write (setter) operations based on the
+    /// number of arguments provided, supporting the Jolk fluent setter pattern.
+    ///
+    @ExportLibrary(InteropLibrary.class)
+    public static final class JolkSyntheticAccessor implements TruffleObject {
+        private final String fieldName;
+
+        public JolkSyntheticAccessor(String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @ExportMessage
+        boolean isExecutable() {
+            return true;
+        }
+
+        @ExportMessage
+        Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+            if (arguments.length < 1) throw ArityException.create(1, 2, arguments.length);
+            
+            // Argument 0 is the receiver (JolkObject)
+            if (!(arguments[0] instanceof JolkObject receiver)) {
+                throw UnsupportedTypeException.create(arguments, "Receiver must be a JolkObject");
+            }
+
+            if (arguments.length == 1) {
+                // Getter: x() -> returns value
+                return receiver.getFieldValue(fieldName);
+            } else if (arguments.length == 2) {
+                // Setter: x(value) -> returns Self (for fluent chaining)
+                Object value = arguments[1];
+                receiver.setFieldValue(fieldName, value);
+                return receiver;
+            }
+            throw ArityException.create(1, 2, arguments.length);
+        }
     }
 }

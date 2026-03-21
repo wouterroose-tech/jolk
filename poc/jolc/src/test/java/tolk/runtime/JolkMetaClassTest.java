@@ -124,4 +124,17 @@ public class JolkMetaClassTest {
         assertTrue(metaClass.isMemberReadable("VERSION"));
         assertFalse(metaClass.isMemberReadable("new"));
     }
+
+    @Test
+    void testLookupInstanceFieldAccessor() {
+        // Verify the Virtual Field Strategy
+        Map<String, Object> fields = Collections.singletonMap("myField", null);
+        // Use the full constructor to inject fields
+        JolkMetaClass fieldClass = new JolkMetaClass("FieldClass", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+        
+        assertTrue(fieldClass.hasInstanceMember("myField"), "Should report field as an instance member");
+        Object accessor = fieldClass.lookupInstanceMember("myField");
+        assertNotNull(accessor, "Should return a synthesized accessor");
+        assertTrue(accessor instanceof JolkMetaClass.JolkSyntheticAccessor, "Accessor should be of the correct synthetic type");
+    }
 }

@@ -54,7 +54,8 @@ public class JolkClassDefinitionNodeTest {
             JolkFinality.FINAL,
             JolkVisibility.PUBLIC,
             JolkArchetype.CLASS,
-            members
+            members,
+            new HashMap<>()
         );
 
         Object result = node.executeGeneric(null);

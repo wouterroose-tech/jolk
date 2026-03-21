@@ -3,7 +3,9 @@ package tolk.runtime;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -22,6 +24,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 public class JolkObject implements TruffleObject {
 
     private final JolkMetaClass metaClass;
+    private final Map<String, Object> fields = new HashMap<>();
 
     public JolkObject(JolkMetaClass metaClass) {
         this.metaClass = metaClass;
@@ -29,6 +32,14 @@ public class JolkObject implements TruffleObject {
 
     JolkMetaClass getJolkMetaClass() {
         return metaClass;
+    }
+
+    Object getFieldValue(String name) {
+        return fields.get(name);
+    }
+
+    void setFieldValue(String name, Object value) {
+        fields.put(name, value);
     }
 
     @ExportMessage
@@ -65,7 +76,11 @@ public class JolkObject implements TruffleObject {
         // 1. Prioritize user-defined members for overridable selectors.
         if (metaClass.hasInstanceMember(member)) {
             Object instanceMember = metaClass.lookupInstanceMember(member);
-            return InteropLibrary.getUncached().execute(instanceMember, arguments);
+            // Prepend 'this' (receiver) to arguments as Jolk instance members expect it
+            Object[] argsWithReceiver = new Object[arguments.length + 1];
+            argsWithReceiver[0] = this;
+            if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+            return InteropLibrary.getUncached().execute(instanceMember, argsWithReceiver);
         }
 
         // 2. Handle Object.jolk intrinsics and fallbacks.

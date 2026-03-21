@@ -10,6 +10,8 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.CachedLibrary;
+import java.util.Arrays;
 
 /// # JolkObject
 /// 
@@ -27,6 +29,7 @@ public class JolkObject implements TruffleObject {
     public JolkObject(JolkMetaClass metaClass) {
         this.metaClass = metaClass;
         this.data = new Object[metaClass.getFieldCount()];
+        Arrays.fill(this.data, JolkNothing.INSTANCE);
     }
 
     JolkMetaClass getJolkMetaClass() {
@@ -86,7 +89,8 @@ public class JolkObject implements TruffleObject {
     }
 
     @ExportMessage
-    Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+    Object invokeMember(String member, Object[] arguments,
+                        @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         // 1. Prioritize user-defined members for overridable selectors.
         if (metaClass.hasInstanceMember(member)) {
             Object instanceMember = metaClass.lookupInstanceMember(member);
@@ -94,7 +98,7 @@ public class JolkObject implements TruffleObject {
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
-            return InteropLibrary.getUncached().execute(instanceMember, argsWithReceiver);
+            return interop.execute(instanceMember, argsWithReceiver);
         }
 
         // 2. Handle Object.jolk intrinsics and fallbacks.
@@ -114,7 +118,7 @@ public class JolkObject implements TruffleObject {
             }
             case "!~" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return !InteropLibrary.getUncached().asBoolean(this.invokeMember("~~", arguments));
+                return !interop.asBoolean(this.invokeMember("~~", arguments, interop));
             }
             case "hash" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -127,7 +131,7 @@ public class JolkObject implements TruffleObject {
             case "ifPresent" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 Object action = arguments[0];
-                return InteropLibrary.getUncached().execute(action, this);
+                return interop.execute(action, this);
             }
             case "ifEmpty" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -148,7 +152,7 @@ public class JolkObject implements TruffleObject {
             case "instanceOf" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 Object type = arguments[0];
-                if (InteropLibrary.getUncached().isMetaInstance(type, this)) {
+                if (interop.isMetaInstance(type, this)) {
                     return JolkMatch.with(this);
                 }
                 return JolkMatch.empty();

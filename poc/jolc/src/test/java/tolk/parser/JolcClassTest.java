@@ -110,18 +110,17 @@ public class JolcClassTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("TODO: Implement synthesized self return for methods with empty bodies, then re-enable this test.") 
     void testClassWithField() {
         String className = "MyClass";
-        String source = "class " + className + " { String name; }";
+        String source = "class " + className + " { String myField; }";
         Value meta = eval(className, source);
         Value instance = meta.invokeMember("new");
         assertTrue(instance.hasMembers());
-        assertTrue(instance.hasMember("name"), "Instance should have member 'name' from its field.");
+        assertTrue(instance.hasMember("myField"), "Instance should have member 'myField' from its field.");
         
         // Test synthesized setter and getter
-        instance.invokeMember("name", "Jolk");
-        assertEquals("Jolk", instance.invokeMember("name").asString(), "Synthesized accessor should store and retrieve value.");
+        instance.invokeMember("myField", "Jolk");
+        assertEquals("Jolk", instance.invokeMember("myField").asString(), "Synthesized accessor should store and retrieve value.");
     }
 
     @Test

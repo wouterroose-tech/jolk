@@ -1,5 +1,6 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -8,6 +9,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Collections;
@@ -41,6 +43,8 @@ public final class JolkMetaClass implements TruffleObject {
     private final Map<String, Object> instanceFields;
     // Map field names to their array index for O(1) access
     private final Map<String, Integer> fieldIndices;
+    // Cache synthetic accessors to prevent allocation on every lookup
+    private final Map<String, JolkSyntheticAccessor> accessorCache;
     // Total number of fields including hierarchy
     private final int totalFieldCount;
     // Meta members (e.g. user-defined meta methods).
@@ -67,11 +71,14 @@ public final class JolkMetaClass implements TruffleObject {
         this.instanceMembers = instanceMembers;
         this.instanceFields = instanceFields;
         this.fieldIndices = new HashMap<>();
+        this.accessorCache = new HashMap<>();
         
         // Calculate field layout: Start after superclass fields to support inheritance
         int currentIndex = (superclass != null) ? superclass.getFieldCount() : 0;
         for (String fieldName : instanceFields.keySet()) {
-            fieldIndices.put(fieldName, currentIndex++);
+            fieldIndices.put(fieldName, currentIndex);
+            accessorCache.put(fieldName, new JolkSyntheticAccessor(fieldName, currentIndex));
+            currentIndex++;
         }
         this.totalFieldCount = currentIndex;
         this.metaMembers = metaMembers;
@@ -199,10 +206,17 @@ public final class JolkMetaClass implements TruffleObject {
      */
     public Object lookupInstanceMember(String name) {
         Object member = instanceMembers.get(name);
-        if (member != null) return member;
+        if (member != null) {
+            // If the parser erroneously puts the field definition in instanceMembers,
+            // we detect the duplicate and prefer the synthetic accessor.
+            if (instanceFields.containsKey(name) && instanceFields.get(name) == member) {
+                return accessorCache.get(name);
+            }
+            return member;
+        }
         // Virtual Field Strategy: Hydrate a specialized node if the field exists.
         if (instanceFields.containsKey(name)) {
-            return new JolkSyntheticAccessor(name, getFieldIndex(name));
+            return accessorCache.get(name);
         }
         return null;
     }
@@ -252,7 +266,9 @@ public final class JolkMetaClass implements TruffleObject {
         }
 
         @ExportMessage
-        Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+        Object execute(Object[] arguments,
+                       @Cached("createBinaryProfile()") ConditionProfile lengthProfile) throws ArityException, UnsupportedTypeException {
+            
             if (arguments.length < 1) throw ArityException.create(1, 2, arguments.length);
             
             // Argument 0 is the receiver (JolkObject)
@@ -260,11 +276,11 @@ public final class JolkMetaClass implements TruffleObject {
                 throw UnsupportedTypeException.create(arguments, "Receiver must be a JolkObject");
             }
 
-            if (arguments.length == 1) {
-                // Getter: x() -> returns value
+            if (lengthProfile.profile(arguments.length == 1)) {
+                // Getter: #x -> returns value
                 return receiver.getFieldValue(index);
-            } else if (arguments.length == 2) {
-                // Setter: x(value) -> returns Self (for fluent chaining)
+            } else if (lengthProfile.profile(arguments.length >= 2)) {
+                // Setter: #x(value) -> returns Self (for fluent chaining)
                 Object value = arguments[1];
                 receiver.setFieldValue(index, value);
                 return receiver;

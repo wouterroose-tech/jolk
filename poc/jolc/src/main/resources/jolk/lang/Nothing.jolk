@@ -9,7 +9,7 @@
 /// @author Wouter Roose
 
 @Intrinsic("jolk.lang.Nothing")
-final class Nothing {
+final class Nothing extends Object {
 
     /// ## ~~
     /// Performs a semantic equivalence check.

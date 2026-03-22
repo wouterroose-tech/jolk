@@ -55,6 +55,7 @@ public class JolkClassDefinitionNodeTest {
             JolkVisibility.PUBLIC,
             JolkArchetype.CLASS,
             members,
+            new HashMap<>(),
             new HashMap<>()
         );
 

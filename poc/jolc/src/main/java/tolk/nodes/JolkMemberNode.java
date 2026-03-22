@@ -12,20 +12,22 @@ public class JolkMemberNode extends JolkNode {
     private final JolkNode body;
     private final String[] parameters;
     private final boolean isVariadic;
+    private final boolean isState;
 
-    public JolkMemberNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
+    public JolkMemberNode(String name, JolkNode body, String[] parameters, boolean isVariadic, boolean isState) {
         this.name = name;
         this.body = body;
         this.parameters = parameters;
         this.isVariadic = isVariadic;
+        this.isState = isState;
     }
 
     public JolkMemberNode(String name) {
-        this(name, new JolkEmptyNode(), new String[0], false);
+        this(name, new JolkEmptyNode(), new String[0], false, true);
     }
     
     public JolkMemberNode(String name, JolkNode body) {
-        this(name, body, new String[0], false);
+        this(name, body, new String[0], false, true);
     }
 
     public String getName() {
@@ -42,6 +44,10 @@ public class JolkMemberNode extends JolkNode {
 
     public boolean isVariadic() {
         return isVariadic;
+    }
+
+    public boolean isState() {
+        return isState;
     }
 
     @Override

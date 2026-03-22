@@ -29,18 +29,20 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     private final JolkArchetype archetype;
     private final Map<String, Object> instanceMembers;
     private final Map<String, Object> instanceFields;
+    private final Map<String, Object> metaMembers;
 
-    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields) {
+    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
         this.className = className;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
         this.instanceMembers = instanceMembers;
         this.instanceFields = instanceFields;
+        this.metaMembers = metaMembers;
     }
 
     public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(className, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap());
+        this(className, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
     }
 
     @Override
@@ -60,6 +62,22 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             }
         }
 
-        return new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, instanceFields, Collections.emptyMap());
+        Map<String, Object> runtimeMetaMembers = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : metaMembers.entrySet()) {
+            if (entry.getValue() instanceof JolkMemberNode member) {
+                JolkRootNode root = new JolkRootNode(language, member.getBody(), member.getName());
+                if (member.isState()) {
+                    // It's a constant or static field: evaluate the initializer immediately
+                    runtimeMetaMembers.put(entry.getKey(), root.getCallTarget().call());
+                } else {
+                    // It's a meta method: wrap in closure
+                    runtimeMetaMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
+                }
+            } else {
+                runtimeMetaMembers.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, instanceFields, runtimeMetaMembers);
     }
 }

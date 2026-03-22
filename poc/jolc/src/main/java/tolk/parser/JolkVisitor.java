@@ -97,21 +97,28 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
                 Map<String, Object> instanceMembers = new LinkedHashMap<>();
                 Map<String, Object> instanceFields = new LinkedHashMap<>();
+                Map<String, Object> metaMembers = new LinkedHashMap<>();
 
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
+                        boolean isMeta = mbr.member().META() != null;
                         JolkNode node = visit(mbr.member());
                         if (node instanceof JolkMemberNode memberNode) {
-                            if (mbr.member().state() != null && mbr.member().state().field() != null) {
+                            if (isMeta) {
+                                metaMembers.put(memberNode.getName(), memberNode);
+                            } else if (memberNode.isState()) {
+                                // Instance fields
                                 instanceFields.put(memberNode.getName(), null);
+                                // TODO: Handle instance field initializers here or in JolkClassDefinitionNode logic
                             } else {
+                                // Instance methods
                                 instanceMembers.put(memberNode.getName(), memberNode);
                             }
                         }
                     }
                 }
 
-                return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMembers, instanceFields);
+                return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers);
             }
         }
         return new JolkEmptyNode();
@@ -132,8 +139,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitMember(jolkParser.MemberContext ctx) {
         if (ctx.method() != null) {
             return visit(ctx.method());
-        } else if (ctx.state() != null && ctx.state().field() != null) {
-            return visit(ctx.state().field());
+        } else if (ctx.state() != null) {
+            if (ctx.state().field() != null) {
+                return visit(ctx.state().field());
+            } else if (ctx.state().constant() != null) {
+                return visit(ctx.state().constant());
+            }
         }
         return new JolkEmptyNode();
     }
@@ -141,7 +152,18 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitField(jolkParser.FieldContext ctx) {
         String name = ctx.identifier().getText();
-        return new JolkMemberNode(name);
+        JolkNode initializer = new JolkEmptyNode();
+        if (ctx.assignment() != null) {
+            initializer = visit(ctx.assignment().expression());
+        }
+        return new JolkMemberNode(name, initializer);
+    }
+
+    @Override
+    public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
+        String name = ctx.binding().identifier().getText();
+        JolkNode initializer = visit(ctx.binding().assignment().expression());
+        return new JolkMemberNode(name, initializer);
     }
 
     @Override
@@ -159,7 +181,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             params = spec.names;
             isVariadic = spec.isVariadic;
         }
-        return new JolkMemberNode(name, body, params, isVariadic);
+        return new JolkMemberNode(name, body, params, isVariadic, false);
     }
 
     @Override

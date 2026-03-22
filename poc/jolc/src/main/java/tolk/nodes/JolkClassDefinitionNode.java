@@ -54,7 +54,10 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         Map<String, Object> runtimeMembers = new LinkedHashMap<>();
         
         for (Map.Entry<String, Object> entry : instanceMembers.entrySet()) {
-            if (entry.getValue() instanceof JolkMemberNode member) {
+            if (entry.getValue() instanceof JolkMethodNode method) {
+                JolkRootNode root = new JolkRootNode(language, method.getBody(), method.getName());
+                runtimeMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
+            } else if (entry.getValue() instanceof JolkMemberNode member) {
                 JolkRootNode root = new JolkRootNode(language, member.getBody(), member.getName());
                 runtimeMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
             } else {
@@ -64,7 +67,15 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
 
         Map<String, Object> runtimeMetaMembers = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : metaMembers.entrySet()) {
-            if (entry.getValue() instanceof JolkMemberNode member) {
+            Object value = entry.getValue();
+            if (value instanceof JolkMethodNode method) {
+                JolkRootNode root = new JolkRootNode(language, method.getBody(), method.getName());
+                runtimeMetaMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
+            } else if (value instanceof JolkFieldNode field) {
+                // Constants: evaluate initializer immediately
+                JolkRootNode root = new JolkRootNode(language, field.getInitializer(), field.getName());
+                runtimeMetaMembers.put(entry.getKey(), root.getCallTarget().call());
+            } else if (value instanceof JolkMemberNode member) {
                 JolkRootNode root = new JolkRootNode(language, member.getBody(), member.getName());
                 if (member.isState()) {
                     // It's a constant or static field: evaluate the initializer immediately

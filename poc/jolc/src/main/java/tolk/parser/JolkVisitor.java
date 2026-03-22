@@ -11,9 +11,10 @@ import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkClosureNode;
 import tolk.nodes.JolkEmptyNode;
+import tolk.nodes.JolkFieldNode;
 import tolk.nodes.JolkIdentityNode;
 import tolk.nodes.JolkLiteralNode;
-import tolk.nodes.JolkMemberNode;
+import tolk.nodes.JolkMethodNode;
 import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkNode;
@@ -108,10 +109,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     if (mbr.member() != null) {
                         boolean isMeta = mbr.member().META() != null;
                         JolkNode node = visit(mbr.member());
-                        if (node instanceof JolkMemberNode memberNode) {
+                        if (node instanceof JolkFieldNode fieldNode) {
                             if (isMeta) {
-                                metaMembers.put(memberNode.getName(), memberNode);
-                            } else if (memberNode.isState()) {
+                                metaMembers.put(fieldNode.getName(), fieldNode);
+                            } else {
                                 // Instance fields
                                 String typeName = "Object";
                                 if (mbr.member().state() != null) {
@@ -121,11 +122,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                                         typeName = mbr.member().state().constant().type().getText();
                                     }
                                 }
-                                instanceFields.put(memberNode.getName(), "Int".equals(typeName) ? 0 : null);
+                                instanceFields.put(fieldNode.getName(), "Int".equals(typeName) ? 0 : null);
                                 // TODO: Handle instance field initializers here or in JolkClassDefinitionNode logic
+                            }
+                        } else if (node instanceof JolkMethodNode methodNode) {
+                            if (isMeta) {
+                                metaMembers.put(methodNode.getName(), methodNode);
                             } else {
                                 // Instance methods
-                                instanceMembers.put(memberNode.getName(), memberNode);
+                                instanceMembers.put(methodNode.getName(), methodNode);
                             }
                         }
                     }
@@ -169,14 +174,14 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.assignment() != null) {
             initializer = visit(ctx.assignment().expression());
         }
-        return new JolkMemberNode(name, initializer);
+        return new JolkFieldNode(name, initializer);
     }
 
     @Override
     public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
         String name = ctx.binding().identifier().getText();
         JolkNode initializer = visit(ctx.binding().assignment().expression());
-        return new JolkMemberNode(name, initializer);
+        return new JolkFieldNode(name, initializer);
     }
 
     @Override
@@ -199,7 +204,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         } finally {
             scopes.pop();
         }
-        return new JolkMemberNode(name, body, params, isVariadic, false);
+        return new JolkMethodNode(name, body, params, isVariadic);
     }
 
     @Override

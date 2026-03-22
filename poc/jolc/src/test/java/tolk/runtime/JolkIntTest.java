@@ -44,6 +44,13 @@ public class JolkIntTest {
     }
 
     @Test
+    void testNegate() throws Exception {
+        Object op = getOperation("-");
+        assertEquals(-5, execute(op, 5));
+        assertEquals(10, execute(op, -10));
+    }
+
+    @Test
     void testMultiply() throws Exception {
         Object op = getOperation("*");
         assertEquals(60, execute(op, 3, 20));
@@ -62,6 +69,27 @@ public class JolkIntTest {
         Object op = getOperation("%");
         assertEquals(1, execute(op, 10, 3));
         assertEquals(0, execute(op, 10, 5));
+    }
+
+    @Test
+    void testPower() throws Exception {
+        Object op = getOperation("**");
+        assertEquals(8, execute(op, 2, 3));
+        assertEquals(1, execute(op, 10, 0));
+    }
+
+    @Test
+    void testEquals() throws Exception {
+        Object op = getOperation("==");
+        assertEquals(true, execute(op, 10, 10));
+        assertEquals(false, execute(op, 10, 5));
+    }
+
+    @Test
+    void testNotEquals() throws Exception {
+        Object op = getOperation("!=");
+        assertEquals(false, execute(op, 10, 10));
+        assertEquals(true, execute(op, 10, 5));
     }
 
     @Test
@@ -108,6 +136,90 @@ public class JolkIntTest {
 
         assertEquals(5, result, "Times should return the count (self)");
         assertEquals(5, counter.get(), "Action should be executed 5 times");
+    }
+
+    @Test
+    void testToString() throws Exception {
+        Object op = getOperation("toString");
+        assertEquals("42", execute(op, 42));
+    }
+
+    @Test
+    void testHash() throws Exception {
+        Object op = getOperation("hash");
+        assertEquals(42, execute(op, 42));
+    }
+
+    @Test
+    void testEquivalence() throws Exception {
+        Object op = getOperation("~~");
+        assertEquals(true, execute(op, 10, 10));
+        assertEquals(false, execute(op, 10, 5));
+    }
+
+    @Test
+    void testNonEquivalence() throws Exception {
+        Object op = getOperation("!~");
+        assertEquals(false, execute(op, 10, 10));
+        assertEquals(true, execute(op, 10, 5));
+    }
+
+    @Test
+    void testIfPresent() throws Exception {
+        Object op = getOperation("ifPresent");
+        AtomicInteger counter = new AtomicInteger(0);
+        IntTestExecutable action = new IntTestExecutable(counter::incrementAndGet);
+
+        // Execute: 5 #ifPresent [ ... ]
+        Object result = execute(op, 5, action);
+
+        assertEquals(5, result, "ifPresent should return self");
+        assertEquals(1, counter.get(), "Action should be executed");
+    }
+
+    @Test
+    void testIfEmpty() throws Exception {
+        Object op = getOperation("ifEmpty");
+        AtomicInteger counter = new AtomicInteger(0);
+        IntTestExecutable action = new IntTestExecutable(counter::incrementAndGet);
+
+        // Execute: 5 #ifEmpty [ ... ]
+        Object result = execute(op, 5, action);
+
+        assertEquals(5, result, "ifEmpty should return self");
+        assertEquals(0, counter.get(), "Action should NOT be executed");
+    }
+
+    @Test
+    void testIsPresent() throws Exception {
+        Object op = getOperation("isPresent");
+        assertEquals(true, execute(op, 5));
+    }
+
+    @Test
+    void testIsEmpty() throws Exception {
+        Object op = getOperation("isEmpty");
+        assertEquals(false, execute(op, 5));
+    }
+
+    @Test
+    void testClassAccessor() throws Exception {
+        Object op = getOperation("class");
+        Object result = execute(op, 42);
+        assertEquals(JolkInt.INT_TYPE, result);
+    }
+
+    @Test
+    void testInstanceOf() throws Exception {
+        Object op = getOperation("instanceOf");
+
+        // Test against Int type
+        Object match = execute(op, 42, JolkInt.INT_TYPE);
+        assertTrue((Boolean) InteropLibrary.getUncached().invokeMember(match, "isPresent"));
+
+        // Test against an unrelated type (using Nothing type as dummy unrelated)
+        Object noMatch = execute(op, 42, JolkNothing.NOTHING_TYPE);
+        assertFalse((Boolean) InteropLibrary.getUncached().invokeMember(noMatch, "isPresent"));
     }
 
     @Test

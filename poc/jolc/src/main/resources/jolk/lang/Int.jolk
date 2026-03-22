@@ -9,7 +9,7 @@
 /// @author Wouter Roose
 
 @Intrinsic
-public final class Int {
+public final class Int extends Object {
 
     /// Adds the other Int to this one.
     Self +(Int other) { }
@@ -25,6 +25,9 @@ public final class Int {
 
     /// Computes the remainder of the division of this Int by the other.
     Self %(Int other) { }
+
+    /// Computes this Int raised to the power of the other.
+    Self **(Int other) { }
 
     /// Returns true if this Int is greater than the other.
     Boolean >(Int other) { }

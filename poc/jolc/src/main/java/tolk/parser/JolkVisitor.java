@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
+import java.util.Arrays;
 import tolk.grammar.jolkBaseVisitor;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
@@ -15,6 +17,7 @@ import tolk.nodes.JolkMemberNode;
 import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkNode;
+import tolk.nodes.JolkReadArgumentNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
 import tolk.runtime.JolkArchetype;
@@ -22,6 +25,8 @@ import tolk.runtime.JolkNothing;
 
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
+
+    private final Stack<List<String>> scopes = new Stack<>();
 
     /// ### visitUnit
     ///
@@ -177,11 +182,6 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
         String name = ctx.selector_id().getText();
-        JolkNode body = new JolkEmptyNode();
-        if (ctx.block() != null) {
-            body = visit(ctx.block());
-        }
-
         String[] params = new String[0];
         boolean isVariadic = false;
         if (ctx.typed_params() != null) {
@@ -189,7 +189,89 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             params = spec.names;
             isVariadic = spec.isVariadic;
         }
+
+        scopes.push(Arrays.asList(params));
+        JolkNode body = new JolkEmptyNode();
+        try {
+            if (ctx.block() != null) {
+                body = visit(ctx.block());
+            }
+        } finally {
+            scopes.pop();
+        }
         return new JolkMemberNode(name, body, params, isVariadic, false);
+    }
+
+    @Override
+    public JolkNode visitExpression(jolkParser.ExpressionContext ctx) {
+        JolkNode result = visit(ctx.logic_or());
+        // Handle ternary operations: condition ? trueBranch : falseBranch
+        if (!ctx.expression().isEmpty()) {
+            String op = ctx.getChild(1).getText(); // "?" or "?!"
+            JolkNode thenBranch = visit(ctx.expression(0));
+            result = new JolkMessageSendNode(result, op, new JolkNode[]{thenBranch});
+            
+            if (ctx.expression().size() > 1) {
+                JolkNode elseBranch = visit(ctx.expression(1));
+                result = new JolkMessageSendNode(result, ":", new JolkNode[]{elseBranch});
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public JolkNode visitLogic_or(jolkParser.Logic_orContext ctx) {
+        JolkNode left = visit(ctx.logic_and(0));
+        for (int i = 1; i < ctx.logic_and().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.logic_and(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitLogic_and(jolkParser.Logic_andContext ctx) {
+        JolkNode left = visit(ctx.inclusive_or(0));
+        for (int i = 1; i < ctx.inclusive_or().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.inclusive_or(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitInclusive_or(jolkParser.Inclusive_orContext ctx) {
+        JolkNode left = visit(ctx.exclusive_or(0));
+        for (int i = 1; i < ctx.exclusive_or().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.exclusive_or(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitExclusive_or(jolkParser.Exclusive_orContext ctx) {
+        JolkNode left = visit(ctx.bitwise_and(0));
+        for (int i = 1; i < ctx.bitwise_and().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.bitwise_and(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitBitwise_and(jolkParser.Bitwise_andContext ctx) {
+        JolkNode left = visit(ctx.equality(0));
+        for (int i = 1; i < ctx.equality().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.equality(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
     }
 
     @Override
@@ -207,6 +289,64 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 case "!=" -> left = new JolkIdentityNode(left, right, true);
                 default   -> left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
             }
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitComparison(jolkParser.ComparisonContext ctx) {
+        JolkNode left = visit(ctx.term(0));
+        for (int i = 1; i < ctx.term().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.term(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitTerm(jolkParser.TermContext ctx) {
+        JolkNode left = visit(ctx.factor(0));
+        for (int i = 1; i < ctx.factor().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.factor(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitFactor(jolkParser.FactorContext ctx) {
+        JolkNode left = visit(ctx.unary(0));
+        for (int i = 1; i < ctx.unary().size(); i++) {
+            String op = ctx.getChild(2 * i - 1).getText();
+            JolkNode right = visit(ctx.unary(i));
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        return left;
+    }
+
+    @Override
+    public JolkNode visitUnary(jolkParser.UnaryContext ctx) {
+        if (ctx.power() != null) {
+            return visit(ctx.power());
+        }
+        String op = ctx.getChild(0).getText();
+        JolkNode operand = visit(ctx.unary());
+        return new JolkMessageSendNode(operand, op, new JolkNode[0]);
+    }
+
+    @Override
+    public JolkNode visitPower(jolkParser.PowerContext ctx) {
+        JolkNode left = visit(ctx.message());
+        if (ctx.powOp() != null) {
+            String op = ctx.powOp().getText();
+            JolkNode right = visit(ctx.unary());
+            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+        }
+        if (ctx.NULL_COALESCE() != null) {
+            JolkNode right = visit(ctx.power());
+            left = new JolkMessageSendNode(left, "??", new JolkNode[]{right});
         }
         return left;
     }
@@ -235,11 +375,6 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitClosure(jolkParser.ClosureContext ctx) {
-        JolkNode body = new JolkEmptyNode();
-        if (ctx.statements() != null) {
-            body = visit(ctx.statements());
-        }
-
         String[] params = new String[0];
         boolean isVariadic = false;
         if (ctx.stat_params() != null) {
@@ -250,6 +385,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             } else if (ctx.stat_params().inferred_params() != null) {
                 params = parseInferredParams(ctx.stat_params().inferred_params());
             }
+        }
+
+        scopes.push(Arrays.asList(params));
+        JolkNode body = new JolkEmptyNode();
+        try {
+            if (ctx.statements() != null) {
+                body = visit(ctx.statements());
+            }
+        } finally {
+            scopes.pop();
         }
         return new JolkClosureNode(body, params, isVariadic);
     }
@@ -264,7 +409,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
-        return new JolkMessageSendNode(new JolkSelfNode(), ctx.getText(), new JolkNode[0]);
+        String name = ctx.getText();
+        // Check if the identifier matches a parameter in the current scope
+        if (!scopes.isEmpty()) {
+            int index = scopes.peek().indexOf(name);
+            if (index != -1) {
+                return new JolkReadArgumentNode(index);
+            }
+        }
+        return new JolkMessageSendNode(new JolkSelfNode(), name, new JolkNode[0]);
     }
 
     @Override

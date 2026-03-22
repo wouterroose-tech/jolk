@@ -115,21 +115,29 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     boolean isMetaInstance(Object instance) {
-        // In Jolk, everything is an Object, including Nothing.
-        if ("Object".equals(this.name)) {
-            return instance instanceof JolkObject || instance == JolkNothing.INSTANCE;
-        }
+        // 1. Handle Jolk's reified null (`Nothing`)
         if (instance == JolkNothing.INSTANCE) {
-            return this == JolkNothing.NOTHING_TYPE;
+            // Nothing is an instance of its own type and also of Object.
+            return this == JolkNothing.NOTHING_TYPE || "Object".equals(this.name);
         }
+
+        // 2. Handle Jolk's intrinsic `Int` (represented by java.lang.Integer)
+        if (instance instanceof Integer) {
+            // An Integer is an instance of Int and also of Object.
+            return "Int".equals(this.name) || "Object".equals(this.name);
+        }
+
+        // 3. Handle standard JolkObjects by walking their class hierarchy.
         if (instance instanceof JolkObject jolkObject) {
             JolkMetaClass current = jolkObject.getJolkMetaClass();
             while (current != null) {
                 if (current == this) return true;
                 current = current.superclass;
             }
-            return false;
         }
+
+        // 4. For the PoC, other Java objects (e.g., String) are not considered
+        // instances of any Jolk type to ensure runtime safety.
         return false;
     }
 
@@ -235,6 +243,10 @@ public final class JolkMetaClass implements TruffleObject {
         // Virtual Field Strategy: Hydrate a specialized node if the field exists.
         if (instanceFields.containsKey(name)) {
             return accessorCache.get(name);
+        }
+        // Recurse up the hierarchy
+        if (superclass != null) {
+            return superclass.lookupInstanceMember(name);
         }
         return null;
     }

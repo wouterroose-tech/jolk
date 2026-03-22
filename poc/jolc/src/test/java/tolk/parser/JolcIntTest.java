@@ -15,7 +15,6 @@ import tolk.JolcTestBase;
 ///
 public class JolcIntTest extends JolcTestBase {
 
-    //TODO Visitor
     @Test
     void testIntField() {
         // Verify that #new(arg) initializes the field 'val'
@@ -33,6 +32,66 @@ public class JolcIntTest extends JolcTestBase {
         assertEquals(42, instance.invokeMember("val").asInt(), "Canonical #new should initialize fields in order.");
     }
 
+    /// Verify that Int fields can be initialized with expressions and that they evaluate correctly.
+     @Test
+     void testIntExpression() {
+        String source = "class ExprTest { Int run() { ^ 40 + 1 ** 2  * -2 * -1 } }";
+        Value result = eval(source).invokeMember("new").invokeMember("run");
+        assertEquals(42, result.asInt(), "The expression should evaluate to the correct integer value.");
+     }
+
+    @Test
+    void testArithmetic() {
+        String source = "class MathTest { " +
+                "Int add(Int a, Int b) { ^ a + b } " +
+                "Int sub(Int a, Int b) { ^ a - b } " +
+                "Int mul(Int a, Int b) { ^ a * b } " +
+                "Int div(Int a, Int b) { ^ a / b } " +
+                "Int mod(Int a, Int b) { ^ a % b } " +
+                "Int pow(Int a, Int b) { ^ a ** b } }";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(30, instance.invokeMember("add", 10, 20).asInt());
+        assertEquals(10, instance.invokeMember("sub", 30, 20).asInt());
+        assertEquals(200, instance.invokeMember("mul", 10, 20).asInt());
+        assertEquals(5, instance.invokeMember("div", 10, 2).asInt());
+        assertEquals(1, instance.invokeMember("mod", 10, 3).asInt());
+        assertEquals(8, instance.invokeMember("pow", 2, 3).asInt());
+    }
+
+    @Test
+    void testComparison() {
+        String source = "class CompTest { " +
+                "Boolean gt(Int a, Int b) { ^ a > b } " +
+                "Boolean lt(Int a, Int b) { ^ a < b } " +
+                "Boolean ge(Int a, Int b) { ^ a >= b } " +
+                "Boolean le(Int a, Int b) { ^ a <= b } " +
+                "Boolean eq(Int a, Int b) { ^ a == b } " +
+                "Boolean ne(Int a, Int b) { ^ a != b } }";
+        Value instance = eval(source).invokeMember("new");
+        assertTrue(instance.invokeMember("gt", 10, 5).asBoolean());
+        assertTrue(instance.invokeMember("lt", 5, 10).asBoolean());
+        assertTrue(instance.invokeMember("ge", 10, 10).asBoolean());
+        assertTrue(instance.invokeMember("le", 10, 10).asBoolean());
+        assertTrue(instance.invokeMember("eq", 10, 10).asBoolean());
+        assertTrue(instance.invokeMember("ne", 10, 5).asBoolean());
+    }
+
+    @Test
+    void testObjectProtocol() {
+        String source = "class ProtoTest { " +
+                "String str(Int i) { ^ i #toString } " +
+                "Int h(Int i) { ^ i #hash } " +
+                "Boolean eq(Int a, Int b) { ^ a ~~ b } " +
+                "Boolean present(Int i) { ^ i #isPresent } " +
+                "Boolean empty(Int i) { ^ i #isEmpty } }";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals("42", instance.invokeMember("str", 42).asString());
+        assertEquals(42, instance.invokeMember("h", 42).asInt());
+        assertTrue(instance.invokeMember("eq", 42, 42).asBoolean());
+        assertTrue(instance.invokeMember("present", 42).asBoolean());
+        assertFalse(instance.invokeMember("empty", 42).asBoolean());
+    }
+
     @Test
     @Disabled("Default field values are not yet supported.")
     void testIntFieldWithDefault() {
@@ -41,18 +100,4 @@ public class JolcIntTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");  
         assertEquals(42, instance.invokeMember("val").asInt(), "The field should be initialized to the default value.");
     }
-
-    ///TODO test  expressions
-    /// 
-    /// Verify that Int fields can be initialized with expressions and that they evaluate correctly.
-     @Test
-     @Disabled("Expression evaluation in field initializers is not yet supported.")
-     void testIntExpression() {
-        String source = "40 + 2";
-        Value meta = eval(source);
-        Value result = meta.invokeMember("new");
-        assertEquals(42, result, "The field should be initialized to the result of the expression.");
-
-     }
-
 }

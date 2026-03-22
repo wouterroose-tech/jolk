@@ -19,9 +19,9 @@ final class Person {
     Boolean ~~(Object other) {
         (self == other) ? [ ^true ];
         other #instanceOf(Person) #ifPresent [ p -> 
-            ^ (self #ssn == p #ssn) &&
-                (self #firstName ~~ p #firstName) &&
-                (self #lastName ~~ p #lastName)
+            ^ (self #ssn == p #ssn)
+                && (self #firstName ~~ p #firstName)
+                && (self #lastName ~~ p #lastName)
             ];
         ^ false
     }

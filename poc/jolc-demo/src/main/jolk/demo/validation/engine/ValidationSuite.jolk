@@ -20,12 +20,12 @@ abstract class ValidationSuite<T> extends Validation<T> {
 
     /// Adds a validation constraint to this ruleset.
     final Self add(Constraint<T> constraint) {
-        nodes #add(constraint)
+        self #nodes #add(constraint)
     }
 
     /// Adds a nested ruleset, allowing hierarchical composition of validations.
     package final <R> Self add(ChildValidation<T, R> suite) {
-        nodes #add(suite)
+        self #nodes #add(suite)
     }
 
     // The Refinement Pivot: Creates the requirement identity
@@ -43,7 +43,7 @@ abstract class ValidationSuite<T> extends Validation<T> {
     /// Visit each node in the ruleset. If a [ValidationInterruptException]
     /// is thrown and doesn't match this level, it is rethrown for handling at a higher level.
     package final Self doAccept(T subject, ExecutionContext executionContext) {
-        [ nodes #forEach [ node -> node #accept(subject, executionContext) ] ]
+        [ self #nodes #forEach [ node -> node #accept(subject, executionContext) ] ]
             #catch [ 
                 // the further validation of this ruleset is ignored on an interrupt
                 Interrupt e ->  (e != self #interrupt) ? e #throw

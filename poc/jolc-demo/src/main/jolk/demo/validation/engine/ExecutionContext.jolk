@@ -14,12 +14,12 @@ class ExecutionContext {
 
     /// Adds an issue for the given subject.
     Self add(Object subject, Issue issue) {
-        issues #add(issue)
+        self #issues #add(issue)
     }
 
     /// Returns true if any issue has been reported.
     Boolean hasIssue() {
-        ^ !issues #isEmpty
+        ^ !self #issues #isEmpty
     }
     
     /// Returns true if any error has been reported.

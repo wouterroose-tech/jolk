@@ -108,7 +108,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                                 metaMembers.put(memberNode.getName(), memberNode);
                             } else if (memberNode.isState()) {
                                 // Instance fields
-                                instanceFields.put(memberNode.getName(), null);
+                                String typeName = "Object";
+                                if (mbr.member().state() != null) {
+                                    if (mbr.member().state().field() != null) {
+                                        typeName = mbr.member().state().field().type().getText();
+                                    } else if (mbr.member().state().constant() != null) {
+                                        typeName = mbr.member().state().constant().type().getText();
+                                    }
+                                }
+                                instanceFields.put(memberNode.getName(), "Int".equals(typeName) ? 0 : null);
                                 // TODO: Handle instance field initializers here or in JolkClassDefinitionNode logic
                             } else {
                                 // Instance methods

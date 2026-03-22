@@ -47,6 +47,8 @@ public final class JolkMetaClass implements TruffleObject {
     private final Map<String, JolkSyntheticAccessor> accessorCache;
     // Total number of fields including hierarchy
     private final int totalFieldCount;
+    // Default field values
+    private final Object[] defaultFieldValues;
     // Meta members (e.g. user-defined meta methods).
     private final Map<String, Object> metaMembers;
 
@@ -81,6 +83,18 @@ public final class JolkMetaClass implements TruffleObject {
             currentIndex++;
         }
         this.totalFieldCount = currentIndex;
+        
+        this.defaultFieldValues = new Object[totalFieldCount];
+        if (superclass != null) {
+            System.arraycopy(superclass.defaultFieldValues, 0, this.defaultFieldValues, 0, superclass.totalFieldCount);
+        }
+        for (Map.Entry<String, Object> entry : instanceFields.entrySet()) {
+            Integer idx = fieldIndices.get(entry.getKey());
+            if (idx != null) {
+                Object val = entry.getValue();
+                this.defaultFieldValues[idx] = (val != null) ? val : JolkNothing.INSTANCE;
+            }
+        }
         this.metaMembers = metaMembers;
     }
 
@@ -245,6 +259,10 @@ public final class JolkMetaClass implements TruffleObject {
         if (index != null) return index;
         if (superclass != null) return superclass.getFieldIndex(name);
         return -1;
+    }
+
+    Object[] getDefaultFieldValues() {
+        return defaultFieldValues;
     }
 
     ///

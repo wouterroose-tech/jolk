@@ -48,7 +48,7 @@ public final class JolkNothing implements TruffleObject {
 
     @ExportMessage
     Object getMembers(boolean includeInternal) {
-        return new JolkMemberNames(new String[]{"~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "project", "class", "instanceOf"});
+        return new JolkMemberNames(new String[]{"~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "class", "instanceOf"});
     }
 
     @ExportMessage
@@ -85,10 +85,6 @@ public final class JolkNothing implements TruffleObject {
             case "ifEmpty":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return InteropLibrary.getUncached().execute(arguments[0]);
-            case "project":
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                // Project is ignored for Nothing
-                return this;
             case "instanceOf":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);                
                 Object type = arguments[0];

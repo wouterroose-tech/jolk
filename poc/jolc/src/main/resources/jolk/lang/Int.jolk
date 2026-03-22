@@ -1,0 +1,46 @@
+~ jolk.lang;
+
+/// # Int
+
+/// The **Int** type represents a 32-bit signed integer, 
+/// serving as the fundamental building block for numerical computations 
+/// and indexing within the Jolk language.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+public final class Int {
+
+    /// Adds the other Int to this one.
+    Self +(Int other) { }
+
+    /// Subtracts the other Int from this one.
+    Self -(Int other) { }
+
+    /// Multiplies this Int by the other.
+    Self *(Int other) { }
+
+    /// Divides this Int by the other.
+    Self /(Int other) { }
+
+    /// Computes the remainder of the division of this Int by the other.
+    Self %(Int other) { }
+
+    /// Returns true if this Int is greater than the other.
+    Boolean >(Int other) { }
+
+    /// Returns true if this Int is less than the other.
+    Boolean <(Int other) { }
+
+    /// Returns true if this Int is greater than or equal to the other.
+    Boolean >=(Int other) { }
+
+    /// Returns true if this Int is less than or equal to the other.
+    Boolean <=(Int other) { }
+
+    /// Executes the provided closure this number of times.
+    ///
+    /// @param action The closure to execute.
+    Self repeat(Closure action) { }
+
+}

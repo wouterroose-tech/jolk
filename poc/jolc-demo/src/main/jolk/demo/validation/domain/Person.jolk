@@ -8,17 +8,6 @@ final class Person {
     public String firstName;
     public String lastName;
 
-    meta Person new() {
-        ^ super #new
-    }
-
-    meta Person new(Long ssn, String firstName, String lastName) {
-        ^ super #new
-            #ssn(ssn)
-            #firstName(firstName)
-            #lastName(lastName)
-    }
-
     String name() {
         ^ self #firstName + " "+ self #lastName
     }

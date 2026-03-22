@@ -15,7 +15,6 @@ import tolk.JolcTestBase;
 ///
 public class JolcClassTest extends JolcTestBase {
 
-
     private Value eval(String className, String source) {
         // Value is a polyglot representation of the result of evaluating the class definition.
         Value result = eval(source);
@@ -245,4 +244,5 @@ public class JolcClassTest extends JolcTestBase {
         assertEquals(20, instance.invokeMember("y").asInt(), "Field 'y' should be initialized to second argument.");
         assertEquals(30, instance.invokeMember("z").asInt(), "Field 'z' should be initialized to third argument.");
     }
+
 }

@@ -7,11 +7,4 @@ final class ContactForm {
     public Person person;
     public String description;
     public Int zipCode;
-
-    meta ContactForm new(Person person, String description, Int zipCode) {
-        ^ super #new
-            #person(person)
-            #description(description)
-            #zipCode(zipCode)
-    }
 }

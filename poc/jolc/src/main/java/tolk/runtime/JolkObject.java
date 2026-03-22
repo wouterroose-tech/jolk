@@ -36,7 +36,7 @@ public class JolkObject implements TruffleObject {
         if (args != null && args.length == data.length) {
             System.arraycopy(args, 0, data, 0, data.length);
         } else {
-            Arrays.fill(this.data, JolkNothing.INSTANCE);
+            System.arraycopy(metaClass.getDefaultFieldValues(), 0, data, 0, data.length);
         }
     }
 

@@ -1,5 +1,6 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -10,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -55,6 +57,25 @@ public class JolkMetaClassTest {
     }
 
     @Test
+    void testIsMetaInstancePrimitives() {
+        // Mocking intrinsic types by name as per implementation logic
+        JolkMetaClass intClass = new JolkMetaClass("Int", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        JolkMetaClass otherClass = new JolkMetaClass("Other", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+
+        assertTrue(intClass.isMetaInstance(42), "Integer should be instance of Int");
+        assertTrue(objClass.isMetaInstance(42), "Integer should be instance of Object");
+        assertFalse(otherClass.isMetaInstance(42), "Integer should not be instance of Other");
+    }
+
+    @Test
+    void testIsMetaInstanceNothing() {
+        JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        // JolkNothing.INSTANCE is an instance of Nothing type and Object (by name)
+        assertTrue(objClass.isMetaInstance(JolkNothing.INSTANCE), "Nothing should be instance of Object");
+    }
+
+    @Test
     void testHasMembers() throws UnsupportedMessageException {
         assertTrue(metaClass.hasMembers());
     }
@@ -90,6 +111,44 @@ public class JolkMetaClassTest {
         Object result = metaClass.invokeMember("new", new Object[]{});
         assertNotNull(result, "The result of #new should not be null");
         assertTrue(result instanceof JolkObject, "The result should be an instance of JolkObject");
+    }
+
+    @Test
+    void testInvokeSuperclass() throws Exception {
+        JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+        JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+
+        assertEquals(parent, child.invokeMember("superclass", new Object[]{}), "Should return parent meta class");
+        assertEquals(JolkNothing.INSTANCE, parent.invokeMember("superclass", new Object[]{}), "Root class superclass should be Nothing");
+    }
+
+    @Test
+    void testCanonicalNewWithFields() throws Exception {
+        Map<String, Object> fields = Collections.singletonMap("val", null);
+        // Constructor: name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers
+        JolkMetaClass containerClass = new JolkMetaClass("Container", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+
+        Object instanceObj = containerClass.invokeMember("new", new Object[]{"data"});
+        assertTrue(instanceObj instanceof JolkObject, "Result should be a JolkObject");
+        JolkObject instance = (JolkObject) instanceObj;
+
+        // Verify field value via synthesized accessor
+        Object accessorObj = containerClass.lookupInstanceMember("val");
+        assertTrue(accessorObj instanceof JolkMetaClass.JolkSyntheticAccessor);
+        
+        Object result = InteropLibrary.getUncached().execute(accessorObj, new Object[]{instance});
+        assertEquals("data", result, "Canonical constructor should initialize field");
+    }
+
+    @Test
+    void testInvokeMetaMember() throws Exception {
+        AtomicBoolean ran = new AtomicBoolean(false);
+        JolkNothingTest.TestExecutable executable = new JolkNothingTest.TestExecutable(() -> ran.set(true));
+        Map<String, Object> metaMembers = Collections.singletonMap("customMeta", executable);
+        JolkMetaClass meta = new JolkMetaClass("MetaWithMethod", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), metaMembers);
+        
+        meta.invokeMember("customMeta", new Object[]{});
+        assertTrue(ran.get(), "Custom meta member should be invocable");
     }
 
     @Test
@@ -136,5 +195,38 @@ public class JolkMetaClassTest {
         Object accessor = fieldClass.lookupInstanceMember("myField");
         assertNotNull(accessor, "Should return a synthesized accessor");
         assertTrue(accessor instanceof JolkMetaClass.JolkSyntheticAccessor, "Accessor should be of the correct synthetic type");
+    }
+
+    @Test
+    void testInstanceMemberLookupInheritance() {
+        Object method = new Object(); // Dummy member
+        Map<String, Object> parentMembers = Collections.singletonMap("inherited", method);
+        JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, parentMembers, Collections.emptyMap());
+        JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+        
+        assertEquals(method, child.lookupInstanceMember("inherited"), "Should find member in superclass");
+        assertNull(child.lookupInstanceMember("nonexistent"), "Should return null for missing member");
+    }
+
+    @Test
+    void testSynthesizedAccessorExecution() throws Exception {
+        Map<String, Object> fields = Collections.singletonMap("score", null);
+        JolkMetaClass meta = new JolkMetaClass("Score", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+        
+        Object instanceObj = meta.invokeMember("new", new Object[]{10});
+        JolkObject instance = (JolkObject) instanceObj;
+        
+        Object accessor = meta.lookupInstanceMember("score");
+        InteropLibrary interop = InteropLibrary.getUncached();
+        
+        // Getter
+        assertEquals(10, interop.execute(accessor, instance));
+        
+        // Setter (Fluent: returns instance)
+        Object setRes = interop.execute(accessor, instance, 20);
+        assertEquals(instance, setRes);
+        
+        // Check new value
+        assertEquals(20, interop.execute(accessor, instance));
     }
 }

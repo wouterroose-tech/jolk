@@ -51,6 +51,40 @@ public class JolkVisitorTest extends JolcTestBase {
     }
 
     @Test
+    void testVisitEquivalence() {
+        eval("a ~~ b");
+        eval("a !~ b");
+    }
+
+    @Test
+    void testVisitTernaryOperator() {
+        // ? (ifTrue)
+        eval("condition ? 1");
+        // ? : (ifTrue:ifFalse:)
+        eval("condition ? 1 : 0");
+        // ?! (ifFalse)
+        eval("condition ?! 1");
+        // ?! : (ifFalse:ifTrue:)
+        eval("condition ?! 1 : 0");
+    }
+
+    @Test
+    void testVisitNullCoalescing() {
+        // ?? operator
+        eval("a ?? b");
+        eval("a ?? b ?? c");
+    }
+
+    @Test
+    void testVisitLogicalAndBitwise() {
+        eval("a || b");  // Logic or
+        eval("a && b");  // Logic and
+        eval("a | b");   // Inclusive or
+        eval("a ^ b");   // Exclusive or
+        eval("a & b");   // Bitwise and
+    }
+
+    @Test
     void testVisitAssignment() {
         String source = "a = b";
         eval(source);
@@ -96,6 +130,34 @@ public class JolkVisitorTest extends JolcTestBase {
                 }
             }
         """;
+        eval(source);
+    }
+
+    @Test
+    void testVisitMetaMembers() {
+        String source = """
+            class MetaMemberTest {
+                meta Int version = 1;
+                meta Void log() { }
+            }
+        """;
+        eval(source);
+    }
+
+    @Test
+    void testVisitConstant() {
+        // Syntax implies: const Type name = value
+        String source = """
+            class ConstTest {
+                const Int PI = 314;
+            }
+        """;
+        eval(source);
+    }
+
+    @Test
+    void testVisitExtension() {
+        String source = "extension MyClass { }";
         eval(source);
     }
 

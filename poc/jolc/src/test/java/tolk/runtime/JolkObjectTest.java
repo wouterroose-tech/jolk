@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -65,6 +66,22 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
+    void testFlowControlReturnValues() {
+        String source = "class FlowReturnTest {}";
+        Value meta = eval(source);
+        Value obj = meta.invokeMember("new");
+
+        // #ifPresent returns the result of the closure
+        Function<Object, String> action = (o) -> "Executed";
+        Value result = obj.invokeMember("ifPresent", action);
+        assertEquals("Executed", result.asString(), "ifPresent should return the result of the action.");
+
+        // #ifEmpty returns 'self' (the object)
+        Value resultEmpty = obj.invokeMember("ifEmpty", action);
+        assertEquals(obj, resultEmpty, "ifEmpty should return self for non-null objects.");
+    }
+
+    @Test
     void testHash() {
         String source = "class HashTest {}";
         Value meta = eval(source);
@@ -73,6 +90,18 @@ public class JolkObjectTest extends JolcTestBase {
         
         assertTrue(hash.isNumber(), "Hash code should be a number.");
         // We can't guarantee non-zero, but typically it is.
+    }
+
+    @Test
+    void testHashConsistency() {
+        String source = "class HashConsistencyTest {}";
+        Value meta = eval(source);
+        Value obj = meta.invokeMember("new");
+
+        long h1 = obj.invokeMember("hash").asLong();
+        long h2 = obj.invokeMember("hash").asLong();
+
+        assertEquals(h1, h2, "Hash code must be consistent for the same object.");
     }
 
     @Test
@@ -132,6 +161,43 @@ public class JolkObjectTest extends JolcTestBase {
     @Test
     @Disabled("Pending implementation of Map support and project intrinsic")
     void testProject() {}
+
+    @Test
+    void testIntrinsicArityChecks() {
+        String source = "class ArityTest {}";
+        Value meta = eval(source);
+        Value obj = meta.invokeMember("new");
+        Value other = meta.invokeMember("new");
+        // ==
+        assertThrows(Exception.class, () -> obj.invokeMember("=="));
+        assertThrows(Exception.class, () -> obj.invokeMember("==", other, other));
+        // !=
+        assertThrows(Exception.class, () -> obj.invokeMember("!="));
+        assertThrows(Exception.class, () -> obj.invokeMember("!=", other, other));
+        // ~~
+        assertThrows(Exception.class, () -> obj.invokeMember("~~"));
+        assertThrows(Exception.class, () -> obj.invokeMember("~~", other, other));
+        // !~
+        assertThrows(Exception.class, () -> obj.invokeMember("!~"));
+        assertThrows(Exception.class, () -> obj.invokeMember("!~", other, other));
+        // hash
+        assertThrows(Exception.class, () -> obj.invokeMember("hash", 1));
+        // toString
+        assertThrows(Exception.class, () -> obj.invokeMember("toString", 1));
+        // ifPresent
+        assertThrows(Exception.class, () -> obj.invokeMember("ifPresent"));
+        assertThrows(Exception.class, () -> obj.invokeMember("ifPresent", other, other));
+        // ifEmpty
+        assertThrows(Exception.class, () -> obj.invokeMember("ifEmpty"));
+        // isPresent
+        assertThrows(Exception.class, () -> obj.invokeMember("isPresent", 1));
+        // isEmpty
+        assertThrows(Exception.class, () -> obj.invokeMember("isEmpty", 1));
+        // class
+        assertThrows(Exception.class, () -> obj.invokeMember("class", 1));
+        // instanceOf
+        assertThrows(Exception.class, () -> obj.invokeMember("instanceOf"));
+    }
 
     @Test
     @Disabled("Pending complete method body parsing") 

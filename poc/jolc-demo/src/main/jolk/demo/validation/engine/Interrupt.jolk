@@ -14,7 +14,7 @@ package demo.validation.engine;
 ///
 /// Throw the signal within a rule implementation to stop evaluation immediately upon reaching a decisive outcome.
 ///
-/// @author woro
+/// @author Wouter Roose
 
 final class Interrupt extends RuntimeException {
 

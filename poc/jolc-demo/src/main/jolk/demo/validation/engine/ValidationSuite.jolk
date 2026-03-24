@@ -12,7 +12,7 @@ using java.util.function.Function;
 /// - **Composite:** Aggregates nodes uniformly, enabling recursive validation structures
 /// - **Chain of Responsibility:** [Interrupt] propagates to unwind the call stack up to a specified level.
 ///
-/// @author woro
+/// @author Wouter Roose
 
 abstract class ValidationSuite<T> extends Validation<T> {
 

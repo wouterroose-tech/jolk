@@ -10,7 +10,7 @@ package demo.validation.engine;
 /// [Scope] via the constructor to restrict applicability or by overriding [#interrupt()] to halt
 /// validation execution at the indicated level.
 ///
-/// @author woro
+/// @author Wouter Roose
 
 abstract class Constraint<T> extends Validation<T> {
 

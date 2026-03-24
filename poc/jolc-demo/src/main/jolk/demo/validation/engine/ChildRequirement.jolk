@@ -7,7 +7,7 @@ package demo.validation.engine;
 /// and a Requirement (`ChildRequirement`), holding the extraction logic (`supplier`)
 /// until the requirement is fulfilled.
 ///
-/// @author woro
+/// @author Wouter Roose
 
 protocol ChildRequirement<T, R> {
 

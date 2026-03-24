@@ -11,7 +11,7 @@ using java.util.function.Function;
 ///
 /// - **R**: The domain object type of the supplied child.
 ///
-/// @author woro
+/// @author Wouter Roose
 
 package final class ChildValidation<T, R> extends Node<T> {
 

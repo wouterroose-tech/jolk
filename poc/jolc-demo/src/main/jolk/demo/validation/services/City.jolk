@@ -1,5 +1,8 @@
 package demo.validation.services;
 
+///
+/// @author Wouter Roose
+
 record City {
     Integer zipcode;
     String name;

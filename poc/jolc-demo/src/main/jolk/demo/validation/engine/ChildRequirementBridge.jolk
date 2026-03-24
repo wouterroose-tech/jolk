@@ -9,7 +9,7 @@ using java.util.function.Function;
 /// and a Requirement (`ChildRequirement`), holding the extraction logic (`supplier`)
 /// until the requirement is fulfilled.
 ///
-/// @author woro
+/// @author Wouter Roose
 
 package final class ChildRequirementBridge<T, R> implements ChildRequirement<T, R> {
 

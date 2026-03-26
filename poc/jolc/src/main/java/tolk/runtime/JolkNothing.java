@@ -51,6 +51,21 @@ public final class JolkNothing implements TruffleObject {
         return new JolkMemberNames(new String[]{"~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "class", "instanceOf"});
     }
 
+    @ExportMessage boolean isNumber() { return true; }
+    @ExportMessage boolean fitsInByte() { return true; }
+    @ExportMessage boolean fitsInShort() { return true; }
+    @ExportMessage boolean fitsInInt() { return true; }
+    @ExportMessage boolean fitsInLong() { return true; }
+    @ExportMessage boolean fitsInFloat() { return true; }
+    @ExportMessage boolean fitsInDouble() { return true; }
+
+    @ExportMessage byte asByte() { return 0; }
+    @ExportMessage short asShort() { return 0; }
+    @ExportMessage int asInt() { return 0; }
+    @ExportMessage long asLong() { return 0L; }
+    @ExportMessage float asFloat() { return 0.0f; }
+    @ExportMessage double asDouble() { return 0.0; }
+
     @ExportMessage
     boolean isMemberInvocable(String member) {
         // Silent Absorption: JolkNothing accepts all messages.
@@ -68,7 +83,7 @@ public final class JolkNothing implements TruffleObject {
                 return this != arguments[0];
             case "hash":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return 0;
+                return 0L;
             case "toString":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return "null";

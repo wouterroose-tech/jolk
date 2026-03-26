@@ -6,5 +6,5 @@ package demo.validation.domain;
 final class ContactForm {
     public Person person;
     public String description;
-    public Int zipCode;
+    public Long zipCode;
 }

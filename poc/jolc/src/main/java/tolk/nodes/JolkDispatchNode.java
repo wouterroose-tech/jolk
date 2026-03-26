@@ -2,7 +2,7 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
-import tolk.runtime.JolkInt;
+import tolk.runtime.JolkLong;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -94,12 +94,12 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
-    /// ### Fast Path for Integers
-    /// Handles raw Java Integers by routing messages to the JolkInt prototype.
+    /// ### Fast Path for Longs
+    /// Handles raw Java Longs by routing messages to the JolkLong prototype.
     @Specialization
-    protected Object doInt(Integer receiver, String selector, Object[] arguments,
+    protected Object doLong(Long receiver, String selector, Object[] arguments,
                            @CachedLibrary(limit = "3") InteropLibrary interop) {
-        Object member = JolkInt.INT_TYPE.lookupInstanceMember(selector);
+        Object member = JolkLong.LONG_TYPE.lookupInstanceMember(selector);
         if (member != null) {
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = receiver;
@@ -107,7 +107,7 @@ public abstract class JolkDispatchNode extends Node {
             try {
                 return interop.execute(member, argsWithReceiver);
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
-                throw new RuntimeException("Error executing #" + selector + " on Int", e);
+                throw new RuntimeException("Error executing #" + selector + " on Long", e);
             }
         }
         try {
@@ -120,7 +120,7 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Generic Dispatch
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doInt"}, limit = "3")
+    @Specialization(replaces = {"doNothing", "doLong"}, limit = "3")
     protected Object doDispatch(Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         // The logic is identical, but this specialization handles any generic TruffleObject.

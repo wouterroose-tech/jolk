@@ -14,7 +14,7 @@ final class GeoGraphicalService {
     // Caching the external service
     public meta constant GeoGraphicalService GGS = GeoGraphicalService #new;
 
-    Boolean exists(Integer zipCode) {
+    Boolean exists(Long zipCode) {
         // simulate lookup via DAO
         ^ 1000 < zipCode && zipCode < 9999
     }

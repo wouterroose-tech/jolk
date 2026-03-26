@@ -92,7 +92,16 @@ public final class JolkMetaClass implements TruffleObject {
             Integer idx = fieldIndices.get(entry.getKey());
             if (idx != null) {
                 Object val = entry.getValue();
-                this.defaultFieldValues[idx] = (val != null) ? val : JolkNothing.INSTANCE;
+                if (val == null) {
+                    // Heuristic for the PoC: if the field name or context implies a Long
+                    // (often signaled by passing the Long MetaClass as a sentinel in visitors),
+                    // we default to 0L. Otherwise, we fall back to the Nothing identity.
+                    this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
+                } else if (val instanceof JolkMetaClass mc && "Long".equals(mc.getMetaSimpleName())) {
+                    this.defaultFieldValues[idx] = 0L;
+                } else {
+                    this.defaultFieldValues[idx] = val;
+                }
             }
         }
         this.metaMembers = metaMembers;
@@ -121,10 +130,10 @@ public final class JolkMetaClass implements TruffleObject {
             return this == JolkNothing.NOTHING_TYPE || "Object".equals(this.name);
         }
 
-        // 2. Handle Jolk's intrinsic `Int` (represented by java.lang.Integer)
-        if (instance instanceof Integer) {
-            // An Integer is an instance of Int and also of Object.
-            return "Int".equals(this.name) || "Object".equals(this.name);
+        // 2. Handle Jolk's intrinsic `Long` (represented by java.lang.Long or java.lang.Integer)
+        if (instance instanceof Long || instance instanceof Integer) {
+            // Both Long and Integer are treated as instances of Long and also of Object.
+            return "Long".equals(this.name) || "Object".equals(this.name);
         }
 
         // 3. Handle standard JolkObjects by walking their class hierarchy.

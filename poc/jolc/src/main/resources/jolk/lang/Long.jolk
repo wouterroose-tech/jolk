@@ -1,0 +1,57 @@
+~ jolk.lang;
+
+/// # Long
+
+/// The **Long** type represents a 64-bit signed Integer, 
+/// serving as the fundamental building block for numerical computations 
+/// and indexing within the Jolk language.
+///
+/// @author Wouter Roose
+
+@Longrinsic
+public final class Long extends Object {
+
+    /// The maximum value for a Long (2^63-1).
+    /// Substrate representation: 0x7FFFFFFFFFFFFFFFL.
+    public meta constant MAX = 9223372036854775807;
+    
+    /// The minimum value for a Long (-2^63).
+    /// Substrate representation: 0x8000000000000000L.
+    public meta constant MIN = -9223372036854775808;
+
+    /// Adds the other Long to this one.
+    Self +(Long other) { }
+
+    /// Subtracts the other Long from this one.
+    Self -(Long other) { }
+
+    /// Multiplies this Long by the other.
+    Self *(Long other) { }
+
+    /// Divides this Long by the other.
+    Self /(Long other) { }
+
+    /// Computes the remainder of the division of this Long by the other.
+    Self %(Long other) { }
+
+    /// Computes this Long raised to the power of the other.
+    Self **(Long other) { }
+
+    /// Returns true if this Long is greater than the other.
+    Boolean >(Long other) { }
+
+    /// Returns true if this Long is less than the other.
+    Boolean <(Long other) { }
+
+    /// Returns true if this Long is greater than or equal to the other.
+    Boolean >=(Long other) { }
+
+    /// Returns true if this Long is less than or equal to the other.
+    Boolean <=(Long other) { }
+
+    /// Executes the provided closure this number of times.
+    ///
+    /// @param action The closure to execute.
+    Self repeat(Closure action) { }
+
+}

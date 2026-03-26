@@ -59,7 +59,7 @@ public class JolkNothingTest {
     @Test
     void testHash() throws Exception {
         Object nothing = JolkNothing.INSTANCE;
-        assertEquals(0, InteropLibrary.getUncached().invokeMember(nothing, "hash"));
+        assertEquals(0L, InteropLibrary.getUncached().invokeMember(nothing, "hash"));
     }
 
     @Test
@@ -104,7 +104,7 @@ public class JolkNothingTest {
         assertTrue((Boolean) InteropLibrary.getUncached().invokeMember(match, "isPresent"));
         
         // Test against an unrelated type
-        Object noMatch = InteropLibrary.getUncached().invokeMember(nothing, "instanceOf", JolkInt.INT_TYPE);
+        Object noMatch = InteropLibrary.getUncached().invokeMember(nothing, "instanceOf", JolkLong.LONG_TYPE);
         assertFalse((Boolean) InteropLibrary.getUncached().invokeMember(noMatch, "isPresent"));
     }
 

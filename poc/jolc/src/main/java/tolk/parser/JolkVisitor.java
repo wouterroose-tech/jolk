@@ -122,7 +122,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                                         typeName = mbr.member().state().constant().type().getText();
                                     }
                                 }
-                                instanceFields.put(fieldNode.getName(), "Int".equals(typeName) ? 0 : null);
+                                instanceFields.put(fieldNode.getName(), "Long".equals(typeName) ? 0L : null);
                                 // TODO: Handle instance field initializers here or in JolkClassDefinitionNode logic
                             }
                         } else if (node instanceof JolkMethodNode methodNode) {
@@ -358,7 +358,11 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMessage(jolkParser.MessageContext ctx) {
-        JolkNode receiver = visit(ctx.primary());
+        JolkNode receiver = ctx.primary() != null ? visit(ctx.primary()) : new JolkSelfNode();
+        if (receiver == null) {
+            receiver = new JolkEmptyNode();
+        }
+
         for (int i = 0; i < ctx.selector().size(); i++) {
             String selector = ctx.selector(i).identifier().getText();
             JolkNode[] args = new JolkNode[0];
@@ -405,29 +409,63 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     }
 
     @Override
+    public JolkNode visitPrimary(jolkParser.PrimaryContext ctx) {
+        if (ctx.reserved() != null) return visit(ctx.reserved());
+        if (ctx.identifier() != null) return visit(ctx.identifier());
+        if (ctx.literal() != null) return visit(ctx.literal());
+        if (ctx.list_literal() != null) return visit(ctx.list_literal());
+        if (ctx.expression() != null) return visit(ctx.expression());
+        if (ctx.closure() != null) return visit(ctx.closure());
+        if (ctx.method_reference() != null) return visit(ctx.method_reference());
+        return new JolkEmptyNode();
+    }
+
+    @Override
     public JolkNode visitReserved(jolkParser.ReservedContext ctx) {
         String text = ctx.getText();
-        if (text.equals("null")) return new JolkLiteralNode(JolkNothing.INSTANCE);
-        if (text.equals("self")) return new JolkSelfNode();
-        return new JolkEmptyNode();
+        return switch (text) {
+            case "null" -> new JolkLiteralNode(JolkNothing.INSTANCE);
+            case "self" -> new JolkSelfNode();
+            case "true" -> new JolkLiteralNode(true);
+            case "false" -> new JolkLiteralNode(false);
+            // "super" and "Self" (Meta-Object reference) currently resolve to EmptyNode 
+            // in this PoC phase until the Meta-Stratum resolution is fully implemented.
+            default -> new JolkEmptyNode();
+        };
     }
 
     @Override
     public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
         String name = ctx.getText();
-        // Check if the identifier matches a parameter in the current scope
+
+        // 1. Check if it's a Parameter in the current scope
         if (!scopes.isEmpty()) {
             int index = scopes.peek().indexOf(name);
             if (index != -1) {
                 return new JolkReadArgumentNode(index);
             }
         }
+
+        // 2. Semantic Casing: Uppercase names are Meta-Objects (Types/Constants)
+        if (Character.isUpperCase(name.charAt(0))) {
+            // For the PoC, we provide direct resolution for known intrinsic types.
+            // In a full implementation, this would look up the type in the global registry.
+            if ("Long".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLong.LONG_TYPE);
+            if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
+        }
+
+        // 3. Default: Treat as a message send to 'self' (e.g. field access)
         return new JolkMessageSendNode(new JolkSelfNode(), name, new JolkNode[0]);
     }
 
     @Override
     public JolkNode visitLiteral(jolkParser.LiteralContext ctx) {
-        if (ctx.NumberLiteral() != null) return new JolkLiteralNode(Integer.parseInt(ctx.NumberLiteral().getText()));
+        if (ctx.NumberLiteral() != null) 
+            // Use parseUnsignedLong to handle magnitudes up to 2^64-1 (bit-pattern representation).
+            // This correctly handles 9223372036854775808 (2^63) which is then Negated 
+            // by the unary operator in the runtime to result in Long.MIN_VALUE.
+            return new JolkLiteralNode(Long.parseUnsignedLong(ctx.NumberLiteral().getText()));
+            
         return new JolkEmptyNode();
     }
 
@@ -441,6 +479,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitStatement(jolkParser.StatementContext ctx) {
+        // In Jolk, a statement can be a return (caret) or a simple expression.
+        // The PoC currently returns the expression result directly.
         if (ctx.expression() != null) {
             return visit(ctx.expression());
         }
@@ -449,7 +489,13 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitStatements(jolkParser.StatementsContext ctx) {
-        return visit(ctx.statement(ctx.statement().size() - 1));
+        // Visit all statements but return the result of the last one.
+        // This ensures that side-effects (like assignments) in previous statements are captured.
+        JolkNode last = new JolkEmptyNode();
+        for (var stmtCtx : ctx.statement()) {
+            last = visit(stmtCtx);
+        }
+        return last;
     }
 
     // --- Parameter Parsing Helpers ---
@@ -473,7 +519,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     private String[] parseInferredParams(jolkParser.Inferred_paramsContext ctx) {
         List<String> names = new ArrayList<>();
-        for (var id : ctx.instance_id()) {
+        for (var id : ctx.InstanceId()) {
             names.add(id.getText());
         }
         return names.toArray(new String[0]);

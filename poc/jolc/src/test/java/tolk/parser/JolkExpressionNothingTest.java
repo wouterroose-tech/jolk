@@ -65,7 +65,7 @@ public class JolkExpressionNothingTest extends JolcTestBase {
         // #ifEmpty should execute its closure for a null receiver.
         Value ifEmptyResult = instance.invokeMember("runEmpty");
         assertFalse(ifEmptyResult.isNull());
-        assertEquals(1, ifEmptyResult.asInt());
+        assertEquals(1L, ifEmptyResult.asLong());
     }
 
     @Test

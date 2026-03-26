@@ -10,17 +10,17 @@ import com.oracle.truffle.api.library.ExportMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-/// # JolkInt
+/// # JolkLong
 /// 
-/// The runtime representation of the Jolk `Int` type definition.
+/// The runtime representation of the Jolk `Long` type definition.
 /// 
-/// While `Int` values are represented as `java.lang.Integer` primitives (or boxed)
-/// in the polyglot runtime, this class holds the MetaClass definition (`INT_TYPE`)
+/// While `Long` values are represented as `java.lang.Long` primitives (or boxed)
+/// in the polyglot runtime, this class holds the MetaClass definition (`LONG_TYPE`)
 /// and the implementations of the intrinsic operations (addition, comparison, etc.).
 ///
-public final class JolkInt {
+public final class JolkLong {
 
-    public static final JolkMetaClass INT_TYPE;
+    public static final JolkMetaClass LONG_TYPE;
 
     static {
         Map<String, Object> members = new HashMap<>();
@@ -40,7 +40,7 @@ public final class JolkInt {
         // Object Protocol
         members.put("toString", new ToString());
         members.put("hash", new Hash());
-        members.put("~~", new Equals()); // Equivalence defaults to Equality for Int
+        members.put("~~", new Equals()); // Equivalence defaults to Equality for Long
         members.put("!~", new NotEquals());
         members.put("ifPresent", new IfPresent());
         members.put("ifEmpty", new IfEmpty());
@@ -49,10 +49,32 @@ public final class JolkInt {
         members.put("class", new ClassAccessor());
         members.put("instanceOf", new InstanceOf());
 
-        INT_TYPE = new JolkMetaClass("Int", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+        Map<String, Object> metaMembers = new HashMap<>();
+        metaMembers.put("MAX", new Constant(Long.MAX_VALUE));
+        metaMembers.put("MIN", new Constant(Long.MIN_VALUE));
+
+        LONG_TYPE = new JolkMetaClass("Long", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, metaMembers);
     }
 
-    private JolkInt() {
+    private JolkLong() {
+    }
+
+    private static Long asLong(Object arg) {
+        if (arg instanceof Long l) return l;
+        if (arg instanceof Integer i) return i.longValue();
+        return null;
+    }
+
+    /// Helper to expose substrate constants as Jolk meta-members.
+    @ExportLibrary(InteropLibrary.class)
+    static final class Constant implements TruffleObject {
+        private final Object value;
+        Constant(Object value) { this.value = value; }
+        @ExportMessage boolean isExecutable() { return true; }
+        @ExportMessage Object execute(Object[] arguments) throws ArityException {
+            if (arguments.length > 0) throw ArityException.create(0, 0, arguments.length);
+            return value;
+        }
     }
 
     @ExportLibrary(InteropLibrary.class)
@@ -60,7 +82,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a + b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -72,13 +96,16 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length == 1) {
-                if (arguments[0] instanceof Integer a) {
+                Long a = asLong(arguments[0]);
+                if (a != null) {
                     return -a;
                 }
                 throw UnsupportedTypeException.create(arguments);
             }
             if (arguments.length == 2) {
-                if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+                Long a = asLong(arguments[0]);
+                Long b = asLong(arguments[1]);
+                if (a != null && b != null) {
                     return a - b;
                 }
                 throw UnsupportedTypeException.create(arguments);
@@ -92,7 +119,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a * b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -104,7 +133,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a / b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -116,7 +147,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a % b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -128,7 +161,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a.equals(b);
             }
             return false;
@@ -140,7 +175,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return !a.equals(b);
             }
             return true;
@@ -152,7 +189,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a > b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -164,7 +203,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a < b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -176,7 +217,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a >= b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -188,7 +231,9 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
                 return a <= b;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -200,9 +245,10 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer count) {
+            Long count = asLong(arguments[0]);
+            if (count != null) {
                 Object action = arguments[1];
-                for (int i = 0; i < count; i++) {
+                for (long i = 0; i < count; i++) {
                     InteropLibrary.getUncached().execute(action);
                 }
                 return count; // Return self
@@ -216,8 +262,10 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            if (arguments[0] instanceof Integer a && arguments[1] instanceof Integer b) {
-                return (int) Math.pow(a, b);
+            Long a = asLong(arguments[0]);
+            Long b = asLong(arguments[1]);
+            if (a != null && b != null) {
+                return (long) Math.pow(a, b);
             }
             throw UnsupportedTypeException.create(arguments);
         }
@@ -237,7 +285,8 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1); // receiver only
-            return arguments[0].hashCode();
+            // Explicitly return Long to match the PoC default number type
+            return (long) arguments[0].hashCode();
         }
     }
 
@@ -269,7 +318,7 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1);
-            return INT_TYPE;
+            return LONG_TYPE;
         }
     }
 
@@ -292,7 +341,7 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1);
-            // An Integer is always present
+            // An Long is always present
             return true;
         }
     }
@@ -302,7 +351,7 @@ public final class JolkInt {
         @ExportMessage boolean isExecutable() { return true; }
         @ExportMessage Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1);
-            // An Integer is never empty
+            // An Long is never empty
             return false;
         }
     }

@@ -169,19 +169,24 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitField(jolkParser.FieldContext ctx) {
+        // The 'stable' keyword signals instance-level immutability.
+        // We check for the presence of the terminal to set the stability flag.
+        boolean isStable = ctx.getChild(0).getText().equals("stable");
         String name = ctx.identifier().getText();
         JolkNode initializer = new JolkEmptyNode();
         if (ctx.assignment() != null) {
             initializer = visit(ctx.assignment().expression());
         }
-        return new JolkFieldNode(name, initializer);
+        // Note: JolkFieldNode must be updated to accept the isStable flag.
+        return new JolkFieldNode(name, initializer, isStable);
     }
 
     @Override
     public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
+        // Constants are implicitly stable (immutable) identities.
         String name = ctx.binding().identifier().getText();
         JolkNode initializer = visit(ctx.binding().assignment().expression());
-        return new JolkFieldNode(name, initializer);
+        return new JolkFieldNode(name, initializer, true);
     }
 
     @Override

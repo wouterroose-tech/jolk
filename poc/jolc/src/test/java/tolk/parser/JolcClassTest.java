@@ -138,7 +138,6 @@ public class JolcClassTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("TODO: Implement field access and synthesized accessors, then re-enable this test.")
     void testClassWithMethodAndField_2_TODO() {
         String className = "MyClass";
         String source = "final class " + className + " { String name; String myName() { ^ name; } }";

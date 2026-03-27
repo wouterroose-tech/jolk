@@ -35,7 +35,6 @@ public class JolcBooleanTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Complex expressions ot yet implemented for the PoC.")
     void testLogicExpression() {
         String source = "class ExprTest { Boolean run() { ^ true && false || !false } }";
         Value result = eval(source).invokeMember("new").invokeMember("run");
@@ -75,7 +74,7 @@ public class JolcBooleanTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Control flow not yet implemented for the PoC.")
+    @Disabled("binding not yet implemented for the PoC.")
     void testControlFlow() {
         String source = """
             class FlowTest {
@@ -87,8 +86,8 @@ public class JolcBooleanTest extends JolcTestBase {
             }
             """;
         Value instance = eval(source).invokeMember("new");
-        assertEquals(1, instance.invokeMember("check", true).asInt());
-        assertEquals(2, instance.invokeMember("check", false).asInt());
+        assertEquals(1L, instance.invokeMember("check", true).asLong());
+        assertEquals(2L, instance.invokeMember("check", false).asLong());
     }
 
     @Test

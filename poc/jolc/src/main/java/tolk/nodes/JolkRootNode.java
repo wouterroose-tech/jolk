@@ -16,23 +16,33 @@ public final class JolkRootNode extends RootNode {
     @Child
     private JolkNode bodyNode;
     private final String name;
+    private final boolean isMethod;
 
-    public JolkRootNode(JolkLanguage language, JolkNode bodyNode, String name) {
+    public JolkRootNode(JolkLanguage language, JolkNode bodyNode, String name, boolean isMethod) {
         super(language);
         this.bodyNode = bodyNode;
         this.name = name;
+        this.isMethod = isMethod;
+    }
+
+    public JolkRootNode(JolkLanguage language, JolkNode bodyNode, String name) {
+        this(language, bodyNode, name, true);
     }
 
     public JolkRootNode(JolkLanguage language, JolkNode bodyNode) {
-        this(language, bodyNode, "root");
+        this(language, bodyNode, "root", true);
     }
 
     @Override
     public Object execute(VirtualFrame frame) {
-        try {
+        if (isMethod) {
+            try {
+                return bodyNode.executeGeneric(frame);
+            } catch (JolkReturnException e) {
+                return e.getResult();
+            }
+        } else {
             return bodyNode.executeGeneric(frame);
-        } catch (JolkReturnException e) {
-            return e.getResult();
         }
     }
 

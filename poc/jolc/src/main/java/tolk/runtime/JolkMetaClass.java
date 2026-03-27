@@ -102,6 +102,9 @@ public final class JolkMetaClass implements TruffleObject {
                 } else if (val instanceof JolkMetaClass || val == null) {
                     // Other classes (including sentinels for non-intrinsics) or explicit nulls default to Nothing.
                     this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
+                } else if (val instanceof String) {
+                    // Type name hints that didn't match intrinsics also default to Nothing.
+                    this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
                 } else {
                     this.defaultFieldValues[idx] = val;
                 }

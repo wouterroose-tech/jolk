@@ -26,7 +26,7 @@ public class JolkClosureNode extends JolkExpressionNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         JolkLanguage language = getRootNode().getLanguage(JolkLanguage.class);
-        JolkRootNode root = new JolkRootNode(language, body, "closure");
+        JolkRootNode root = new JolkRootNode(language, body, "closure", false);
         return new JolkClosure(root.getCallTarget());
     }
 }

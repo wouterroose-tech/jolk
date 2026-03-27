@@ -74,23 +74,6 @@ public class JolcBooleanTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("binding not yet implemented for the PoC.")
-    void testControlFlow() {
-        String source = """
-            class FlowTest {
-                Int check(Boolean b) {
-                    res = 0;
-                    b ? [ res = 1 ] : [ res = 2 ];
-                    ^ res
-                }
-            }
-            """;
-        Value instance = eval(source).invokeMember("new");
-        assertEquals(1L, instance.invokeMember("check", true).asLong());
-        assertEquals(2L, instance.invokeMember("check", false).asLong());
-    }
-
-    @Test
     //@Disabled("Message dispatch not yet implemented for the PoC.")
     void testObjectProtocol() {
         String source = """

@@ -117,14 +117,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                             } else {
                                 // Instance fields
                                 String typeName = "Object";
-                                if (mbr.member().state() != null) {
-                                    if (mbr.member().state().field() != null) {
-                                        typeName = mbr.member().state().field().type().getText();
-                                    } else if (mbr.member().state().constant() != null) {
-                                        typeName = mbr.member().state().constant().type().getText();
+                                var stateCtx = mbr.member().state();
+                                if (stateCtx != null) {
+                                    if (stateCtx.field() != null) {
+                                        typeName = stateCtx.field().type().getText();
+                                    } else if (stateCtx.constant() != null) {
+                                        typeName = stateCtx.constant().type().getText();
                                     }
                                 }
-                                instanceFields.put(fieldNode.getName(), "Long".equals(typeName) ? 0L : null);
+                                instanceFields.put(fieldNode.getName(), typeName);
                                 // TODO: Handle instance field initializers here or in JolkClassDefinitionNode logic
                             }
                         } else if (node instanceof JolkMethodNode methodNode) {
@@ -172,8 +173,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitField(jolkParser.FieldContext ctx) {
         // The 'stable' keyword signals instance-level immutability.
-        // We check for the presence of the terminal to set the stability flag.
-        boolean isStable = ctx.getChild(0).getText().equals("stable");
+        // We check for the terminal presence to set the stability flag.
+        boolean isStable = ctx.STABLE() != null;
         String name = ctx.identifier().getText();
         JolkNode initializer = new JolkEmptyNode();
         if (ctx.assignment() != null) {
@@ -192,6 +193,14 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     }
 
     @Override
+    public JolkNode visitBinding(jolkParser.BindingContext ctx) {
+        String name = ctx.identifier().getText();
+        JolkNode expression = visit(ctx.expression());
+        // Jolk treats assignments as message sends to 'self' (synthesized setters)
+        return new JolkMessageSendNode(new JolkSelfNode(), name, new JolkNode[]{expression});
+    }
+
+    @Override
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
         String name = ctx.selector_id().getText();
         String[] params = new String[0];
@@ -202,7 +211,11 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             isVariadic = spec.isVariadic;
         }
 
-        scopes.push(Arrays.asList(params));
+        // Establish the method scope: 'self' is always at index 0.
+        List<String> methodScope = new ArrayList<>();
+        methodScope.add("self");
+        methodScope.addAll(Arrays.asList(params));
+        scopes.push(methodScope);
         JolkNode body = new JolkEmptyNode();
         try {
             if (ctx.block() != null) {
@@ -220,13 +233,13 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Handle ternary operations: condition ? trueBranch : falseBranch
         if (!ctx.expression().isEmpty()) {
             String op = ctx.getChild(1).getText(); // "?" or "?!"
-            JolkNode thenBranch = new JolkClosureNode(visit(ctx.expression(0)), new String[0], false);
+            JolkNode thenBranch = ensureClosure(visit(ctx.expression(0)));
 
             if (ctx.expression().size() > 1) {
                 // Atomic ternary: if both branches are present, we dispatch a single message
                 // to ensure the branch result is returned instead of the Boolean receiver.
                 String selector = op + " :"; // results in "? :" or "?! :"
-                JolkNode elseBranch = new JolkClosureNode(visit(ctx.expression(1)), new String[0], false);
+                JolkNode elseBranch = ensureClosure(visit(ctx.expression(1)));
                 result = new JolkMessageSendNode(result, selector, new JolkNode[]{thenBranch, elseBranch});
             } else {
                 // Binary branching: behaves as a control-flow message returning the receiver.
@@ -363,7 +376,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         }
         if (ctx.NULL_COALESCE() != null) {
             // Lazy Evaluation: The fallback expression must be wrapped in a closure.
-            JolkNode rightClosure = new JolkClosureNode(visit(ctx.power()), new String[0], false);
+            JolkNode rightClosure = ensureClosure(visit(ctx.power()));
             left = new JolkMessageSendNode(left, "??", new JolkNode[]{rightClosure});
         }
         return left;
@@ -493,11 +506,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitStatement(jolkParser.StatementContext ctx) {
-        // In Jolk, a statement can be a return (caret) or a simple expression.
+        // Handle all statement alternatives defined in the grammar.
+        if (ctx.constant() != null) return visit(ctx.constant());
+        if (ctx.field() != null) return visit(ctx.field());
+        if (ctx.binding() != null) return visit(ctx.binding());
+
         if (ctx.expression() != null) {
             JolkNode exprNode = visit(ctx.expression());
             // Check for the explicit return symbol (CARET)
-            if (ctx.getChild(0).getText().equals("^")) {
+            if (ctx.getToken(jolkParser.CARET, 0) != null) {
                 return new JolkReturnNode(exprNode);
             }
             return exprNode;
@@ -540,5 +557,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             names.add(id.getText());
         }
         return names.toArray(new String[0]);
+    }
+
+    private JolkNode ensureClosure(JolkNode node) {
+        if (node instanceof JolkClosureNode) {
+            return node;
+        }
+        return new JolkClosureNode(node, new String[0], false);
     }
 }

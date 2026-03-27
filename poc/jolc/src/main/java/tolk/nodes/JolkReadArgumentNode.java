@@ -18,7 +18,7 @@ public class JolkReadArgumentNode extends JolkNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         Object[] args = frame.getArguments();
-        // Index 0 is the receiver (this), so parameters start at index 1.
-        return (index + 1 < args.length) ? args[index + 1] : JolkNothing.INSTANCE;
+        // The index is already the correct position in the frame arguments array.
+        return (index < args.length) ? args[index] : JolkNothing.INSTANCE;
     }
 }

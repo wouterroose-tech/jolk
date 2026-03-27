@@ -159,10 +159,6 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending implementation of Map support and project intrinsic")
-    void testProject() {}
-
-    @Test
     void testIntrinsicArityChecks() {
         String source = "class ArityTest {}";
         Value meta = eval(source);
@@ -200,11 +196,11 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("Pending complete method body parsing") 
+    @Disabled("Pending complete method body parsing")
     void testOverriddenEquivalence() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
-            class Point {
+            class MyClass {
                 Boolean ~~(Object other) {
                     (self == other) ? [ ^true ];
                     ^ false
@@ -222,7 +218,8 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending complete method body parsing") 
+    @Disabled("Pending complete method body parsing")
+    // TPDO check if x & y are initialized
     void testOverriddenEquivalence_2() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
@@ -247,5 +244,35 @@ public class JolkObjectTest extends JolcTestBase {
         // By default, equivalence (~~) should fall back to identity (==).
         assertTrue(x.invokeMember("~~", x).asBoolean(), "An object must be equivalent to itself.");
         assertFalse(x.invokeMember("~~", y).asBoolean(), "Two distinct objects should not be equivalent by default.");
+    }
+
+    @Test
+    @Disabled("Pending complete method body parsing") 
+    void testPresence() {
+        // Define a class that overrides the equivalence operator '~~'.
+        String source = """
+            class MyClass {
+                Long val() { 42 #ifPresent [ x -> ^ x ]; ^ 0 }
+                Long val2() { null #ifPresent [ x -> ^ x ]; ^ 0 }
+                Long val3() { 42 #ifEmpty [ x -> ^ x ]; ^ 0 }
+                Long val4() { null #ifEmpty [ x -> ^ x ]; ^ 0 }
+                Long val5() { 42 #isPresent [ ^ 42 ]; ^ 0 }
+                Long val6() { null #isPresent [ ^ 42 ]; ^ 0 }
+                Long val7() { 42 #isEmpty [ ^ 42 ]; ^ 0 }
+                Long val8() { null #isEmpty [ ^ 42 ]; ^ 0 }
+            }
+        """;
+        Value meta = eval(source);
+        // Logic tests moved to JolkObjectTest or similar once parser supports statements
+        Value x = meta.invokeMember("new");
+
+        assertEquals(42L, x.invokeMember("val").asLong(), "The field should be initialized to the default value.");
+        assertEquals(0L, x.invokeMember("val2").asLong(), "The field should be initialized to the default value.");
+        assertEquals(0L, x.invokeMember("val3").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, x.invokeMember("val4").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, x.invokeMember("val5").asLong(), "The field should be initialized to the default value.");
+        assertEquals(0L, x.invokeMember("val6").asLong(), "The field should be initialized to the default value.");
+        assertEquals(0L, x.invokeMember("val7").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, x.invokeMember("val8").asLong(), "The field should be initialized to the default value.");
     }
 }

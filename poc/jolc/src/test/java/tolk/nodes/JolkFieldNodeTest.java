@@ -25,6 +25,16 @@ public class JolkFieldNodeTest {
     }
 
     ///
+    /// Verifies that the two-argument constructor defaults the stability flag to false.
+    ///
+    @Test
+    void testFieldDefaultStability() {
+        JolkNode initializer = new JolkLiteralNode(123);
+        JolkFieldNode node = new JolkFieldNode("mutable", initializer);
+        assertFalse(node.isStable(), "Fields created without the stable flag should default to mutable (false).");
+    }
+
+    ///
     /// Tests that executing a field node returns the value of its initializer.
     ///
     @Test

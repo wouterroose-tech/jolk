@@ -134,6 +134,17 @@ public class JolkVisitorTest extends JolcTestBase {
     }
 
     @Test
+    void testVisitStableField() {
+        String source = """
+            class StableTest {
+                stable Int id;
+                public stable String name = "Jolk";
+            }
+        """;
+        eval(source);
+    }
+
+    @Test
     void testVisitMetaMembers() {
         String source = """
             class MetaMemberTest {

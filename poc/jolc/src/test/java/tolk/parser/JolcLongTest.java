@@ -155,4 +155,16 @@ public class JolcLongTest extends JolcTestBase {
         assertEquals(0L, instance.invokeMember("val4").asLong(), "The field should be initialized to the default value.");
         assertEquals(42L, instance.invokeMember("val5").asLong(), "The field should be initialized to the default value.");
     }
+
+    @Test
+    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
+    void testFlowControlMessages() {
+        // #ifPresent should not execute its closure for a null receiver.
+        Value ifPresentResult = eval("x = 1; null #ifPresent [ x = 2 ]; ^x");
+        assertEquals(1L, ifPresentResult.asLong(), "The #ifPresent block should not execute on null.");
+
+        // #ifEmpty should execute its closure for a null receiver.
+        Value ifEmptyResult = eval("x = 1; null #ifEmpty [ x = 2 ]; ^x");
+        assertEquals(2L, ifEmptyResult.asLong(), "The #ifEmpty block should execute on null.");
+    }
 }

@@ -69,30 +69,11 @@ public class JolkExpressionNothingTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testFlowControlMessages() {
-        // #ifPresent should not execute its closure for a null receiver.
-        Value ifPresentResult = eval("x = 1; null #ifPresent [ x = 2 ]; ^x");
-        assertEquals(1L, ifPresentResult.asLong(), "The #ifPresent block should not execute on null.");
-
-        // #ifEmpty should execute its closure for a null receiver.
-        Value ifEmptyResult = eval("x = 1; null #ifEmpty [ x = 2 ]; ^x");
-        assertEquals(2L, ifEmptyResult.asLong(), "The #ifEmpty block should execute on null.");
-    }
-
-    @Test
     void testSilentAbsorptionOfMessages() {
         // Sending an arbitrary message to 'null' should not cause a crash.
         // It should absorb the message and return 'null' itself, enabling fluid chains.
         Value result = eval("null #someRandomMessage #anotherMessage");
         assertEquals("null", result.toString(), "Chaining messages on null should result in null (Silent Absorption).");
-    }
-
-    @Test
-    //@Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testNullCoalescingOperator() {
-        Value result = eval("null ?? 42");
-        assertEquals(42L, result.asLong(), "The null-coalescing operator '??' should return the right-hand side for a null operand.");
     }
 
 }

@@ -117,6 +117,11 @@ public final class JolkNothing implements TruffleObject {
                     return JolkMatch.with(this);
                 }
                 return JolkMatch.empty();
+            case "??": {
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                // If Nothing is the receiver, execute the fallback argument.
+                return InteropLibrary.getUncached().execute(arguments[0]);
+            }
             case "class":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return NOTHING_TYPE;

@@ -136,4 +136,23 @@ public class JolcLongTest extends JolcTestBase {
         assertEquals(Long.MIN_VALUE, instance.invokeMember("getMinConst").asLong());
         assertEquals(Long.MIN_VALUE, instance.invokeMember("wrap").asLong(), "Long overflow should wrap around.");
     }
+
+    @Test
+    void testExpression() {
+        String source = """
+            class MinMaxTest {
+            Long val() { ^ 42 }
+            Long val2() { ^ 40 + 2 }
+            Long val3() { ^ true ? 42 : 0 }
+            Long val4() { ^ false ? 42 : 0 }
+            Long val5() { ^ null ?? 42 }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");  
+        assertEquals(42L, instance.invokeMember("val").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, instance.invokeMember("val2").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, instance.invokeMember("val3").asLong(), "The field should be initialized to the default value.");
+        assertEquals(0L, instance.invokeMember("val4").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, instance.invokeMember("val5").asLong(), "The field should be initialized to the default value.");
+    }
 }

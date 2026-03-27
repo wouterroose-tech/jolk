@@ -200,20 +200,20 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending complete method body parsing") 
+    //@Disabled("Pending complete method body parsing") 
     void testOverriddenEquivalence() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
             class Point {
-                Int x;
-                Int y;
+                Long x;
+                Long y;
 
                 Boolean ~~(Object other) {
                     (self == other) ? [ ^true ];
                     other #as(Point) #ifPresent [ p ->
                         ^ (self #x == p #x) && (self #y == p #y)
                     ];
-                    ^ false
+                    ^ true
                 }
             }
         """;

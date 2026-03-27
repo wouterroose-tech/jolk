@@ -166,6 +166,11 @@ public class JolkObject implements TruffleObject {
                 }
                 return JolkMatch.empty();
             }
+            case "??"->  {
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                // If the receiver is not Nothing, return the receiver itself.
+                return this;
+            }
         }
 
         throw UnknownIdentifierException.create(member);

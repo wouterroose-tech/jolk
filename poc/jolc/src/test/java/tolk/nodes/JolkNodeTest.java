@@ -15,17 +15,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class JolkNodeTest extends JolcTestBase {
 
     @Test
-    @Disabled("Pending implementation of literal nodes.")
+    //@Disabled("Pending implementation of literal nodes.")
     void testIntegerLiteralNode() {
         Value result = eval("42");
-        assertEquals(42, result.asInt(), "An integer literal node should evaluate to its primitive value.");
+        assertEquals(42L, result.asLong(), "An Long literal node should evaluate to its primitive value.");
     }
 
     @Test
-    @Disabled("Pending implementation of binary operation nodes.")
+    //@Disabled("Pending implementation of binary operation nodes.")
     void testSimpleAdditionNode() {
         Value result = eval("10 + 32");
-        assertEquals(42, result.asInt(), "An addition node should correctly sum the values of its children.");
+        assertEquals(42L, result.asLong(), "An addition node should correctly sum the values of its children.");
     }
 
 }

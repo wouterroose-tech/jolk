@@ -218,12 +218,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Handle ternary operations: condition ? trueBranch : falseBranch
         if (!ctx.expression().isEmpty()) {
             String op = ctx.getChild(1).getText(); // "?" or "?!"
-            JolkNode thenBranch = visit(ctx.expression(0));
-            result = new JolkMessageSendNode(result, op, new JolkNode[]{thenBranch});
-            
+            JolkNode thenBranch = new JolkClosureNode(visit(ctx.expression(0)), new String[0], false);
+
             if (ctx.expression().size() > 1) {
-                JolkNode elseBranch = visit(ctx.expression(1));
-                result = new JolkMessageSendNode(result, ":", new JolkNode[]{elseBranch});
+                // Atomic ternary: if both branches are present, we dispatch a single message
+                // to ensure the branch result is returned instead of the Boolean receiver.
+                String selector = op + " :"; // results in "? :" or "?! :"
+                JolkNode elseBranch = new JolkClosureNode(visit(ctx.expression(1)), new String[0], false);
+                result = new JolkMessageSendNode(result, selector, new JolkNode[]{thenBranch, elseBranch});
+            } else {
+                // Binary branching: behaves as a control-flow message returning the receiver.
+                result = new JolkMessageSendNode(result, op, new JolkNode[]{thenBranch});
             }
         }
         return result;
@@ -355,8 +360,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
         }
         if (ctx.NULL_COALESCE() != null) {
-            JolkNode right = visit(ctx.power());
-            left = new JolkMessageSendNode(left, "??", new JolkNode[]{right});
+            // Lazy Evaluation: The fallback expression must be wrapped in a closure.
+            JolkNode rightClosure = new JolkClosureNode(visit(ctx.power()), new String[0], false);
+            left = new JolkMessageSendNode(left, "??", new JolkNode[]{rightClosure});
         }
         return left;
     }

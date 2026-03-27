@@ -31,6 +31,8 @@ public final class JolkBoolean {
         members.put("?", new BooleanIfTrue());
         members.put("?!", new BooleanIfFalse());
         members.put(":", new BooleanElse());
+        members.put("? :", new BooleanTernaryTrue());
+        members.put("?! :", new BooleanTernaryFalse());
         // Object Protocol
         members.put("==", new BooleanEquals());
         members.put("!=", new BooleanNotEquals());
@@ -138,6 +140,41 @@ public final class JolkBoolean {
             if (receiver != null) {
                 if (!receiver) InteropLibrary.getUncached().execute(action, receiver);
                 return receiver;
+            }
+            throw UnsupportedTypeException.create(arguments);
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static final class BooleanTernaryTrue implements TruffleObject {
+        public BooleanTernaryTrue() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
+            if (arguments.length != 3) throw ArityException.create(3, 3, arguments.length);
+            Boolean receiver = asBoolean(arguments[0]);
+            Object thenAction = arguments[1];
+            Object elseAction = arguments[2];
+            if (receiver != null) {
+                Object branch = receiver ? thenAction : elseAction;
+                // Returns the result of the branch execution.
+                return InteropLibrary.getUncached().execute(branch, receiver);
+            }
+            throw UnsupportedTypeException.create(arguments);
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static final class BooleanTernaryFalse implements TruffleObject {
+        public BooleanTernaryFalse() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
+            if (arguments.length != 3) throw ArityException.create(3, 3, arguments.length);
+            Boolean receiver = asBoolean(arguments[0]);
+            Object thenAction = arguments[1];
+            Object elseAction = arguments[2];
+            if (receiver != null) {
+                Object branch = !receiver ? thenAction : elseAction;
+                return InteropLibrary.getUncached().execute(branch, receiver);
             }
             throw UnsupportedTypeException.create(arguments);
         }

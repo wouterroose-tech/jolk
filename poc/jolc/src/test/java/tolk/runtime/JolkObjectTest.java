@@ -200,7 +200,7 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending complete method body parsing") 
+    //@Disabled("Pending complete method body parsing") 
     void testOverriddenEquivalence() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """

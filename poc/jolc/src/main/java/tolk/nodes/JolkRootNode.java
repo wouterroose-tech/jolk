@@ -29,7 +29,11 @@ public final class JolkRootNode extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return bodyNode.executeGeneric(frame);
+        try {
+            return bodyNode.executeGeneric(frame);
+        } catch (JolkReturnException e) {
+            return e.getResult();
+        }
     }
 
     @Override

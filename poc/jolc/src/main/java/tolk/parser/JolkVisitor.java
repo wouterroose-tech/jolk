@@ -9,6 +9,8 @@ import java.util.Arrays;
 import tolk.grammar.jolkBaseVisitor;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
+import tolk.nodes.JolkBlockNode;
+import tolk.nodes.JolkReturnNode;
 import tolk.nodes.JolkClosureNode;
 import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkFieldNode;
@@ -492,22 +494,25 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitStatement(jolkParser.StatementContext ctx) {
         // In Jolk, a statement can be a return (caret) or a simple expression.
-        // The PoC currently returns the expression result directly.
         if (ctx.expression() != null) {
-            return visit(ctx.expression());
+            JolkNode exprNode = visit(ctx.expression());
+            // Check for the explicit return symbol (CARET)
+            if (ctx.getChild(0).getText().equals("^")) {
+                return new JolkReturnNode(exprNode);
+            }
+            return exprNode;
         }
         return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitStatements(jolkParser.StatementsContext ctx) {
-        // Visit all statements but return the result of the last one.
-        // This ensures that side-effects (like assignments) in previous statements are captured.
-        JolkNode last = new JolkEmptyNode();
+        // Preserves all statements by wrapping them in a BlockNode.
+        List<JolkNode> nodes = new ArrayList<>();
         for (var stmtCtx : ctx.statement()) {
-            last = visit(stmtCtx);
+            nodes.add(visit(stmtCtx));
         }
-        return last;
+        return new JolkBlockNode(nodes.toArray(new JolkNode[0]));
     }
 
     // --- Parameter Parsing Helpers ---

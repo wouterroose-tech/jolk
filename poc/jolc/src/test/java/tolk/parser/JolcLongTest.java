@@ -146,6 +146,8 @@ public class JolcLongTest extends JolcTestBase {
             Long val3() { ^ true ? 42 : 0 }
             Long val4() { ^ false ? 42 : 0 }
             Long val5() { ^ null ?? 42 }
+            Long val6() { ^ (2 * 1) + (20 * 2)}
+            Long val6() { ^ (2 ** 2) + (19 * 2)}
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  
@@ -154,6 +156,7 @@ public class JolcLongTest extends JolcTestBase {
         assertEquals(42L, instance.invokeMember("val3").asLong(), "The field should be initialized to the default value.");
         assertEquals(0L, instance.invokeMember("val4").asLong(), "The field should be initialized to the default value.");
         assertEquals(42L, instance.invokeMember("val5").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, instance.invokeMember("val6").asLong(), "The field should be initialized to the default value.");
     }
 
     @Test

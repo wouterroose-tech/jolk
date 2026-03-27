@@ -185,7 +185,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
         // Constants are implicitly stable (immutable) identities.
         String name = ctx.binding().identifier().getText();
-        JolkNode initializer = visit(ctx.binding().assignment().expression());
+        JolkNode initializer = visit(ctx.binding().expression());
         return new JolkFieldNode(name, initializer, true);
     }
 

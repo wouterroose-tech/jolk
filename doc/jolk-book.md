@@ -153,7 +153,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	constant        = "constant" type binding
 	binding         = identifier assignment
 	assignment      = "=" expression
-	field           = type identifier [ assignment ]
+	field           = ["stable"] type identifier [ assignment ]
 	enum            = meta_id [ arguments ] ";"
 	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
 	selector_id     = identifier | operator
@@ -237,7 +237,7 @@ In Jolk, distinguishing between *Reserved Object Identifiers* and *Structural Sc
 * *Structure / Metadata*: package, class, value, record, enum, protocol, extension
 * *Relations / Hierarchy*: extends, implements are hierarchy markers  
 * *Access / Visibility & Finality*: public, protected, private, package, abstract, final
-* *State & Behavior Modifiers*: meta, constant, lazy
+* *State & Behavior Modifiers*: meta, stable, constant, lazy
 * *Annotations*: anchored by the at-symbol (`@`).
 
 ### Lexical Anchors
@@ -297,6 +297,7 @@ Primitives are absent from the syntax because Jolk follows a pure object-oriente
 
 `meta`: Designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta layer.   
 `constant`: Establishes a field as non-assignable (shallow immutability)
+`stable`:  a field or local remains unchanged after its initial binding
 `lazy`	: Designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
 
 ### Mathematical and Equality Operators
@@ -369,15 +370,15 @@ Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type sy
 
 To maintain rigorous encapsulation, direct field manipulation in Jolk is restricted to the local class scope for private fields and the inheritance hierarchy for protected fields. Even when a developer declares a field as `public`, the language does not expose the raw memory address. Instead, it constructs a *Lexical Fence*. This boundary restricts direct memory interaction—conducted via the internal terminals (`^ field` for retrieval or `field = value` for assignment)—strictly to the Archetype's internal logic.
 
-External state interaction is managed through *Implicit Field Encapsulation*, a protocol synthesised by the compiler that provides an automatic *Fluent API*. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent constants within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that *State Integrity* is maintained through an immutable contract of message pivots, effectively preventing encapsulation leaks.
+External state interaction is managed through *Implicit Field Encapsulation*, a protocol synthesised by the compiler that provides an automatic *Fluent API*. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent stable values within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that *State Integrity* is maintained through an immutable contract of message pivots, effectively preventing encapsulation leaks.
 
 	class Point {  
-	    public Int x;  
-	    public Int y;
+	    public stable Int x;  
+	    public stable Int y;
 	
 	    // Synthesised default accessors  
 	    // public Int x() { ^x }  
-	    // public Self x(Int v) { x = v }
+	    // public Int y() { ^y }  
 	
 	    // ...  
 	}
@@ -385,9 +386,11 @@ External state interaction is managed through *Implicit Field Encapsulation*, a 
 The binding protocol establishes a deterministic hierarchy for state management, anchored by a clear distinction between declaration and mutation. By requiring an explicit *Type* for state anchoring, the language ensures that memory slots are architecturally defined, while mandatory initialisation provides a streamlined path toward *Referential Stability*.
 
 	Self method() {  
-	    constant Int x = 10 // constant - Immutability  
-	    Int y = 10;         // variable - Mutability  
-	    y = 20              // binding  - value update
+	    constant Int x = 10; // constant - Immutability  
+	    stable Int x;        // stable - Immutability  
+		x = 10;              // stable binding  - value update  
+	    Int y = 10;          // variable - Mutability  
+	    y = 20               // binding  - value update
 	
 	    // ...  
 	}
@@ -463,8 +466,8 @@ Structurally, enum constants use a shorthand notation for public meta constant d
 	    TU("Tuesday", 2);
 	
 	    // Fields are private by default  
-	    Int index;  
-	    String label;
+	    stable Int index;  
+	    stable String label;
 	
 	    // message send  
 	    // today = Day #MO;  
@@ -1052,7 +1055,7 @@ The jolc compiler achieves shim-less integration by using compile-time reflectio
 
 *Syntactic Fluidity*: A Bracket-Light design that prioritizes fluid syntax to maximise structural density by eliminating redundant delimiters and reducing the cognitive overhead
 
-*Modifiers*: Jolk distinguishes Value Stability (`constant`) from structural constraints (`final`), utilising public defaults for types and methods to maximise Structural Density—reflecting the industrial reality of 80%—while enforcing Encapsulation through a private default for fields; however, Meta Constants permit direct access through Import Lenses.
+*Modifiers*: Jolk distinguishes Value Stability (constant) from structural constraints (final) and instance-level stability (stable), utilising public defaults for types and methods to maximise Structural Density—reflecting the industrial reality of 80%—while enforcing Encapsulation through a private default for fields; however, Meta Constants permit direct access through Import Lenses.
 
 ## Heritage & Foundation
 

@@ -146,10 +146,21 @@ public class JolkVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitConstant() {
-        // Syntax implies: const Type name = value
+        // Syntax implies: constant Type name = value
         String source = """
-            class ConstTest {
-                const Int PI = 314;
+            class ConstantTest {
+                constant Int PI = 314;
+            }
+        """;
+        eval(source);
+    }
+
+    @Test
+    void testVisitMetaConstant() {
+        // Syntax implies: constant Type name = value
+        String source = """
+            class ConstantTest {
+                meta constant Int PI = 314;
             }
         """;
         eval(source);

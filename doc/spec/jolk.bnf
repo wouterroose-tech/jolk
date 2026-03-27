@@ -22,7 +22,7 @@ type_mbr        = { annotation } ( member | enum )
 member          = [ visibility ] ( [ "meta" ] state | [ finality ] [ "meta" ] method )
 state           = ( constant | field ) ";"
 constant        = "constant" type binding
-field           = type identifier [ assignment ]
+field           = [ "stable" ] type identifier [ assignment ]
 binding         = identifier assignment
 assignment      = "=" expression
 enum            = meta_id [ arguments ] ";"

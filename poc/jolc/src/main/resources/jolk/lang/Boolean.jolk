@@ -1,0 +1,46 @@
+~ jolk.lang;
+
+/// # Boolean
+
+/// The **Boolean** type represents a logical identity with two possible states: 
+/// `true` and `false`. In Jolk, Booleans are first-class identities that 
+/// encapsulate branching behavior and logical operations through message passing.
+///
+/// This archetype replaces traditional control-flow keywords (if/else) with 
+/// polymorphic dispatch, allowing boolean singletons to decide which execution 
+/// paths to realize.
+///
+/// @author Wouter Roose
+
+@Longrinsic
+public final class Boolean extends Object {
+
+    /// Logical AND. 
+    /// Returns true if both this identity and the other are true.
+    Self &&(Boolean other) { }
+
+    /// Logical OR. 
+    /// Returns true if either this identity or the other is true.
+    Self ||(Boolean other) { }
+
+    /// Logical NOT. 
+    /// Returns the inverse of this boolean identity.
+    Self !() { }
+
+    /// Executes the provided closure if this identity is true.
+    /// Corresponds to the `?` operator in the expression grammar.
+    Self ?(Closure action) { }
+
+    /// Executes the provided closure if this identity is false.
+    /// Corresponds to the `?!` operator in the expression grammar.
+    Self ?!(Closure action) { }
+
+    /// Represents the alternative branch in a message chain.
+    /// Typically sent following a `?` or `?!` message to implement else-logic.
+    Self :(Closure action) { }
+
+    /// Returns a string representation of this boolean identity.
+    /// Results in either "true" or "false".
+    String toString() { }
+
+}

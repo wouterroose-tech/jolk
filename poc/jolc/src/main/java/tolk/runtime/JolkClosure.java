@@ -19,28 +19,28 @@ public class JolkClosure implements TruffleObject {
     }
 
     @ExportMessage
-    boolean isExecutable() {
+    public boolean isExecutable() {
         return true;
     }
 
     @ExportMessage
-    Object execute(Object[] arguments) {
+    public Object execute(Object[] arguments) {
         return callTarget.call(arguments);
     }
 
 
     @ExportMessage
-    boolean hasMembers() {
+    public boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
-    Object getMembers(boolean includeInternal) {
+    public Object getMembers(boolean includeInternal) {
         return new JolkMemberNames(new String[]{"apply", "catch", "finally", "try"});
     }
 
     @ExportMessage
-    boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member) {
         return switch (member) {
             case "apply", "catch", "finally", "try" -> true;
             default -> false;
@@ -48,7 +48,7 @@ public class JolkClosure implements TruffleObject {
     }
 
     @ExportMessage
-    Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+    public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         switch (member) {
             case "apply":
                 return execute(arguments);

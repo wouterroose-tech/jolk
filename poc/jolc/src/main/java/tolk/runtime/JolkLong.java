@@ -24,30 +24,30 @@ public final class JolkLong {
 
     static {
         Map<String, Object> members = new HashMap<>();
-        members.put("+", new Add());
-        members.put("-", new Subtract());
-        members.put("*", new Multiply());
-        members.put("/", new Divide());
-        members.put("%", new Modulo());
-        members.put("==", new Equals());
-        members.put("!=", new NotEquals());
-        members.put(">", new GreaterThan());
-        members.put("<", new LessThan());
-        members.put(">=", new GreaterOrEqual());
-        members.put("<=", new LessOrEqual());
-        members.put("times", new Times());
-        members.put("**", new Power());
+        members.put("+", new LongAdd());
+        members.put("-", new LongSubtract());
+        members.put("*", new LongMultiply());
+        members.put("/", new LongDivide());
+        members.put("%", new LongModulo());
+        members.put("==", new LongEquals());
+        members.put("!=", new LongNotEquals());
+        members.put(">", new LongGreaterThan());
+        members.put("<", new LongLessThan());
+        members.put(">=", new LongGreaterOrEqual());
+        members.put("<=", new LongLessOrEqual());
+        members.put("times", new LongTimes());
+        members.put("**", new LongPower());
         // Object Protocol
-        members.put("toString", new ToString());
-        members.put("hash", new Hash());
-        members.put("~~", new Equals()); // Equivalence defaults to Equality for Long
-        members.put("!~", new NotEquals());
-        members.put("ifPresent", new IfPresent());
-        members.put("ifEmpty", new IfEmpty());
-        members.put("isPresent", new IsPresent());
-        members.put("isEmpty", new IsEmpty());
-        members.put("class", new ClassAccessor());
-        members.put("instanceOf", new InstanceOf());
+        members.put("toString", new LongToString());
+        members.put("hash", new LongHash());
+        members.put("~~", new LongEquals()); // Equivalence defaults to Equality for Long
+        members.put("!~", new LongNotEquals());
+        members.put("ifPresent", new LongIfPresent());
+        members.put("ifEmpty", new LongIfEmpty());
+        members.put("isPresent", new LongIsPresent());
+        members.put("isEmpty", new LongIsEmpty());
+        members.put("class", new LongClassAccessor());
+        members.put("instanceOf", new LongInstanceOf());
 
         Map<String, Object> metaMembers = new HashMap<>();
         metaMembers.put("MAX", new Constant(Long.MAX_VALUE));
@@ -59,7 +59,7 @@ public final class JolkLong {
     private JolkLong() {
     }
 
-    private static Long asLong(Object arg) {
+    static Long asLong(Object arg) {
         if (arg instanceof Long l) return l;
         if (arg instanceof Integer i) return i.longValue();
         return null;
@@ -67,20 +67,21 @@ public final class JolkLong {
 
     /// Helper to expose substrate constants as Jolk meta-members.
     @ExportLibrary(InteropLibrary.class)
-    static final class Constant implements TruffleObject {
+    public static final class Constant implements TruffleObject {
         private final Object value;
-        Constant(Object value) { this.value = value; }
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
+        public Constant(Object value) { this.value = value; }
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length > 0) throw ArityException.create(0, 0, arguments.length);
             return value;
         }
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Add implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongAdd implements TruffleObject {
+        public LongAdd() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -92,9 +93,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Subtract implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongSubtract implements TruffleObject {
+        public LongSubtract() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length == 1) {
                 Long a = asLong(arguments[0]);
                 if (a != null) {
@@ -115,9 +117,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Multiply implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongMultiply implements TruffleObject {
+        public LongMultiply() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -129,9 +132,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Divide implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongDivide implements TruffleObject {
+        public LongDivide() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -143,9 +147,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Modulo implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongModulo implements TruffleObject {
+        public LongModulo() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -157,9 +162,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Equals implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
+    public static final class LongEquals implements TruffleObject {
+        public LongEquals() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -171,9 +177,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class NotEquals implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
+    public static final class LongNotEquals implements TruffleObject {
+        public LongNotEquals() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -185,9 +192,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class GreaterThan implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongGreaterThan implements TruffleObject {
+        public LongGreaterThan() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -199,9 +207,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class LessThan implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongLessThan implements TruffleObject {
+        public LongLessThan() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -213,9 +222,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class GreaterOrEqual implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongGreaterOrEqual implements TruffleObject {
+        public LongGreaterOrEqual() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -227,9 +237,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class LessOrEqual implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongLessOrEqual implements TruffleObject {
+        public LongLessOrEqual() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -241,9 +252,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Times implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
+    public static final class LongTimes implements TruffleObject {
+        public LongTimes() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long count = asLong(arguments[0]);
             if (count != null) {
@@ -258,9 +270,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Power implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+    public static final class LongPower implements TruffleObject {
+        public LongPower() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Long a = asLong(arguments[0]);
             Long b = asLong(arguments[1]);
@@ -272,28 +285,31 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class ToString implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
+    public static final class LongToString implements TruffleObject {
+        public LongToString() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length); // receiver
             return String.valueOf(arguments[0]);
         }
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class Hash implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1); // receiver only
+    public static final class LongHash implements TruffleObject {
+        public LongHash() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length); // receiver only
             // Explicitly return Long to match the PoC default number type
             return (long) arguments[0].hashCode();
         }
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class IfPresent implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
+    public static final class LongIfPresent implements TruffleObject {
+        public LongIfPresent() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             // arguments[0] is receiver (Int), arguments[1] is action (Closure)
             Object receiver = arguments[0];
@@ -304,9 +320,10 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class IfEmpty implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
+    public static final class LongIfEmpty implements TruffleObject {
+        public LongIfEmpty() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             // Int is never empty, do nothing
             return arguments[0]; // Return self
@@ -314,19 +331,21 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class ClassAccessor implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1);
+    public static final class LongClassAccessor implements TruffleObject {
+        public LongClassAccessor() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
             return LONG_TYPE;
         }
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class InstanceOf implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException, UnsupportedMessageException {
-            if (arguments.length != 2) throw ArityException.create(1, 1, arguments.length - 1);
+    public static final class LongInstanceOf implements TruffleObject {
+        public LongInstanceOf() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedMessageException {
+            if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Object receiver = arguments[0];
             Object type = arguments[1];
             if (InteropLibrary.getUncached().isMetaInstance(type, receiver)) {
@@ -337,20 +356,22 @@ public final class JolkLong {
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class IsPresent implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1);
+    public static final class LongIsPresent implements TruffleObject {
+        public LongIsPresent() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
             // An Long is always present
             return true;
         }
     }
 
     @ExportLibrary(InteropLibrary.class)
-    static final class IsEmpty implements TruffleObject {
-        @ExportMessage boolean isExecutable() { return true; }
-        @ExportMessage Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length != 1) throw ArityException.create(0, 0, arguments.length - 1);
+    public static final class LongIsEmpty implements TruffleObject {
+        public LongIsEmpty() {}
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
             // An Long is never empty
             return false;
         }

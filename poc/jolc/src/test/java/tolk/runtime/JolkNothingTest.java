@@ -117,12 +117,12 @@ public class JolkNothingTest {
         }
 
         @ExportMessage
-        boolean isExecutable() {
+        public boolean isExecutable() {
             return true;
         }
 
         @ExportMessage
-        Object execute(Object[] arguments) {
+        public Object execute(Object[] arguments) {
             runnable.run();
             return JolkNothing.INSTANCE;
         }

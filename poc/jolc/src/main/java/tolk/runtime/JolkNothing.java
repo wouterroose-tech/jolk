@@ -42,38 +42,38 @@ public final class JolkNothing implements TruffleObject {
     }
 
     @ExportMessage
-    boolean hasMembers() {
+    public boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
-    Object getMembers(boolean includeInternal) {
+    public Object getMembers(boolean includeInternal) {
         return new JolkMemberNames(new String[]{"~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "class", "instanceOf"});
     }
 
-    @ExportMessage boolean isNumber() { return true; }
-    @ExportMessage boolean fitsInByte() { return true; }
-    @ExportMessage boolean fitsInShort() { return true; }
-    @ExportMessage boolean fitsInInt() { return true; }
-    @ExportMessage boolean fitsInLong() { return true; }
-    @ExportMessage boolean fitsInFloat() { return true; }
-    @ExportMessage boolean fitsInDouble() { return true; }
+    @ExportMessage public boolean isNumber() { return true; }
+    @ExportMessage public boolean fitsInByte() { return true; }
+    @ExportMessage public boolean fitsInShort() { return true; }
+    @ExportMessage public boolean fitsInInt() { return true; }
+    @ExportMessage public boolean fitsInLong() { return true; }
+    @ExportMessage public boolean fitsInFloat() { return true; }
+    @ExportMessage public boolean fitsInDouble() { return true; }
 
-    @ExportMessage byte asByte() { return 0; }
-    @ExportMessage short asShort() { return 0; }
-    @ExportMessage int asInt() { return 0; }
-    @ExportMessage long asLong() { return 0L; }
-    @ExportMessage float asFloat() { return 0.0f; }
-    @ExportMessage double asDouble() { return 0.0; }
+    @ExportMessage public byte asByte() { return 0; }
+    @ExportMessage public short asShort() { return 0; }
+    @ExportMessage public int asInt() { return 0; }
+    @ExportMessage public long asLong() { return 0L; }
+    @ExportMessage public float asFloat() { return 0.0f; }
+    @ExportMessage public double asDouble() { return 0.0; }
 
     @ExportMessage
-    boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member) {
         // Silent Absorption: JolkNothing accepts all messages.
         return true;
     }
 
     @ExportMessage
-    Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+    public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         switch (member) {
             case "~~":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -119,11 +119,11 @@ public final class JolkNothing implements TruffleObject {
     @ExportLibrary(InteropLibrary.class)
     public static final class NothingNew implements TruffleObject {
         @ExportMessage
-        boolean isExecutable() {
+        public boolean isExecutable() {
             return true;
         }
         @ExportMessage
-        Object execute(Object[] arguments) {
+        public Object execute(Object[] arguments) {
             throw new RuntimeException("Nothing cannot be instantiated. Use 'null' literal.");
         }
     }

@@ -108,22 +108,22 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     @ExportMessage
-    boolean isMetaObject() {
+    public boolean isMetaObject() {
         return true;
     }
 
     @ExportMessage
-    Object getMetaQualifiedName() {
+    public Object getMetaQualifiedName() {
         return name;
     }
 
     @ExportMessage
-    Object getMetaSimpleName() {
+    public Object getMetaSimpleName() {
         return name;
     }
 
     @ExportMessage
-    boolean isMetaInstance(Object instance) {
+    public boolean isMetaInstance(Object instance) {
         // 1. Handle Jolk's reified null (`Nothing`)
         if (instance == JolkNothing.INSTANCE) {
             // Nothing is an instance of its own type and also of Object.
@@ -136,7 +136,13 @@ public final class JolkMetaClass implements TruffleObject {
             return "Long".equals(this.name) || "Object".equals(this.name);
         }
 
-        // 3. Handle standard JolkObjects by walking their class hierarchy.
+        // 3. Handle Jolk's intrinsic `Boolean` (represented by java.lang.Boolean)
+        if (instance instanceof Boolean) {
+            // Boolean is an instance of Boolean and also of Object.
+            return "Boolean".equals(this.name) || "Object".equals(this.name);
+        }
+
+        // 4. Handle standard JolkObjects by walking their class hierarchy.
         if (instance instanceof JolkObject jolkObject) {
             JolkMetaClass current = jolkObject.getJolkMetaClass();
             while (current != null) {
@@ -145,18 +151,18 @@ public final class JolkMetaClass implements TruffleObject {
             }
         }
 
-        // 4. For the PoC, other Java objects (e.g., String) are not considered
+        // 5. For the PoC, other Java objects (e.g., String) are not considered
         // instances of any Jolk type to ensure runtime safety.
         return false;
     }
 
     @ExportMessage
-    boolean hasMembers() {
+    public boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
-    Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
+    public Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
         // This returns the members of the META-OBJECT, not the instance.
         Set<String> keys = new HashSet<>(metaMembers.keySet());
         keys.add("new");
@@ -167,12 +173,12 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     @ExportMessage
-    boolean isMemberReadable(String member) {
+    public boolean isMemberReadable(String member) {
         return metaMembers.containsKey(member);
     }
 
     @ExportMessage
-    boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member) {
         // This checks if a message can be sent TO THE META-OBJECT itself.
         return metaMembers.containsKey(member) || switch (member) {
             case "new", "name", "superclass", "isInstance" -> true;
@@ -181,7 +187,7 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     @ExportMessage
-    Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+    public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         if (metaMembers.containsKey(member)) {
             Object memberObj = metaMembers.get(member);
             return InteropLibrary.getUncached().execute(memberObj, arguments);
@@ -211,7 +217,7 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     @ExportMessage
-    Object readMember(String member) throws UnknownIdentifierException {
+    public Object readMember(String member) throws UnknownIdentifierException {
         if (metaMembers.containsKey(member)) {
             return metaMembers.get(member);
         }
@@ -304,12 +310,12 @@ public final class JolkMetaClass implements TruffleObject {
         }
 
         @ExportMessage
-        boolean isExecutable() {
+        public boolean isExecutable() {
             return true;
         }
 
         @ExportMessage
-        Object execute(Object[] arguments,
+        public Object execute(Object[] arguments,
                        @Cached("createBinaryProfile()") ConditionProfile lengthProfile) throws ArityException, UnsupportedTypeException {
             
             if (arguments.length < 1) throw ArityException.create(1, 2, arguments.length);

@@ -67,12 +67,12 @@ public class JolkObject implements TruffleObject {
     }
 
     @ExportMessage
-    boolean hasMembers() {
+    public boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
-    Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
+    public Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
         Set<String> keys = new HashSet<>(metaClass.getInstanceMemberKeys());
         keys.add("==");
         keys.add("!=");
@@ -90,13 +90,13 @@ public class JolkObject implements TruffleObject {
     }
 
     @ExportMessage
-    boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member) {
         // An instance can invoke a member if it's an Object intrinsic or an instance member on its class.
         return metaClass.hasInstanceMember(member) || isObjectIntrinsic(member);
     }
 
     @ExportMessage
-    Object invokeMember(String member, Object[] arguments,
+    public Object invokeMember(String member, Object[] arguments,
                         @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         // 1. Prioritize user-defined members for overridable selectors.
         if (metaClass.hasInstanceMember(member)) {

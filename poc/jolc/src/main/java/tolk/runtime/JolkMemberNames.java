@@ -8,7 +8,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 /// Helper class to expose member names as a TruffleObject.
 @ExportLibrary(InteropLibrary.class)
-final class JolkMemberNames implements TruffleObject {
+public final class JolkMemberNames implements TruffleObject {
     private final String[] members;
 
     public JolkMemberNames(String[] members) {
@@ -16,23 +16,23 @@ final class JolkMemberNames implements TruffleObject {
     }
 
     @ExportMessage
-    boolean hasArrayElements() {
+    public boolean hasArrayElements() {
         return true;
     }
 
     @ExportMessage
-    long getArraySize() {
+    public long getArraySize() {
         return members.length;
     }
 
     @ExportMessage
-    Object readArrayElement(long index) throws InvalidArrayIndexException {
+    public Object readArrayElement(long index) throws InvalidArrayIndexException {
         if (index < 0 || index >= members.length) throw InvalidArrayIndexException.create(index);
         return members[(int) index];
     }
 
     @ExportMessage
-    boolean isArrayElementReadable(long index) {
+    public boolean isArrayElementReadable(long index) {
         return index >= 0 && index < members.length;
     }
 }

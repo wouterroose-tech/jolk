@@ -1,7 +1,7 @@
 ~ jolk.lang;
 
 /// # Long
-
+///
 /// The **Long** type represents a 64-bit signed Integer, 
 /// serving as the fundamental building block for numerical computations 
 /// and indexing within the Jolk language.

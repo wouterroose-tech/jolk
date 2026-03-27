@@ -55,17 +55,17 @@ public final class JolkMatch implements TruffleObject {
     }
 
     @ExportMessage
-    boolean hasMembers() {
+    public boolean hasMembers() {
         return true;
     }
 
     @ExportMessage
-    Object getMembers(boolean includeInternal) {
+    public Object getMembers(boolean includeInternal) {
         return new JolkMemberNames(new String[]{"ifPresent", "isPresent", "isEmpty"});
     }
 
     @ExportMessage
-    boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member) {
         return switch (member) {
             case "ifPresent", "isPresent", "isEmpty" -> true;
             default -> false;
@@ -73,7 +73,7 @@ public final class JolkMatch implements TruffleObject {
     }
 
     @ExportMessage
-    Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+    public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         switch (member) {
             case "ifPresent":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);

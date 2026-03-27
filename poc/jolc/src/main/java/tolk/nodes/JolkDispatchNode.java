@@ -2,6 +2,7 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkBoolean;
 import tolk.runtime.JolkLong;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -117,10 +118,33 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
+    /// ### Fast Path for Booleans
+    /// Handles raw Java Booleans by routing messages to the JolkBoolean prototype.
+    @Specialization
+    protected Object doBoolean(Boolean receiver, String selector, Object[] arguments,
+                               @CachedLibrary(limit = "3") InteropLibrary interop) {
+        Object member = JolkBoolean.BOOLEAN_TYPE.lookupInstanceMember(selector);
+        if (member != null) {
+            Object[] argsWithReceiver = new Object[arguments.length + 1];
+            argsWithReceiver[0] = receiver;
+            if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+            try {
+                return interop.execute(member, argsWithReceiver);
+            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                throw new RuntimeException("Error executing #" + selector + " on Boolean", e);
+            }
+        }
+        try {
+            return interop.invokeMember(receiver, selector, arguments);
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+            throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+        }
+    }
+
     /// ### Generic Dispatch
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doLong"}, limit = "3")
+    @Specialization(replaces = {"doNothing", "doLong", "doBoolean"}, limit = "3")
     protected Object doDispatch(Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         // The logic is identical, but this specialization handles any generic TruffleObject.

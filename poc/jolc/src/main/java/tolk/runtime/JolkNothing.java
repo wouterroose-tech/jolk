@@ -82,7 +82,9 @@ public final class JolkNothing implements TruffleObject {
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        switch (member) {
+        String name = member;
+
+        switch (name) {
             case "~~":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return this == arguments[0];

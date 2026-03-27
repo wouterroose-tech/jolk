@@ -74,4 +74,23 @@ public class JolkClassDefinitionNodeTest {
         InteropLibrary interop = InteropLibrary.getUncached();
         assertTrue(interop.isMemberInvocable(instance, memberName) || interop.isMemberReadable(instance, memberName), "Instance should have member '" + memberName + "'");
     }
+
+    ///
+    /// Verifies that meta-members defined as FieldNodes (constants) are evaluated
+    /// and their results stored immediately when the meta-class is defined.
+    ///
+    @Test
+    void testMetaConstantEvaluation() throws UnsupportedMessageException, UnknownIdentifierException {
+        Map<String, Object> metaMembers = new HashMap<>();
+        metaMembers.put("VERSION", new JolkFieldNode("VERSION", new JolkLiteralNode(1L)));
+
+        JolkClassDefinitionNode node = new JolkClassDefinitionNode(
+            "Config", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            new HashMap<>(), new HashMap<>(), metaMembers
+        );
+
+        Object result = node.executeGeneric(null);
+        assertEquals(1L, InteropLibrary.getUncached().readMember(result, "VERSION"), 
+            "Meta constants should be evaluated and stored during class definition.");
+    }
 }

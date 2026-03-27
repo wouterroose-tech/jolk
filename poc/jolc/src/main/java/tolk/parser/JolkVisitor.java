@@ -451,6 +451,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             // For the PoC, we provide direct resolution for known intrinsic types.
             // In a full implementation, this would look up the type in the global registry.
             if ("Long".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLong.LONG_TYPE);
+            if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBoolean.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
         }
 

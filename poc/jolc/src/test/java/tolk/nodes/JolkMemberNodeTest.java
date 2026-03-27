@@ -16,6 +16,22 @@ class JolkMemberNodeTest {
         assertSame(node, node.executeGeneric(null));
     }
 
+    ///
+    /// Verifies that member nodes correctly retain their structural metadata.
+    ///
+    @Test
+    void testMemberMetadata() {
+        JolkNode body = new JolkEmptyNode();
+        String[] params = {"a", "b"};
+        JolkMemberNode node = new JolkMemberNode("complex", body, params, true, false);
+
+        assertEquals("complex", node.getName());
+        assertSame(body, node.getBody());
+        assertArrayEquals(params, node.getParameters());
+        assertTrue(node.isVariadic());
+        assertFalse(node.isState(), "Should not be state if initialized as a functional method.");
+    }
+
     @Test
     void testToString() {
         JolkMemberNode node = new JolkMemberNode("myMember");

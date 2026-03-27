@@ -32,7 +32,7 @@ import java.util.Set;
 @ExportLibrary(InteropLibrary.class)
 public final class JolkMetaClass implements TruffleObject {
 
-    private final String name;
+    public final String name;
     private final JolkMetaClass superclass;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
@@ -110,21 +110,21 @@ public final class JolkMetaClass implements TruffleObject {
         this.metaMembers = metaMembers;
     }
 
-    private String resolveTypeHint(Object val) {
+    private static String resolveTypeHint(Object val) {
         if (val instanceof JolkMetaClass mc) return mc.name;
         if (val instanceof String s) return s;
         if (val instanceof Class<?> c) return c.getSimpleName();
         return null;
     }
 
-    private boolean isLongHint(String hint) {
+    public static boolean isLongHint(String hint) {
         if (hint == null) return false;
         return hint.equalsIgnoreCase("Long") 
             || hint.equalsIgnoreCase("Int") 
             || hint.equalsIgnoreCase("jolk.lang.Long");
     }
 
-    private boolean isBooleanHint(String hint) {
+    public static boolean isBooleanHint(String hint) {
         if (hint == null) return false;
         return hint.equalsIgnoreCase("Boolean") 
             || hint.equalsIgnoreCase("Bool") 
@@ -151,19 +151,19 @@ public final class JolkMetaClass implements TruffleObject {
         // 1. Handle Jolk's reified null (`Nothing`)
         if (instance == JolkNothing.INSTANCE) {
             // Nothing is an instance of its own type and also of Object.
-            return this == JolkNothing.NOTHING_TYPE || "Object".equals(this.name);
+            if (this == JolkNothing.NOTHING_TYPE) return true;
         }
 
         // 2. Handle Jolk's intrinsic `Long` (represented by java.lang.Long or java.lang.Integer)
         if (instance instanceof Long || instance instanceof Integer) {
-            // Both Long and Integer are treated as instances of Long and also of Object.
-            return isLongHint(this.name) || "Object".equals(this.name);
+            // Primitives match their specialized archetypes.
+            if (isLongHint(this.name)) return true;
         }
 
         // 3. Handle Jolk's intrinsic `Boolean` (represented by java.lang.Boolean)
         if (instance instanceof Boolean) {
-            // Boolean is an instance of Boolean and also of Object.
-            return isBooleanHint(this.name) || "Object".equals(this.name);
+            // Primitives match their specialized archetypes.
+            if (isBooleanHint(this.name)) return true;
         }
 
         // 4. Handle standard JolkObjects by walking their class hierarchy.
@@ -175,7 +175,15 @@ public final class JolkMetaClass implements TruffleObject {
             }
         }
 
-        // 5. For the PoC, other Java objects (e.g., String) are not considered
+        // 5. Root Object Fallback: JolkObjects, Nothing, and primitives are instances of Object.
+        // Note: During message dispatch, specialized MetaClasses (Boolean/Long) must be 
+        // registered before the root Object archetype to avoid shadowing specialized members.
+        if (this.superclass == null && "Object".equals(this.name)) {
+            return instance instanceof JolkObject || instance == JolkNothing.INSTANCE ||
+                   instance instanceof Long || instance instanceof Integer || instance instanceof Boolean;
+        }
+
+        // 6. For the PoC, other Java objects (e.g., String) are not considered
         // instances of any Jolk type to ensure runtime safety.
         return false;
     }
@@ -204,7 +212,8 @@ public final class JolkMetaClass implements TruffleObject {
     @ExportMessage
     public boolean isMemberInvocable(String member) {
         // This checks if a message can be sent TO THE META-OBJECT itself.
-        return metaMembers.containsKey(member) || switch (member) {
+        String name = member;
+        return metaMembers.containsKey(name) || switch (name) {
             case "new", "name", "superclass", "isInstance" -> true;
             default -> false;
         };
@@ -212,11 +221,12 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        if (metaMembers.containsKey(member)) {
-            Object memberObj = metaMembers.get(member);
+        String name = member;
+        if (metaMembers.containsKey(name)) {
+            Object memberObj = metaMembers.get(name);
             return InteropLibrary.getUncached().execute(memberObj, arguments);
         }
-        switch (member) {
+        switch (name) {
             case "new":
                 if (arguments.length != 0) {
                     // Support Canonical #new if arguments match field count
@@ -242,8 +252,9 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     public Object readMember(String member) throws UnknownIdentifierException {
-        if (metaMembers.containsKey(member)) {
-            return metaMembers.get(member);
+        String name = member;
+        if (metaMembers.containsKey(name)) {
+            return metaMembers.get(name);
         }
         throw UnknownIdentifierException.create(member);
     }
@@ -261,7 +272,8 @@ public final class JolkMetaClass implements TruffleObject {
      * @return `true` if an instance member with that name exists.
      */
     public boolean hasInstanceMember(String name) {
-        return instanceMembers.containsKey(name) || instanceFields.containsKey(name);
+        String sanitized = name;
+        return instanceMembers.containsKey(sanitized) || instanceFields.containsKey(sanitized);
     }
 
     /**
@@ -270,22 +282,23 @@ public final class JolkMetaClass implements TruffleObject {
      * Looks up an instance member (e.g., a `JolkClosure`) by name.
      */
     public Object lookupInstanceMember(String name) {
-        Object member = instanceMembers.get(name);
+        String sanitized = name;
+        Object member = instanceMembers.get(sanitized);
         if (member != null) {
             // If the parser erroneously puts the field definition in instanceMembers,
             // we detect the duplicate and prefer the synthetic accessor.
-            if (instanceFields.containsKey(name) && instanceFields.get(name) == member) {
-                return accessorCache.get(name);
+            if (instanceFields.containsKey(sanitized) && instanceFields.get(sanitized) == member) {
+                return accessorCache.get(sanitized);
             }
             return member;
         }
         // Virtual Field Strategy: Hydrate a specialized node if the field exists.
-        if (instanceFields.containsKey(name)) {
-            return accessorCache.get(name);
+        if (instanceFields.containsKey(sanitized)) {
+            return accessorCache.get(sanitized);
         }
         // Recurse up the hierarchy
         if (superclass != null) {
-            return superclass.lookupInstanceMember(name);
+            return superclass.lookupInstanceMember(sanitized);
         }
         return null;
     }

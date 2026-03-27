@@ -54,6 +54,21 @@ public class JolkClosureNodeTest {
     }
 
     ///
+    /// Tests that a closure can be defined with parameters and a variadic flag.
+    /// In the PoC, this verifies the constructor path and ensures execution 
+    /// still yields a valid, executable closure object.
+    ///
+    @Test
+    void testClosureWithComplexMetadata() {
+        JolkNode body = new JolkLiteralNode(true);
+        String[] params = {"first", "second"};
+        JolkClosureNode node = new JolkClosureNode(body, params, true);
+
+        Object result = execute(node);
+        assertNotNull(result, "Should result in a non-null closure object even when parameters are defined.");
+    }
+
+    ///
     /// Helper method to execute a JolkNode within a proper Truffle context.
     /// This wraps the node in a [JolkRootNode] and calls it.
     ///

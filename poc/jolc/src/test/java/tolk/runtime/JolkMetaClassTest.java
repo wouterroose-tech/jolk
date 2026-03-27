@@ -60,12 +60,16 @@ public class JolkMetaClassTest {
     void testIsMetaInstancePrimitives() {
         // Mocking intrinsic types by name as per implementation logic
         JolkMetaClass longClass = new JolkMetaClass("Long", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        JolkMetaClass boolClass = new JolkMetaClass("Boolean", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
         JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
         JolkMetaClass otherClass = new JolkMetaClass("Other", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
 
         assertTrue(longClass.isMetaInstance(42), "Long should be instance of Long");
+        assertTrue(boolClass.isMetaInstance(true), "Boolean should be instance of Boolean");
         assertTrue(objClass.isMetaInstance(42), "Long should be instance of Object");
+        assertTrue(objClass.isMetaInstance(true), "Boolean should be instance of Object");
         assertFalse(otherClass.isMetaInstance(42), "Long should not be instance of Other");
+        assertFalse(otherClass.isMetaInstance(true), "Boolean should not be instance of Other");
     }
 
     @Test

@@ -98,9 +98,11 @@ public class JolkObject implements TruffleObject {
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
                         @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+        String name = member;
+
         // 1. Prioritize user-defined members for overridable selectors.
-        if (metaClass.hasInstanceMember(member)) {
-            Object instanceMember = metaClass.lookupInstanceMember(member);
+        if (metaClass.hasInstanceMember(name)) {
+            Object instanceMember = metaClass.lookupInstanceMember(name);
             // Prepend 'this' (receiver) to arguments as Jolk instance members expect it
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = this;
@@ -109,7 +111,7 @@ public class JolkObject implements TruffleObject {
         }
 
         // 2. Handle Object.jolk intrinsics and fallbacks.
-        switch (member) {
+        switch (name) {
             case "==" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return this == arguments[0];
@@ -133,7 +135,7 @@ public class JolkObject implements TruffleObject {
             }
             case "toString" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return "instance of " + metaClass.getMetaSimpleName();
+                return "instance of " + metaClass.name;
             }
             case "ifPresent" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);

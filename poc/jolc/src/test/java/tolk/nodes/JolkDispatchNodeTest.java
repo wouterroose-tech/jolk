@@ -23,6 +23,14 @@ public class JolkDispatchNodeTest {
     }
 
     @Test
+    void testDispatchToNothingError() {
+        // isEmpty takes 0 arguments, passing 1 should fail
+        TestDispatchNode node = new TestDispatchNode(JolkNothing.INSTANCE, "isEmpty", new Object[]{"extra"});
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
+        assertTrue(ex.getMessage().contains("Message dispatch failed"), "Should catch ArityException for Nothing");
+    }
+
+    @Test
     void testDispatchToObject() {
         JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
         JolkObject obj = new JolkObject(meta);
@@ -30,6 +38,44 @@ public class JolkDispatchNodeTest {
         
         Object result = execute(node);
         assertEquals("instance of Test", result);
+    }
+
+    @Test
+    void testDispatchToLong() {
+        // Test protocol message
+        TestDispatchNode node1 = new TestDispatchNode(42L, "toString", new Object[]{});
+        assertEquals("42", execute(node1), "Long #toString should return string representation");
+
+        // Test arithmetic message
+        TestDispatchNode node2 = new TestDispatchNode(10L, "+", new Object[]{20L});
+        assertEquals(30L, execute(node2), "Long #+ should perform addition");
+    }
+
+    @Test
+    void testDispatchToLongError() {
+        // Passing wrong type to '+' to trigger UnsupportedTypeException inside LongAdd
+        TestDispatchNode node = new TestDispatchNode(10L, "+", new Object[]{"not a number"});
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
+        assertTrue(ex.getMessage().contains("Error executing #+ on Long"), "Should wrap intrinsic execution errors");
+    }
+
+    @Test
+    void testDispatchToBoolean() {
+        // Test protocol message
+        TestDispatchNode node1 = new TestDispatchNode(true, "toString", new Object[]{});
+        assertEquals("true", execute(node1), "Boolean #toString should return string representation");
+
+        // Test logic message
+        TestDispatchNode node2 = new TestDispatchNode(true, "&&", new Object[]{false});
+        assertEquals(false, execute(node2), "Boolean #&& should perform logical AND");
+    }
+
+    @Test
+    void testDispatchToBooleanError() {
+        // Passing wrong type to '&&' to trigger UnsupportedTypeException inside BooleanAnd
+        TestDispatchNode node = new TestDispatchNode(true, "&&", new Object[]{"not a boolean"});
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
+        assertTrue(ex.getMessage().contains("Error executing #&& on Boolean"), "Should wrap intrinsic execution errors");
     }
 
     @Test

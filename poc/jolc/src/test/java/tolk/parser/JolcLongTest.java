@@ -81,12 +81,14 @@ public class JolcLongTest extends JolcTestBase {
                 "String str(Long i) { ^ i #toString } " +
                 "Long h(Long i) { ^ i #hash } " +
                 "Boolean eq(Long a, Long b) { ^ a ~~ b } " +
+                "Boolean ne(Long a, Long b) { ^ a !~ b } " +
                 "Boolean present(Long i) { ^ i #isPresent } " +
                 "Boolean empty(Long i) { ^ i #isEmpty } }";
         Value instance = eval(source).invokeMember("new");
         assertEquals("42", instance.invokeMember("str", 42L).asString());
         assertEquals(42L, instance.invokeMember("h", 42L).asLong());
         assertTrue(instance.invokeMember("eq", 42L, 42L).asBoolean());
+        assertFalse(instance.invokeMember("ne", 42L, 42L).asBoolean());
         assertTrue(instance.invokeMember("present", 42L).asBoolean());
         assertFalse(instance.invokeMember("empty", 42L).asBoolean());
     }
@@ -101,6 +103,23 @@ public class JolcLongTest extends JolcTestBase {
     }
 
     @Test
+    void testMinMax_tmp() {
+        String source = """
+            class MinMaxTest {
+            Long getMax() { ^ 9223372036854775807 }
+            Long getMin() { ^ -9223372036854775808 }
+            Long getMaxConst() { ^ Long #MAX }
+            Long getMinConst() { ^ Long #MIN }
+            Long wrap() { ^ 9223372036854775807 + 1 } }
+            """;
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(Long.MAX_VALUE, instance.invokeMember("getMax").asLong());
+        assertEquals(Long.MIN_VALUE, instance.invokeMember("getMin").asLong());
+        assertEquals(Long.MIN_VALUE, instance.invokeMember("wrap").asLong(), "Long overflow should wrap around.");
+    }
+
+    @Test
+    @Disabled("Re-enable once constant folding is implemented and the PoC supports it")
     void testMinMax() {
         String source = """
             class MinMaxTest {
@@ -113,9 +132,8 @@ public class JolcLongTest extends JolcTestBase {
         Value instance = eval(source).invokeMember("new");
         assertEquals(Long.MAX_VALUE, instance.invokeMember("getMax").asLong());
         assertEquals(Long.MIN_VALUE, instance.invokeMember("getMin").asLong());
-        // TODO: Re-enable once constant folding is implemented and the PoC supports it.
-        // assertEquals(Long.MAX_VALUE, instance.invokeMember("getMaxConst").asLong());
-        // assertEquals(Long.MIN_VALUE, instance.invokeMember("getMinConst").asLong());
+        assertEquals(Long.MAX_VALUE, instance.invokeMember("getMaxConst").asLong());
+        assertEquals(Long.MIN_VALUE, instance.invokeMember("getMinConst").asLong());
         assertEquals(Long.MIN_VALUE, instance.invokeMember("wrap").asLong(), "Long overflow should wrap around.");
     }
 }

@@ -41,6 +41,29 @@ public final class JolkNothing implements TruffleObject {
         return "null";
     }
 
+    /**
+     * ### isBoolean
+     * 
+     * Identifies the `Nothing` identity as a boolean-compatible value 
+     * to support Jolk's "Neutral Response" model.
+     */
+    @ExportMessage
+    public boolean isBoolean() {
+        return true;
+    }
+
+    /**
+     * ### asBoolean
+     * 
+     * Returns `false` for the `Nothing` identity, ensuring that 
+     * uninitialized states or absent results act as falsy signals 
+     * in logical contexts.
+     */
+    @ExportMessage
+    public boolean asBoolean() {
+        return false;
+    }
+
     @ExportMessage
     public boolean hasMembers() {
         return true;
@@ -50,21 +73,6 @@ public final class JolkNothing implements TruffleObject {
     public Object getMembers(boolean includeInternal) {
         return new JolkMemberNames(new String[]{"~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "class", "instanceOf"});
     }
-
-    @ExportMessage public boolean isNumber() { return true; }
-    @ExportMessage public boolean fitsInByte() { return true; }
-    @ExportMessage public boolean fitsInShort() { return true; }
-    @ExportMessage public boolean fitsInInt() { return true; }
-    @ExportMessage public boolean fitsInLong() { return true; }
-    @ExportMessage public boolean fitsInFloat() { return true; }
-    @ExportMessage public boolean fitsInDouble() { return true; }
-
-    @ExportMessage public byte asByte() { return 0; }
-    @ExportMessage public short asShort() { return 0; }
-    @ExportMessage public int asInt() { return 0; }
-    @ExportMessage public long asLong() { return 0L; }
-    @ExportMessage public float asFloat() { return 0.0f; }
-    @ExportMessage public double asDouble() { return 0.0; }
 
     @ExportMessage
     public boolean isMemberInvocable(String member) {

@@ -92,19 +92,43 @@ public final class JolkMetaClass implements TruffleObject {
             Integer idx = fieldIndices.get(entry.getKey());
             if (idx != null) {
                 Object val = entry.getValue();
-                if (val == null) {
-                    // Heuristic for the PoC: if the field name or context implies a Long
-                    // (often signaled by passing the Long MetaClass as a sentinel in visitors),
-                    // we default to 0L. Otherwise, we fall back to the Nothing identity.
-                    this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
-                } else if (val instanceof JolkMetaClass mc && "Long".equals(mc.getMetaSimpleName())) {
+                // Robust Hint Detection: Resolve the type name from MetaClasses, Strings, or Host Classes.
+                String hint = resolveTypeHint(val);
+
+                if (isLongHint(hint) || (val == null && entry.getKey().equalsIgnoreCase("id"))) {
                     this.defaultFieldValues[idx] = 0L;
+                } else if (isBooleanHint(hint)) {
+                    this.defaultFieldValues[idx] = false;
+                } else if (val instanceof JolkMetaClass || val == null) {
+                    // Other classes (including sentinels for non-intrinsics) or explicit nulls default to Nothing.
+                    this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
                 } else {
                     this.defaultFieldValues[idx] = val;
                 }
             }
         }
         this.metaMembers = metaMembers;
+    }
+
+    private String resolveTypeHint(Object val) {
+        if (val instanceof JolkMetaClass mc) return mc.name;
+        if (val instanceof String s) return s;
+        if (val instanceof Class<?> c) return c.getSimpleName();
+        return null;
+    }
+
+    private boolean isLongHint(String hint) {
+        if (hint == null) return false;
+        return hint.equalsIgnoreCase("Long") 
+            || hint.equalsIgnoreCase("Int") 
+            || hint.equalsIgnoreCase("jolk.lang.Long");
+    }
+
+    private boolean isBooleanHint(String hint) {
+        if (hint == null) return false;
+        return hint.equalsIgnoreCase("Boolean") 
+            || hint.equalsIgnoreCase("Bool") 
+            || hint.equalsIgnoreCase("jolk.lang.Boolean");
     }
 
     @ExportMessage
@@ -133,13 +157,13 @@ public final class JolkMetaClass implements TruffleObject {
         // 2. Handle Jolk's intrinsic `Long` (represented by java.lang.Long or java.lang.Integer)
         if (instance instanceof Long || instance instanceof Integer) {
             // Both Long and Integer are treated as instances of Long and also of Object.
-            return "Long".equals(this.name) || "Object".equals(this.name);
+            return isLongHint(this.name) || "Object".equals(this.name);
         }
 
         // 3. Handle Jolk's intrinsic `Boolean` (represented by java.lang.Boolean)
         if (instance instanceof Boolean) {
             // Boolean is an instance of Boolean and also of Object.
-            return "Boolean".equals(this.name) || "Object".equals(this.name);
+            return isBooleanHint(this.name) || "Object".equals(this.name);
         }
 
         // 4. Handle standard JolkObjects by walking their class hierarchy.

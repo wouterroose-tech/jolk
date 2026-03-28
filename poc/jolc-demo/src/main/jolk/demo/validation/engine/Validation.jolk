@@ -36,8 +36,8 @@ package abstract class Validation<T> extends Node<T> {
 
     /// Returns the interrupt identity to use when this validation fails.
     ///
-    /// @return The `Interrupt` identity, or the `null` identity (the default for no interrupt).
+    /// @return The `Interrupt` identity, or `Interrupt #NO_INTERRUPT` (the default).
     protected Interrupt interrupt() {
-        ^ null
+        ^ Interrupt #NO_INTERRUPT
     }
 }

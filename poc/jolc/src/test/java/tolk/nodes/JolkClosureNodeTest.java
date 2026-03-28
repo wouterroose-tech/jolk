@@ -104,6 +104,33 @@ public class JolkClosureNodeTest {
         assertNull(getEnvironmentViaReflection(result), "Closure environment should be null if executed without a frame context.");
     }
 
+    /**
+     * ### getEnvironmentViaReflection
+     *
+     * Accesses the private environment field in `JolkClosure` for testing purposes.
+     * This bypasses the current lack of a public getter in the runtime class.
+     *
+     * @param closure The closure instance to inspect.
+     * @return The captured environment array.
+     */
+    private Object[] getEnvironmentViaReflection(JolkClosure closure) {
+        try {
+            Field field = JolkClosure.class.getDeclaredField("environment");
+            field.setAccessible(true);
+            return (Object[]) field.get(closure);
+        } catch (NoSuchFieldException e) {
+            try {
+                Field field = JolkClosure.class.getDeclaredField("env");
+                field.setAccessible(true);
+                return (Object[]) field.get(closure);
+            } catch (Exception ex) {
+                throw new RuntimeException("Could not find environment field in JolkClosure", ex);
+            }
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     ///
     /// Helper to access the private environment field in JolkClosure for testing purposes.
     /// This bypasses the current lack of a public getter in the runtime class.

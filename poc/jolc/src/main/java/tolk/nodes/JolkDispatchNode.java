@@ -221,13 +221,21 @@ public abstract class JolkDispatchNode extends Node {
                     if (receiver == other) return false;
                     return !interop.isIdentical(receiver, other, interop);
                 }
-                case "~~" -> { 
+                case "~~" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    return receiver.equals(arguments[0]); 
+                    Object other = arguments[0];
+                    if (receiver instanceof Number n1 && other instanceof Number n2) {
+                        return n1.longValue() == n2.longValue();
+                    }
+                    return receiver.equals(other);
                 }
-                case "!~" -> { 
+                case "!~" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    return !receiver.equals(arguments[0]); 
+                    Object other = arguments[0];
+                    if (receiver instanceof Number n1 && other instanceof Number n2) {
+                        return n1.longValue() != n2.longValue();
+                    }
+                    return !receiver.equals(other);
                 }
                 case "??" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);

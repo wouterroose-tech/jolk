@@ -71,7 +71,7 @@ public final class JolkNothing implements TruffleObject {
 
     @ExportMessage
     public Object getMembers(boolean includeInternal) {
-        return new JolkMemberNames(new String[]{"~~", "!~", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "class", "instanceOf"});
+        return new JolkMemberNames(new String[]{"==", "!=", "~~", "!~", "??", "hash", "toString", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "class", "instanceOf", "?", "?!", ":", "? :", "?! :"});
     }
 
     @ExportMessage

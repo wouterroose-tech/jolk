@@ -6,6 +6,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import org.junit.jupiter.api.Test;
 import tolk.runtime.JolkClosure;
+import com.oracle.truffle.api.CallTarget;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,7 +26,8 @@ public class JolkClosureNodeTest {
     @Test
     void testExecuteGenericReturnsClosure() {
         JolkNode body = new JolkLiteralNode("test");
-        JolkClosureNode closureNode = new JolkClosureNode(body);
+        CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
+        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
 
         Object result = execute(closureNode);
 
@@ -41,7 +43,8 @@ public class JolkClosureNodeTest {
     @Test
     void testClosureExecution() throws UnsupportedMessageException, ArityException, UnsupportedTypeException {
         JolkNode body = new JolkLiteralNode(123);
-        JolkClosureNode closureNode = new JolkClosureNode(body);
+        CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
+        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
 
         Object closureObject = execute(closureNode);
         assertTrue(closureObject instanceof JolkClosure);
@@ -62,7 +65,8 @@ public class JolkClosureNodeTest {
     void testClosureWithComplexMetadata() {
         JolkNode body = new JolkLiteralNode(true);
         String[] params = {"first", "second"};
-        JolkClosureNode node = new JolkClosureNode(body, params, true);
+        CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
+        JolkClosureNode node = new JolkClosureNode(target, params, true);
 
         Object result = execute(node);
         assertNotNull(result, "Should result in a non-null closure object even when parameters are defined.");
@@ -76,8 +80,8 @@ public class JolkClosureNodeTest {
     /// @return The result of the execution.
     ///
     private Object execute(JolkNode node) {
-        // A null language is acceptable for this test's scope.
-        JolkRootNode root = new JolkRootNode(null, node);
+        // For testing JolkClosureNode, we need a JolkRootNode that is not a method.
+        JolkRootNode root = new JolkRootNode(null, node, "testClosureNode", false);
         return root.getCallTarget().call();
     }
 }

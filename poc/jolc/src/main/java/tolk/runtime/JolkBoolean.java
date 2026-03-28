@@ -105,7 +105,7 @@ public final class JolkBoolean {
             Boolean receiver = asBoolean(arguments[0]);
             Object action = arguments[1];
             if (receiver != null) {
-                if (receiver) InteropLibrary.getUncached().execute(action, receiver);
+                if (receiver) InteropLibrary.getUncached().execute(action);
                 return receiver;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -121,7 +121,7 @@ public final class JolkBoolean {
             Boolean receiver = asBoolean(arguments[0]);
             Object action = arguments[1];
             if (receiver != null) {
-                if (!receiver) InteropLibrary.getUncached().execute(action, receiver);
+                if (!receiver) InteropLibrary.getUncached().execute(action);
                 return receiver;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -138,7 +138,7 @@ public final class JolkBoolean {
             Boolean receiver = asBoolean(arguments[0]);
             Object action = arguments[1];
             if (receiver != null) {
-                if (!receiver) InteropLibrary.getUncached().execute(action, receiver);
+                if (!receiver) InteropLibrary.getUncached().execute(action);
                 return receiver;
             }
             throw UnsupportedTypeException.create(arguments);
@@ -157,7 +157,7 @@ public final class JolkBoolean {
             if (receiver != null) {
                 Object branch = receiver ? thenAction : elseAction;
                 // Returns the result of the branch execution.
-                return InteropLibrary.getUncached().execute(branch, receiver);
+                return InteropLibrary.getUncached().execute(branch);
             }
             throw UnsupportedTypeException.create(arguments);
         }
@@ -174,7 +174,7 @@ public final class JolkBoolean {
             Object elseAction = arguments[2];
             if (receiver != null) {
                 Object branch = !receiver ? thenAction : elseAction;
-                return InteropLibrary.getUncached().execute(branch, receiver);
+                return InteropLibrary.getUncached().execute(branch);
             }
             throw UnsupportedTypeException.create(arguments);
         }

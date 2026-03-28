@@ -10,14 +10,17 @@ import com.oracle.truffle.api.frame.VirtualFrame;
  */
 public final class JolkReturnNode extends JolkNode {
     @Child private JolkNode expression;
+    @Child private JolkNode targetNode;
 
-    public JolkReturnNode(JolkNode expression) {
+    public JolkReturnNode(JolkNode expression, JolkReadEnvironmentNode targetNode) {
         this.expression = expression;
+        this.targetNode = targetNode;
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         Object value = expression.executeGeneric(frame);
-        throw new JolkReturnException(value);
+        Object target = targetNode.executeGeneric(frame);
+        throw new JolkReturnException(value, target);
     }
 }

@@ -13,9 +13,16 @@ import com.oracle.truffle.api.library.ExportMessage;
 @ExportLibrary(InteropLibrary.class)
 public class JolkClosure implements TruffleObject {
     private final CallTarget callTarget;
+    private final Object[] environment;
 
     public JolkClosure(CallTarget callTarget) {
         this.callTarget = callTarget;
+        this.environment = null;
+    }
+
+    public JolkClosure(CallTarget callTarget, Object[] environment) {
+        this.callTarget = callTarget;
+        this.environment = environment;
     }
 
     @ExportMessage
@@ -25,6 +32,16 @@ public class JolkClosure implements TruffleObject {
 
     @ExportMessage
     public Object execute(Object[] arguments) {
+        Object[] env = this.environment;
+        if (env != null) {
+            // Prepend the captured environment (lexical scope) at index 0
+            Object[] captures = new Object[arguments.length + 1];
+            captures[0] = env;
+            System.arraycopy(arguments, 0, captures, 1, arguments.length);
+            
+            return callTarget.call(captures);
+        }
+        // Method mode: the receiver is already at index 0
         return callTarget.call(arguments);
     }
 

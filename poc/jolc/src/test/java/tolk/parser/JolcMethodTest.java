@@ -64,7 +64,7 @@ public class JolcMethodTest  extends JolcTestBase {
     }
 
     @Test
-    @Disabled("TODO: Implement method call resolution, then re-enable this test.")
+    //@Disabled("TODO: Implement method call resolution, then re-enable this test.")
     void testMethodWithCalls() {
         String source = """
             class MyClass {
@@ -100,7 +100,7 @@ public class JolcMethodTest  extends JolcTestBase {
 
     @Test
     @Disabled("TODO: Implement recursive method calls, then re-enable this test.")
-    void testRrecursivelyNestedStatements() {
+    void testRecursivelyNestedStatements() {
         String source = "final class Fibonacci { Long fib(Long n) { ^ n < 2 ? 1 : self #fib(n - 1) + self #fib(n - 2) } }";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");

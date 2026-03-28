@@ -39,7 +39,14 @@ public final class JolkRootNode extends RootNode {
             try {
                 return bodyNode.executeGeneric(frame);
             } catch (JolkReturnException e) {
-                return e.getResult();
+                // In Jolk, the return target is the arguments array (lexical environment)
+                // of the 'Home' method. We verify if this activation's environment
+                // matches the target stored in the exception.
+                if (e.getTarget() == frame.getArguments()) {
+                    return e.getResult();
+                } else {
+                    throw e;
+                }
             }
         } else {
             return bodyNode.executeGeneric(frame);

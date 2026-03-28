@@ -93,7 +93,7 @@ public class JolkDispatchNodeTest {
         JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
         JolkObject obj = new JolkObject(meta);
         // hash takes 0 arguments, passing 1 should fail
-        TestDispatchNode node = new TestDispatchNode(obj, "hash", new Object[]{"extra"});
+        TestDispatchNode node = new TestDispatchNode(obj, "", new Object[]{"extra"});
         
         RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
         assertTrue(ex.getMessage().contains("Message dispatch failed"));

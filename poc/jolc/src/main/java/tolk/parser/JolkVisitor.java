@@ -6,10 +6,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.Arrays;
+import org.antlr.v4.runtime.tree.ParseTree;
 import tolk.grammar.jolkBaseVisitor;
+import com.oracle.truffle.api.nodes.RootNode;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkBlockNode;
+import tolk.nodes.JolkReadEnvironmentNode;
 import tolk.nodes.JolkReturnNode;
 import tolk.nodes.JolkClosureNode;
 import tolk.nodes.JolkEmptyNode;
@@ -20,6 +23,7 @@ import tolk.nodes.JolkMethodNode;
 import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkNode;
+import tolk.nodes.JolkRootNode;
 import tolk.nodes.JolkReadArgumentNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
@@ -30,6 +34,8 @@ import tolk.runtime.JolkNothing;
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     private final Stack<List<String>> scopes = new Stack<>();
+    private final Stack<Integer> methodDepths = new Stack<>();
+    private String currentClassName;
 
     /// ### visitUnit
     ///
@@ -93,6 +99,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
                 String className = typeContext.MetaId().getText();
+                // Track the current class for 'Self' resolution
+                String oldClassName = this.currentClassName;
+                this.currentClassName = className;
 
                 JolkArchetype archetype = switch (ctx.archetype().getText()) {
                     case "class" -> JolkArchetype.CLASS;
@@ -139,6 +148,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     }
                 }
 
+                this.currentClassName = oldClassName;
                 return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers);
             }
         }
@@ -197,7 +207,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         String name = ctx.identifier().getText();
         JolkNode expression = visit(ctx.expression());
         // Jolk treats assignments as message sends to 'self' (synthesized setters)
-        return new JolkMessageSendNode(new JolkSelfNode(), name, new JolkNode[]{expression});
+        return new JolkMessageSendNode(visitReservedSelf(), name, new JolkNode[]{expression});
     }
 
     @Override
@@ -215,7 +225,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         List<String> methodScope = new ArrayList<>();
         methodScope.add("self");
         methodScope.addAll(Arrays.asList(params));
+        
+        int baseDepth = scopes.size();
         scopes.push(methodScope);
+        methodDepths.push(baseDepth);
         JolkNode body = new JolkEmptyNode();
         try {
             if (ctx.block() != null) {
@@ -223,6 +236,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
         } finally {
             scopes.pop();
+            methodDepths.pop();
         }
         return new JolkMethodNode(name, body, params, isVariadic);
     }
@@ -233,13 +247,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Handle ternary operations: condition ? trueBranch : falseBranch
         if (!ctx.expression().isEmpty()) {
             String op = ctx.getChild(1).getText(); // "?" or "?!"
-            JolkNode thenBranch = ensureClosure(visit(ctx.expression(0)));
+            // We pass the raw ParseTree (the expression context) to ensureClosure.
+            // This allows the visitor to decide whether to wrap it in an implicit closure
+            // or visit it directly if it's already a closure literal.
+            JolkNode thenBranch = ensureClosure(ctx.expression(0));
 
             if (ctx.expression().size() > 1) {
                 // Atomic ternary: if both branches are present, we dispatch a single message
                 // to ensure the branch result is returned instead of the Boolean receiver.
                 String selector = op + " :"; // results in "? :" or "?! :"
-                JolkNode elseBranch = ensureClosure(visit(ctx.expression(1)));
+                JolkNode elseBranch = ensureClosure(ctx.expression(1));
                 result = new JolkMessageSendNode(result, selector, new JolkNode[]{thenBranch, elseBranch});
             } else {
                 // Binary branching: behaves as a control-flow message returning the receiver.
@@ -376,7 +393,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         }
         if (ctx.NULL_COALESCE() != null) {
             // Lazy Evaluation: The fallback expression must be wrapped in a closure.
-            JolkNode rightClosure = ensureClosure(visit(ctx.power()));
+            JolkNode rightClosure = ensureClosure(ctx.power());
             left = new JolkMessageSendNode(left, "??", new JolkNode[]{rightClosure});
         }
         return left;
@@ -384,7 +401,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMessage(jolkParser.MessageContext ctx) {
-        JolkNode receiver = ctx.primary() != null ? visit(ctx.primary()) : new JolkSelfNode();
+        JolkNode receiver = ctx.primary() != null ? visit(ctx.primary()) : visitReservedSelf();
         if (receiver == null) {
             receiver = new JolkEmptyNode();
         }
@@ -422,7 +439,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
         }
 
-        scopes.push(Arrays.asList(params));
+        // For closures, index 0 is reserved for the captured lexical environment.
+        List<String> closureScope = new ArrayList<>();
+        closureScope.add("<env>"); 
+        closureScope.addAll(Arrays.asList(params));
+        
+        scopes.push(closureScope);
         JolkNode body = new JolkEmptyNode();
         try {
             if (ctx.statements() != null) {
@@ -431,7 +453,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         } finally {
             scopes.pop();
         }
-        return new JolkClosureNode(body, params, isVariadic);
+        // Closures are not method boundaries; isMethod must be false to 
+        // allow Non-Local Returns (^) to propagate to the defining method.
+        JolkRootNode jolkRootNode = new JolkRootNode(null, body, "closure", false);
+        return new JolkClosureNode(jolkRootNode.getCallTarget(), params, isVariadic);
     }
 
     @Override
@@ -451,11 +476,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         String text = ctx.getText();
         return switch (text) {
             case "null" -> new JolkLiteralNode(JolkNothing.INSTANCE);
-            case "self" -> new JolkSelfNode();
+            case "self" -> visitReservedSelf();
+            case "Self" -> new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
             case "true" -> new JolkLiteralNode(true);
             case "false" -> new JolkLiteralNode(false);
-            // "super" and "Self" (Meta-Object reference) currently resolve to EmptyNode 
-            // in this PoC phase until the Meta-Stratum resolution is fully implemented.
             default -> new JolkEmptyNode();
         };
     }
@@ -464,16 +488,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
         String name = ctx.getText();
 
-        // 1. Check if it's a Parameter in the current scope
-        if (!scopes.isEmpty()) {
-            int index = scopes.peek().indexOf(name);
-            if (index != -1) {
-                return new JolkReadArgumentNode(index);
-            }
+        // 1. Check if it's a Parameter in the current or outer scope (Recursive Search)
+        JolkNode argNode = lookupIdentifier(name);
+        if (argNode != null) {
+            return argNode;
         }
 
         // 2. Semantic Casing: Uppercase names are Meta-Objects (Types/Constants)
         if (Character.isUpperCase(name.charAt(0))) {
+            // Self-reference resolution
+            if (name.equals(currentClassName)) return new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+            
             // For the PoC, we provide direct resolution for known intrinsic types.
             // In a full implementation, this would look up the type in the global registry.
             if ("Long".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLong.LONG_TYPE);
@@ -482,7 +507,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         }
 
         // 3. Default: Treat as a message send to 'self' (e.g. field access)
-        return new JolkMessageSendNode(new JolkSelfNode(), name, new JolkNode[0]);
+        return new JolkMessageSendNode(visitReservedSelf(), name, new JolkNode[0]);
     }
 
     @Override
@@ -512,10 +537,21 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.binding() != null) return visit(ctx.binding());
 
         if (ctx.expression() != null) {
+            // Check for the explicit return symbol (CARET) and calculate target method depth
+            // We check the first token of the statement specifically to avoid false positives in sub-expressions.
+            boolean hasCaret = ctx.getToken(jolkParser.CARET, 0) != null || 
+                              (ctx.getChildCount() > 0 && ctx.getChild(0).getText().equals("^"));
+            
+            // We visit the expression after checking for the caret to maintain structural context
             JolkNode exprNode = visit(ctx.expression());
-            // Check for the explicit return symbol (CARET)
-            if (ctx.getToken(jolkParser.CARET, 0) != null) {
-                return new JolkReturnNode(exprNode);
+            
+            if (hasCaret) {
+                // targetDepth calculation:
+                // 1. In a method: distance from current closure scope back to the method scope.
+                // 2. At top-level (script): depth needed to reach the script root activation.
+                int targetDepth = methodDepths.isEmpty() ? scopes.size() : 
+                                  Math.max(0, scopes.size() - methodDepths.peek() - 1);
+                return new JolkReturnNode(exprNode, new JolkReadEnvironmentNode(targetDepth));
             }
             return exprNode;
         }
@@ -559,10 +595,63 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return names.toArray(new String[0]);
     }
 
-    private JolkNode ensureClosure(JolkNode node) {
-        if (node instanceof JolkClosureNode) {
-            return node;
+    /**
+     * Ensures that a parse tree branch is treated as a closure.
+     * If it is not already a closure literal (e.g., [ ... ]), it accounts for 
+     * implicit closure scoping by pushing an environment scope before visitation.
+     *
+     * @param tree The parse tree to visit.
+     * @return A [JolkNode] representing the closure.
+     */
+    private JolkNode ensureClosure(ParseTree tree) {
+        if (tree == null) return new JolkEmptyNode();
+        
+        if (isClosureLiteral(tree)) {
+            return visit(tree);
         }
-        return new JolkClosureNode(node, new String[0], false);
+
+        // Implicit closure: push an environment scope to account for frame depth.
+        scopes.push(new ArrayList<>(List.of("<env>")));
+        try {
+            JolkNode body = visit(tree);
+            RootNode root = new JolkRootNode(null, body, "closure", false);
+            return new JolkClosureNode(root.getCallTarget(), new String[0], false);
+        } finally {
+            scopes.pop();
+        }
+    }
+
+    private boolean isClosureLiteral(ParseTree tree) {
+        if (tree instanceof jolkParser.ClosureContext) return true;
+        if (tree.getChildCount() == 1) return isClosureLiteral(tree.getChild(0));
+        return false;
+    }
+
+    /**
+     * Searches through the lexical scope stack recursively to find an identifier.
+     * Calculates the frame depth required to reach the variable.
+     *
+     * @param name The name of the identifier to look up.
+     * @return A [JolkNode] to read the argument if found, otherwise null.
+     */
+    private JolkNode lookupIdentifier(String name) {
+        int currentDepth = 0;
+        for (int i = scopes.size() - 1; i >= 0; i--) {
+            int index = scopes.get(i).indexOf(name);
+            if (index != -1) {
+                return new JolkReadArgumentNode(index, currentDepth);
+            }
+            currentDepth++;
+        }
+        return null;
+    }
+
+    /**
+     * Resolves the 'self' reference by prioritizing the lexically captured 'self'
+     * (Home context) over the dynamic receiver.
+     */
+    private JolkNode visitReservedSelf() {
+        JolkNode selfNode = lookupIdentifier("self");
+        return selfNode != null ? selfNode : new JolkSelfNode();
     }
 }

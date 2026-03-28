@@ -177,14 +177,13 @@ public class JolkLongTest {
     @Test
     void testIfPresent() throws Exception {
         Object op = getOperation("ifPresent");
-        AtomicLong counter = new AtomicLong(0);
-        IntTestExecutable action = new IntTestExecutable(counter::incrementAndGet);
+        // We expect the closure result (e.g. 42) to be returned
+        IntTestExecutable action = new IntTestExecutable(() -> 42L);
 
         // Execute: 5 #ifPresent [ ... ]
         Object result = execute(op, 5L, action);
 
-        assertEquals(5L, result, "ifPresent should return self");
-        assertEquals(1, counter.get(), "Action should be executed");
+        assertEquals(42L, result, "ifPresent should return the result of the closure");
     }
 
     @Test
@@ -268,10 +267,10 @@ public class JolkLongTest {
 
     @ExportLibrary(InteropLibrary.class)
     public static class IntTestExecutable implements TruffleObject {
-        private final Runnable runnable;
+        private final java.util.function.Supplier<Object> supplier;
 
-        public IntTestExecutable(Runnable runnable) {
-            this.runnable = runnable;
+        public IntTestExecutable(java.util.function.Supplier<Object> supplier) {
+            this.supplier = supplier;
         }
 
         @ExportMessage
@@ -281,8 +280,7 @@ public class JolkLongTest {
 
         @ExportMessage
         public Object execute(Object[] arguments) {
-            runnable.run();
-            return JolkNothing.INSTANCE;
+            return supplier.get();
         }
     }
 }

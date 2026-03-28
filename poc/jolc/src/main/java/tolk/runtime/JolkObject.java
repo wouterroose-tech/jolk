@@ -115,11 +115,15 @@ public class JolkObject implements TruffleObject {
         switch (name) {
             case "==" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return this == arguments[0];
+                Object other = arguments[0];
+                if (this == other) return true;
+                return interop.isIdentical(this, other, interop);
             }
             case "!=" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return this != arguments[0];
+                Object other = arguments[0];
+                if (this == other) return false;
+                return !interop.isIdentical(this, other, interop);
             }
             case "~~" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -137,11 +141,11 @@ public class JolkObject implements TruffleObject {
             }
             case "hash" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return this.hashCode();
+                return (long) this.hashCode();
             }
             case "toString" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return "instance of " + metaClass.name;
+                return this.toString();
             }
             case "ifPresent" -> {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -177,9 +181,31 @@ public class JolkObject implements TruffleObject {
         throw UnknownIdentifierException.create(member);
     }
 
+    /**
+     * ### toString
+     * 
+     * Returns the Jolk-standard string representation of the object.
+     * Overriding this at the Java level ensures that the [JolkDispatchNode] 
+     * intrinsic path remains consistent with the object protocol.
+     */
+    @Override
+    public String toString() {
+        return "instance of " + metaClass.name;
+    }
+
+    @Override
+    public int hashCode() {
+        return System.identityHashCode(this);
+    }
+
+    @ExportMessage
+    public String toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
+        return toString();
+    }
+
     private boolean isObjectIntrinsic(String member) {
         return switch (member) {
-            case "==", "!=", "~~", "!~", "??",  "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
+            case "==", "!=", "~~", "!~", "??", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
             default -> false;
         };
     }

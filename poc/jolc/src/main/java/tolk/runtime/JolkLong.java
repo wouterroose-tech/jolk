@@ -314,8 +314,7 @@ public final class JolkLong {
             // arguments[0] is receiver (Int), arguments[1] is action (Closure)
             Object receiver = arguments[0];
             Object action = arguments[1];
-            InteropLibrary.getUncached().execute(action, receiver);
-            return receiver; // Return self
+            return InteropLibrary.getUncached().execute(action, receiver);
         }
     }
 

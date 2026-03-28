@@ -2,6 +2,7 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkObject;
 import tolk.runtime.JolkBoolean;
 import tolk.runtime.JolkLong;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -100,6 +101,16 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization
     protected Object doLong(Long receiver, String selector, Object[] arguments,
                            @CachedLibrary(limit = "3") InteropLibrary interop) {
+        try {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+        } catch (JolkReturnException e) {
+            throw e;
+        } catch (Exception e) {
+             throw new RuntimeException("Error executing #" + selector + " on Long", e);
+        }
+
         Object member = JolkLong.LONG_TYPE.lookupInstanceMember(selector);
         if (member != null) {
             Object[] argsWithReceiver = new Object[arguments.length + 1];
@@ -128,6 +139,15 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization
     protected Object doBoolean(Boolean receiver, String selector, Object[] arguments,
                                @CachedLibrary(limit = "3") InteropLibrary interop) {
+        try {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+        } catch (JolkReturnException e) {
+            throw e;
+        } catch (Exception e) {
+             throw new RuntimeException("Error executing #" + selector + " on Boolean", e);
+        }
         Object member = JolkBoolean.BOOLEAN_TYPE.lookupInstanceMember(selector);
         if (member != null) {
             Object[] argsWithReceiver = new Object[arguments.length + 1];
@@ -156,8 +176,12 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(replaces = {"doNothing", "doLong", "doBoolean"}, limit = "3")
     protected Object doDispatch(Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
-        // The logic is identical, but this specialization handles any generic TruffleObject.
         try {
+            // Apply the Jolk Object Protocol to all objects
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+
             Object result = interop.invokeMember(receiver, selector, arguments);
             
             // Identity Restitution Protocol:
@@ -165,8 +189,91 @@ public abstract class JolkDispatchNode extends Node {
                 return JolkNothing.INSTANCE;
             }
             return result;
+        } catch (JolkReturnException e) {
+            throw e;
         } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }
+    }
+
+    private boolean isObjectIntrinsic(String member) {
+        return switch (member) {
+            case "==", "!=", "~~", "!~", "??", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
+            default -> false;
+        };
+    }
+
+    private Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
+        try {
+            switch (name) {
+                case "==" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    Object other = arguments[0];
+                    // Identity short-circuit: same instance is always identical.
+                    if (receiver == other) return true;
+                    return interop.isIdentical(receiver, other, interop);
+                }
+                case "!=" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    Object other = arguments[0];
+                    if (receiver == other) return false;
+                    return !interop.isIdentical(receiver, other, interop);
+                }
+                case "~~" -> { 
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    return receiver.equals(arguments[0]); 
+                }
+                case "!~" -> { 
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    return !receiver.equals(arguments[0]); 
+                }
+                case "??" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    // Primitives are never Nothing
+                    return receiver;
+                }
+                case "hash" -> { 
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    return (long) receiver.hashCode(); 
+                }
+                case "toString" -> { 
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    return receiver.toString(); 
+                }
+                case "ifPresent" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    return interop.execute(arguments[0], receiver);
+                }
+                case "ifEmpty" -> { 
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    return receiver; 
+                }
+                case "isPresent" -> { 
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    return true; 
+                }
+                case "isEmpty" -> { 
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    return false; 
+                }
+                case "class" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    if (receiver instanceof JolkObject jo) return jo.getJolkMetaClass();
+                    if (receiver instanceof Long || receiver instanceof Integer) return JolkLong.LONG_TYPE;
+                    if (receiver instanceof Boolean) return JolkBoolean.BOOLEAN_TYPE;
+                    return JolkNothing.NOTHING_TYPE;
+                }
+                case "instanceOf" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    Object type = arguments[0];
+                    return (interop.isMetaObject(type) && interop.isMetaInstance(type, receiver)) ? tolk.runtime.JolkMatch.with(receiver) : tolk.runtime.JolkMatch.empty();
+                }
+            }
+        } catch (JolkReturnException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Intrinsic dispatch failed: #" + name, e);
+        }
+        return JolkNothing.INSTANCE;
     }
 }

@@ -96,10 +96,11 @@ public class JolcLongTest extends JolcTestBase {
     @Test
     @Disabled("Default field values are not yet supported.")
     void testLongFieldWithDefault() {
-        String source = "class Container { Long val = 42; }";
+        String source = "class Container { Long long = 42; Int int = 42;}";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  
-        assertEquals(42L, instance.invokeMember("val").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, instance.invokeMember("long").asLong());
+        assertEquals(42L, instance.invokeMember("int").asLong());
     }
 
     @Test
@@ -148,15 +149,19 @@ public class JolcLongTest extends JolcTestBase {
             Long val5() { ^ null ?? 42 }
             Long val6() { ^ (2 * 1) + (20 * 2)}
             Long val6() { ^ (2 ** 2) + (19 * 2)}
+            Int int() { ^ 42 }
+            
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  
-        assertEquals(42L, instance.invokeMember("val").asLong(), "The field should be initialized to the default value.");
-        assertEquals(42L, instance.invokeMember("val2").asLong(), "The field should be initialized to the default value.");
-        assertEquals(42L, instance.invokeMember("val3").asLong(), "The field should be initialized to the default value.");
-        assertEquals(0L, instance.invokeMember("val4").asLong(), "The field should be initialized to the default value.");
-        assertEquals(42L, instance.invokeMember("val5").asLong(), "The field should be initialized to the default value.");
-        assertEquals(42L, instance.invokeMember("val6").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, instance.invokeMember("val").asLong());
+        assertEquals(42L, instance.invokeMember("val2").asLong());
+        assertEquals(42L, instance.invokeMember("val3").asLong());
+        assertEquals(0L, instance.invokeMember("val4").asLong());
+        assertEquals(42L, instance.invokeMember("val5").asLong());
+        assertEquals(42L, instance.invokeMember("val6").asLong());
+        assertEquals(42L, instance.invokeMember("val6").asLong());
+        assertEquals(42L, instance.invokeMember("int").asLong());
     }
 
     @Test

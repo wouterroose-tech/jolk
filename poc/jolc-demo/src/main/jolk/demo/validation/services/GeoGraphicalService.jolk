@@ -7,12 +7,8 @@ final class GeoGraphicalService {
     
     public meta constant Array<Integer> MECHELEN = #[2800, 2801, 2811, 2812];
 
-    private meta GeoGraphicalService new() {
-        ^ super #new
-    }
-
     // Caching the external service
-    public meta constant GeoGraphicalService GGS = GeoGraphicalService #new;
+    public meta stable GeoGraphicalService GGS = GeoGraphicalService #new;
 
     Boolean exists(Long zipCode) {
         // simulate lookup via DAO

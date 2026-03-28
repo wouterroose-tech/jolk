@@ -3,13 +3,15 @@ package jolk.lang;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 
-/// # Set
-///
-/// Runtime implementation of the Jolk Set archetype.
-/// Extends LinkedHashSet to maintain deterministic iteration order.
-///
-/// @author Wouter Roose
-
+/**
+ * # Set
+ *
+ * The **Set** represents a collection of unique identities, excising duplication.
+ * Extends {@link LinkedHashSet} to maintain deterministic iteration order.
+ *
+ * @author Wouter Roose
+ */
+@Intrinsic
 public final class Set<T> extends LinkedHashSet<T> {
 
     @SafeVarargs
@@ -19,18 +21,16 @@ public final class Set<T> extends LinkedHashSet<T> {
         return set;
     }
 
-    public Boolean includes(T element) {
+    public boolean includes(T element) {
         return contains(element);
     }
 
-    @Override
-    public boolean add(T element) {
-        return super.add(element);
-    }
-    
-    // Fluent alias for add
-    public Set<T> push(T element) {
-        add(element);
+    /**
+     * Adds an element to the set.
+     * Returns {@code Self} to allow for fluent message chaining.
+     */
+    public Set<T> add(T element) {
+        super.add(element);
         return this;
     }
 }

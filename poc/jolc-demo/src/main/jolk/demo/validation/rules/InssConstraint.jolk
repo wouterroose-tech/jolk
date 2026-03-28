@@ -16,7 +16,7 @@
         ^ self #isValid(person #ssn)
     }
 
-    #> Boolean isValid(Integer ssn) {
+    #> Boolean isValid(Long ssn) {
         ^ (ssn / 97) != (ssn % 97)
     }
 

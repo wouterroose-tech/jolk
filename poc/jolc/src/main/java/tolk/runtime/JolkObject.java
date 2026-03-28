@@ -39,7 +39,7 @@ public class JolkObject implements TruffleObject {
         }
     }
 
-    JolkMetaClass getJolkMetaClass() {
+    public JolkMetaClass getJolkMetaClass() {
         return metaClass;
     }
 
@@ -78,6 +78,7 @@ public class JolkObject implements TruffleObject {
         keys.add("!=");
         keys.add("~~");
         keys.add("!~");
+        keys.add("??");
         keys.add("hash");
         keys.add("toString");
         keys.add("ifPresent");
@@ -129,6 +130,11 @@ public class JolkObject implements TruffleObject {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return !interop.asBoolean(this.invokeMember("~~", arguments, interop));
             }
+            case "??" ->  {
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                // If the receiver is not Nothing, return the receiver itself.
+                return this;
+            }
             case "hash" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return this.hashCode();
@@ -166,11 +172,6 @@ public class JolkObject implements TruffleObject {
                 }
                 return JolkMatch.empty();
             }
-            case "??"->  {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                // If the receiver is not Nothing, return the receiver itself.
-                return this;
-            }
         }
 
         throw UnknownIdentifierException.create(member);
@@ -178,7 +179,7 @@ public class JolkObject implements TruffleObject {
 
     private boolean isObjectIntrinsic(String member) {
         return switch (member) {
-            case "==", "!=", "~~", "!~", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
+            case "==", "!=", "~~", "!~", "??",  "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
             default -> false;
         };
     }

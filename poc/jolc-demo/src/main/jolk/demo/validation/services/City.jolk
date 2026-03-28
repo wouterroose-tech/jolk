@@ -4,7 +4,7 @@ package demo.validation.services;
 /// @author Wouter Roose
 
 record City {
-    Integer zipcode;
+    Int zipcode;
     String name;
     String province;
 }

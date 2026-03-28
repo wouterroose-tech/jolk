@@ -21,7 +21,7 @@ final class TernaryExpressionDemonstrator {
         ^ result
     }
 
-    String runChain(Integer val) {
+    String runChain(Int val) {
         ^ (val > 10) ? "High"
             : (val > 5) ? "Medium"
             : "Low"
@@ -46,8 +46,8 @@ final class TernaryExpressionDemonstrator {
         cond ?! [ ^ false ] : [ ^ true ]
     }
 
-    Integer runBlockAssignment(Boolean condition) {
-        condition ? [ Integer x = 1; ^x ]
-            : [ Integer x = 2; ^x ]
+    Int runBlockAssignment(Boolean condition) {
+        condition ? [ Int x = 1; ^x ]
+            : [ Int x = 2; ^x ]
     }
 }

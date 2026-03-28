@@ -5,7 +5,7 @@ package demo.validation.services;
 
 final class GeoGraphicalService {
     
-    public meta constant Array<Integer> MECHELEN = #[2800, 2801, 2811, 2812];
+    public meta constant Array<Int> MECHELEN = #[2800, 2801, 2811, 2812];
 
     // Caching the external service
     public meta stable GeoGraphicalService GGS = GeoGraphicalService #new;

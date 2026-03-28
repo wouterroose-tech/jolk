@@ -20,7 +20,7 @@
         ^ self #isMalinesArea(form #zipCode)
     }
 
-    #> Boolean isMalinesArea(Integer zipCode) {
+    #> Boolean isMalinesArea(Int zipCode) {
         ^ GeoGraphicalService #GGS #exists(zipCode) && MECHELEN #contains(zipCode)
     }
 

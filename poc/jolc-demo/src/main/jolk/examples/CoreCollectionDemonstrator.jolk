@@ -35,7 +35,7 @@ final class CoreCollectionDemonstrator {
         ^ colors
     }
 
-    Integer runSize() {
+    Int runSize() {
         constant Array<String> colors = Array #new("red", "green", "blue");
         ^ colors #size
     }

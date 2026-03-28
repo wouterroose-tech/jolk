@@ -112,7 +112,12 @@ public abstract class JolkDispatchNode extends Node {
             }
         }
         try {
-            return interop.invokeMember(receiver, selector, arguments);
+            Object result = interop.invokeMember((Object) receiver, selector, arguments);
+            // Identity Restitution: We lift raw JVM nulls into the Nothing singleton.
+            if (result == null) {
+                return JolkNothing.INSTANCE;
+            }
+            return result;
         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }
@@ -135,7 +140,11 @@ public abstract class JolkDispatchNode extends Node {
             }
         }
         try {
-            return interop.invokeMember(receiver, selector, arguments);
+            Object result = interop.invokeMember((Object) receiver, selector, arguments);
+            if (result == null) {
+                return JolkNothing.INSTANCE;
+            }
+            return result;
         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }
@@ -149,7 +158,13 @@ public abstract class JolkDispatchNode extends Node {
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         // The logic is identical, but this specialization handles any generic TruffleObject.
         try {
-            return interop.invokeMember(receiver, selector, arguments);
+            Object result = interop.invokeMember(receiver, selector, arguments);
+            
+            // Identity Restitution Protocol:
+            if (result == null) {
+                return JolkNothing.INSTANCE;
+            }
+            return result;
         } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }

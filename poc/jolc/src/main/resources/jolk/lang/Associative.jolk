@@ -1,0 +1,16 @@
+~ jolk.lang;
+
+/// # Associative
+///
+/// The Associative protocol defines the contract for key-value mappings.
+/// It ensures that associative archetypes maintain the "Messages in Motion"
+/// contract by returning Self on mutations.
+///
+/// @author Wouter Roose
+
+public protocol Associative<K, V> {
+    V atKey(K key);
+    Self put(K key, V value);
+    Array<K> keys();
+    Int size();
+}

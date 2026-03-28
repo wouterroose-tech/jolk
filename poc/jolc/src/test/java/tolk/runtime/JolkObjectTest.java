@@ -1,7 +1,6 @@
 package tolk.runtime;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import java.util.function.Consumer;

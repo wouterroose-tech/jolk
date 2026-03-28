@@ -91,6 +91,8 @@ public abstract class JolkDispatchNode extends Node {
             // The logic for how Nothing responds is correctly encapsulated in JolkNothing itself.
             // This specialization simply provides a direct, cached route to that logic.
             return interop.invokeMember(receiver, selector, arguments);
+        } catch (JolkReturnException e) {
+            throw e;
         } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }
@@ -198,7 +200,7 @@ public abstract class JolkDispatchNode extends Node {
 
     private boolean isObjectIntrinsic(String member) {
         return switch (member) {
-            case "==", "!=", "~~", "!~", "??", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
+            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf" -> true;
             default -> false;
         };
     }
@@ -239,22 +241,6 @@ public abstract class JolkDispatchNode extends Node {
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     return receiver.toString(); 
-                }
-                case "ifPresent" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    return interop.execute(arguments[0], receiver);
-                }
-                case "ifEmpty" -> { 
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    return receiver; 
-                }
-                case "isPresent" -> { 
-                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return true; 
-                }
-                case "isEmpty" -> { 
-                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return false; 
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);

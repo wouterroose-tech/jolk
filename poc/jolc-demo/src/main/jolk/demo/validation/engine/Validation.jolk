@@ -34,9 +34,9 @@ package abstract class Validation<T> extends Node<T> {
     /// Visitor Pattern Continuation.
     package abstract Self doAccept(T subject, ExecutionContext executionContext);
 
-    /// Returns the interrupt level to use when this constraint fails.
+    /// Returns the interrupt identity to use when this validation fails.
     ///
-    /// @return the interrupt level identifier, or null (the default)
+    /// @return The `Interrupt` identity, or the `null` identity (the default for no interrupt).
     protected Interrupt interrupt() {
         ^ null
     }

@@ -3,6 +3,8 @@ package tolk.nodes;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkBoolean;
+import tolk.runtime.JolkLong;
 import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkObject;
 
@@ -18,9 +20,11 @@ import tolk.runtime.JolkObject;
     long.class,
     boolean.class,
     String.class,
-    JolkObject.class,
+    JolkBoolean.class,
+    JolkLong.class,
+    JolkMatch.class,
     JolkNothing.class,
-    JolkMatch.class
+    JolkObject.class
 })
 public abstract class JolkTypes { 
     // This class is intentionally left empty. It serves as a marker for the Truffle DSL

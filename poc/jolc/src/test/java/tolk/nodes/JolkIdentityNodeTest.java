@@ -8,7 +8,7 @@ public class JolkIdentityNodeTest {
 
     @Test
     void testIdentityTrue() {
-        Object obj = new Object();
+        Long obj = 1000L;
         JolkIdentityNode node = new JolkIdentityNode(new ValueNode(obj), new ValueNode(obj), false);
         // Since JolkIdentityNode doesn't use the frame, passing null is safe for this unit test
         assertTrue((Boolean) node.executeGeneric(null), "Identical objects should return true for ==");
@@ -16,19 +16,19 @@ public class JolkIdentityNodeTest {
 
     @Test
     void testIdentityFalse() {
-        JolkIdentityNode node = new JolkIdentityNode(new ValueNode(new Object()), new ValueNode(new Object()), false);
+        JolkIdentityNode node = new JolkIdentityNode(new ValueNode(1000L), new ValueNode(2000L), false);
         assertFalse((Boolean) node.executeGeneric(null), "Distinct objects should return false for ==");
     }
 
     @Test
     void testNonIdentityTrue() {
-        JolkIdentityNode node = new JolkIdentityNode(new ValueNode(new Object()), new ValueNode(new Object()), true);
+        JolkIdentityNode node = new JolkIdentityNode(new ValueNode(1000L), new ValueNode(2000L), true);
         assertTrue((Boolean) node.executeGeneric(null), "Distinct objects should return true for !=");
     }
 
     @Test
     void testNonIdentityFalse() {
-        Object obj = new Object();
+        Long obj = 1000L;
         JolkIdentityNode node = new JolkIdentityNode(new ValueNode(obj), new ValueNode(obj), true);
         assertFalse((Boolean) node.executeGeneric(null), "Identical objects should return false for !=");
     }

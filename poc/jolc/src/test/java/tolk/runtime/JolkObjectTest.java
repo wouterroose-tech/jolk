@@ -219,7 +219,6 @@ public class JolkObjectTest extends JolcTestBase {
 
     @Test
     @Disabled("Pending complete method body parsing")
-    // TPDO check if x & y are initialized
     void testOverriddenEquivalence_2() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
@@ -229,17 +228,22 @@ public class JolkObjectTest extends JolcTestBase {
 
                 Boolean ~~(Object other) {
                     (self == other) ? [ ^true ];
-                    other #as(Point) #ifPresent [ p ->
+                    other #instanceOf(Point) #ifPresent [ p ->
                         ^ (self #x == p #x) && (self #y == p #y)
                     ];
-                    ^ true
+                    ^ false
                 }
             }
         """;
         Value meta = eval(source);
         // Logic tests moved to JolkObjectTest or similar once parser supports statements
-        Value x = meta.invokeMember("new");
-        Value y = meta.invokeMember("new");
+        Value x = meta.invokeMember("new", 0L, 1L);
+        assertEquals(0L, x.invokeMember("x").asLong());
+        assertEquals(1L, x.invokeMember("y").asLong());
+
+        Value y = meta.invokeMember("new", 1L, 0L);
+        assertEquals(1L, y.invokeMember("x").asLong());
+        assertEquals(0L, y.invokeMember("y").asLong());
 
         // By default, equivalence (~~) should fall back to identity (==).
         assertTrue(x.invokeMember("~~", x).asBoolean(), "An object must be equivalent to itself.");
@@ -247,32 +251,32 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending complete method body parsing") 
+    
     void testPresence() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
             class MyClass {
                 Long val() { 42 #ifPresent [ x -> ^ x ]; ^ 0 }
                 Long val2() { null #ifPresent [ x -> ^ x ]; ^ 0 }
-                Long val3() { 42 #ifEmpty [ x -> ^ x ]; ^ 0 }
-                Long val4() { null #ifEmpty [ x -> ^ x ]; ^ 0 }
-                Long val5() { 42 #isPresent [ ^ 42 ]; ^ 0 }
-                Long val6() { null #isPresent [ ^ 42 ]; ^ 0 }
-                Long val7() { 42 #isEmpty [ ^ 42 ]; ^ 0 }
-                Long val8() { null #isEmpty [ ^ 42 ]; ^ 0 }
+                Long val3() { 42 #ifEmpty [ ^ 42 ]; ^ 0 }
+                Long val4() { null #ifEmpty [ ^ 42 ]; ^ 0 }
+                Long val5() { ^ 42 #isPresent ? 42 : ^ 0 }
+                Long val6() { ^ null #isPresent ? 42 : ^ 0 }
+                Long val7() { ^ 42 #isEmpty ? 42 : ^ 0 }
+                Long val8() { ^ null #isEmpty ? 42 : ^ 0 }
             }
         """;
         Value meta = eval(source);
         // Logic tests moved to JolkObjectTest or similar once parser supports statements
         Value x = meta.invokeMember("new");
 
-        assertEquals(42L, x.invokeMember("val").asLong(), "The field should be initialized to the default value.");
-        assertEquals(0L, x.invokeMember("val2").asLong(), "The field should be initialized to the default value.");
-        assertEquals(0L, x.invokeMember("val3").asLong(), "The field should be initialized to the default value.");
-        assertEquals(42L, x.invokeMember("val4").asLong(), "The field should be initialized to the default value.");
-        assertEquals(42L, x.invokeMember("val5").asLong(), "The field should be initialized to the default value.");
-        assertEquals(0L, x.invokeMember("val6").asLong(), "The field should be initialized to the default value.");
-        assertEquals(0L, x.invokeMember("val7").asLong(), "The field should be initialized to the default value.");
-        assertEquals(42L, x.invokeMember("val8").asLong(), "The field should be initialized to the default value.");
+        assertEquals(42L, x.invokeMember("val").asLong());
+        assertEquals(0L, x.invokeMember("val2").asLong());
+        assertEquals(0L, x.invokeMember("val3").asLong());
+        assertEquals(42L, x.invokeMember("val4").asLong());
+        assertEquals(42L, x.invokeMember("val5").asLong());
+        assertEquals(0L, x.invokeMember("val6").asLong());
+        assertEquals(0L, x.invokeMember("val7").asLong());
+        assertEquals(42L, x.invokeMember("val8").asLong());
     }
 }

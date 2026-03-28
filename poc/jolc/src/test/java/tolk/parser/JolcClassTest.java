@@ -71,17 +71,6 @@ public class JolcClassTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         assertTrue(instance.hasMembers());
         assertTrue(instance.hasMember("me"));
-    }
-
-    @Test
-    @Disabled("TODO: Implement explicit self return for methods, then re-enable this test.")
-    void testClassWithMethodWithExplicitSelfReturn_TODO() {
-        String className = "MyClass";
-        String source = "final class " + className + " { Self me() { ^ self } }";
-        Value meta = eval(className, source);
-        Value instance = meta.invokeMember("new");
-        assertTrue(instance.hasMembers());
-        assertTrue(instance.hasMember("me"));
         assertEquals(instance, instance.invokeMember("me"), "The explicit method 'me' should return 'self'.");
     }
 
@@ -106,6 +95,28 @@ public class JolcClassTest extends JolcTestBase {
         assertTrue(instance.hasMember("me"));
         //TODO: Implement synthesized self return for methods with empty bodies, then re-enable this test.
         assertEquals(instance, instance.invokeMember("me"), "The explicit method 'me' should return 'self'.");
+    }
+
+    @Test
+    void testMethods() {
+        String source = """
+            class MyClass {
+                Self me() { ^ self }
+                Boolean exist() { ^ true }
+                Long x() { ^ 42 } 
+                Long y(Long y) { ^ y } 
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertTrue(instance.hasMember("me")); 
+        assertTrue(instance.hasMember("exist"));
+        assertTrue(instance.hasMember("x"));
+        assertTrue(instance.hasMember("y"));
+        
+        assertEquals(instance, instance.invokeMember("me"));
+        assertTrue(instance.invokeMember("exist").asBoolean());
+        assertEquals(42L, instance.invokeMember("x").asLong());
+        assertEquals(42L, instance.invokeMember("y", 42L).asLong());
     }
 
     @Test
@@ -135,23 +146,6 @@ public class JolcClassTest extends JolcTestBase {
         // Use synthesized setter on the field
         instance.invokeMember("name", "Jolk");
         assertEquals("Jolk", instance.invokeMember("myName").asString(), "Synthesized accessor should store and retrieve value.");
-    }
-
-    @Test
-    void testClassWithMethodAndField_2_TODO() {
-        String className = "MyClass";
-        String source = "final class " + className + " { String name; String myName() { ^ name; } }";
-        Value meta = eval(className, source);
-        Value instance = meta.invokeMember("new");
-        assertTrue(instance.hasMembers());
-        assertTrue(instance.hasMember("name"));
-        assertTrue(instance.hasMember("myName"));
-        
-        // Use synthesized setter on the field
-        instance.invokeMember("name", "Jolk");
-        
-        // Use explicit method to get the value
-        assertEquals("Jolk", instance.invokeMember("myName").asString(), "Explicit method should be able to access the field.");
     }
 
     @Test

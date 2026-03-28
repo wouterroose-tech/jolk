@@ -12,14 +12,6 @@ import static org.junit.jupiter.api.Assertions.*;
 ///
 public class JolkExpressionTest extends JolcTestBase {
 
-    private Value eval(String className, String source) {
-        Value result = eval(source);
-        assertFalse(result.isNull());
-        assertTrue(result.isMetaObject());
-        assertEquals(className, result.getMetaQualifiedName());
-        return result;
-    }
-
     @Test
     void testExpression() {
         String source = """
@@ -41,6 +33,8 @@ public class JolkExpressionTest extends JolcTestBase {
             Long val15() { true ?! [^42] : [^0] }
             Long val16() { false ? [^42] : [^0] }
             Long val17() { false ?! [^42] : [^0] }
+            Long val18() { ^ 1 < 2 ? 42 : 0 }
+            Long val19() { ^ 1 > 2 ? 42 : 0 }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  
@@ -61,6 +55,8 @@ public class JolkExpressionTest extends JolcTestBase {
         assertEquals(0L, instance.invokeMember("val15").asLong());
         assertEquals(0L, instance.invokeMember("val16").asLong());
         assertEquals(42L, instance.invokeMember("val17").asLong());
+        assertEquals(42L, instance.invokeMember("val18").asLong());
+        assertEquals(0L, instance.invokeMember("val19").asLong());
     }
 
     @Test

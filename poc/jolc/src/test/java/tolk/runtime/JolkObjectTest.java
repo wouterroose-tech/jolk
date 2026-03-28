@@ -199,7 +199,6 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending complete method body parsing")
     void testOverriddenEquivalence() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
@@ -221,7 +220,7 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending method call fix")
+    //@Disabled("Pending method call fix")
     void testOverriddenEquivalence_2() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
@@ -254,7 +253,6 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("pending closure fix")
     void testPresence() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """

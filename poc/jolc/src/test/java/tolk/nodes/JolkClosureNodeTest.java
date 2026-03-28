@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import tolk.runtime.JolkClosure;
 import com.oracle.truffle.api.CallTarget;
 
+import java.lang.reflect.Field;
 import static org.junit.jupiter.api.Assertions.*;
 
 ///
@@ -70,6 +71,61 @@ public class JolkClosureNodeTest {
 
         Object result = execute(node);
         assertNotNull(result, "Should result in a non-null closure object even when parameters are defined.");
+    }
+
+    ///
+    /// Tests that the closure correctly captures the lexical environment 
+    /// (the frame arguments) of the caller.
+    ///
+    @Test
+    void testEnvironmentCapture() {
+        JolkNode body = new JolkLiteralNode("env");
+        CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
+        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
+
+        // Define lexical arguments to be captured by the node
+        Object[] expectedEnv = {"outerValue", 99L};
+        
+        // Wrap the closure node in a root node and call it with arguments
+        JolkRootNode parentRoot = new JolkRootNode(null, closureNode, "parent", false);
+        JolkClosure closure = (JolkClosure) parentRoot.getCallTarget().call(expectedEnv);
+
+        assertArrayEquals(expectedEnv, getEnvironmentViaReflection(closure), 
+            "The closure should capture the frame arguments as its lexical environment.");
+    }
+
+    @Test
+    void testExecuteWithNullFrame() {
+        JolkNode body = new JolkLiteralNode(1);
+        CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
+        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
+
+        JolkClosure result = (JolkClosure) closureNode.executeGeneric(null);
+        assertNull(getEnvironmentViaReflection(result), "Closure environment should be null if executed without a frame context.");
+    }
+
+    ///
+    /// Helper to access the private environment field in JolkClosure for testing purposes.
+    /// This bypasses the current lack of a public getter in the runtime class.
+    ///
+    private Object[] getEnvironmentViaReflection(JolkClosure closure) {
+        try {
+            // We assume the field is named 'environment' based on JolkClosureNode's constructor call.
+            Field field = JolkClosure.class.getDeclaredField("environment");
+            field.setAccessible(true);
+            return (Object[]) field.get(closure);
+        } catch (NoSuchFieldException e) {
+            // Fallback for different naming conventions in the PoC
+            try {
+                Field field = JolkClosure.class.getDeclaredField("env");
+                field.setAccessible(true);
+                return (Object[]) field.get(closure);
+            } catch (Exception ex) {
+                throw new RuntimeException("Could not find environment field in JolkClosure", ex);
+            }
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     ///

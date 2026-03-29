@@ -1,7 +1,6 @@
 package tolk.parser;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
@@ -60,7 +59,7 @@ public class JolkExpressionTest extends JolcTestBase {
     }
 
     @Test
-    void testFlowControlMessages() {
+    void testControlFlow() {
         String sourceIfPresent = """
             class FlowPresentTest {
                 Long x;
@@ -87,12 +86,11 @@ public class JolkExpressionTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("binding not yet implemented for the PoC.")
-    void testControlFlow() {
+    void testControlFlow_1() {
         String source = """
             class FlowTest {
                 Int check(Boolean b) {
-                    res = 0;
+                    Int res = 0;
                     b ? [ res = 1 ] : [ res = 2 ];
                     ^ res
                 }
@@ -101,6 +99,60 @@ public class JolkExpressionTest extends JolcTestBase {
         Value instance = eval(source).invokeMember("new");
         assertEquals(1L, instance.invokeMember("check", true).asLong());
         assertEquals(2L, instance.invokeMember("check", false).asLong());
+    }
+
+    @Test
+    void testControlFlow_2() {
+        String source = """
+            class MyClass {
+                Long ifPresentTrue() { Long x = 21; x #ifPresent [v -> x = v * 2 ]; ^x }
+                Long ifPresentFalse() { Long x = 42; null #ifPresent [v -> x = 0 ]; ^x }
+                Long ifEmptyTrue() { Long x = 0; null #ifEmpty [ x = 42 ]; ^x }
+                Long ifEmptyFalse() { Long x = 42; x #ifEmpty [ x = 0 ]; ^x }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");  
+
+        assertEquals(42L, instance.invokeMember("ifPresentTrue").asLong());
+        assertEquals(42L, instance.invokeMember("ifPresentFalse").asLong());
+        assertEquals(42L, instance.invokeMember("ifEmptyTrue").asLong());
+        assertEquals(42L, instance.invokeMember("ifEmptyFalse").asLong());
+    }
+
+    /**
+     * ### testCoreProtocol
+     * 
+     * Verifies the Jolk Object Foundation: #hash, #toString, and #instanceOf.
+     */
+    @Test
+    void testCoreProtocol() {
+        String source = """
+            class ProtocolTest {
+                Long getHash(Object o) { ^ o #hash }
+                String asString(Object o) { ^ o #toString }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+
+        assertEquals(42, instance.invokeMember("getHash", 42L).asInt());
+        assertEquals("42", instance.invokeMember("asString", 42L).asString());
+    }
+
+    /**
+     * ### testNothingSilentAbsorption
+     * 
+     * Verifies that 'null' (Nothing) safely absorbs messages without crashing,
+     * supporting the "Neutral Response" model.
+     */
+    @Test
+    void testNothingSilentAbsorption() {
+        String source = """
+            class NothingTest {
+                Object run() { ^ null #someArbitraryMessage #anotherOne }
+            }""";
+        Value result = eval(source).invokeMember("new").invokeMember("run");
+        
+        // JolkNothing is a first-class identity, not a polyglot null.
+        assertEquals("null", result.toString(), "null should absorb messages and return the 'null' identity string.");
     }
 
 }

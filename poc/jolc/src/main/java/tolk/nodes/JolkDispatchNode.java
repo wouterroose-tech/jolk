@@ -3,11 +3,13 @@ package tolk.nodes;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkObject;
+import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBoolean;
 import tolk.runtime.JolkLong;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
@@ -198,14 +200,15 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
-    private boolean isObjectIntrinsic(String member) {
+    boolean isObjectIntrinsic(String member) {
         return switch (member) {
-            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf" -> true;
+            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "?", "? :", "?!", "?! :" -> true;
             default -> false;
         };
     }
 
     private Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
+        InteropLibrary genericInterop = InteropLibrary.getUncached();
         try {
             switch (name) {
                 case "==" -> {
@@ -213,13 +216,41 @@ public abstract class JolkDispatchNode extends Node {
                     Object other = arguments[0];
                     // Identity short-circuit: same instance is always identical.
                     if (receiver == other) return true;
-                    return interop.isIdentical(receiver, other, interop);
+                    // Only use InteropLibrary.isIdentical if both are interoperable types.
+                    // Otherwise, for distinct plain Java Objects, they are not identical.
+                    if (receiver instanceof TruffleObject || other instanceof TruffleObject ||
+                        receiver instanceof Boolean || other instanceof Boolean ||
+                        receiver instanceof Byte || other instanceof Byte ||
+                        receiver instanceof Short || other instanceof Short ||
+                        receiver instanceof Integer || other instanceof Integer ||
+                        receiver instanceof Long || other instanceof Long ||
+                        receiver instanceof Float || other instanceof Float ||
+                        receiver instanceof Double || other instanceof Double ||
+                        receiver instanceof Character || other instanceof Character ||
+                        receiver instanceof String || other instanceof String) {
+                        return interop.isIdentical(receiver, other, genericInterop);
+                    }
+                    return false; // Distinct plain Java objects are not identical
                 }
                 case "!=" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     Object other = arguments[0];
                     if (receiver == other) return false;
-                    return !interop.isIdentical(receiver, other, interop);
+                    // Only use InteropLibrary.isIdentical if both are interoperable types.
+                    // Otherwise, for distinct plain Java Objects, they are not identical.
+                    if (receiver instanceof TruffleObject || other instanceof TruffleObject ||
+                        receiver instanceof Boolean || other instanceof Boolean ||
+                        receiver instanceof Byte || other instanceof Byte ||
+                        receiver instanceof Short || other instanceof Short ||
+                        receiver instanceof Integer || other instanceof Integer ||
+                        receiver instanceof Long || other instanceof Long ||
+                        receiver instanceof Float || other instanceof Float ||
+                        receiver instanceof Double || other instanceof Double ||
+                        receiver instanceof Character || other instanceof Character ||
+                        receiver instanceof String || other instanceof String) {
+                        return !interop.isIdentical(receiver, other, genericInterop);
+                    }
+                    return true; // Distinct plain Java objects are non-identical
                 }
                 case "~~" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -239,7 +270,8 @@ public abstract class JolkDispatchNode extends Node {
                 }
                 case "??" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    // Primitives are never Nothing
+                    // Identity-Based Flow Control: execute fallback only if receiver is Nothing.
+                    if (receiver == JolkNothing.INSTANCE) return genericInterop.execute(arguments[0]);
                     return receiver;
                 }
                 case "hash" -> { 
@@ -249,6 +281,37 @@ public abstract class JolkDispatchNode extends Node {
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     return receiver.toString(); 
+                }
+                case "isPresent" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    if (receiver instanceof JolkMatch match) return match.isPresent();
+                    return receiver != JolkNothing.INSTANCE;
+                }
+                case "isEmpty" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    if (receiver instanceof JolkMatch match) return !match.isPresent();
+                    return receiver == JolkNothing.INSTANCE;
+                }
+                case "ifPresent" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
+                    if (receiver instanceof JolkMatch match) {
+                        if (match.isPresent()) {
+                            Object val = match.getValue();
+                            return genericInterop.execute(arguments[0], val == null ? JolkNothing.INSTANCE : val);
+                        }
+                        return JolkNothing.INSTANCE;
+                    }
+                    return genericInterop.execute(arguments[0], receiver);
+                }
+                case "ifEmpty" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver == JolkNothing.INSTANCE) return genericInterop.execute(arguments[0]);
+                    if (receiver instanceof JolkMatch match) {
+                        if (!match.isPresent()) return genericInterop.execute(arguments[0]);
+                        return receiver;
+                    }
+                    return receiver;
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -260,12 +323,37 @@ public abstract class JolkDispatchNode extends Node {
                 case "instanceOf" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     Object type = arguments[0];
-                    return (interop.isMetaObject(type) && interop.isMetaInstance(type, receiver)) ? tolk.runtime.JolkMatch.with(receiver) : tolk.runtime.JolkMatch.empty();
+                    return (genericInterop.isMetaObject(type) && genericInterop.isMetaInstance(type, receiver)) ? JolkMatch.with(receiver) : JolkMatch.empty();
+                }
+                case "?" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver instanceof Boolean b && b) return genericInterop.execute(arguments[0]);
+                    return receiver; // Binary branching returns receiver
+                }
+                case "?!" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver instanceof Boolean b && !b) return genericInterop.execute(arguments[0]);
+                    return receiver;
+                }
+                case "? :" -> {
+                    if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
+                    if (receiver instanceof Boolean b) {
+                        return b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                    }
+                    return JolkNothing.INSTANCE;
+                }
+                case "?! :" -> {
+                    if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
+                    if (receiver instanceof Boolean b) {
+                        return !b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                    }
+                    return JolkNothing.INSTANCE;
                 }
             }
         } catch (JolkReturnException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            if (e instanceof JolkReturnException re) throw re;
             throw new RuntimeException("Intrinsic dispatch failed: #" + name, e);
         }
         return JolkNothing.INSTANCE;

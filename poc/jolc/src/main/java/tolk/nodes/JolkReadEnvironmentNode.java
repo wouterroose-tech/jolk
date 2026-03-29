@@ -1,5 +1,6 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -20,10 +21,10 @@ public final class JolkReadEnvironmentNode extends JolkNode {
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] args = frame.getArguments();
-        Object[] targetArgs = args;
+        Object[] targetArgs = frame.getArguments();
         for (int i = 0; i < depth; i++) {
-            targetArgs = (Object[]) targetArgs[0];
+            Object env = targetArgs[0];
+            targetArgs = (env instanceof Frame f) ? f.getArguments() : (Object[]) env;
         }
         return targetArgs;
     }

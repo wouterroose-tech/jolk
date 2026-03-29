@@ -3,6 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.interop.TruffleObject;
 
 /// ### JolkIdentityNode
 /// 
@@ -28,14 +29,33 @@ public class JolkIdentityNode extends JolkExpressionNode {
         Object right = rightNode.executeGeneric(frame);
         
         // Optimization: identical references are always the same identity.
-        // This also guards against interop crashes with non-interop objects (like in tests).
         if (left == right) return negate ? false : true;
         if (left == null || right == null) return negate ? true : false;
 
-        // Use Interop identity checking to handle boxed primitives (e.g. large Longs) correctly.
-        // We pass the uncached library as the third argument for the profiling node context.
-        boolean identical = InteropLibrary.getUncached().isIdentical(left, right, InteropLibrary.getUncached());
+        InteropLibrary interop = InteropLibrary.getUncached();
+        boolean identical;
+
+        // Only call interop.isIdentical if both operands are interop-compatible.
+        // Otherwise, if they are not reference-equal, they are not identical.
+        if (isInteropCompatible(left) && isInteropCompatible(right)) {
+            identical = interop.isIdentical(left, right, interop);
+        } else {
+            // If they are not reference-equal and at least one is not interop-compatible,
+            // then they are not identical in the Jolk sense.
+            identical = false;
+        }
 
         return negate ? !identical : identical;
+    }
+
+    /**
+     * Checks if an object is compatible with Truffle's InteropLibrary for identity checks.
+     * This includes TruffleObjects, primitive wrapper types, and String.
+     */
+    private boolean isInteropCompatible(Object obj) {
+        return obj instanceof TruffleObject ||
+               obj instanceof Boolean || obj instanceof Byte || obj instanceof Short ||
+               obj instanceof Integer || obj instanceof Long || obj instanceof Float ||
+               obj instanceof Double || obj instanceof Character || obj instanceof String;
     }
 }

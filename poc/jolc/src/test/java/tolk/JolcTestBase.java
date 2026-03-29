@@ -2,6 +2,7 @@ package tolk;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,8 @@ public abstract class JolcTestBase {
         context = Context.newBuilder(JolkLanguage.ID)
                 .engine(engine)
                 .allowAllAccess(true)
+                .allowHostAccess(HostAccess.ALL) // Allow Jolk to access all public host (Java) members
+                .allowHostClassLookup(className -> true) // Allow Jolk to look up any Java class
                 .build();
     }
 

@@ -1,6 +1,7 @@
 package tolk.runtime;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import java.util.function.Consumer;
@@ -219,7 +220,6 @@ public class JolkObjectTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("Pending method call fix")
     void testOverriddenEquivalence_2() {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
@@ -278,5 +278,55 @@ public class JolkObjectTest extends JolcTestBase {
         assertEquals(0L, x.invokeMember("val6").asLong());
         assertEquals(0L, x.invokeMember("val7").asLong());
         assertEquals(42L, x.invokeMember("val8").asLong());
+    }
+
+    /**
+     * ### testAsProjection
+     * 
+     * Verifies the '#as' projection (Safe Casting). 
+     * It should return a Match identity.
+     */
+    @Test
+    @Disabled("Pending implemetation of asProjection")
+    void testAsProjection() {
+        String source = "class TargetType { Long id = 42; }";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+
+        Value match = instance.invokeMember("as", meta);
+        assertTrue(match.invokeMember("isPresent").asBoolean());
+        assertEquals(42L, match.invokeMember("get").invokeMember("id").asLong());
+
+        Value noMatch = instance.invokeMember("as", eval("class WrongType {}"));
+        assertFalse(noMatch.invokeMember("isPresent").asBoolean());
+    }
+
+    /**
+     * ### testProject
+     * 
+     * Verifies mass-assignment via the '#project' message using a Map.
+     */
+    @Test
+    @Disabled("Pending implemetation of asProjection")
+    void testProject() {
+        String source = "class Projectable { String name; Long age; }";
+        Value instance = eval(source).invokeMember("new");
+        
+        // In a real Jolk environment, this would be a Jolk Map #( ... )
+        // For the test, we simulate the interop call.
+        java.util.Map<String, Object> data = java.util.Map.of("name", "Jolk", "age", 1L);
+        instance.invokeMember("project", data);
+
+        assertEquals("Jolk", instance.invokeMember("name").asString());
+        assertEquals(1L, instance.invokeMember("age").asLong());
+    }
+
+    @Test
+    void testNothingAdheresToObjectProtocol() {
+        Value nothing = eval("class Wrapper { Object get() { ^ null } }").invokeMember("new").invokeMember("get");
+        
+        assertEquals("null", nothing.invokeMember("toString").asString());
+        assertTrue(nothing.invokeMember("hash").isNumber());
+        assertTrue(nothing.invokeMember("isEmpty").asBoolean());
     }
 }

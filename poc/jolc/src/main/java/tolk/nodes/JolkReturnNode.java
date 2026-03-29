@@ -20,7 +20,7 @@ public final class JolkReturnNode extends JolkNode {
      * @param expression The expression to be evaluated and returned.
      * @param targetNode The node used to resolve the lexical environment of the target method.
      */
-    public JolkReturnNode(JolkNode expression, JolkReadEnvironmentNode targetNode) {
+    public JolkReturnNode(JolkNode expression, JolkNode targetNode) {
         this.expression = expression;
         this.targetNode = targetNode;
     }

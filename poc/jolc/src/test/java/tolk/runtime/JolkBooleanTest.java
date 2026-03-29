@@ -37,6 +37,16 @@ public class JolkBooleanTest {
     }
 
     @Test
+    void testIdentityAndEquivalence() throws Exception {
+        assertTrue((Boolean) execute(getOperation("=="), true, true));
+        assertFalse((Boolean) execute(getOperation("=="), true, false));
+        assertTrue((Boolean) execute(getOperation("!="), true, false));
+
+        assertTrue((Boolean) execute(getOperation("~~"), true, true));
+        assertTrue((Boolean) execute(getOperation("!~"), true, false));
+    }
+
+    @Test
     void testLogicOr() throws Exception {
         Object op = getOperation("||");
         assertEquals(true, execute(op, true, true));
@@ -89,6 +99,22 @@ public class JolkBooleanTest {
     }
 
     @Test
+    void testCombinedTernary() throws Exception {
+        Object op = getOperation("? :");
+        AtomicBoolean thenExecuted = new AtomicBoolean(false);
+        AtomicBoolean elseExecuted = new AtomicBoolean(false);
+        
+        BooleanTestExecutable thenAction = new BooleanTestExecutable(() -> thenExecuted.set(true));
+        BooleanTestExecutable elseAction = new BooleanTestExecutable(() -> elseExecuted.set(true));
+
+        // true ? [ then ] : [ else ]
+        execute(op, true, thenAction, elseAction);
+        assertTrue(thenExecuted.get());
+        assertFalse(elseExecuted.get());
+        // Note: In Jolk, ternary returns the result of the executed block.
+    }
+
+    @Test
     void testElse() throws Exception {
         Object op = getOperation(":");
         AtomicBoolean executed = new AtomicBoolean(false);
@@ -121,6 +147,26 @@ public class JolkBooleanTest {
 
         // Class
         assertEquals(JolkBoolean.BOOLEAN_TYPE, execute(getOperation("class"), true));
+    }
+
+    @Test
+    void testPresenceLogic() throws Exception {
+        AtomicBoolean executed = new AtomicBoolean(false);
+        BooleanTestExecutable action = new BooleanTestExecutable(() -> executed.set(true));
+
+        // ifPresent: Booleans are present identities, so action should execute
+        Object resPresent = execute(getOperation("ifPresent"), true, action);
+        assertTrue(executed.get(), "ifPresent should execute for Boolean");
+        // JolkObject.ifPresent returns the result of the action
+        assertEquals(JolkNothing.INSTANCE, resPresent);
+
+        executed.set(false);
+
+        // ifEmpty: Booleans are NOT empty, so action should NOT execute
+        Object resEmpty = execute(getOperation("ifEmpty"), true, action);
+        assertFalse(executed.get(), "ifEmpty should NOT execute for Boolean");
+        // JolkObject.ifEmpty returns self (the receiver)
+        assertEquals(true, resEmpty);
     }
 
     @Test

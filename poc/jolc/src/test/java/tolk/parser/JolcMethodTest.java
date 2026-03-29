@@ -3,7 +3,6 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -113,25 +112,6 @@ public class JolcMethodTest  extends JolcTestBase {
         assertEquals(34L, instance.invokeMember("fib", 8L).asLong());
         assertEquals(55L, instance.invokeMember("fib", 9L).asLong());
         assertEquals(89L, instance.invokeMember("fib", 10L).asLong());
-    }
-
-    @Test
-    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testFlowControlMessages() {
-        String source = """
-            class MinMaxTest {
-                Long ifPresentTrue() { Long x = 42; x #ifPresent [v -> x = v ]; ^x" }
-                Long ifPresentFalse() { Long x = 0; null #ifPresent [v -> x = 42 ]; ^x" }
-                Long ifEmptyTrue() { Long x = 42; null #ifEmpty [ x = 0 ]; ^x"}
-                Long ifEmptyFalse() { Long x = 42; null #ifEmpty [ x = 0 ]; ^x"}
-            }""";
-        Value meta = eval(source);
-        Value instance = meta.invokeMember("new");  
-
-        assertEquals(42L, instance.invokeMember("ifPresentTrue").asLong());
-        assertEquals(42L, instance.invokeMember("ifPresentFalse").asLong());
-        assertEquals(0L, instance.invokeMember("ifEmptyTrue").asLong());
-        assertEquals(0L, instance.invokeMember("ifEmptyFalse").asLong());
     }
 
 }

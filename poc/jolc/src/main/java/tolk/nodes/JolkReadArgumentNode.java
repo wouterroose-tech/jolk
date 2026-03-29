@@ -1,5 +1,6 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import tolk.runtime.JolkNothing;
@@ -32,7 +33,9 @@ public class JolkReadArgumentNode extends JolkNode {
 
         // The compiler will unroll this loop because depth is constant
         for (int i = 0; i < depth; i++) {
-            targetArgs = (Object[]) targetArgs[0];
+            // Navigate through the VirtualFrame/MaterializedFrame stored at index 0
+            Object env = targetArgs[0];
+            targetArgs = (env instanceof Frame f) ? f.getArguments() : (Object[]) env;
         }
 
         return (index < targetArgs.length) ? targetArgs[index] : JolkNothing.INSTANCE;

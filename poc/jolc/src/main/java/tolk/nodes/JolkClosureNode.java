@@ -1,6 +1,7 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import tolk.runtime.JolkClosure;
 
 /// # JolkClosureNode
@@ -24,7 +25,7 @@ public class JolkClosureNode extends JolkNode {
     // This node's role is to create the JolkClosure instance with the correct CallTarget and environment.
     @Override
     public Object executeGeneric(com.oracle.truffle.api.frame.VirtualFrame frame) {
-        Object[] environment = (frame != null) ? frame.getArguments() : null;
-        return new JolkClosure(callTarget, environment);
+        MaterializedFrame materializedFrame = (frame != null) ? frame.materialize() : null;
+        return new JolkClosure(callTarget, materializedFrame);
     }
 }

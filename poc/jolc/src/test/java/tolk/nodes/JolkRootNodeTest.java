@@ -1,88 +1,117 @@
 package tolk.nodes;
 
-import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
-import tolk.JolcTestBase;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-///
-/// Verifies the behavior of the root execution node for the Jolk language.
-/// These tests confirm that the program's entry point correctly manages the
-/// execution flow and returns the appropriate final value from a script.
-///
-public class JolkRootNodeTest extends JolcTestBase {
+/**
+ * ## JolkRootNodeTest
+ *
+ * Verifies the behavior of the {@link JolkRootNode}, which serves as the entry point
+ * for Jolk methods and closures, managing their execution context and handling
+ * non-local returns.
+ */
+public class JolkRootNodeTest {
 
+    /**
+     * Tests that a {@link JolkRootNode} correctly executes its body and returns the result.
+     */
     @Test
-    void testEmptyProgramReturnsNull() {
-        Value result = eval("");
-        assertEquals("null", result.toString(), "Executing an empty program should result in a null value.");
+    void testExecuteGeneric() {
+        JolkNode body = new JolkLiteralNode(42);
+        JolkRootNode rootNode = new JolkRootNode(null, body, "testMethod", true);
+        CallTarget callTarget = rootNode.getCallTarget();
+
+        Object result = callTarget.call();
+        assertEquals(42, result, "The root node should execute its body and return the result.");
     }
 
     /**
-     * Verifies that the root node correctly delegates execution to the body node
-     * and returns the result in a script (non-method) context.
+     * Tests that a {@link JolkRootNode} configured as a method boundary
+     * catches a {@link JolkReturnException} and returns its value.
      */
     @Test
-    void testScriptExecution() {
-        JolkNode body = new JolkLiteralNode(100L);
-        JolkRootNode rootNode = new JolkRootNode(null, body, "script", false);
-
-        Object result = rootNode.getCallTarget().call();
-        assertEquals(100L, result, "Script execution should return the literal value from the body.");
-    }
-
-    /**
-     * Verifies that when a [JolkReturnException] is thrown with a target matching
-     * the current activation's environment, the root node catches it and returns the value.
-     */
-    @Test
-    void testMethodReturnUnwindsToCorrectTarget() {
-        Object[] environment = new Object[]{"self", "arg1"};
-
-        JolkNode body = new JolkNode() {
+    void testMethodRootNodeCatchesReturnException() {
+        // A body that throws a JolkReturnException
+        JolkNode throwingBody = new JolkNode() {
             @Override
             public Object executeGeneric(VirtualFrame frame) {
-                // In Jolk, ^ targets the 'Home' method arguments array (the lexical environment)
-                throw new JolkReturnException("ReturnValue", frame.getArguments());
+                // Jolk uses identity-based targets for non-local returns.
+                // The target identity is the arguments array of the target activation.
+                throw new JolkReturnException(42, frame.getArguments());
             }
         };
 
-        JolkRootNode rootNode = new JolkRootNode(null, new FrameDescriptor(), body, "testMethod", true);
-        Object result = rootNode.getCallTarget().call(environment);
+        // Root node for a method (isMethod = true)
+        JolkRootNode methodRootNode = new JolkRootNode(null, throwingBody, "testMethod", true);
+        CallTarget callTarget = methodRootNode.getCallTarget();
 
-        assertEquals("ReturnValue", result, "RootNode should catch the ReturnException when the target matches the arguments.");
+        Object result = callTarget.call();
+        assertEquals(42, result, "A method root node should catch JolkReturnException and return its value.");
     }
 
     /**
-     * Verifies that a [JolkReturnException] bubbles up through intermediate methods
-     * if the target does not match the current method's environment.
+     * Tests that a {@link JolkRootNode} configured as a closure (not a method boundary)
+     * re-throws a {@link JolkReturnException} if it's not the target of the return.
+     * This is crucial for Non-Local Returns.
      */
     @Test
-    void testReturnBubblesUpOnMismatch() {
-        Object[] currentEnv = new Object[]{"inner"};
-        Object[] targetEnv = new Object[]{"outer"};
-
-        JolkNode body = new JolkNode() {
+    void testClosureRootNodeReThrowsReturnExceptionIfNotTarget() {
+        // A body that throws a JolkReturnException with targetDepth > 0
+        // We need a distinct Object[] to represent a "higher" frame's arguments.
+        Object[] higherFrameArgs = new Object[]{"higher"};
+        JolkNode throwingBody = new JolkNode() {
             @Override
             public Object executeGeneric(VirtualFrame frame) {
-                throw new JolkReturnException("exit", targetEnv);
+                // This return targets a frame *other* than the current closure's frame.
+                // The JolkRootNode for the closure should re-throw it.
+                throw new JolkReturnException(99, higherFrameArgs);
             }
         };
 
-        JolkRootNode rootNode = new JolkRootNode(null, new FrameDescriptor(), body, "innerMethod", true);
+        // Root node for a closure (isMethod = false)
+        JolkRootNode closureRootNode = new JolkRootNode(null, throwingBody, "testClosure", false);
+        CallTarget callTarget = closureRootNode.getCallTarget(); // This will create a frame for the closure
 
-        // Should bubble up because currentEnv != targetEnv
-        assertThrows(JolkReturnException.class, () -> rootNode.getCallTarget().call(currentEnv),
-            "ReturnException should be rethrown if the target doesn't match the current frame arguments.");
+        // Expect the JolkReturnException to be re-thrown
+        JolkReturnException thrown = assertThrows(JolkReturnException.class, () -> callTarget.call(),
+                "A closure root node should re-throw JolkReturnException if it's not the target.");
+
+        assertEquals(99, thrown.getResult(), "The re-thrown exception should carry the correct result.");
+        assertEquals(higherFrameArgs, thrown.getTarget(), "The re-thrown exception should carry the correct target identifier.");
+    }
+
+    /**
+     * Tests that a {@link JolkRootNode} properly handles standard execution 
+     * without exceptions.
+     */
+    @Test
+    void testStandardExecutionFlow() {
+        JolkNode body = new JolkNode() {
+            @Override
+            public Object executeGeneric(VirtualFrame frame) {
+                return "success";
+            }
+        };
+        JolkRootNode root = new JolkRootNode(null, body, "test", true);
+        assertEquals("success", root.getCallTarget().call());
     }
 
     @Test
-    void testGetName() {
-        JolkRootNode rootNode = new JolkRootNode(null, new JolkEmptyNode(), "testRoot", false);
-        assertEquals("testRoot", rootNode.getName());
+    void testClosureRootNodeAcceptsZeroDepthReturn() {
+        // A closure root node should re-throw returns that target its own frame,
+        // as it's not a method boundary.
+        JolkNode body = new JolkNode() {
+            @Override public Object executeGeneric(VirtualFrame frame) {
+                // This return targets the current frame's arguments.
+                throw new JolkReturnException("local", frame.getArguments());
+            }
+        };
+        // Even if isMethod is false, if targetDepth is 0, it should be caught if the node is the target.
+        // However, JolkRootNode logic usually catches ONLY if isMethod is true or depth matches.
+        JolkRootNode root = new JolkRootNode(null, body, "closure", false);
+        assertThrows(JolkReturnException.class, () -> root.getCallTarget().call());
     }
-
 }

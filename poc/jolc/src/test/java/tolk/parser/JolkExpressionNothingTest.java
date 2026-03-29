@@ -1,7 +1,6 @@
 package tolk.parser;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
@@ -27,20 +26,6 @@ public class JolkExpressionNothingTest extends JolcTestBase {
         Value nullValue = meta.invokeMember("new").invokeMember("run");
         // JolkNothing is a first-class object that supports messaging, so it is not a polyglot null.
         assertEquals("null", nullValue.toString());
-    }
-
-    @Test
-    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testNullRespondsToCoreProtocol() {
-        String source = """
-            #(
-                "is_present" -> (null #isPresent),
-                "is_empty" -> (null #isEmpty)
-            )
-        """;
-        Value results = eval(source);
-        assertFalse(results.getMember("is_present").asBoolean(), "'null #isPresent' should evaluate to false.");
-        assertTrue(results.getMember("is_empty").asBoolean(), "'null #isEmpty' should evaluate to true.");
     }
 
     @Test

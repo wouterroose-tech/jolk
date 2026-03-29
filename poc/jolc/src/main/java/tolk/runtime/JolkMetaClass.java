@@ -151,20 +151,22 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     public boolean isMetaInstance(Object instance) {
+        InteropLibrary interop = InteropLibrary.getUncached();
+
         // 1. Handle Jolk's reified null (`Nothing`)
         if (instance == JolkNothing.INSTANCE) {
             // Nothing is an instance of its own type and also of Object.
             if (this == JolkNothing.NOTHING_TYPE) return true;
         }
 
-        // 2. Handle Jolk's intrinsic `Long` (represented by java.lang.Long or java.lang.Integer)
-        if (instance instanceof Long || instance instanceof Integer) {
-            // Primitives match their specialized archetypes.
+        // 2. Handle Jolk's intrinsic numeric archetypes.
+        // We use InteropLibrary to handle both raw primitives and polyglot-wrapped values.
+        if (interop.isNumber(instance)) {
             if (isLongHint(this.name)) return true;
         }
 
-        // 3. Handle Jolk's intrinsic `Boolean` (represented by java.lang.Boolean)
-        if (instance instanceof Boolean) {
+        // 3. Handle Jolk's intrinsic `Boolean` archetype.
+        if (interop.isBoolean(instance)) {
             // Primitives match their specialized archetypes.
             if (isBooleanHint(this.name)) return true;
         }
@@ -182,8 +184,8 @@ public final class JolkMetaClass implements TruffleObject {
         // Note: During message dispatch, specialized MetaClasses (Boolean/Long) must be 
         // registered before the root Object archetype to avoid shadowing specialized members.
         if (this.superclass == null && "Object".equals(this.name)) {
-            return instance instanceof JolkObject || instance == JolkNothing.INSTANCE ||
-                   instance instanceof Long || instance instanceof Integer || instance instanceof Boolean;
+            return instance instanceof JolkObject || instance == JolkNothing.INSTANCE || 
+                   interop.isNumber(instance) || interop.isBoolean(instance);
         }
 
         // 6. For the PoC, other Java objects (e.g., String) are not considered

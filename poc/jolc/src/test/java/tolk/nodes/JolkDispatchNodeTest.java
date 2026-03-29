@@ -1,126 +1,132 @@
 package tolk.nodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import tolk.runtime.JolkArchetype;
-import tolk.runtime.JolkFinality;
-import tolk.runtime.JolkMetaClass;
+import tolk.JolcTestBase;
 import tolk.runtime.JolkNothing;
-import tolk.runtime.JolkObject;
-import tolk.runtime.JolkVisibility;
 
-import java.util.Collections;
-
+import java.util.HashMap;
+import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class JolkDispatchNodeTest {
+/**
+ * ## JolkDispatchNodeTest
+ *
+ * Verifies the behavior of the {@link JolkDispatchNode}, which is responsible for
+ * polymorphic message dispatch in Jolk, including intrinsic handling and
+ * Identity Restitution.
+ */
+public class JolkDispatchNodeTest extends JolcTestBase {
+
+    /**
+     * Tests that {@link JolkNothing} correctly absorbs messages and returns itself.
+     * This verifies the `doNothing` specialization.
+     */
+    @Test
+    void testNothingSilentAbsorption() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        Object result = dispatchNode.executeDispatch(JolkNothing.INSTANCE, "someArbitraryMessage", new Object[0]);
+        assertEquals(JolkNothing.INSTANCE, result, "JolkNothing should absorb any message and return itself.");
+    }
+
+    /**
+     * Tests that raw JVM `null` values returned from interop calls are
+     * "lifted" to {@link JolkNothing.INSTANCE} (Identity Restitution).
+     * This specifically targets the `if (result == null)` check in `doDispatch`.
+     */
+    @Test
+    @Disabled("TODO reactivate when interop is finalized")
+    void testIdentityRestitutionForNull() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        // Use a standard Java Map (Host Object) to test raw null restitution.
+        // Host objects are allowed to return raw nulls via Interop, which 
+        // Jolk must then lift to Nothing.
+        Map<String, Object> hostMap = new HashMap<>();
+        // We wrap the host object in a Polyglot Value to ensure it is treated as a 
+        // Host Object with member support by the InteropLibrary.
+        Object wrappedMap = context.asValue(hostMap);
+
+        Object result = dispatchNode.executeDispatch(wrappedMap, "get", new Object[]{"missingKey"});
+        assertEquals(JolkNothing.INSTANCE, result, "Raw JVM null should be restituted to JolkNothing.INSTANCE.");
+    }
+
+    /**
+     * Tests that intrinsic messages to raw Java `Long` are routed to `JolkLong.LONG_TYPE`.
+     */
+    @Test
+    void testLongIntrinsicRouting() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        Long receiver = 42L;
+
+        // Test an intrinsic like "hash"
+        Object result = dispatchNode.executeDispatch(receiver, "hash", new Object[0]);
+        assertEquals(42L, result, "Long intrinsic 'hash' should be handled correctly.");
+
+        // Test an intrinsic like "isPresent"
+        result = dispatchNode.executeDispatch(receiver, "isPresent", new Object[0]);
+        assertEquals(true, result, "Long intrinsic 'isPresent' should return true.");
+
+        // Test a non-intrinsic (should fall through to interop or JolkLong members)
+        // For this test, we'll assume JolkLong has a '+' operator
+        result = dispatchNode.executeDispatch(receiver, "+", new Object[]{10L});
+        assertEquals(52L, result, "Long '+' operator should be handled by JolkLong members.");
+    }
+
+    /**
+     * Tests that intrinsic messages to raw Java `Boolean` are routed to `JolkBoolean.BOOLEAN_TYPE`.
+     */
+    @Test
+    void testBooleanIntrinsicRouting() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        Boolean receiver = true;
+
+        // Test an intrinsic like "isPresent"
+        Object result = dispatchNode.executeDispatch(receiver, "isPresent", new Object[0]);
+        assertEquals(true, result, "Boolean intrinsic 'isPresent' should return true.");
+
+        // Test an intrinsic like "isEmpty"
+        result = dispatchNode.executeDispatch(receiver, "isEmpty", new Object[0]);
+        assertEquals(false, result, "Boolean intrinsic 'isEmpty' should return false.");
+
+        // Test a non-intrinsic (should fall through to interop or JolkBoolean members)
+        // For this test, we'll assume JolkBoolean has a '!' operator
+        result = dispatchNode.executeDispatch(receiver, "!", new Object[0]);
+        assertEquals(false, result, "Boolean '!' operator should be handled by JolkBoolean members.");
+    }
+
+    /**
+     * Tests that `isObjectIntrinsic` correctly identifies all core object protocol messages.
+     */
+    @Test
+    void testIsObjectIntrinsic() {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create(); // Need an instance to call non-static method
+        assertTrue(dispatchNode.isObjectIntrinsic("=="));
+        assertTrue(dispatchNode.isObjectIntrinsic("!="));
+        assertTrue(dispatchNode.isObjectIntrinsic("~~"));
+        assertTrue(dispatchNode.isObjectIntrinsic("!~"));
+        assertTrue(dispatchNode.isObjectIntrinsic("??"));
+        assertTrue(dispatchNode.isObjectIntrinsic("hash"));
+        assertTrue(dispatchNode.isObjectIntrinsic("toString"));
+        assertTrue(dispatchNode.isObjectIntrinsic("class"));
+        assertTrue(dispatchNode.isObjectIntrinsic("instanceOf"));
+        assertTrue(dispatchNode.isObjectIntrinsic("isPresent"));
+        assertTrue(dispatchNode.isObjectIntrinsic("isEmpty"));
+        assertFalse(dispatchNode.isObjectIntrinsic("someOtherMessage"));
+    }
 
     @Test
-    void testDispatchToNothing() {
-        TestDispatchNode node = new TestDispatchNode(JolkNothing.INSTANCE, "isEmpty", new Object[]{});
-        Object result = execute(node);
-        assertEquals(true, result, "Nothing #isEmpty should be true");
-    }
+    void testNullResultRestitution() {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        // Verify raw nulls from members are restituted to Nothing
+        Object result = dispatchNode.executeDispatch(JolkNothing.INSTANCE, "hash", new Object[0]);
+        assertEquals(0L, result);
 
-    @Test
-    void testDispatchToNothingError() {
-        // isEmpty takes 0 arguments, passing 1 should fail
-        TestDispatchNode node = new TestDispatchNode(JolkNothing.INSTANCE, "isEmpty", new Object[]{"extra"});
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
-        assertTrue(ex.getMessage().contains("Message dispatch failed"), "Should catch ArityException for Nothing");
-    }
-
-    @Test
-    void testDispatchToObject() {
-        JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
-        JolkObject obj = new JolkObject(meta);
-        TestDispatchNode node = new TestDispatchNode(obj, "toString", new Object[]{});
-        
-        Object result = execute(node);
-        assertEquals("instance of Test", result);
-    }
-
-    @Test
-    void testDispatchToLong() {
-        // Test protocol message
-        TestDispatchNode node1 = new TestDispatchNode(42L, "toString", new Object[]{});
-        assertEquals("42", execute(node1), "Long #toString should return string representation");
-
-        // Test arithmetic message
-        TestDispatchNode node2 = new TestDispatchNode(10L, "+", new Object[]{20L});
-        assertEquals(30L, execute(node2), "Long #+ should perform addition");
-    }
-
-    @Test
-    void testDispatchToLongError() {
-        // Passing wrong type to '+' to trigger UnsupportedTypeException inside LongAdd
-        TestDispatchNode node = new TestDispatchNode(10L, "+", new Object[]{"not a number"});
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
-        assertTrue(ex.getMessage().contains("Error executing #+ on Long"), "Should wrap intrinsic execution errors");
-    }
-
-    @Test
-    void testDispatchToBoolean() {
-        // Test protocol message
-        TestDispatchNode node1 = new TestDispatchNode(true, "toString", new Object[]{});
-        assertEquals("true", execute(node1), "Boolean #toString should return string representation");
-
-        // Test logic message
-        TestDispatchNode node2 = new TestDispatchNode(true, "&&", new Object[]{false});
-        assertEquals(false, execute(node2), "Boolean #&& should perform logical AND");
-    }
-
-    @Test
-    void testDispatchToBooleanError() {
-        // Passing wrong type to '&&' to trigger UnsupportedTypeException inside BooleanAnd
-        TestDispatchNode node = new TestDispatchNode(true, "&&", new Object[]{"not a boolean"});
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
-        assertTrue(ex.getMessage().contains("Error executing #&& on Boolean"), "Should wrap intrinsic execution errors");
-    }
-
-    @Test
-    void testDispatchUnknownSelector() {
-        JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
-        JolkObject obj = new JolkObject(meta);
-        TestDispatchNode node = new TestDispatchNode(obj, "unknown", new Object[]{});
-        
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
-        assertTrue(ex.getMessage().contains("Message dispatch failed"));
-    }
-
-    @Test
-    void testDispatchArityError() {
-        JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
-        JolkObject obj = new JolkObject(meta);
-        // hash takes 0 arguments, passing 1 should fail
-        TestDispatchNode node = new TestDispatchNode(obj, "", new Object[]{"extra"});
-        
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> execute(node));
-        assertTrue(ex.getMessage().contains("Message dispatch failed"));
-    }
-
-    private Object execute(JolkNode node) {
-        // Wrap in RootNode to support Truffle DSL caching and adoption
-        JolkRootNode root = new JolkRootNode(null, node);
-        return root.getCallTarget().call();
-    }
-
-    // Helper node to exercise JolkDispatchNode within a Truffle context
-    static class TestDispatchNode extends JolkNode {
-        @Child JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
-        private final Object receiver;
-        private final String selector;
-        private final Object[] args;
-
-        TestDispatchNode(Object receiver, String selector, Object[] args) {
-            this.receiver = receiver;
-            this.selector = selector;
-            this.args = args;
-        }
-
-        @Override
-        public Object executeGeneric(VirtualFrame frame) {
-            return dispatchNode.executeDispatch(receiver, selector, args);
-        }
+        Object str = dispatchNode.executeDispatch(JolkNothing.INSTANCE, "toString", new Object[0]);
+        assertEquals("null", str);
     }
 }

@@ -1,5 +1,6 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 
@@ -23,7 +24,7 @@ public class JolkWriteLocalVariableNode extends JolkNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         Object value = valueNode.executeGeneric(frame);
-        VirtualFrame targetFrame = getTargetFrame(frame);
+        Frame targetFrame = getTargetFrame(frame);
         // Jolk uses indexed slots in the frame for locals and parameters
         // aligned with the indices in the visitor's scope stack.
         targetFrame.setObject(index, value);
@@ -31,11 +32,11 @@ public class JolkWriteLocalVariableNode extends JolkNode {
     }
 
     @ExplodeLoop
-    private VirtualFrame getTargetFrame(VirtualFrame frame) {
-        VirtualFrame current = frame;
+    private Frame getTargetFrame(VirtualFrame frame) {
+        Frame current = frame;
         for (int i = 0; i < depth; i++) {
             // Navigates lexical environment via context pointer at index 0
-            current = (VirtualFrame) current.getArguments()[0];
+            current = (Frame) current.getArguments()[0];
         }
         return current;
     }

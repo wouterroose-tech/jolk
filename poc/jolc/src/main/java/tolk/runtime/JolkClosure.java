@@ -1,6 +1,7 @@
 package tolk.runtime;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -13,14 +14,14 @@ import com.oracle.truffle.api.library.ExportMessage;
 @ExportLibrary(InteropLibrary.class)
 public class JolkClosure implements TruffleObject {
     private final CallTarget callTarget;
-    private final Object[] environment;
+    private final MaterializedFrame environment;
 
     public JolkClosure(CallTarget callTarget) {
         this.callTarget = callTarget;
         this.environment = null;
     }
 
-    public JolkClosure(CallTarget callTarget, Object[] environment) {
+    public JolkClosure(CallTarget callTarget, MaterializedFrame environment) {
         this.callTarget = callTarget;
         this.environment = environment;
     }
@@ -32,7 +33,7 @@ public class JolkClosure implements TruffleObject {
 
     @ExportMessage
     public Object execute(Object[] arguments) {
-        Object[] env = this.environment;
+        Object env = this.environment;
         if (env != null) {
             // Prepend the captured environment (lexical scope) at index 0
             Object[] captures = new Object[arguments.length + 1];

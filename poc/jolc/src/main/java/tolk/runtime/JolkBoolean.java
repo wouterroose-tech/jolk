@@ -234,8 +234,7 @@ public final class JolkBoolean {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Object receiver = arguments[0];
             Object action = arguments[1];
-            InteropLibrary.getUncached().execute(action, receiver);
-            return receiver;
+            return InteropLibrary.getUncached().execute(action, receiver);
         }
     }
 

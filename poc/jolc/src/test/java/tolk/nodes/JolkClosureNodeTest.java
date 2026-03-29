@@ -1,9 +1,13 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.runtime.JolkClosure;
 import com.oracle.truffle.api.CallTarget;
@@ -35,7 +39,7 @@ public class JolkClosureNodeTest {
         assertNotNull(result);
         assertTrue(result instanceof JolkClosure, "Executing a closure node should yield a JolkClosure instance.");
     }
-
+    
     ///
     /// Tests that the created [JolkClosure] can be executed and returns the
     /// value from its body. This test uses the Interop library to treat the closure
@@ -71,6 +75,40 @@ public class JolkClosureNodeTest {
 
         Object result = execute(node);
         assertNotNull(result, "Should result in a non-null closure object even when parameters are defined.");
+    }
+
+    /**
+     * ### testClosureProtocolHandlers
+     * 
+     * Verifies the JolkClosure interop protocol for 'catch' and 'finally'.
+     */
+    @Test
+    @Disabled("Activate when interop protocol is implemented")
+    void testClosureProtocolHandlers() throws UnsupportedMessageException, ArityException, UnsupportedTypeException, UnknownIdentifierException {
+        InteropLibrary interop = InteropLibrary.getUncached();
+        
+        // Setup a closure that returns a value
+        JolkNode body = new JolkLiteralNode(42);
+        CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
+        JolkClosure closure = new JolkClosure(target);
+
+        // Test #finally: Ensure the finalAction is executed
+        boolean[] finallyExecuted = {false};
+        JolkClosure finalAction = new JolkClosure(new JolkRootNode(null, new JolkNode() {
+            @Override public Object executeGeneric(com.oracle.truffle.api.frame.VirtualFrame frame) {
+                finallyExecuted[0] = true;
+                return null;
+            }
+        }, "finalizer", false).getCallTarget());
+
+        Object result = interop.invokeMember(closure, "finally", finalAction);
+        assertEquals(42, result, "Finally should return the result of the original closure.");
+        assertTrue(finallyExecuted[0], "The 'finally' action must be executed.");
+
+        // Test #catch: Ensure no catch occurs if no exception is thrown
+        JolkClosure catchHandler = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode("error"), "handler", false).getCallTarget());
+        Object noCatchResult = interop.invokeMember(closure, "catch", Exception.class, catchHandler);
+        assertEquals(42, noCatchResult, "Should return original result if no exception occurs.");
     }
 
     ///
@@ -117,12 +155,14 @@ public class JolkClosureNodeTest {
         try {
             Field field = JolkClosure.class.getDeclaredField("environment");
             field.setAccessible(true);
-            return (Object[]) field.get(closure);
+            Object env = field.get(closure);
+            return (env instanceof Frame f) ? f.getArguments() : (Object[]) env;
         } catch (NoSuchFieldException e) {
             try {
                 Field field = JolkClosure.class.getDeclaredField("env");
                 field.setAccessible(true);
-                return (Object[]) field.get(closure);
+                Object env = field.get(closure);
+                return (env instanceof Frame f) ? f.getArguments() : (Object[]) env;
             } catch (Exception ex) {
                 throw new RuntimeException("Could not find environment field in JolkClosure", ex);
             }

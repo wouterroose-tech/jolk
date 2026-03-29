@@ -87,6 +87,19 @@ public class JolkNothingTest {
         Object result = InteropLibrary.getUncached().invokeMember(nothing, "project", nothing);
         assertEquals(nothing, result, "Project on Nothing should return Nothing (silent absorption)");
     }
+    
+    /**
+     * ### testSilentAbsorption
+     * 
+     * Verifies the "Neutral Response" model: any unknown message sent to Nothing 
+     * should return Nothing itself.
+     */
+    @Test
+    void testSilentAbsorption() throws Exception {
+        Object nothing = JolkNothing.INSTANCE;
+        Object result = InteropLibrary.getUncached().invokeMember(nothing, "someRandomMessageThatDoesNotExist");
+        assertEquals(nothing, result, "Nothing should absorb unknown messages and return itself.");
+    }
 
     @Test
     void testClass() throws Exception {

@@ -103,22 +103,6 @@ public class JolcLongTest extends JolcTestBase {
     }
 
     @Test
-    void testMinMax_tmp() {
-        String source = """
-            class MinMaxTest {
-            Long getMax() { ^ 9223372036854775807 }
-            Long getMin() { ^ -9223372036854775808 }
-            Long getMaxConst() { ^ Long #MAX }
-            Long getMinConst() { ^ Long #MIN }
-            Long wrap() { ^ 9223372036854775807 + 1 } }
-            """;
-        Value instance = eval(source).invokeMember("new");
-        assertEquals(Long.MAX_VALUE, instance.invokeMember("getMax").asLong());
-        assertEquals(Long.MIN_VALUE, instance.invokeMember("getMin").asLong());
-        assertEquals(Long.MIN_VALUE, instance.invokeMember("wrap").asLong(), "Long overflow should wrap around.");
-    }
-
-    @Test
     @Disabled("Re-enable once constant folding is implemented and the PoC supports it")
     void testMinMax() {
         String source = """

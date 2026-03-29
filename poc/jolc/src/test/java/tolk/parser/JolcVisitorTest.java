@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /// S-expression representation of the Abstract Syntax Tree (AST) to validate
 /// the parser's output and the visitor's traversal logic.
 ///
-public class JolkVisitorTest extends JolcTestBase {
+public class JolcVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitDeclArchetype() {

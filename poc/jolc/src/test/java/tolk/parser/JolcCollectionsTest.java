@@ -13,7 +13,7 @@ public class JolcCollectionsTest extends JolcTestBase {
 
     @Test
     @Disabled("Pending implementation of Map & String") 
-    void testNullRespondsToCoreProtocol() {
+    void testMapLiteral() {
         String source = """
             class MyClass {
                 Map<Long, String> map = #(
@@ -25,7 +25,6 @@ public class JolcCollectionsTest extends JolcTestBase {
         Value instance = eval(source);
         assertEquals("one", instance.invokeMember("get", 1));
         assertNull(instance.invokeMember("get", 0));
-
     }
 
 }

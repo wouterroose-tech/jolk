@@ -8,7 +8,7 @@
 ///
 /// @author Wouter Roose
 
-@Longrinsic
+@Intrinsic
 public final class Long extends Object {
 
     /// The maximum value for a Long (2^63-1).

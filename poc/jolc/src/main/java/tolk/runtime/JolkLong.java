@@ -48,10 +48,15 @@ public final class JolkLong {
         members.put("isEmpty", new LongIsEmpty());
         members.put("class", new LongClassAccessor());
         members.put("instanceOf", new LongInstanceOf());
+        // Synthesized Meta-Methods: accessible via instances
+        Constant MIN = new Constant(Long.MIN_VALUE);
+        Constant MAX = new Constant(Long.MAX_VALUE);
+        members.put("MIN", MIN);
+        members.put("MAX", MAX);
 
         Map<String, Object> metaMembers = new HashMap<>();
-        metaMembers.put("MAX", new Constant(Long.MAX_VALUE));
-        metaMembers.put("MIN", new Constant(Long.MIN_VALUE));
+        metaMembers.put("MIN", MIN);
+        metaMembers.put("MAX", MAX);
 
         LONG_TYPE = new JolkMetaClass("Long", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, metaMembers);
     }
@@ -72,7 +77,8 @@ public final class JolkLong {
         public Constant(Object value) { this.value = value; }
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length > 0) throw ArityException.create(0, 0, arguments.length);
+            // Allow 0 args (meta-call) or 1 arg (instance-call where arg[0] is the receiver)
+            if (arguments.length > 1) throw ArityException.create(0, 1, arguments.length);
             return value;
         }
     }

@@ -1,5 +1,6 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.language.JolkLanguage;
@@ -18,19 +19,27 @@ public final class JolkRootNode extends RootNode {
     private final String name;
     private final boolean isMethod;
 
-    public JolkRootNode(JolkLanguage language, JolkNode bodyNode, String name, boolean isMethod) {
-        super(language);
+    public JolkRootNode(JolkLanguage language, FrameDescriptor frameDescriptor, JolkNode bodyNode, String name, boolean isMethod) {
+        super(language, frameDescriptor);
         this.bodyNode = bodyNode;
         this.name = name;
         this.isMethod = isMethod;
     }
 
+    /**
+     * Convenience constructor for cases where a FrameDescriptor is not explicitly provided,
+     * defaulting to an empty FrameDescriptor.
+     */
+    public JolkRootNode(JolkLanguage language, JolkNode bodyNode, String name, boolean isMethod) {
+        this(language, new FrameDescriptor(), bodyNode, name, isMethod);
+    }
+
     public JolkRootNode(JolkLanguage language, JolkNode bodyNode, String name) {
-        this(language, bodyNode, name, true);
+        this(language, new FrameDescriptor(), bodyNode, name, true);
     }
 
     public JolkRootNode(JolkLanguage language, JolkNode bodyNode) {
-        this(language, bodyNode, "root", true);
+        this(language, new FrameDescriptor(), bodyNode, "root", true);
     }
 
     @Override

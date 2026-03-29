@@ -60,7 +60,6 @@ public class JolkExpressionTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending implementation of assignments") 
     void testFlowControlMessages() {
         String sourceIfPresent = """
             class FlowPresentTest {

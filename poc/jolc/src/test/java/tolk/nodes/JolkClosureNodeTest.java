@@ -132,30 +132,6 @@ public class JolkClosureNodeTest {
     }
 
     ///
-    /// Helper to access the private environment field in JolkClosure for testing purposes.
-    /// This bypasses the current lack of a public getter in the runtime class.
-    ///
-    private Object[] getEnvironmentViaReflection(JolkClosure closure) {
-        try {
-            // We assume the field is named 'environment' based on JolkClosureNode's constructor call.
-            Field field = JolkClosure.class.getDeclaredField("environment");
-            field.setAccessible(true);
-            return (Object[]) field.get(closure);
-        } catch (NoSuchFieldException e) {
-            // Fallback for different naming conventions in the PoC
-            try {
-                Field field = JolkClosure.class.getDeclaredField("env");
-                field.setAccessible(true);
-                return (Object[]) field.get(closure);
-            } catch (Exception ex) {
-                throw new RuntimeException("Could not find environment field in JolkClosure", ex);
-            }
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    ///
     /// Helper method to execute a JolkNode within a proper Truffle context.
     /// This wraps the node in a [JolkRootNode] and calls it.
     ///

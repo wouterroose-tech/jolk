@@ -24,8 +24,29 @@ public class JolkMethodNodeTest {
 
         assertEquals("myMethod", node.getName());
         assertSame(body, node.getBody(), "getBody should return the constructor-injected body node.");
+        assertArrayEquals(params, node.getParameters(), "getParameters should return the constructor-injected parameters.");
+        assertFalse(node.isVariadic(), "isVariadic should reflect the constructor-injected value.");
+        assertEquals(0, node.getFrameSlots(), "Default frameSlots should be 0 for the 4-argument constructor.");
     }
 
+    ///
+    /// Verifies that the method node correctly stores frame slot information
+    /// when provided via the 5-argument constructor.
+    ///
+    @Test
+    void testMethodMetadataWithFrameSlots() {
+        JolkNode body = new JolkEmptyNode();
+        String[] params = {"a", "b"};
+        int expectedFrameSlots = 5; // Example value
+        JolkMethodNode node = new JolkMethodNode("complexMethod", body, params, true, expectedFrameSlots);
+
+        assertEquals("complexMethod", node.getName());
+        assertSame(body, node.getBody());
+        assertArrayEquals(params, node.getParameters());
+        assertTrue(node.isVariadic());
+        assertEquals(expectedFrameSlots, node.getFrameSlots(), "getFrameSlots should return the constructor-injected value.");
+    }
+    
     ///
     /// Verifies that executing a [JolkMethodNode] delegates to its body
     /// and returns the evaluation result.

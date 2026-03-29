@@ -12,12 +12,22 @@ public class JolkMethodNode extends JolkNode {
     @Child private JolkNode body;
     private final String[] parameters;
     private final boolean isVariadic;
+    private final int frameSlots;
 
-    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
+    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots) {
         this.name = name;
         this.body = body;
         this.parameters = parameters;
         this.isVariadic = isVariadic;
+        this.frameSlots = frameSlots;
+    }
+
+    /**
+     * Convenience constructor for cases where frameSlots is not explicitly provided,
+     * defaulting to 0.
+     */
+    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
+        this(name, body, parameters, isVariadic, 0);
     }
 
     public String getName() {
@@ -28,8 +38,20 @@ public class JolkMethodNode extends JolkNode {
         return body;
     }
 
+    public int getFrameSlots() {
+        return frameSlots;
+    }
+
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         return body.executeGeneric(frame);
+    }
+
+    public String[] getParameters() {
+        return parameters;
+    }
+
+    public boolean isVariadic() {
+        return isVariadic;
     }
 }

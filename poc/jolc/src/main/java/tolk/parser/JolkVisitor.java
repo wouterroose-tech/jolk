@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.Arrays;
 import org.antlr.v4.runtime.tree.ParseTree;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import tolk.grammar.jolkBaseVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.grammar.jolkParser;
@@ -25,6 +27,8 @@ import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkNode;
 import tolk.nodes.JolkRootNode;
 import tolk.nodes.JolkReadArgumentNode;
+import tolk.nodes.JolkReadLocalVariableNode;
+import tolk.nodes.JolkWriteLocalVariableNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
 import tolk.runtime.JolkArchetype;
@@ -34,6 +38,7 @@ import tolk.runtime.JolkNothing;
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     private final Stack<List<String>> scopes = new Stack<>();
+    private final Stack<Integer> parameterThresholds = new Stack<>();
     private final Stack<Integer> methodDepths = new Stack<>();
     private String currentClassName;
 
@@ -134,8 +139,14 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                                         typeName = stateCtx.constant().type().getText();
                                     }
                                 }
-                                instanceFields.put(fieldNode.getName(), typeName);
-                                // TODO: Handle instance field initializers here or in JolkClassDefinitionNode logic
+
+                                // If the field has an initializer, we store the field node so the runtime 
+                                // can evaluate it. Otherwise, we store the type name for default initialization.
+                                if (fieldNode.getInitializer() instanceof JolkEmptyNode) {
+                                    instanceFields.put(fieldNode.getName(), typeName);
+                                } else {
+                                    instanceFields.put(fieldNode.getName(), fieldNode);
+                                }
                             }
                         } else if (node instanceof JolkMethodNode methodNode) {
                             if (isMeta) {
@@ -188,9 +199,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         String name = ctx.identifier().getText();
         JolkNode initializer = new JolkEmptyNode();
         if (ctx.assignment() != null) {
-            initializer = visit(ctx.assignment().expression());
+            initializer = visit(ctx.assignment());
         }
-        // Note: JolkFieldNode must be updated to accept the isStable flag.
+
+        // If inside a method/closure, this is a local variable declaration
+        if (!scopes.isEmpty()) {
+            List<String> currentScope = scopes.peek();
+            currentScope.add(name);
+            LocalInfo info = resolveLocal(name);
+            return new JolkWriteLocalVariableNode(info.index, info.depth, initializer);
+        }
+
         return new JolkFieldNode(name, initializer, isStable);
     }
 
@@ -199,6 +218,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Constants are implicitly stable (immutable) identities.
         String name = ctx.binding().identifier().getText();
         JolkNode initializer = visit(ctx.binding().expression());
+
+        if (!scopes.isEmpty()) {
+            List<String> currentScope = scopes.peek();
+            currentScope.add(name);
+            LocalInfo info = resolveLocal(name);
+            // Note: PoC assumes write capability for initialization;
+            // full implementation would enforce immutability post-init.
+            return new JolkWriteLocalVariableNode(info.index, info.depth, initializer);
+        }
+
         return new JolkFieldNode(name, initializer, true);
     }
 
@@ -206,8 +235,24 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitBinding(jolkParser.BindingContext ctx) {
         String name = ctx.identifier().getText();
         JolkNode expression = visit(ctx.expression());
-        // Jolk treats assignments as message sends to 'self' (synthesized setters)
+
+        // Resolve lexical scope
+        LocalInfo info = resolveLocal(name);
+        if (info != null) {
+            // Parameters are immutable in Jolk; only locals can be reassigned.
+            if (info.isParameter) {
+                throw new RuntimeException("Jolk Error: Cannot reassign immutable parameter '" + name + "'");
+            }
+            return new JolkWriteLocalVariableNode(info.index, info.depth, expression);
+        }
+
+        // Fallback: Jolk treats assignments as message sends to 'self' (synthesized setters)
         return new JolkMessageSendNode(visitReservedSelf(), name, new JolkNode[]{expression});
+    }
+
+    @Override
+    public JolkNode visitAssignment(jolkParser.AssignmentContext ctx) {
+        return visit(ctx.expression());
     }
 
     @Override
@@ -226,19 +271,26 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         methodScope.add("self");
         methodScope.addAll(Arrays.asList(params));
         
+        // Store the number of parameters (including 'self') for this scope.
+        // This threshold is used to distinguish parameters from local variables.
+        int currentParameterThreshold = methodScope.size();
+        parameterThresholds.push(methodScope.size());
         int baseDepth = scopes.size();
         scopes.push(methodScope);
         methodDepths.push(baseDepth);
         JolkNode body = new JolkEmptyNode();
+        int frameSlots = 0;
         try {
             if (ctx.block() != null) {
                 body = visit(ctx.block());
             }
+            frameSlots = methodScope.size();
         } finally {
             scopes.pop();
+            parameterThresholds.pop();
             methodDepths.pop();
         }
-        return new JolkMethodNode(name, body, params, isVariadic);
+        return new JolkMethodNode(name, body, params, isVariadic, frameSlots);
     }
 
     @Override
@@ -444,18 +496,26 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         closureScope.add("<env>"); 
         closureScope.addAll(Arrays.asList(params));
         
+        parameterThresholds.push(closureScope.size());
         scopes.push(closureScope);
         JolkNode body = new JolkEmptyNode();
+        int frameSlots = 0;
         try {
             if (ctx.statements() != null) {
                 body = visit(ctx.statements());
             }
+            frameSlots = closureScope.size();
         } finally {
             scopes.pop();
+            parameterThresholds.pop();
         }
+
+        FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
+        builder.addSlots(frameSlots, FrameSlotKind.Object);
+        
         // Closures are not method boundaries; isMethod must be false to 
         // allow Non-Local Returns (^) to propagate to the defining method.
-        JolkRootNode jolkRootNode = new JolkRootNode(null, body, "closure", false);
+        JolkRootNode jolkRootNode = new JolkRootNode(null, builder.build(), body, "closure", false);
         return new JolkClosureNode(jolkRootNode.getCallTarget(), params, isVariadic);
     }
 
@@ -612,12 +672,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
         // Implicit closure: push an environment scope to account for frame depth.
         scopes.push(new ArrayList<>(List.of("<env>")));
+        parameterThresholds.push(1); // One slot for the implicit environment capture
         try {
             JolkNode body = visit(tree);
-            RootNode root = new JolkRootNode(null, body, "closure", false);
+            FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
+            builder.addSlots(1, FrameSlotKind.Object);
+            RootNode root = new JolkRootNode(null, builder.build(), body, "closure", false);
             return new JolkClosureNode(root.getCallTarget(), new String[0], false);
         } finally {
             scopes.pop();
+            parameterThresholds.pop();
         }
     }
 
@@ -635,11 +699,24 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
      * @return A [JolkNode] to read the argument if found, otherwise null.
      */
     private JolkNode lookupIdentifier(String name) {
+        LocalInfo info = resolveLocal(name);
+        if (info != null) {
+            return info.isParameter 
+                ? new JolkReadArgumentNode(info.index, info.depth)
+                : new JolkReadLocalVariableNode(info.index, info.depth);
+        }
+        return null;
+    }
+
+    private record LocalInfo(int index, int depth, boolean isParameter) {}
+
+    private LocalInfo resolveLocal(String name) {
         int currentDepth = 0;
         for (int i = scopes.size() - 1; i >= 0; i--) {
             int index = scopes.get(i).indexOf(name);
             if (index != -1) {
-                return new JolkReadArgumentNode(index, currentDepth);
+                boolean isParam = index < parameterThresholds.get(i);
+                return new LocalInfo(index, currentDepth, isParam);
             }
             currentDepth++;
         }

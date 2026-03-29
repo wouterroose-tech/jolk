@@ -48,10 +48,12 @@ public class JolkExpressionNothingTest extends JolcTestBase {
         String source = """
             class IfEmptyTest {
                 Object run() {
-                    ^ null #ifPresent [ ^1 ]
+                    null #ifPresent [ ^1 ];
+                    ^ null
                 }
                 Object runEmpty() {
-                    ^ null #ifEmpty [ ^1 ]
+                    null #ifEmpty [ ^1 ];
+                    ^ null
                 }
             }
         """;

@@ -43,7 +43,7 @@ public class JolcMethodTest  extends JolcTestBase {
 
     @Test
     void testMethodWithParameters() {
-        String source = "final class MyClass { Long eval(Long x, Long y) { ^ x + y } }";
+        String source = "class MyClass { Long eval(Long x, Long y) { ^ x + y } }";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
@@ -88,9 +88,8 @@ public class JolcMethodTest  extends JolcTestBase {
     }
 
     @Test
-    @Disabled("TODO: Implement variable assignment, then re-enable this test.")
     void testAssignment() {
-        String source = "final class MyClass { Long eval(Long val) { Long x = val; x = x + 2; ^ x } }";
+        String source = "class MyClass { Long eval(Long val) { Long x = val; x = x + 2; ^ x } }";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
@@ -99,7 +98,7 @@ public class JolcMethodTest  extends JolcTestBase {
 
     @Test
     void testRecursivelyNestedStatements() {
-        String source = "final class Fibonacci { Long fib(Long n) { ^ n < 2 ? 1 : self #fib(n - 1) + self #fib(n - 2) } }";
+        String source = "class Fibonacci { Long fib(Long n) { ^ n < 2 ? 1 : self #fib(n - 1) + self #fib(n - 2) } }";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
@@ -114,6 +113,25 @@ public class JolcMethodTest  extends JolcTestBase {
         assertEquals(34L, instance.invokeMember("fib", 8L).asLong());
         assertEquals(55L, instance.invokeMember("fib", 9L).asLong());
         assertEquals(89L, instance.invokeMember("fib", 10L).asLong());
+    }
+
+    @Test
+    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
+    void testFlowControlMessages() {
+        String source = """
+            class MinMaxTest {
+                Long ifPresentTrue() { Long x = 42; x #ifPresent [v -> x = v ]; ^x" }
+                Long ifPresentFalse() { Long x = 0; null #ifPresent [v -> x = 42 ]; ^x" }
+                Long ifEmptyTrue() { Long x = 42; null #ifEmpty [ x = 0 ]; ^x"}
+                Long ifEmptyFalse() { Long x = 42; null #ifEmpty [ x = 0 ]; ^x"}
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");  
+
+        assertEquals(42L, instance.invokeMember("ifPresentTrue").asLong());
+        assertEquals(42L, instance.invokeMember("ifPresentFalse").asLong());
+        assertEquals(0L, instance.invokeMember("ifEmptyTrue").asLong());
+        assertEquals(0L, instance.invokeMember("ifEmptyFalse").asLong());
     }
 
 }

@@ -1,5 +1,7 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import java.util.Collections;
@@ -55,7 +57,10 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         
         for (Map.Entry<String, Object> entry : instanceMembers.entrySet()) {
             if (entry.getValue() instanceof JolkMethodNode method) {
-                JolkRootNode root = new JolkRootNode(language, method.getBody(), method.getName());
+                FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
+                builder.addSlots(method.getFrameSlots(), FrameSlotKind.Object);
+                
+                JolkRootNode root = new JolkRootNode(language, builder.build(), method.getBody(), method.getName(), true);
                 runtimeMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
             } else if (entry.getValue() instanceof JolkMemberNode member) {
                 JolkRootNode root = new JolkRootNode(language, member.getBody(), member.getName());
@@ -65,11 +70,27 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             }
         }
 
+        Map<String, Object> runtimeInstanceFields = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : instanceFields.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof JolkFieldNode fieldNode) {
+                // Instance field initializers: evaluate the initializer to get the template value.
+                // Note: For the PoC, we evaluate at class-definition time to ensure slots contain values.
+                JolkRootNode root = new JolkRootNode(language, fieldNode.getInitializer(), fieldNode.getName());
+                runtimeInstanceFields.put(entry.getKey(), root.getCallTarget().call());
+            } else {
+                runtimeInstanceFields.put(entry.getKey(), value);
+            }
+        }
+
         Map<String, Object> runtimeMetaMembers = new LinkedHashMap<>();
         for (Map.Entry<String, Object> entry : metaMembers.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof JolkMethodNode method) {
-                JolkRootNode root = new JolkRootNode(language, method.getBody(), method.getName());
+                FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
+                builder.addSlots(method.getFrameSlots(), FrameSlotKind.Object);
+
+                JolkRootNode root = new JolkRootNode(language, builder.build(), method.getBody(), method.getName(), true);
                 runtimeMetaMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
             } else if (value instanceof JolkFieldNode field) {
                 // Constants: evaluate initializer immediately
@@ -89,6 +110,6 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             }
         }
 
-        return new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, instanceFields, runtimeMetaMembers);
+        return new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers);
     }
 }

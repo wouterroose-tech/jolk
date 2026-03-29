@@ -94,7 +94,6 @@ public class JolcLongTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Default field values are not yet supported.")
     void testLongFieldWithDefault() {
         String source = "class Container { Long long = 42; Int int = 42;}";
         Value meta = eval(source);
@@ -150,7 +149,6 @@ public class JolcLongTest extends JolcTestBase {
             Long val6() { ^ (2 * 1) + (20 * 2)}
             Long val6() { ^ (2 ** 2) + (19 * 2)}
             Int int() { ^ 42 }
-            
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  
@@ -163,16 +161,5 @@ public class JolcLongTest extends JolcTestBase {
         assertEquals(42L, instance.invokeMember("val6").asLong());
         assertEquals(42L, instance.invokeMember("int").asLong());
     }
-
-    @Test
-    @Disabled("Pending implementation of the core protocol in JolkNothing.") 
-    void testFlowControlMessages() {
-        // #ifPresent should not execute its closure for a null receiver.
-        Value ifPresentResult = eval("x = 1; null #ifPresent [ x = 2 ]; ^x");
-        assertEquals(1L, ifPresentResult.asLong(), "The #ifPresent block should not execute on null.");
-
-        // #ifEmpty should execute its closure for a null receiver.
-        Value ifEmptyResult = eval("x = 1; null #ifEmpty [ x = 2 ]; ^x");
-        assertEquals(2L, ifEmptyResult.asLong(), "The #ifEmpty block should execute on null.");
-    }
+    
 }

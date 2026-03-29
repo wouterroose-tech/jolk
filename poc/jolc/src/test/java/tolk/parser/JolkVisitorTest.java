@@ -1,8 +1,8 @@
 package tolk.parser;
 
 import org.junit.jupiter.api.Test;
-
 import tolk.JolcTestBase;
+import static org.junit.jupiter.api.Assertions.*;
 
 ///
 /// Verifies that a visitor can correctly traverse the parse tree generated
@@ -113,6 +113,13 @@ public class JolkVisitorTest extends JolcTestBase {
         String source = "final class MyClass { self me() { ^ self; } }";
         eval(source);
     }
+
+    @Test
+    void testVisitMethodReference() {
+        eval("obj ##method");
+        eval("self ##me");
+        eval("String ##toUpperCase");
+    }
     
     @Test
     void testVisitClass_2() {
@@ -127,6 +134,19 @@ public class JolkVisitorTest extends JolcTestBase {
                         ^ (self #x == p #x) && (self #y == p #y)
                     ];
                     ^ false
+                }
+            }
+        """;
+        eval(source);
+    }
+
+    @Test
+    void testVisitNonLocalReturn() {
+        String source = """
+            class Search {
+                Object find(Array<Int> list) {
+                    list #forEach [ x -> x > 10 ? [ ^ x ] ];
+                    ^ null
                 }
             }
         """;
@@ -184,6 +204,14 @@ public class JolkVisitorTest extends JolcTestBase {
     }
 
     @Test
+    void testVisitEnumWithConstants() {
+        String source = """
+            enum Color { RED; GREEN; BLUE; }
+        """;
+        eval(source);
+    }
+
+    @Test
     void testVisitMessage() {
         // Unary
         eval("obj #selector");
@@ -207,12 +235,12 @@ public class JolkVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitReserved() {
-        eval("self");
-        eval("super");
-        eval("Self");
-        eval("true");
-        eval("false");
-        eval("null");
+        eval("self");  // receiver
+        eval("super"); // parent context
+        eval("Self");  // Meta-object (translated to self#class)
+        eval("true");  // Boolean singleton
+        eval("false"); // Boolean singleton
+        eval("null");  // Nothing singleton
     }
 
     @Test
@@ -241,5 +269,32 @@ public class JolkVisitorTest extends JolcTestBase {
             }
         """;
         eval(source);
+    }
+
+    @Test
+    void testVisitPackageAndImports() {
+        eval("package tolk.demo;");
+        eval("~ tolk.demo;");
+        eval("using tolk.util.*;");
+        eval("+ tolk.util.List;");
+        eval("using meta jolk.lang.Math.PI;");
+        eval("& jolk.lang.Math.PI;");
+    }
+
+    /**
+     * Verifies that the visitor throws an error when attempting to reassign 
+     * an immutable parameter, as defined in the Jolk specification.
+     */
+    @Test
+    void testParameterImmutabilityError() {
+        String source = """
+            class ErrorTest {
+                Void fail(Int x) {
+                    x = 42; 
+                }
+            }
+        """;
+        assertThrows(RuntimeException.class, () -> eval(source), 
+            "Jolk Visitor should forbid assignment to method parameters.");
     }
 }

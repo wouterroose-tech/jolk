@@ -13,6 +13,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import tolk.runtime.JolkMetaClass;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 
@@ -121,7 +122,8 @@ public abstract class JolkDispatchNode extends Node {
             argsWithReceiver[0] = receiver;
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
             try {
-                return interop.execute(member, argsWithReceiver);
+                // Library Mismatch: Use a generic library to execute members on a specialized receiver.
+                return InteropLibrary.getUncached().execute(member, argsWithReceiver);
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
                 throw new RuntimeException("Error executing #" + selector + " on Long", e);
             }
@@ -158,7 +160,8 @@ public abstract class JolkDispatchNode extends Node {
             argsWithReceiver[0] = receiver;
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
             try {
-                return interop.execute(member, argsWithReceiver);
+                // Library Mismatch: Use a generic library to execute members on a specialized receiver.
+                return InteropLibrary.getUncached().execute(member, argsWithReceiver);
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
                 throw new RuntimeException("Error executing #" + selector + " on Boolean", e);
             }
@@ -318,6 +321,7 @@ public abstract class JolkDispatchNode extends Node {
                     if (receiver instanceof JolkObject jo) return jo.getJolkMetaClass();
                     if (receiver instanceof Long || receiver instanceof Integer) return JolkLong.LONG_TYPE;
                     if (receiver instanceof Boolean) return JolkBoolean.BOOLEAN_TYPE;
+                    if (receiver instanceof JolkMetaClass) return receiver;
                     return JolkNothing.NOTHING_TYPE;
                 }
                 case "instanceOf" -> {

@@ -1,43 +1,30 @@
 package tolk.language;
 
 import com.oracle.truffle.api.TruffleLanguage;
-import com.oracle.truffle.api.interop.TruffleObject;
+import tolk.runtime.JolkMetaClass;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public final class JolkContext {
+/// ## JolkContext
+///
+/// Represents the execution context for a Jolk program. It holds global state
+/// such as defined classes and provides access to the Truffle environment.
 
-    private final JolkLanguage language;
+public class JolkContext {
     private final TruffleLanguage.Env env;
-    private final Map<String, TruffleObject> typeRegistry;
-    private final Map<String, TruffleObject> javaTypeCache;
-    private final Map<String, Object> topLevelBindings;
+    private final Map<String, JolkMetaClass> definedClasses = new ConcurrentHashMap<>();
 
     public JolkContext(JolkLanguage language, TruffleLanguage.Env env) {
-        this.language = language;
         this.env = env;
-        this.typeRegistry = new ConcurrentHashMap<>();
-        this.javaTypeCache = new ConcurrentHashMap<>();
-        this.topLevelBindings = new ConcurrentHashMap<>();
     }
 
-    public TruffleLanguage.Env getEnv() {
-        return env;
+    public void registerClass(JolkMetaClass metaClass) {
+        definedClasses.put(metaClass.name, metaClass);
+        env.exportSymbol(metaClass.name, metaClass); // Export to polyglot environment
     }
 
-    /// @return The registry for Jolk-defined types.
-    public Map<String, TruffleObject> getTypeRegistry() {
-        return typeRegistry;
-    }
-
-    /// @return The cache for Java types that have been resolved and wrapped for Jolk.
-    public Map<String, TruffleObject> getJavaTypeCache() {
-        return javaTypeCache;
-    }
-
-    /// @return The map for top-level variable bindings.
-    public Map<String, Object> getTopLevelBindings() {
-        return topLevelBindings;
+    public JolkMetaClass getDefinedClass(String name) {
+        return definedClasses.get(name);
     }
 }

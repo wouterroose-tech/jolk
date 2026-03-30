@@ -103,7 +103,6 @@ public class JolcLongTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Re-enable once constant folding is implemented and the PoC supports it")
     void testMinMax() {
         String source = """
             class MinMaxTest {

@@ -10,6 +10,9 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+
+import tolk.nodes.JolkReturnException;
+
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Collections;
@@ -85,6 +88,17 @@ public final class JolkMetaClass implements TruffleObject {
         this.totalFieldCount = currentIndex;
         
         this.defaultFieldValues = new Object[totalFieldCount];
+        this.metaMembers = metaMembers;
+        initializeDefaultValues();
+    }
+
+    /**
+     * ### initializeDefaultValues
+     * 
+     * Re-scans the instanceFields map to establish the template values for new 
+     * instances. This is called after the hydration phase in the definition node.
+     */
+    public void initializeDefaultValues() {
         if (superclass != null) {
             System.arraycopy(superclass.defaultFieldValues, 0, this.defaultFieldValues, 0, superclass.totalFieldCount);
         }
@@ -110,7 +124,6 @@ public final class JolkMetaClass implements TruffleObject {
                 }
             }
         }
-        this.metaMembers = metaMembers;
     }
 
     private static String resolveTypeHint(Object val) {
@@ -123,14 +136,13 @@ public final class JolkMetaClass implements TruffleObject {
     public static boolean isLongHint(String hint) {
         if (hint == null) return false;
         return hint.equalsIgnoreCase("Long") 
-            || hint.equalsIgnoreCase("Int") 
+            || hint.equalsIgnoreCase("Int")
             || hint.equalsIgnoreCase("jolk.lang.Long");
     }
 
     public static boolean isBooleanHint(String hint) {
         if (hint == null) return false;
         return hint.equalsIgnoreCase("Boolean") 
-            || hint.equalsIgnoreCase("Bool") 
             || hint.equalsIgnoreCase("jolk.lang.Boolean");
     }
 
@@ -229,7 +241,15 @@ public final class JolkMetaClass implements TruffleObject {
         String name = member;
         if (metaMembers.containsKey(name)) {
             Object memberObj = metaMembers.get(name);
-            return InteropLibrary.getUncached().execute(memberObj, arguments);
+            // Jolk Protocol: Every method call must include the receiver as the first argument.
+            Object[] metaArguments = new Object[arguments.length + 1];
+            metaArguments[0] = this;
+            if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
+            try {
+                return InteropLibrary.getUncached().execute(memberObj, metaArguments);
+            } catch (JolkReturnException e) {
+                throw e; // Preserve signal for non-local returns
+            }
         }
         switch (name) {
             case "new":

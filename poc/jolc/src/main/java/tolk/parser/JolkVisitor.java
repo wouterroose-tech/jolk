@@ -10,11 +10,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import tolk.grammar.jolkBaseVisitor;
+import tolk.language.JolkLanguage;
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkBlockNode;
 import tolk.nodes.JolkReadEnvironmentNode;
+import tolk.nodes.JolkReadTypeNode;
 import tolk.nodes.JolkReturnNode;
 import tolk.nodes.JolkClosureNode;
 import tolk.nodes.JolkEmptyNode;
@@ -37,10 +39,16 @@ import tolk.runtime.JolkNothing;
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
+    private final JolkLanguage language;
+
     private final Stack<List<String>> scopes = new Stack<>();
     private final Stack<Integer> parameterThresholds = new Stack<>();
     private final Stack<Integer> methodDepths = new Stack<>();
     private String currentClassName;
+
+    public JolkVisitor(JolkLanguage language) {
+        this.language = language;
+    }
 
     /// ### visitUnit
     ///
@@ -160,7 +168,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 }
 
                 this.currentClassName = oldClassName;
-                return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers);
+                return new JolkClassDefinitionNode(language, className, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers);
             }
         }
         return new JolkEmptyNode();
@@ -513,16 +521,20 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
         builder.addSlots(frameSlots, FrameSlotKind.Object);
         
-        // Closures are not method boundaries; isMethod must be false to 
+        // Closures are not method boundaries; isMethod must be false to
         // allow Non-Local Returns (^) to propagate to the defining method.
-        JolkRootNode jolkRootNode = new JolkRootNode(null, builder.build(), body, "closure", false);
+        JolkRootNode jolkRootNode = new JolkRootNode(language, builder.build(), body, "closure", false);
         return new JolkClosureNode(jolkRootNode.getCallTarget(), params, isVariadic);
     }
 
     @Override
     public JolkNode visitPrimary(jolkParser.PrimaryContext ctx) {
         if (ctx.reserved() != null) return visit(ctx.reserved());
+        // Jolk matches InstanceId as 'identifier' and MetaId as 'type' in the primary rule.
+        // We must check both to ensure both instance and meta identifiers are resolved.
         if (ctx.identifier() != null) return visit(ctx.identifier());
+        if (ctx.type() != null) return visit(ctx.type());
+
         if (ctx.literal() != null) return visit(ctx.literal());
         if (ctx.list_literal() != null) return visit(ctx.list_literal());
         if (ctx.expression() != null) return visit(ctx.expression());
@@ -546,7 +558,31 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
+        return createIdentifierNode(ctx.getText());
+    }
+
+    /**
+     * ### visitType
+     * 
+     * Resolves a Type reference. In Jolk, Types are first-class Meta-Objects.
+     */
+    @Override
+    public JolkNode visitType(jolkParser.TypeContext ctx) {
         String name = ctx.getText();
+        // Self is a dynamic type alias referring to the current MetaClass.
+        if ("Self".equals(name)) {
+            return new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+        }
+        return createIdentifierNode(name);
+    }
+
+    /**
+     * ### createIdentifierNode
+     * 
+     * Centralized logic for resolving identifiers into AST nodes based on
+     * lexical scope and semantic casing.
+     */
+    private JolkNode createIdentifierNode(String name) {
 
         // 1. Check if it's a Parameter in the current or outer scope (Recursive Search)
         JolkNode argNode = lookupIdentifier(name);
@@ -556,14 +592,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
         // 2. Semantic Casing: Uppercase names are Meta-Objects (Types/Constants)
         if (Character.isUpperCase(name.charAt(0))) {
-            // Self-reference resolution
-            if (name.equals(currentClassName)) return new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+            // Self-reference resolution: Inside a class definition, the name refers 
+            // to the Meta-Object. We use the dynamic lookup node to ensure registry consistency.
+            if (name.equals(currentClassName)) return new JolkReadTypeNode(name);
             
-            // For the PoC, we provide direct resolution for known intrinsic types.
-            // In a full implementation, this would look up the type in the global registry.
+            // Priority 1: Intrinsic Types (Resolved as static literals for performance)
             if ("Long".equals(name) || "Int".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLong.LONG_TYPE);
             if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBoolean.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
+
+            // Priority 2: User-Defined Meta-Objects (Resolved via dynamic lookup)
+            return new JolkReadTypeNode(name);
         }
 
         // 3. Default: Treat as a message send to 'self' (e.g. field access)
@@ -677,7 +716,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             JolkNode body = visit(tree);
             FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
             builder.addSlots(1, FrameSlotKind.Object);
-            RootNode root = new JolkRootNode(null, builder.build(), body, "closure", false);
+            RootNode root = new JolkRootNode(language, builder.build(), body, "closure", false);
             return new JolkClosureNode(root.getCallTarget(), new String[0], false);
         } finally {
             scopes.pop();

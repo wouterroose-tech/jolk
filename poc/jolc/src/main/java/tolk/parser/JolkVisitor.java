@@ -164,50 +164,36 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     default -> JolkArchetype.CLASS;
                 };
 
-                Map<String, Object> instanceMembers = new LinkedHashMap<>();
-                Map<String, Object> instanceFields = new LinkedHashMap<>();
-                Map<String, Object> metaMembers = new LinkedHashMap<>();
+                Map<String, JolkMethodNode> instanceMethods = new LinkedHashMap<>(); // Instance methods
+                Map<String, JolkFieldNode> instanceFields = new LinkedHashMap<>(); // Instance fields
+                Map<String, JolkNode> metaMembers = new LinkedHashMap<>(); // Can contain JolkFieldNode or JolkMethodNode
 
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
                         boolean isMeta = mbr.member().META() != null;
+                        // TODO: Collect member annotations for the class definition metadata
                         JolkNode node = visit(mbr.member());
+                        
                         if (node instanceof JolkFieldNode fieldNode) {
                             if (isMeta) {
                                 metaMembers.put(fieldNode.getName(), fieldNode);
                             } else {
                                 // Instance fields
-                                String typeName = "Object";
-                                var stateCtx = mbr.member().state();
-                                if (stateCtx != null) {
-                                    if (stateCtx.field() != null) {
-                                        typeName = stateCtx.field().type().getText();
-                                    } else if (stateCtx.constant() != null) {
-                                        typeName = stateCtx.constant().type().getText();
-                                    }
-                                }
-
-                                // If the field has an initializer, we store the field node so the runtime 
-                                // can evaluate it. Otherwise, we store the type name for default initialization.
-                                if (fieldNode.getInitializer() instanceof JolkEmptyNode) {
-                                    instanceFields.put(fieldNode.getName(), typeName);
-                                } else {
-                                    instanceFields.put(fieldNode.getName(), fieldNode);
-                                }
+                                instanceFields.put(fieldNode.getName(), fieldNode);
                             }
                         } else if (node instanceof JolkMethodNode methodNode) {
                             if (isMeta) {
                                 metaMembers.put(methodNode.getName(), methodNode);
                             } else {
                                 // Instance methods
-                                instanceMembers.put(methodNode.getName(), methodNode);
+                                instanceMethods.put(methodNode.getName(), methodNode);
                             }
                         }
                     }
                 }
 
                 this.currentClassName = oldClassName;
-                return new JolkClassDefinitionNode(language, className, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers);
+                return new JolkClassDefinitionNode(language, className, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
             }
         }
         return new JolkEmptyNode();
@@ -310,6 +296,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // We check for the terminal presence to set the stability flag.
         boolean isStable = ctx.STABLE() != null;
         String name = ctx.identifier().getText();
+        String typeName = ctx.type().getText();
         JolkNode initializer = new JolkEmptyNode();
         if (ctx.assignment() != null) {
             initializer = visit(ctx.assignment());
@@ -323,13 +310,14 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return new JolkWriteLocalVariableNode(info.index, info.depth, initializer);
         }
 
-        return new JolkFieldNode(name, initializer, isStable);
+        return new JolkFieldNode(name, typeName, initializer, isStable);
     }
 
     @Override
     public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
         // Constants are implicitly stable (immutable) identities.
         String name = ctx.binding().identifier().getText();
+        String typeName = ctx.type().getText();
         JolkNode initializer = visit(ctx.binding().expression());
 
         if (!scopes.isEmpty()) {
@@ -341,7 +329,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return new JolkWriteLocalVariableNode(info.index, info.depth, initializer);
         }
 
-        return new JolkFieldNode(name, initializer, true);
+        return new JolkFieldNode(name, typeName, initializer, true);
     }
 
     @Override
@@ -366,6 +354,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitAssignment(jolkParser.AssignmentContext ctx) {
         return visit(ctx.expression());
+    }
+
+    @Override
+    public JolkNode visitEnum_constant(jolkParser.Enum_constantContext ctx) {
+        // TODO: Handle enum constant with optional arguments
+        return super.visitEnum_constant(ctx);
     }
 
     @Override
@@ -886,6 +880,48 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitOperator(jolkParser.OperatorContext ctx) {
         // TODO: Implementation for generic operator mapping
         return super.visitOperator(ctx);
+    }
+
+    @Override
+    public JolkNode visitPayload(jolkParser.PayloadContext ctx) {
+        // TODO: Implementation for message payload (arguments or closure)
+        return super.visitPayload(ctx);
+    }
+
+    @Override
+    public JolkNode visitArguments(jolkParser.ArgumentsContext ctx) {
+        // TODO: Implementation for parenthesized arguments
+        return super.visitArguments(ctx);
+    }
+
+    @Override
+    public JolkNode visitStat_params(jolkParser.Stat_paramsContext ctx) {
+        // TODO: Implementation for closure parameter block
+        return super.visitStat_params(ctx);
+    }
+
+    @Override
+    public JolkNode visitInferred_params(jolkParser.Inferred_paramsContext ctx) {
+        // TODO: Implementation for inferred closure parameters
+        return super.visitInferred_params(ctx);
+    }
+
+    @Override
+    public JolkNode visitSelector(jolkParser.SelectorContext ctx) {
+        // TODO: Implementation for selector anchor (#)
+        return super.visitSelector(ctx);
+    }
+
+    @Override
+    public JolkNode visitSelf_type(jolkParser.Self_typeContext ctx) {
+        // TODO: Implementation for Self type resolution
+        return super.visitSelf_type(ctx);
+    }
+
+    @Override
+    public JolkNode visitSelf_instance(jolkParser.Self_instanceContext ctx) {
+        // TODO: Implementation for self instance resolution
+        return super.visitSelf_instance(ctx);
     }
 
     // --- Parameter Parsing Helpers ---

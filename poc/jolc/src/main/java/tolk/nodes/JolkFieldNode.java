@@ -5,26 +5,46 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 /// # JolkFieldNode
 ///
 /// Represents a field or constant declaration in the Jolk AST.
-/// Unlike methods, fields are primarily state containers with an optional initializer
-/// and a stability flag that establishes instance-level immutability.
+/// Unlike methods, fields are primarily state containers with a type, an optional
+/// initializer, and a stability flag that establishes instance-level immutability.
 public class JolkFieldNode extends JolkNode {
     private final String name;
+    private final String typeName;
     @Child private JolkNode initializer;
     private final boolean isStable;
 
-    /// Creates a new field node that is mutable by default.
+    /**
+     * Convenience constructor for unit tests or untyped declarations.
+     */
     public JolkFieldNode(String name, JolkNode initializer) {
-        this(name, initializer, false);
+        this(name, "Object", initializer, false);
     }
 
+    /**
+     * Convenience constructor for unit tests or untyped declarations with stability control.
+     */
     public JolkFieldNode(String name, JolkNode initializer, boolean isStable) {
+        this(name, "Object", initializer, isStable);
+    }
+
+    // Creates a new field node that is mutable by default.
+    public JolkFieldNode(String name, String typeName, JolkNode initializer) {
+        this(name, typeName, initializer, false);
+    }
+
+    public JolkFieldNode(String name, String typeName, JolkNode initializer, boolean isStable) {
         this.name = name;
+        this.typeName = typeName;
         this.initializer = initializer;
         this.isStable = isStable;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getTypeName() {
+        return typeName;
     }
 
     public JolkNode getInitializer() {

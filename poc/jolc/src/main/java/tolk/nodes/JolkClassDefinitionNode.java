@@ -31,18 +31,18 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     private final JolkFinality finality;
     private final JolkVisibility visibility;
     private final JolkArchetype archetype;
-    private final Map<String, Object> instanceMembers;
-    private final Map<String, Object> instanceFields;
-    private final Map<String, Object> metaMembers;
+    private final Map<String, JolkMethodNode> instanceMethods;
+    private final Map<String, JolkFieldNode> instanceFields;
+    private final Map<String, JolkNode> metaMembers;
     private final JolkLanguage language;
 
-    public JolkClassDefinitionNode(JolkLanguage language, String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
+    public JolkClassDefinitionNode(JolkLanguage language, String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, JolkMethodNode> instanceMethods, Map<String, JolkFieldNode> instanceFields, Map<String, JolkNode> metaMembers) {
         this.language = language;
         this.className = className;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
-        this.instanceMembers = instanceMembers;
+        this.instanceMethods = instanceMethods;
         this.instanceFields = instanceFields;
         this.metaMembers = metaMembers;
     }
@@ -53,8 +53,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * Convenience constructor for unit tests that provides member maps but omits the 
      * {@link JolkLanguage} context. The language will be resolved dynamically during execution.
      */
-    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
-        this(null, className, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers);
+    @SuppressWarnings("unchecked")
+    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, ?> instanceMethods, Map<String, ?> instanceFields, Map<String, ?> metaMembers) {
+        this(null, className, finality, visibility, archetype, (Map<String, JolkMethodNode>) instanceMethods, (Map<String, JolkFieldNode>) instanceFields, (Map<String, JolkNode>) metaMembers);
     }
 
     public JolkClassDefinitionNode(JolkLanguage language, String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
@@ -81,60 +82,65 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         Map<String, Object> runtimeMembers = new LinkedHashMap<>();
         Map<String, Object> runtimeInstanceFields = new LinkedHashMap<>();
         Map<String, Object> runtimeMetaMembers = new LinkedHashMap<>();
+        Map<String, Object> runtimeMetaFields = new LinkedHashMap<>();
 
         // Jolk Structural Preamble: Populate keys and hints before MetaClass construction.
         // This ensures the MetaClass calculates the correct 'totalFieldCount' and arity 
         // for the canonical #new message, as well as accurate member visibility.
-        for (String key : instanceMembers.keySet()) runtimeMembers.put(key, JolkNothing.INSTANCE);
-        for (String key : metaMembers.keySet()) runtimeMetaMembers.put(key, JolkNothing.INSTANCE);
-        
-        for (Map.Entry<String, Object> entry : instanceFields.entrySet()) {
-            Object val = entry.getValue();
-            // If the value is a String, it's a type hint from the visitor (e.g. "Long").
+        for (String key : instanceMethods.keySet()) runtimeMembers.put(key, JolkNothing.INSTANCE);
+
+        for (Map.Entry<String, JolkNode> entry : metaMembers.entrySet()) {
+            if (entry.getValue() instanceof JolkMethodNode) {
+                runtimeMetaMembers.put(entry.getKey(), JolkNothing.INSTANCE);
+            } else if (entry.getValue() instanceof JolkFieldNode) {
+                runtimeMetaFields.put(entry.getKey(), JolkNothing.INSTANCE);
+            }
+        }
+
+        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
+            JolkFieldNode fieldNode = entry.getValue();
+            // If the field has no initializer, pass its type name as a hint.
             // Passing hints to the constructor allows JolkMetaClass to establish correct
             // default values (like 0L or false) in its internal state template.
-            runtimeInstanceFields.put(entry.getKey(), (val instanceof String) ? val : JolkNothing.INSTANCE);
+            runtimeInstanceFields.put(entry.getKey(), (fieldNode.getInitializer() instanceof JolkEmptyNode) ? fieldNode.getTypeName() : JolkNothing.INSTANCE);
         }
 
         // Jolk Lifecycle Protocol: Instantiate and Register the Identity BEFORE 
         // populating members (Hydration). This allows methods created during hydration to 
         // resolve the class name via the registry.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers);
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
 
         if (lang != null) {
             JolkContext context = lang.getContextReference().get(this);
             context.registerClass(newMetaClass);
         }
 
-        for (Map.Entry<String, Object> entry : instanceMembers.entrySet()) {
+        for (Map.Entry<String, JolkMethodNode> entry : instanceMethods.entrySet()) {
             if (entry.getValue() instanceof JolkMethodNode method) {
                 FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
                 builder.addSlots(method.getFrameSlots(), FrameSlotKind.Object);
                 
                 JolkRootNode root = new JolkRootNode(lang, builder.build(), method.getBody(), method.getName(), true);
                 runtimeMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
-            } else if (entry.getValue() instanceof JolkMemberNode member) {
-                JolkRootNode root = new JolkRootNode(lang, member.getBody(), member.getName());
-                runtimeMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
-            } else {
-                runtimeMembers.put(entry.getKey(), entry.getValue());
             }
         }
 
-        for (Map.Entry<String, Object> entry : instanceFields.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof JolkFieldNode fieldNode) {
+        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
+            JolkFieldNode fieldNode = entry.getValue();
+            if (!(fieldNode.getInitializer() instanceof JolkEmptyNode)) {
                 // Instance field initializers: evaluate the initializer to get the template value.
                 // Note: For the PoC, we evaluate at class-definition time to ensure slots contain values.
                 JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
                 runtimeInstanceFields.put(entry.getKey(), root.getCallTarget().call());
             } else {
-                runtimeInstanceFields.put(entry.getKey(), value);
+                // If no initializer, the type hint was already passed.
+                runtimeInstanceFields.put(entry.getKey(), fieldNode.getTypeName());
             }
         }
 
-        for (Map.Entry<String, Object> entry : metaMembers.entrySet()) {
-            Object value = entry.getValue();
+        for (Map.Entry<String, JolkNode> entry : metaMembers.entrySet()) {
+            String name = entry.getKey();
+            JolkNode value = entry.getValue();
             if (value instanceof JolkMethodNode method) {
                 FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
                 builder.addSlots(method.getFrameSlots(), FrameSlotKind.Object);
@@ -142,20 +148,11 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 JolkRootNode root = new JolkRootNode(lang, builder.build(), method.getBody(), method.getName(), true);
                 runtimeMetaMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
             } else if (value instanceof JolkFieldNode field) {
-                // Constants: evaluate initializer immediately
+                // Meta fields/constants: evaluate initializer immediately and synthesize accessor
                 JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
-                runtimeMetaMembers.put(entry.getKey(), root.getCallTarget().call());
-            } else if (value instanceof JolkMemberNode member) {
-                JolkRootNode root = new JolkRootNode(lang, member.getBody(), member.getName());
-                if (member.isState()) {
-                    // It's a constant or static field: evaluate the initializer immediately
-                    runtimeMetaMembers.put(entry.getKey(), root.getCallTarget().call());
-                } else {
-                    // It's a meta method: wrap in closure
-                    runtimeMetaMembers.put(entry.getKey(), new JolkClosure(root.getCallTarget()));
-                }
-            } else {
-                runtimeMetaMembers.put(entry.getKey(), entry.getValue());
+                Object initialValue = root.getCallTarget().call();
+                newMetaClass.setMetaFieldValue(name, initialValue);
+                runtimeMetaMembers.put(name, newMetaClass.getMetaAccessor(name, field.isStable()));
             }
         }
 

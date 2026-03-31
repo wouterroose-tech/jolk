@@ -52,22 +52,33 @@ public final class JolkMetaClass implements TruffleObject {
     private final int totalFieldCount;
     // Default field values
     private final Object[] defaultFieldValues;
-    // Meta members (e.g. user-defined meta methods).
+    // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
+    // Meta-level field storage
+    private final Map<String, Integer> metaFieldIndices;
+    private final Object[] metaFieldValues;
+    private final Map<String, JolkMetaFieldAccessor> metaAccessorCache;
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), Collections.emptyMap());
+        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
     }
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), metaMembers);
+        this(name, null, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), metaMembers, Collections.emptyMap());
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), metaMembers);
+        this(name, superclass, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), metaMembers, Collections.emptyMap());
     }
 
+    /**
+     * Convenience constructor for unit tests providing instance field templates.
+     */
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
+        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, Collections.emptyMap());
+    }
+
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers, Map<String, Object> metaFields) {
         this.name = name;
         this.superclass = superclass;
         this.finality = finality;
@@ -89,7 +100,68 @@ public final class JolkMetaClass implements TruffleObject {
         
         this.defaultFieldValues = new Object[totalFieldCount];
         this.metaMembers = metaMembers;
+        this.metaFieldIndices = new HashMap<>();
+        this.metaAccessorCache = new HashMap<>();
+        
+        int mIdx = 0;
+        for (String fieldName : metaFields.keySet()) {
+            metaFieldIndices.put(fieldName, mIdx++);
+        }
+        this.metaFieldValues = new Object[mIdx];
+
         initializeDefaultValues();
+    }
+    public Object getMetaFieldValue(int index) {
+        return metaFieldValues[index];
+    }
+
+    public void setMetaFieldValue(int index, Object value) {
+        metaFieldValues[index] = value;
+    }
+
+    public void setMetaFieldValue(String name, Object value) {
+        Integer idx = metaFieldIndices.get(name);
+        if (idx != null) metaFieldValues[idx] = value;
+    }
+
+    public Object getMetaAccessor(String name, boolean isStable) {
+        return metaAccessorCache.computeIfAbsent(name, k -> new JolkMetaFieldAccessor(k, metaFieldIndices.get(k), isStable));
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static final class JolkMetaFieldAccessor implements TruffleObject {
+        private final String fieldName;
+        private final int index;
+        private final boolean isStable;
+
+        public JolkMetaFieldAccessor(String fieldName, int index, boolean isStable) {
+            this.fieldName = fieldName;
+            this.index = index;
+            this.isStable = isStable;
+        }
+
+        @ExportMessage
+        public boolean isExecutable() { return true; }
+
+        @ExportMessage
+        public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+            if (arguments.length < 1) throw ArityException.create(1, 2, arguments.length);
+            
+            if (!(arguments[0] instanceof JolkMetaClass receiver)) {
+                throw UnsupportedTypeException.create(arguments, "Receiver must be a JolkMetaClass");
+            }
+
+            if (arguments.length == 1) {
+                return receiver.getMetaFieldValue(index);
+            } else {
+                if (isStable) {
+                    throw UnsupportedTypeException.create(arguments, "Cannot modify stable/constant meta field: " + fieldName);
+                }
+                Object value = arguments[1];
+                receiver.setMetaFieldValue(index, value);
+                return receiver;
+            }
+        }
     }
 
     /**
@@ -113,11 +185,8 @@ public final class JolkMetaClass implements TruffleObject {
                     this.defaultFieldValues[idx] = 0L;
                 } else if (isBooleanHint(hint)) {
                     this.defaultFieldValues[idx] = false;
-                } else if (val instanceof JolkMetaClass || val == null) {
+                } else if (val instanceof JolkMetaClass || val == null || val instanceof String) {
                     // Other classes (including sentinels for non-intrinsics) or explicit nulls default to Nothing.
-                    this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
-                } else if (val instanceof String) {
-                    // Type name hints that didn't match intrinsics also default to Nothing.
                     this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
                 } else {
                     this.defaultFieldValues[idx] = val;

@@ -49,4 +49,25 @@ public abstract class JolkNode extends Node {
         }
         return current;
     }
+
+    /**
+     * Navigates the lexical environment chain to find the Frame at the specified depth.
+     * 
+     * @param frame The starting frame.
+     * @param depth The number of levels to traverse.
+     * @return The target Frame, or null if unreachable.
+     */
+    @ExplodeLoop
+    protected final Frame getTargetFrame(VirtualFrame frame, int depth) {
+        Frame current = frame;
+        for (int i = 0; i < depth; i++) {
+            Object[] args = current.getArguments();
+            if (args.length > 0 && args[0] instanceof Frame next) {
+                current = next;
+            } else {
+                return null;
+            }
+        }
+        return current;
+    }
 }

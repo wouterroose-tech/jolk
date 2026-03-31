@@ -174,8 +174,7 @@ public class JolkClassDefinitionNodeTest {
         );
 
         Object result = node.executeGeneric(null);
-        @SuppressWarnings("unchecked")
-        Map<String, Object> members = (Map<String, Object>) getInternalField(result, "metaMembers");
-        assertEquals(1L, members.get("VERSION"), "Meta constants should be evaluated and stored during class definition.");
+        Object value = InteropLibrary.getUncached().invokeMember(result, "VERSION");
+        assertEquals(1L, value, "Meta constants should be evaluated and accessible via synthesized accessors.");
     }
 }

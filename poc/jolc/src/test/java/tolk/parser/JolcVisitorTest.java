@@ -15,6 +15,7 @@ public class JolcVisitorTest extends JolcTestBase {
     @Test
     void testVisitDeclArchetype() {
         eval("class MyClass { }");
+        eval("value MyValue { }");
         eval("record MyRecord { }");
         eval("enum MyEnum { }");
         eval("protocol MyProtocol { }");
@@ -297,4 +298,42 @@ public class JolcVisitorTest extends JolcTestBase {
         assertThrows(RuntimeException.class, () -> eval(source), 
             "Jolk Visitor should forbid assignment to method parameters.");
     }
+
+    @Test
+    void testVisitAnnotations() {
+        // Verify that annotations at different levels don't break the visitor
+        eval("@Intrinsic class MyClass { }");
+        eval("class Annotated { @Deprecated Int x; @OnMethod void run() {} }");
+    }
+
+    @Test
+    void testVisitVariadics() {
+        // Verify variadic parameters (spread operator) in method signatures
+        eval("class VariadicTest { void log(String... args) {} }");
+    }
+
+    @Test
+    void testVisitLocalDecls() {
+        // Verify typed local variable declarations inside method blocks
+        eval("class LocalTest { void run() { Int x = 10; stable String name = \"Jolk\"; } }");
+    }
+
+    @Test
+    void testVisitLazy() {
+        // Verify the lazy keyword on fields and methods
+        eval("class LazyTest { lazy Int x; lazy void setup() {} }");
+    }
+
+    @Test
+    void testVisitArithmeticOperators() {
+        eval("a + b");  // Addition
+        eval("a - b");  // Subtraction
+        eval("a * b");  // Multiplication
+        eval("a / b");  // Division
+        eval("a % b");  // Modulo
+        eval("2 ** 8"); // Power
+        eval("x ** y ** z");
+        eval("a + b * c / d % e ** f"); // Complex precedence
+    }
+
 }

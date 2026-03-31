@@ -30,12 +30,16 @@ public class JolkReadArgumentNode extends JolkNode {
     public Object executeGeneric(VirtualFrame frame) {
         Object[] args = frame.getArguments();
         Object[] targetArgs = args;
+        if (targetArgs.length == 0) return JolkNothing.INSTANCE;
 
         // The compiler will unroll this loop because depth is constant
         for (int i = 0; i < depth; i++) {
+            if (targetArgs.length == 0) return JolkNothing.INSTANCE;
             // Navigate through the VirtualFrame/MaterializedFrame stored at index 0
             Object env = targetArgs[0];
-            targetArgs = (env instanceof Frame f) ? f.getArguments() : (Object[]) env;
+            targetArgs = (env instanceof Frame f) ? f.getArguments() : 
+                         (env instanceof Object[] oa ? oa : null);
+            if (targetArgs == null) return JolkNothing.INSTANCE;
         }
 
         return (index < targetArgs.length) ? targetArgs[index] : JolkNothing.INSTANCE;

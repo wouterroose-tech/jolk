@@ -7,15 +7,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Disabled;
-
 /**
  * ## JolkWriteLocalVariableNodeTest
  *
  * Verifies the behavior of the {@link JolkWriteLocalVariableNode}, which is responsible
  * for writing values to local variable slots within a {@link VirtualFrame}.
  */
-@Disabled
 public class JolkWriteLocalVariableNodeTest {
 
     /**
@@ -54,7 +51,7 @@ public class JolkWriteLocalVariableNodeTest {
 
         // Current frame: links to outerFrame
         FrameDescriptor currentFd = FrameDescriptor.newBuilder().build();
-        Object[] currentLocals = {outerLocals};
+        Object[] currentLocals = {outerFrame};
         VirtualFrame currentFrame = new VirtualFrameMock(currentFd, currentLocals, outerFrame);
 
         // Write "updatedOuterValue" to "outerLocal" (index 0, depth 1)

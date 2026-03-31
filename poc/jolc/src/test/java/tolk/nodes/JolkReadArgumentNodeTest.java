@@ -54,7 +54,7 @@ public class JolkReadArgumentNodeTest {
         currentBuilder.addSlot(FrameSlotKind.Object, "currentArg", null);
         FrameDescriptor currentFd = currentBuilder.build();
         // Jolk environment chain: arguments[0] holds the outer context.
-        Object[] currentArgs = {outerArgs, "currentValue"};
+        Object[] currentArgs = {outerFrame, "currentValue"};
         VirtualFrame currentFrame = new VirtualFrameMock(currentFd, currentArgs, outerFrame);
 
         // Read "outerArg" (index 0, depth 1)

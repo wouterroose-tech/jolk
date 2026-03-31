@@ -21,10 +21,19 @@ public final class JolkReadEnvironmentNode extends JolkNode {
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] targetArgs = frame.getArguments();
+        Object[] args = frame.getArguments();
+        if (args == null) return null;
+        Object[] targetArgs = args;
+
         for (int i = 0; i < depth; i++) {
-            Object env = targetArgs[0];
-            targetArgs = (env instanceof Frame f) ? f.getArguments() : (Object[]) env;
+            if (targetArgs.length > 0) {
+                Object env = targetArgs[0];
+                targetArgs = (env instanceof Frame f) ? f.getArguments() : 
+                             (env instanceof Object[] oa ? oa : null);
+            } else {
+                targetArgs = null;
+            }
+            if (targetArgs == null) return null;
         }
         return targetArgs;
     }

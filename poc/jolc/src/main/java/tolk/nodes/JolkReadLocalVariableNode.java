@@ -3,6 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import tolk.runtime.JolkNothing;
 
 /**
  * Node for reading a local variable from the Truffle frame slots.
@@ -23,6 +24,7 @@ public class JolkReadLocalVariableNode extends JolkNode {
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
         Frame targetFrame = getTargetFrame(frame);
+        if (targetFrame == null) return JolkNothing.INSTANCE;
         // Access the indexed slot in the frame.
         return targetFrame.getObject(index);
     }
@@ -31,8 +33,12 @@ public class JolkReadLocalVariableNode extends JolkNode {
     private Frame getTargetFrame(VirtualFrame frame) {
         Frame current = frame;
         for (int i = 0; i < depth; i++) {
-            // Navigates lexical environment via context pointer (Frame) at index 0 of arguments
-            current = (Frame) current.getArguments()[0];
+            Object[] args = current.getArguments();
+            if (args.length > 0 && args[0] instanceof Frame next) {
+                current = next;
+            } else {
+                return null;
+            }
         }
         return current;
     }

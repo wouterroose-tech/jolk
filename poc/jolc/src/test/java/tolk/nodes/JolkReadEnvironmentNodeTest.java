@@ -7,19 +7,31 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Disabled;
-
 /**
  * ## JolkReadEnvironmentNodeTest
  *
  * Verifies the behavior of the {@link JolkReadEnvironmentNode}, which is used
  * to read values from lexically enclosing frames (the "environment" for closures).
  */
-@Disabled
 public class JolkReadEnvironmentNodeTest {
 
     /**
-     * Tests reading a variable from the immediate parent frame (depth 0).
+     * Tests reading the environment from the current frame (depth 0).
+     */
+    @Test
+    void testReadFromCurrentEnvironment() {
+        FrameDescriptor fd = FrameDescriptor.newBuilder().build();
+        Object[] locals = {"currentValue"};
+        VirtualFrame frame = new VirtualFrameMock(fd, locals);
+
+        // Read current environment (depth 0)
+        JolkReadEnvironmentNode readNode = new JolkReadEnvironmentNode(0);
+        assertSame(locals, readNode.executeGeneric(frame),
+                "The node at depth 0 should return the current environment array identity.");
+    }
+
+    /**
+     * Tests reading a variable from the immediate parent frame (depth 1).
      */
     @Test
     void testReadFromImmediateParentEnvironment() {
@@ -32,17 +44,17 @@ public class JolkReadEnvironmentNodeTest {
 
         // Current frame (closure's frame): links to parentFrame
         FrameDescriptor currentFd = FrameDescriptor.newBuilder().build();
-        // Parent data passed at index 0
-        VirtualFrame currentFrame = new VirtualFrameMock(currentFd, new Object[]{parentLocals}, parentFrame);
+        // Parent frame passed at index 0
+        VirtualFrame currentFrame = new VirtualFrameMock(currentFd, new Object[]{parentFrame}, parentFrame);
 
-        // Read "parentVar" (index 0, depth 0 relative to the environment chain)
-        JolkReadEnvironmentNode readNode = new JolkReadEnvironmentNode(0);
+        // Read parent environment (depth 1 relative to the environment chain)
+        JolkReadEnvironmentNode readNode = new JolkReadEnvironmentNode(1);
         assertSame(parentLocals, readNode.executeGeneric(currentFrame),
                 "The node at depth 0 should return the captured parent environment array identity.");
     }
 
     /**
-     * Tests reading a variable from a grandparent frame (depth 1).
+     * Tests reading a variable from a grandparent frame (depth 2).
      * This verifies "Deep Lexical Capture".
      */
     @Test
@@ -56,15 +68,14 @@ public class JolkReadEnvironmentNodeTest {
 
         // Parent frame: links to grandparentFrame
         FrameDescriptor parentFd = FrameDescriptor.newBuilder().build();
-        VirtualFrame parentFrame = new VirtualFrameMock(parentFd, new Object[]{grandparentLocals}, grandparentFrame);
+        VirtualFrame parentFrame = new VirtualFrameMock(parentFd, new Object[]{grandparentFrame}, grandparentFrame);
 
         // Current frame (closure's frame): links to parentFrame
         FrameDescriptor currentFd = FrameDescriptor.newBuilder().build();
-        Object[] parentArgs = parentFrame.getArguments();
-        VirtualFrame currentFrame = new VirtualFrameMock(currentFd, new Object[]{parentArgs}, parentFrame);
+        VirtualFrame currentFrame = new VirtualFrameMock(currentFd, new Object[]{parentFrame}, parentFrame);
 
-        // Read "grandparentVar" (index 0, depth 1 relative to the environment chain)
-        JolkReadEnvironmentNode readNode = new JolkReadEnvironmentNode(1);
+        // Read grandparent environment (depth 2 relative to the environment chain)
+        JolkReadEnvironmentNode readNode = new JolkReadEnvironmentNode(2);
         assertSame(grandparentLocals, readNode.executeGeneric(currentFrame),
                 "The node at depth 1 should return the grandparent environment array identity.");
     }
@@ -75,11 +86,11 @@ public class JolkReadEnvironmentNodeTest {
     @Test
     void testReadFromNonExistentEnvironmentDepth() {
         FrameDescriptor fd = FrameDescriptor.newBuilder().build();
-        VirtualFrame frame = new VirtualFrameMock(fd, new Object[0]);
+        VirtualFrame frame = new VirtualFrameMock(fd, new Object[]{ "not_a_frame" });
 
-        // Attempt to read from depth 0 when there is no parent frame
-        JolkReadEnvironmentNode readNode = new JolkReadEnvironmentNode(0);
-        assertThrows(ClassCastException.class, () -> readNode.executeGeneric(frame),
-                "Should throw an exception when trying to read from a non-existent environment frame.");
+        // Attempt to read from depth 1 when the environment chain is broken
+        JolkReadEnvironmentNode readNode = new JolkReadEnvironmentNode(1);
+        assertNull(readNode.executeGeneric(frame),
+                "Should return null when trying to read from a non-existent environment frame.");
     }
 }

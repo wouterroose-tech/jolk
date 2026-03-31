@@ -25,9 +25,11 @@ public class JolkWriteLocalVariableNode extends JolkNode {
     public Object executeGeneric(VirtualFrame frame) {
         Object value = valueNode.executeGeneric(frame);
         Frame targetFrame = getTargetFrame(frame);
-        // Jolk uses indexed slots in the frame for locals and parameters
-        // aligned with the indices in the visitor's scope stack.
-        targetFrame.setObject(index, value);
+        if (targetFrame != null) {
+            // Jolk uses indexed slots in the frame for locals and parameters
+            // aligned with the indices in the visitor's scope stack.
+            targetFrame.setObject(index, value);
+        }
         return value;
     }
 
@@ -35,8 +37,12 @@ public class JolkWriteLocalVariableNode extends JolkNode {
     private Frame getTargetFrame(VirtualFrame frame) {
         Frame current = frame;
         for (int i = 0; i < depth; i++) {
-            // Navigates lexical environment via context pointer at index 0
-            current = (Frame) current.getArguments()[0];
+            Object[] args = current.getArguments();
+            if (args.length > 0 && args[0] instanceof Frame next) {
+                current = next;
+            } else {
+                return null;
+            }
         }
         return current;
     }

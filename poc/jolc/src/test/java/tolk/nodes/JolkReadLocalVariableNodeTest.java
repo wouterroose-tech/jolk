@@ -7,15 +7,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Disabled;
-
 /**
  * ## JolkReadLocalVariableNodeTest
  *
  * Verifies the behavior of the {@link JolkReadLocalVariableNode}, which is responsible
  * for reading values from local variable slots within a {@link VirtualFrame}.
  */
-@Disabled
 public class JolkReadLocalVariableNodeTest {
 
     /**
@@ -57,7 +54,7 @@ public class JolkReadLocalVariableNodeTest {
         currentBuilder.addSlot(FrameSlotKind.Object, "currentLocal", null);
         FrameDescriptor currentFd = currentBuilder.build();
         // Environment chain at index 0
-        Object[] currentLocals = {outerLocals, "currentValue"};
+        Object[] currentLocals = {outerFrame, "currentValue"};
         VirtualFrame currentFrame = new VirtualFrameMock(currentFd, currentLocals, outerFrame);
 
         // Read "outerLocal" (index 0, depth 1)

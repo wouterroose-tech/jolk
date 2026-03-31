@@ -1,7 +1,9 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -25,4 +27,26 @@ public abstract class JolkNode extends Node {
     /// @return The result of executing this node.
     public abstract Object executeGeneric(VirtualFrame frame);
 
+    /**
+     * Navigates the lexical environment chain to find the arguments array at the specified depth.
+     * This is the standard mechanism in Jolk for environment traversal.
+     * 
+     * @param frame The starting frame.
+     * @param depth The number of levels to traverse.
+     * @return The arguments array of the target environment, or null if unreachable.
+     */
+    @ExplodeLoop
+    protected final Object[] getTargetArgs(VirtualFrame frame, int depth) {
+        Object[] current = frame.getArguments();
+        for (int i = 0; i < depth; i++) {
+            if (current != null && current.length > 0) {
+                Object env = current[0];
+                current = (env instanceof Frame f) ? f.getArguments() : 
+                          (env instanceof Object[] oa ? oa : null);
+            } else {
+                return null;
+            }
+        }
+        return current;
+    }
 }

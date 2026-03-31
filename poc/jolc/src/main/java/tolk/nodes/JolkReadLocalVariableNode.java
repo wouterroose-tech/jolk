@@ -23,23 +23,19 @@ public class JolkReadLocalVariableNode extends JolkNode {
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        Frame targetFrame = getTargetFrame(frame);
-        if (targetFrame == null) return JolkNothing.INSTANCE;
-        // Access the indexed slot in the frame.
-        return targetFrame.getObject(index);
-    }
-
-    @ExplodeLoop
-    private Frame getTargetFrame(VirtualFrame frame) {
+        // Local variables require a Frame to be present at the target depth.
         Frame current = frame;
         for (int i = 0; i < depth; i++) {
             Object[] args = current.getArguments();
             if (args.length > 0 && args[0] instanceof Frame next) {
                 current = next;
             } else {
-                return null;
+                return JolkNothing.INSTANCE;
             }
         }
-        return current;
+        Frame targetFrame = current;
+        if (targetFrame == null) return JolkNothing.INSTANCE;
+        // Access the indexed slot in the frame.
+        return targetFrame.getObject(index);
     }
 }

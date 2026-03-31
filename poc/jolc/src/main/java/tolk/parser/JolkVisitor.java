@@ -60,6 +60,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitUnit(jolkParser.UnitContext ctx) {
         // A unit can contain either a type declaration or an extension declaration,
         // according to the grammar.
+
+        // TODO: Handle unit-level package_decl, expansion, projection, and annotations.
+
         if (ctx.type_decl() != null) {
             return visit(ctx.type_decl());
         }
@@ -67,6 +70,42 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return visit(ctx.extension_decl());
         }
         return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitPackage_decl(jolkParser.Package_declContext ctx) {
+        // TODO: Handle package declaration (namespace and alias)
+        return super.visitPackage_decl(ctx);
+    }
+
+    @Override
+    public JolkNode visitExpansion(jolkParser.ExpansionContext ctx) {
+        // TODO: Handle vocabulary expansion (using/+)
+        return super.visitExpansion(ctx);
+    }
+
+    @Override
+    public JolkNode visitProjection(jolkParser.ProjectionContext ctx) {
+        // TODO: Handle projection lens (using meta/&)
+        return super.visitProjection(ctx);
+    }
+
+    @Override
+    public JolkNode visitInclusion(jolkParser.InclusionContext ctx) {
+        // TODO: Handle namespace inclusion
+        return super.visitInclusion(ctx);
+    }
+
+    @Override
+    public JolkNode visitAlias(jolkParser.AliasContext ctx) {
+        // TODO: Handle meta_id aliasing
+        return super.visitAlias(ctx);
+    }
+
+    @Override
+    public JolkNode visitNamespace(jolkParser.NamespaceContext ctx) {
+        // TODO: Handle fully qualified namespace resolution
+        return super.visitNamespace(ctx);
     }
 
     /// ### visitType_decl
@@ -174,6 +213,60 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return new JolkEmptyNode();
     }
 
+    @Override
+    public JolkNode visitModifiers(jolkParser.ModifiersContext ctx) {
+        // TODO: Extract visibility and finality modifiers
+        return super.visitModifiers(ctx);
+    }
+
+    @Override
+    public JolkNode visitVis_mod(jolkParser.Vis_modContext ctx) {
+        // TODO: Handle symbolic modifiers or keyword visibility
+        return super.visitVis_mod(ctx);
+    }
+
+    @Override
+    public JolkNode visitVisibility(jolkParser.VisibilityContext ctx) {
+        // TODO: Map visibility to JolkVisibility enum
+        return super.visitVisibility(ctx);
+    }
+
+    @Override
+    public JolkNode visitFinality(jolkParser.FinalityContext ctx) {
+        // TODO: Map finality to JolkFinality enum
+        return super.visitFinality(ctx);
+    }
+
+    @Override
+    public JolkNode visitArchetype(jolkParser.ArchetypeContext ctx) {
+        // TODO: Map keyword to JolkArchetype
+        return super.visitArchetype(ctx);
+    }
+
+    @Override
+    public JolkNode visitType_bound(jolkParser.Type_boundContext ctx) {
+        // TODO: Resolve type and contract conjunctions
+        return super.visitType_bound(ctx);
+    }
+
+    @Override
+    public JolkNode visitType_args(jolkParser.Type_argsContext ctx) {
+        // TODO: Resolve generic type arguments
+        return super.visitType_args(ctx);
+    }
+
+    @Override
+    public JolkNode visitType_contracts(jolkParser.Type_contractsContext ctx) {
+        // TODO: Handle extends/implements hierarchy
+        return super.visitType_contracts(ctx);
+    }
+
+    @Override
+    public JolkNode visitType_mbr(jolkParser.Type_mbrContext ctx) {
+        // TODO: Handle member annotations and member declaration
+        return super.visitType_mbr(ctx);
+    }
+
     ///
     /// Visits an extension declaration. This is currently a placeholder.
     ///
@@ -183,6 +276,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitExtension_decl(jolkParser.Extension_declContext ctx) {
         // Not implemented yet, return empty node to avoid null pointers.
         return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitExtension_mbr(jolkParser.Extension_mbrContext ctx) {
+        // TODO: Handle extension method/member
+        return super.visitExtension_mbr(ctx);
     }
 
     @Override
@@ -197,6 +296,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
         }
         return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitState(jolkParser.StateContext ctx) {
+        // TODO: Handle state (field or constant)
+        return super.visitState(ctx);
     }
 
     @Override
@@ -264,6 +369,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     }
 
     @Override
+    public JolkNode visitEnum_constant(jolkParser.Enum_constantContext ctx) {
+        // TODO: Handle enum constant with optional arguments
+        return super.visitEnum_constant(ctx);
+    }
+
+    @Override
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
         String name = ctx.selector_id().getText();
         String[] params = new String[0];
@@ -299,6 +410,18 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             methodDepths.pop();
         }
         return new JolkMethodNode(name, body, params, isVariadic, frameSlots);
+    }
+
+    @Override
+    public JolkNode visitAnnotated_type(jolkParser.Annotated_typeContext ctx) {
+        // TODO: Collect type annotations and resolve type
+        return super.visitAnnotated_type(ctx);
+    }
+
+    @Override
+    public JolkNode visitVararg_id(jolkParser.Vararg_idContext ctx) {
+        // TODO: Handle vararg spread
+        return super.visitVararg_id(ctx);
     }
 
     @Override
@@ -528,6 +651,30 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     }
 
     @Override
+    public JolkNode visitAnnotation(jolkParser.AnnotationContext ctx) {
+        // TODO: Resolve annotation and its arguments
+        return super.visitAnnotation(ctx);
+    }
+
+    @Override
+    public JolkNode visitAnnotation_args(jolkParser.Annotation_argsContext ctx) {
+        // TODO: Handle annotation argument list
+        return super.visitAnnotation_args(ctx);
+    }
+
+    @Override
+    public JolkNode visitAnnotation_arg(jolkParser.Annotation_argContext ctx) {
+        // TODO: Handle key-value annotation pair
+        return super.visitAnnotation_arg(ctx);
+    }
+
+    @Override
+    public JolkNode visitAnnotation_val(jolkParser.Annotation_valContext ctx) {
+        // TODO: Handle nested annotation values
+        return super.visitAnnotation_val(ctx);
+    }
+
+    @Override
     public JolkNode visitPrimary(jolkParser.PrimaryContext ctx) {
         if (ctx.reserved() != null) return visit(ctx.reserved());
         // Jolk matches InstanceId as 'identifier' and MetaId as 'type' in the primary rule.
@@ -559,6 +706,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
         return createIdentifierNode(ctx.getText());
+    }
+
+    @Override
+    public JolkNode visitMethod_reference(jolkParser.Method_referenceContext ctx) {
+        // TODO: Handle method reference (##)
+        return super.visitMethod_reference(ctx);
     }
 
     /**
@@ -617,7 +770,57 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             // by the unary operator in the runtime to result in Long.MIN_VALUE.
             return new JolkLiteralNode(Long.parseUnsignedLong(ctx.NumberLiteral().getText()));
             
+        if (ctx.StringLiteral() != null) {
+            // TODO: Implementation for StringLiteral
+        }
+
+        if (ctx.CharLiteral() != null) {
+            // TODO: Implementation for CharLiteral
+        }
+
         return new JolkEmptyNode();
+    }
+
+    @Override
+    public JolkNode visitList_literal(jolkParser.List_literalContext ctx) {
+        // TODO: Handle collection literals (#[...], #{...}, #(...))
+        return super.visitList_literal(ctx);
+    }
+
+    @Override
+    public JolkNode visitArray_literal(jolkParser.Array_literalContext ctx) {
+        // TODO: Handle array literal synthesis
+        return super.visitArray_literal(ctx);
+    }
+
+    @Override
+    public JolkNode visitSet_literal(jolkParser.Set_literalContext ctx) {
+        // TODO: Handle set literal synthesis
+        return super.visitSet_literal(ctx);
+    }
+
+    @Override
+    public JolkNode visitMap_literal(jolkParser.Map_literalContext ctx) {
+        // TODO: Handle map literal synthesis
+        return super.visitMap_literal(ctx);
+    }
+
+    @Override
+    public JolkNode visitLiteral_list(jolkParser.Literal_listContext ctx) {
+        // TODO: Handle collection element list
+        return super.visitLiteral_list(ctx);
+    }
+
+    @Override
+    public JolkNode visitMap_list(jolkParser.Map_listContext ctx) {
+        // TODO: Handle map entry list
+        return super.visitMap_list(ctx);
+    }
+
+    @Override
+    public JolkNode visitMap_entry(jolkParser.Map_entryContext ctx) {
+        // TODO: Handle key -> value map entry
+        return super.visitMap_entry(ctx);
     }
 
     @Override
@@ -665,6 +868,24 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             nodes.add(visit(stmtCtx));
         }
         return new JolkBlockNode(nodes.toArray(new JolkNode[0]));
+    }
+
+    @Override
+    public JolkNode visitReturnOp(jolkParser.ReturnOpContext ctx) {
+        // TODO: Implementation for returnOp (^)
+        return super.visitReturnOp(ctx);
+    }
+
+    @Override
+    public JolkNode visitCondOp(jolkParser.CondOpContext ctx) {
+        // TODO: Implementation for condOp (?, ?!)
+        return super.visitCondOp(ctx);
+    }
+
+    @Override
+    public JolkNode visitOperator(jolkParser.OperatorContext ctx) {
+        // TODO: Implementation for generic operator mapping
+        return super.visitOperator(ctx);
     }
 
     // --- Parameter Parsing Helpers ---

@@ -45,6 +45,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     private final Stack<Integer> parameterThresholds = new Stack<>();
     private final Stack<Integer> methodDepths = new Stack<>();
     private String currentClassName;
+    private boolean isInMetaScope = false;
 
     public JolkVisitor(JolkLanguage language) {
         this.language = language;
@@ -164,30 +165,36 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     default -> JolkArchetype.CLASS;
                 };
 
-                Map<String, JolkMethodNode> instanceMethods = new LinkedHashMap<>(); // Instance methods
+                Map<String, List<JolkMethodNode>> instanceMethods = new LinkedHashMap<>(); // Instance methods
                 Map<String, JolkFieldNode> instanceFields = new LinkedHashMap<>(); // Instance fields
-                Map<String, JolkNode> metaMembers = new LinkedHashMap<>(); // Can contain JolkFieldNode or JolkMethodNode
+                Map<String, List<JolkNode>> metaMembers = new LinkedHashMap<>(); // Can contain JolkFieldNode or JolkMethodNode
 
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
                         boolean isMeta = mbr.member().META() != null;
-                        // TODO: Collect member annotations for the class definition metadata
-                        JolkNode node = visit(mbr.member());
-                        
-                        if (node instanceof JolkFieldNode fieldNode) {
-                            if (isMeta) {
-                                metaMembers.put(fieldNode.getName(), fieldNode);
-                            } else {
-                                // Instance fields
-                                instanceFields.put(fieldNode.getName(), fieldNode);
+                        boolean oldMetaScope = this.isInMetaScope;
+                        this.isInMetaScope = isMeta;
+                        try {
+                            // TODO: Collect member annotations for the class definition metadata
+                            JolkNode node = visit(mbr.member());
+                            
+                            if (node instanceof JolkFieldNode fieldNode) {
+                                if (isMeta) {
+                                    metaMembers.computeIfAbsent(fieldNode.getName(), k -> new ArrayList<>()).add(fieldNode);
+                                } else {
+                                    // Instance fields
+                                    instanceFields.put(fieldNode.getName(), fieldNode);
+                                }
+                            } else if (node instanceof JolkMethodNode methodNode) {
+                                if (isMeta) {
+                                    metaMembers.computeIfAbsent(methodNode.getName(), k -> new ArrayList<>()).add(methodNode);
+                                } else {
+                                    // Instance methods
+                                    instanceMethods.computeIfAbsent(methodNode.getName(), k -> new ArrayList<>()).add(methodNode);
+                                }
                             }
-                        } else if (node instanceof JolkMethodNode methodNode) {
-                            if (isMeta) {
-                                metaMembers.put(methodNode.getName(), methodNode);
-                            } else {
-                                // Instance methods
-                                instanceMethods.put(methodNode.getName(), methodNode);
-                            }
+                        } finally {
+                            this.isInMetaScope = oldMetaScope;
                         }
                     }
                 }
@@ -354,12 +361,6 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitAssignment(jolkParser.AssignmentContext ctx) {
         return visit(ctx.expression());
-    }
-
-    @Override
-    public JolkNode visitEnum_constant(jolkParser.Enum_constantContext ctx) {
-        // TODO: Handle enum constant with optional arguments
-        return super.visitEnum_constant(ctx);
     }
 
     @Override
@@ -690,7 +691,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return switch (text) {
             case "null" -> new JolkLiteralNode(JolkNothing.INSTANCE);
             case "self" -> visitReservedSelf();
-            case "Self" -> new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+            case "Self" -> isInMetaScope ? visitReservedSelf() : new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
             case "true" -> new JolkLiteralNode(true);
             case "false" -> new JolkLiteralNode(false);
             default -> new JolkEmptyNode();
@@ -718,7 +719,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         String name = ctx.getText();
         // Self is a dynamic type alias referring to the current MetaClass.
         if ("Self".equals(name)) {
-            return new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+            return isInMetaScope ? visitReservedSelf() : new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
         }
         return createIdentifierNode(name);
     }
@@ -739,17 +740,18 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
         // 2. Semantic Casing: Uppercase names are Meta-Objects (Types/Constants)
         if (Character.isUpperCase(name.charAt(0))) {
-            // Self-reference resolution: Inside a class definition, the name refers 
-            // to the Meta-Object. We use the dynamic lookup node to ensure registry consistency.
-            if (name.equals(currentClassName)) return new JolkReadTypeNode(name);
-            
             // Priority 1: Intrinsic Types (Resolved as static literals for performance)
             if ("Long".equals(name) || "Int".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLong.LONG_TYPE);
             if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBoolean.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
 
-            // Priority 2: User-Defined Meta-Objects (Resolved via dynamic lookup)
-            return new JolkReadTypeNode(name);
+            // Priority 2: Current Class Reference
+            if (name.equals(currentClassName)) return new JolkReadTypeNode(language, name, null);
+            
+            // Priority 3: User-Defined Meta-Objects (Resolved via dynamic lookup with Meta-fallback)
+            // This handles both external class references (ClassA) and internal constants (FORTY_TWO).
+            JolkNode metaSelf = isInMetaScope ? visitReservedSelf() : new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+            return new JolkReadTypeNode(language, name, metaSelf);
         }
 
         // 3. Default: Treat as a message send to 'self' (e.g. field access)

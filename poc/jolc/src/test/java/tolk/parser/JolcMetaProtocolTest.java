@@ -3,7 +3,6 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -45,20 +44,19 @@ public class JolcMetaProtocolTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Activate when meta fields are implemented.")
     void testMetaFieldAccessors() {
         String source = """
             class MetaTest {
                 meta constant Long FORTY_TWO = 42;
                 meta Long META_VAL = 0;
-                Long fortyTwo() { ^ FORTY_TWO }
+                meta Long fortyTwo() { ^ FORTY_TWO }
             }""";
         Value meta = eval(source);
         // access meta constant 
         assertEquals(42, meta.invokeMember("FORTY_TWO").asLong());
-        assertEquals(42, meta.invokeMember("fortyTwo").asLong());
         assertEquals(0, meta.invokeMember("META_VAL").asLong());
-        assertEquals(meta, meta.invokeMember("META_VAL", 42L).asLong());
+        assertEquals(42, meta.invokeMember("fortyTwo").asLong());
+        assertEquals(meta, meta.invokeMember("META_VAL", 42L));
         assertEquals(42, meta.invokeMember("META_VAL").asLong());
     }
 

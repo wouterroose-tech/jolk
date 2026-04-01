@@ -3,7 +3,6 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -53,21 +52,22 @@ public class JolcBindingTest  extends JolcTestBase {
     }
 
     @Test
-    @Disabled("TODO: implemnent meta field access, then re-enable this test.")
     void testMetaFieldAccess() {
         String source = """
             class MyClass {
                 meta Long X = 0; 
                 meta Long val() { ^ X }
-                meta Self val(Long x) { self #X(val)}
                 Long val() { ^ X }
+                meta Self val(Long x) { ^ self #X(x)}
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
+        assertEquals(0L, meta.invokeMember("X").asLong());
         assertEquals(0L, meta.invokeMember("val").asLong());
         assertEquals(0L, instance.invokeMember("val").asLong());
-        assertEquals(instance, instance.invokeMember("val", 42L));
+        assertEquals(meta, meta.invokeMember("val", 42L)); 
+        assertEquals(42L, meta.invokeMember("X").asLong());
         assertEquals(42L, meta.invokeMember("val").asLong());
         assertEquals(42L, instance.invokeMember("val").asLong());
     }

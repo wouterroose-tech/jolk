@@ -2,7 +2,6 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 
 /**
  * Node for writing to a local variable or parameter in the Truffle frame.

@@ -200,7 +200,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 }
 
                 this.currentClassName = oldClassName;
-                return new JolkClassDefinitionNode(language, className, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
+                return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
             }
         }
         return new JolkEmptyNode();

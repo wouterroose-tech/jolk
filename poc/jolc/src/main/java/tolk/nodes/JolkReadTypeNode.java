@@ -47,7 +47,12 @@ public final class JolkReadTypeNode extends JolkExpressionNode {
             Object metaObj = metaReceiver.executeGeneric(frame);
             if (metaObj != JolkNothing.INSTANCE) {
                 try {
-                    return InteropLibrary.getUncached(metaObj).invokeMember(metaObj, typeName);
+                    InteropLibrary interop = InteropLibrary.getUncached(metaObj);
+                    if (interop.isMemberInvocable(metaObj, typeName)) {
+                        return interop.invokeMember(metaObj, typeName);
+                    } else if (interop.isMemberReadable(metaObj, typeName)) {
+                        return interop.readMember(metaObj, typeName);
+                    }
                 } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
                     // Fall through to Nothing
                 }

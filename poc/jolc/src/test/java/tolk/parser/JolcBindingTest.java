@@ -21,7 +21,6 @@ public class JolcBindingTest  extends JolcTestBase {
     }
     
     @Test
-    @Disabled("activate when field accessors are implemented")
     void testFieldAccessors() {
         String source = "class MyClass { Long x;}";
         Value meta = eval(source);
@@ -29,13 +28,13 @@ public class JolcBindingTest  extends JolcTestBase {
         
         // access via synthesized accessor
         assertEquals(0L, instance.invokeMember("x").asLong());
-        assertEquals(instance, instance.invokeMember("x", 42L).asLong());
+        assertEquals(instance, instance.invokeMember("x", 42L));
         assertEquals(42L, instance.invokeMember("x").asLong());
     }
 
     @Test
     void testFieldAccess() {
-        String source = "class MyClass { Long x = 42; Long val() { ^ x } }";
+        String source = "class MyClass { Long x = 42; Long val() { ^ self #x } }";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
@@ -58,16 +57,18 @@ public class JolcBindingTest  extends JolcTestBase {
     void testMetaFieldAccess() {
         String source = """
             class MyClass {
-                meta Long X = 42; 
+                meta Long X = 0; 
                 meta Long val() { ^ X }
+                meta Self val(Long x) { self #X(val)}
                 Long val() { ^ X }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
-        // field access in method
-        assertEquals(42L, instance.invokeMember("val").asLong());
-        //meta method
+        assertEquals(0L, meta.invokeMember("val").asLong());
+        assertEquals(0L, instance.invokeMember("val").asLong());
+        assertEquals(instance, instance.invokeMember("val", 42L));
+        assertEquals(42L, meta.invokeMember("val").asLong());
         assertEquals(42L, instance.invokeMember("val").asLong());
     }
 

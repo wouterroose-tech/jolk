@@ -3,7 +3,6 @@ package tolk.nodes;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import tolk.JolcTestBase;
@@ -62,16 +61,22 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
         String constantName = "FORTY_TWO";
         long expectedValue = 42L;
 
-        // In Jolk, a class object is an instance. Meta-constants are exposed as 
-        // meta-members of that class object. We populate the runtimeMetaMembers 
-        // map (arg 8) with an executable member to satisfy the #invokeMember protocol.
+        // Create a MetaClass and manually populate its meta-field storage.
+        // We use the 9-argument constructor to simulate the hydration phase.
+        Map<String, Object> mockMetaFields = new HashMap<>();
+        mockMetaFields.put(constantName, expectedValue); // Value hint/template
         Map<String, Object> mockMetaMembers = new HashMap<>();
-        mockMetaMembers.put(constantName, new JolkMemberNode(constantName, new JolkLiteralNode(expectedValue)));
         
         JolkMetaClass metaReceiverObj = new JolkMetaClass(
             "Constants", null, JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
-            Collections.emptyMap(), Collections.emptyMap(), mockMetaMembers, Collections.emptyMap()
+            Collections.emptyMap(), Collections.emptyMap(), mockMetaMembers, mockMetaFields
         );
+
+        // Hydrate the actual value and attach the synthesized accessor
+        metaReceiverObj.setMetaFieldValue(constantName, expectedValue);
+        // In Jolk, constants are accessed via synthesized accessors in the metaMembers map
+        // (passed as argument 8 in the constructor).
+        mockMetaMembers.put(constantName, metaReceiverObj.getMetaAccessor(constantName, true));
 
         // Setup the node with a receiver that returns our meta-object
         JolkNode receiverNode = new JolkLiteralNode(metaReceiverObj);
@@ -104,6 +109,19 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
         Value result = execute(node);
 
         assertTrue(isNull(result));
+    }
+
+    /**
+     * Helper to access private fields in JolkMetaClass for testing.
+     */
+    private Object getInternalField(Object instance, String fieldName) {
+        try {
+            java.lang.reflect.Field field = instance.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return field.get(instance);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String getMetaSimpleName(Value v) {

@@ -33,7 +33,7 @@ import java.util.Set;
 /// messages itself; that is the responsibility of {@link JolkObject}.
 ///
 @ExportLibrary(InteropLibrary.class)
-public final class JolkMetaClass implements TruffleObject {
+public final class JolkMetaClass implements TruffleObject, JolkIntrinsicObject {
 
     public final String name;
     private final JolkMetaClass superclass;
@@ -54,6 +54,7 @@ public final class JolkMetaClass implements TruffleObject {
     private final Object[] defaultFieldValues;
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
+    private final Map<String, Object> metaFields;
     // Meta-level field storage
     private final Map<String, Integer> metaFieldIndices;
     private final Object[] metaFieldValues;
@@ -86,6 +87,7 @@ public final class JolkMetaClass implements TruffleObject {
         this.archetype = archetype;
         this.instanceMembers = instanceMembers;
         this.instanceFields = instanceFields;
+        this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.fieldIndices = new HashMap<>();
         this.accessorCache = new HashMap<>();
         
@@ -99,18 +101,28 @@ public final class JolkMetaClass implements TruffleObject {
         this.totalFieldCount = currentIndex;
         
         this.defaultFieldValues = new Object[totalFieldCount];
-        this.metaMembers = metaMembers;
+        this.metaMembers = metaMembers; // Maintain reference to allow deferred hydration
         this.metaFieldIndices = new HashMap<>();
         this.metaAccessorCache = new HashMap<>();
         
+        this.metaFieldValues = new Object[metaFields.size()];
         int mIdx = 0;
         for (String fieldName : metaFields.keySet()) {
             metaFieldIndices.put(fieldName, mIdx++);
+            // Auto-register meta field accessors in the meta-member map
+            if (!this.metaMembers.containsKey(fieldName)) {
+                this.metaMembers.put(fieldName, getMetaAccessor(fieldName, false));
+            }
         }
-        this.metaFieldValues = new Object[mIdx];
 
         initializeDefaultValues();
     }
+
+    @Override
+    public JolkMetaClass getJolkMetaClass() {
+        return this; // In the PoC, classes are their own meta-identities.
+    }
+
     public Object getMetaFieldValue(int index) {
         return metaFieldValues[index];
     }
@@ -125,7 +137,12 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     public Object getMetaAccessor(String name, boolean isStable) {
-        return metaAccessorCache.computeIfAbsent(name, k -> new JolkMetaFieldAccessor(k, metaFieldIndices.get(k), isStable));
+        JolkMetaFieldAccessor accessor = metaAccessorCache.get(name);
+        if (accessor == null || accessor.isStable != isStable) {
+            accessor = new JolkMetaFieldAccessor(name, metaFieldIndices.get(name), isStable);
+            metaAccessorCache.put(name, accessor);
+        }
+        return accessor;
     }
 
     @ExportLibrary(InteropLibrary.class)
@@ -153,7 +170,8 @@ public final class JolkMetaClass implements TruffleObject {
 
             if (arguments.length == 1) {
                 Object result = receiver.getMetaFieldValue(index);
-                return result == null ? JolkNothing.INSTANCE : result;
+                // Identity Restitution Protocol: Ensure no raw JVM null or Interop null leaks.
+                return (result == null || (result != JolkNothing.INSTANCE && InteropLibrary.getUncached().isNull(result))) ? JolkNothing.INSTANCE : result;
             } else {
                 if (isStable) {
                     throw UnsupportedTypeException.create(arguments, "Cannot modify stable/constant meta field: " + fieldName);
@@ -191,6 +209,30 @@ public final class JolkMetaClass implements TruffleObject {
                     this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
                 } else {
                     this.defaultFieldValues[idx] = val;
+                }
+            }
+        }
+
+        // Meta-Level Primary Initializer Expansion
+        for (Map.Entry<String, Object> entry : metaFields.entrySet()) {
+            Integer idx = metaFieldIndices.get(entry.getKey());
+            if (idx != null) {
+                Object val = entry.getValue();
+
+                // If the value is a JolkMetaClass or a String, it's a type hint,
+                // so we apply default initialization based on the hint.
+                // Otherwise, it's a concrete initializer value.
+                if (val instanceof JolkMetaClass || val instanceof String) {
+                    String hint = resolveTypeHint(val);
+                    if (isLongHint(hint) || (val == null && entry.getKey().equalsIgnoreCase("id"))) {
+                        this.metaFieldValues[idx] = 0L;
+                    } else if (isBooleanHint(hint)) {
+                        this.metaFieldValues[idx] = false;
+                    } else {
+                        this.metaFieldValues[idx] = JolkNothing.INSTANCE;
+                    }
+                } else {
+                    this.metaFieldValues[idx] = val == null ? JolkNothing.INSTANCE : val; // Use the provided concrete value
                 }
             }
         }
@@ -285,6 +327,28 @@ public final class JolkMetaClass implements TruffleObject {
         return false;
     }
 
+    /**
+     * ### isMemberReadable
+     * 
+     * Returns true if the identifier exists in the meta-member map.
+     */
+    @ExportMessage
+    public boolean isMemberReadable(String member) {
+        return metaMembers.containsKey(member);
+    }
+
+    /**
+     * ### readMember
+     * 
+     * Retrieves the internal substrate object (Closure or Accessor) for a meta-member.
+     */
+    @ExportMessage
+    public Object readMember(String member) throws UnknownIdentifierException {
+        Object val = metaMembers.get(member);
+        if (val == null) throw UnknownIdentifierException.create(member);
+        return val;
+    }
+
     @ExportMessage
     public boolean hasMembers() {
         return true;
@@ -302,36 +366,40 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     @ExportMessage
-    public boolean isMemberReadable(String member) {
-        return metaMembers.containsKey(member);
-    }
-
-    @ExportMessage
     public boolean isMemberInvocable(String member) {
-        // This checks if a message can be sent TO THE META-OBJECT itself.
-        String name = member;
-        return metaMembers.containsKey(name) || switch (name) {
+        InteropLibrary interop = InteropLibrary.getUncached();
+        // 1. Local Meta-Members (Methods and Field Accessors)
+        if (metaMembers.containsKey(member)) return true;
+        
+        // 2. Local Meta-Intrinsics (Identity properties should not delegate)
+        if (switch (member) {
             case "new", "name", "superclass", "isInstance" -> true;
+            case "class", "hash", "toString", "isPresent", "isEmpty" -> true;
             default -> false;
-        };
+        }) return true;
+
+        // 3. Meta-Inheritance check
+        return superclass != null && interop.isMemberInvocable(superclass, member);
     }
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        String name = member;
-        if (metaMembers.containsKey(name)) {
-            Object memberObj = metaMembers.get(name);
+        InteropLibrary interop = InteropLibrary.getUncached();
+        if (metaMembers.containsKey(member)) {
+            Object memberObj = metaMembers.get(member);
             // Jolk Protocol: Every method call must include the receiver as the first argument.
             Object[] metaArguments = new Object[arguments.length + 1];
             metaArguments[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
             try {
-                return InteropLibrary.getUncached().execute(memberObj, metaArguments);
+                return interop.execute(memberObj, metaArguments);
             } catch (JolkReturnException e) {
                 throw e; // Preserve signal for non-local returns
             }
         }
-        switch (name) {
+
+        // 2. Local Meta-Intrinsics: Identity properties specific to this class
+        switch (member) {
             case "new":
                 if (arguments.length != 0) {
                     // Support Canonical #new if arguments match field count
@@ -350,17 +418,23 @@ public final class JolkMetaClass implements TruffleObject {
             case "isInstance":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return isMetaInstance(arguments[0]);
-            default:
-                throw UnknownIdentifierException.create(member);
         }
-    }
 
-    @ExportMessage
-    public Object readMember(String member) throws UnknownIdentifierException {
-        String name = member;
-        if (metaMembers.containsKey(name)) {
-            return metaMembers.get(name);
+        // 3. Meta-Inheritance: Delegate to superclass meta-stratum
+        if (superclass != null) {
+            try {
+                return interop.invokeMember(superclass, member, arguments);
+            } catch (UnknownIdentifierException e) {
+                // fall through to generic protocol
+            }
         }
+
+        // 2. Jolk Object Protocol: Classes are polite JoMoos
+        Object intrinsicResult = invokeIntrinsicMember(this, member, arguments, interop);
+        if (intrinsicResult != null) {
+            return intrinsicResult;
+        }
+
         throw UnknownIdentifierException.create(member);
     }
 
@@ -470,7 +544,8 @@ public final class JolkMetaClass implements TruffleObject {
             if (lengthProfile.profile(arguments.length == 1)) {
                 // Getter: #x -> returns value
                 Object result = receiver.getFieldValue(index);
-                return result == null ? JolkNothing.INSTANCE : result;
+                // Identity Restitution Protocol: Ensure no raw JVM null or Interop null leaks.
+                return (result == null || (result != JolkNothing.INSTANCE && InteropLibrary.getUncached().isNull(result))) ? JolkNothing.INSTANCE : result;
             } else if (lengthProfile.profile(arguments.length >= 2)) {
                 // Setter: #x(value) -> returns Self (for fluent chaining)
                 Object value = arguments[1];

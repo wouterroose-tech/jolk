@@ -2,10 +2,11 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
-import tolk.runtime.JolkObject;
 import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBoolean;
 import tolk.runtime.JolkLong;
+import tolk.runtime.JolkException;
+import tolk.runtime.JolkIntrinsicObject;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -351,7 +352,7 @@ public abstract class JolkDispatchNode extends Node {
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (receiver instanceof JolkObject jo) return jo.getJolkMetaClass();
+                    if (receiver instanceof JolkIntrinsicObject jo) return jo.getJolkMetaClass();
                     if (receiver instanceof Long || receiver instanceof Integer) return JolkLong.LONG_TYPE;
                     if (receiver instanceof Boolean) return JolkBoolean.BOOLEAN_TYPE;
                     if (receiver instanceof JolkMetaClass) return receiver;
@@ -396,6 +397,8 @@ public abstract class JolkDispatchNode extends Node {
                 }
             }
         } catch (JolkReturnException e) {
+            throw e;
+        } catch (JolkException e) {
             throw e;
         } catch (Throwable e) {
             if (e instanceof JolkReturnException re) throw re;

@@ -1,0 +1,27 @@
+~ jolk.lang;
+
+/// # Exception
+///
+/// The fundamental exception type for the Jolk language. 
+/// Allows for unified  error handling through message passing.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+class Exception extends Object {
+
+    /// ## throw
+    /// Throws the receiver as a JolkException. 
+    /// In Jolk, any object can be thrown, but Exception provides the canonical implementation.
+    ///
+    /// - **Returns**: This method does not return; it terminates the current execution path.
+    Self throw() { 
+        // Implementation provided by the JolkDispatchNode intrinsic.
+    }
+
+    /// ## message
+    /// Returns the message payload of the exception.
+    ///
+    /// - **Returns**: The object provided as the message during construction.
+    Object message() { }
+}

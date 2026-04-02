@@ -139,7 +139,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 else if (node instanceof JolkFieldNode field) {
                     JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
                     Object initialValue = lift(root.getCallTarget().call());
-                    newMetaClass.setMetaFieldValue(name, initialValue);
+                    runtimeMetaFields.put(name, initialValue);
                     // Note: In case of field/method collision, we store the field accessor separately
                     // so the dispatcher can include it.
                     runtimeMetaMembers.put(name, newMetaClass.getMetaAccessor(name, field.isStable()));
@@ -151,7 +151,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             }
         }
 
-        // Jolk Lifecycle: Synchronize structural templates after hydration.
+        // Jolk Lifecycle Protocol: Synchronize structural templates after hydration.
         newMetaClass.initializeDefaultValues();
 
         return newMetaClass;

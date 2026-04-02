@@ -169,13 +169,13 @@ public class JolkMetaClassTest {
         });
     }
 
-    @Test
+       @Test
     void testReadMemberThrowsException() {
         assertThrows(UnknownIdentifierException.class, () -> {
             metaClass.readMember("new");
         });
     }
-
+    
     @Test
     void testReadMetaConstant() throws UnknownIdentifierException {
         Object value = metaClass.readMember("VERSION");

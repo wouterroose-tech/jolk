@@ -20,7 +20,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 /// In the future, this class will be expanded to include fields, methods, and other features of the object model.
 /// 
 @ExportLibrary(InteropLibrary.class)
-public class JolkObject implements TruffleObject {
+public class JolkObject implements TruffleObject, JolkIntrinsicObject {
 
     private final JolkMetaClass metaClass;
     private final Object[] data;
@@ -126,71 +126,10 @@ public class JolkObject implements TruffleObject {
             return result == null ? JolkNothing.INSTANCE : result;
         }
 
-        // 2. Handle Object.jolk intrinsics and fallbacks.
-        switch (name) {
-            case "==" -> {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                Object other = arguments[0];
-                if (this == other) return true;
-                return interop.isIdentical(this, other, interop);
-            }
-            case "!=" -> {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                Object other = arguments[0];
-                if (this == other) return false;
-                return !interop.isIdentical(this, other, interop);
-            }
-            case "~~" -> {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                // Default equivalence (fallback) is identity.
-                return this == arguments[0];
-            }
-            case "!~" -> {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return !interop.asBoolean(this.invokeMember("~~", arguments, interop));
-            }
-            case "??" ->  {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                // If the receiver is not Nothing, return the receiver itself.
-                return this;
-            }
-            case "hash" -> {
-                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return (long) this.hashCode();
-            }
-            case "toString" -> {
-                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return this.toString();
-            }
-            case "ifPresent" -> {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                Object action = arguments[0];
-                return interop.execute(action, this);
-            }
-            case "ifEmpty" -> {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return this; // Do nothing for non-null object
-            }
-            case "isPresent" -> { 
-                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return true; 
-            }
-            case "isEmpty" -> { 
-                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return false; 
-            }
-            case "class" -> { 
-                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return metaClass; 
-            }
-            case "instanceOf" -> {
-                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                Object type = arguments[0];
-                if (interop.isMetaInstance(type, this)) {
-                    return JolkMatch.with(this);
-                }
-                return JolkMatch.empty();
-            }
+        // 2. Handle standard intrinsic protocol via common interface.
+        Object intrinsicResult = invokeIntrinsicMember(this, name, arguments, interop);
+        if (intrinsicResult != null) {
+            return intrinsicResult;
         }
 
         throw UnknownIdentifierException.create(member);

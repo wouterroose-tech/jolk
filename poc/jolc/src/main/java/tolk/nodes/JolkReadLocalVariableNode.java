@@ -26,6 +26,6 @@ public class JolkReadLocalVariableNode extends JolkNode {
         Frame targetFrame = getTargetFrame(frame, depth);
         if (targetFrame == null) return JolkNothing.INSTANCE;
         // Access the indexed slot in the frame.
-        return targetFrame.getObject(index);
+        return lift(targetFrame.getObject(index));
     }
 }

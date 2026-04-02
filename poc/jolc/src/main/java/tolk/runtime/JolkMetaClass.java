@@ -152,7 +152,8 @@ public final class JolkMetaClass implements TruffleObject {
             }
 
             if (arguments.length == 1) {
-                return receiver.getMetaFieldValue(index);
+                Object result = receiver.getMetaFieldValue(index);
+                return result == null ? JolkNothing.INSTANCE : result;
             } else {
                 if (isStable) {
                     throw UnsupportedTypeException.create(arguments, "Cannot modify stable/constant meta field: " + fieldName);
@@ -213,6 +214,16 @@ public final class JolkMetaClass implements TruffleObject {
         if (hint == null) return false;
         return hint.equalsIgnoreCase("Boolean") 
             || hint.equalsIgnoreCase("jolk.lang.Boolean");
+    }
+
+    @ExportMessage
+    public boolean hasMetaObject() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object getMetaObject() {
+        return this;
     }
 
     @ExportMessage
@@ -458,7 +469,8 @@ public final class JolkMetaClass implements TruffleObject {
 
             if (lengthProfile.profile(arguments.length == 1)) {
                 // Getter: #x -> returns value
-                return receiver.getFieldValue(index);
+                Object result = receiver.getFieldValue(index);
+                return result == null ? JolkNothing.INSTANCE : result;
             } else if (lengthProfile.profile(arguments.length >= 2)) {
                 // Setter: #x(value) -> returns Self (for fluent chaining)
                 Object value = arguments[1];

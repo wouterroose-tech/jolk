@@ -3,9 +3,11 @@ package tolk.nodes;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import tolk.runtime.JolkNothing;
 
 /// The root of all Jolk execution nodes.
 ///
@@ -26,6 +28,19 @@ public abstract class JolkNode extends Node {
     /// @param frame The current execution frame, which holds local variables.
     /// @return The result of executing this node.
     public abstract Object executeGeneric(VirtualFrame frame);
+
+    /**
+     * Performs "Identity Restitution" by lifting a potential raw Java null into the 
+     * Jolk {@link JolkNothing#INSTANCE}. This ensures that even uninitialized states 
+     * or nulls passed from the Java host can safely participate in Jolk's unified 
+     * message-passing protocol.
+     * 
+     * @param value The value to lift.
+     * @return The lifted value (either the original object or JolkNothing.INSTANCE).
+     */
+    protected final Object lift(Object value) {
+        return (value == null || InteropLibrary.getUncached().isNull(value)) ? JolkNothing.INSTANCE : value;
+    }
 
     /**
      * Navigates the lexical environment chain to find the arguments array at the specified depth.

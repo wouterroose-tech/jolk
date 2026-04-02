@@ -29,6 +29,6 @@ public class JolkReadArgumentNode extends JolkNode {
     public Object executeGeneric(VirtualFrame frame) {
         Object[] targetArgs = getTargetArgs(frame, depth);
         if (targetArgs == null) return JolkNothing.INSTANCE;
-        return (index < targetArgs.length) ? targetArgs[index] : JolkNothing.INSTANCE;
+        return (index < targetArgs.length) ? lift(targetArgs[index]) : JolkNothing.INSTANCE;
     }
 }

@@ -122,7 +122,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 // Instance field initializers: evaluate the initializer to get the template value.
                 // Note: For the PoC, we evaluate at class-definition time to ensure slots contain values.
                 JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
-                runtimeInstanceFields.put(entry.getKey(), root.getCallTarget().call());
+                runtimeInstanceFields.put(entry.getKey(), lift(root.getCallTarget().call()));
             } else {
                 // If no initializer, the type hint was already passed.
                 runtimeInstanceFields.put(entry.getKey(), fieldNode.getTypeName());
@@ -138,7 +138,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 if (node instanceof JolkMethodNode m) methods.add(m);
                 else if (node instanceof JolkFieldNode field) {
                     JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
-                    Object initialValue = root.getCallTarget().call();
+                    Object initialValue = lift(root.getCallTarget().call());
                     newMetaClass.setMetaFieldValue(name, initialValue);
                     // Note: In case of field/method collision, we store the field accessor separately
                     // so the dispatcher can include it.
@@ -197,7 +197,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             int callArity = frame.getArguments().length - 1; // Exclude 'self'
             for (int i = 0; i < arities.length; i++) {
                 if (arities[i] == callArity) {
-                    return methodBodies[i].executeGeneric(frame);
+                    return lift(methodBodies[i].executeGeneric(frame));
                 }
             }
             throw new RuntimeException("No method found for arity " + callArity);

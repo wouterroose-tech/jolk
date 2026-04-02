@@ -67,6 +67,20 @@ public class JolkObject implements TruffleObject {
     }
 
     @ExportMessage
+    public boolean hasMetaObject() {
+        return true;
+    }
+
+    /// ### getMetaObject
+    /// 
+    /// Returns the [JolkMetaClass] that serves as the type identity for this instance.
+    /// This allows the GraalVM Polyglot API to resolve the meta-object correctly.
+    @ExportMessage
+    public Object getMetaObject() {
+        return metaClass;
+    }
+
+    @ExportMessage
     public boolean hasMembers() {
         return true;
     }
@@ -108,7 +122,8 @@ public class JolkObject implements TruffleObject {
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
-            return interop.execute(instanceMember, argsWithReceiver);
+            Object result = interop.execute(instanceMember, argsWithReceiver);
+            return result == null ? JolkNothing.INSTANCE : result;
         }
 
         // 2. Handle Object.jolk intrinsics and fallbacks.

@@ -63,4 +63,30 @@ public class JolcExpressionNothingTest extends JolcTestBase {
         assertEquals("null", result.toString(), "Chaining messages on null should result in null (Silent Absorption).");
     }
 
+    /**
+     * Verifies that raw JVM `null` values returned from host (Java) interop calls
+     * are correctly "lifted" to the Jolk `null` identity (Identity Restitution).
+     */
+    @Test
+    void testHostNullRestitution() {
+        String source = """
+            class HostNullTest {
+                Object callGet(Object host) {
+                    ^ host #get
+                }
+            }
+            """;
+        Value meta = eval("HostNullTest", source);
+        Value instance = meta.invokeMember("new");
+
+        // Pass a Java host object that returns a raw null from its 'get' method.
+        java.util.concurrent.atomic.AtomicReference<Object> hostRef = new java.util.concurrent.atomic.AtomicReference<>(null);
+        Value result = instance.invokeMember("callGet", hostRef);
+
+        assertNotNull(result, "Result wrapper should not be null.");
+        assertEquals("null", result.toString(), "The restituted identity should have the string representation 'null'.");
+        // Verify the archetype identity
+        assertEquals("Nothing", result.invokeMember("class").getMetaSimpleName(), "Raw JVM null from host must be lifted to the Jolk 'Nothing' identity.");
+    }
+
 }

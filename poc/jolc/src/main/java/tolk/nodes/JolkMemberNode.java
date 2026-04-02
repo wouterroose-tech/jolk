@@ -71,10 +71,6 @@ public class JolkMemberNode extends JolkNode implements TruffleObject {
         return result == null ? JolkNothing.INSTANCE : result;
     }
 
-    public boolean isExecutable() {
-        return true;
-    }
-
     @Override
     public String toString() {
         return "Member(" + name + ")";

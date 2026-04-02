@@ -1,17 +1,18 @@
 package tolk.nodes;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import java.util.concurrent.atomic.AtomicReference;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import org.graalvm.polyglot.Value;
+import tolk.language.JolkLanguage;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
+import tolk.runtime.JolkClosure;
 import tolk.runtime.JolkNothing;
 
-import java.util.HashMap;
-import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -35,24 +36,60 @@ public class JolkDispatchNodeTest extends JolcTestBase {
     }
 
     /**
+     * A simple wrapper node to allow JolkDispatchNode to be adopted by a JolkRootNode.
+     * JolkRootNode expects a JolkNode as its body, but JolkDispatchNode directly extends Node.
+     */
+    private static class DispatchNodeWrapper extends JolkNode {
+        @Child private JolkDispatchNode dispatchNode;
+
+        DispatchNodeWrapper(JolkDispatchNode dispatchNode) {
+            this.dispatchNode = dispatchNode;
+        }
+
+        @Override
+        public Object executeGeneric(VirtualFrame frame) {
+            // Use the first argument passed to the CallTarget as the receiver for dispatch.
+            return dispatchNode.executeDispatch(frame.getArguments()[0], "get", new Object[0]);
+        }
+    }
+
+    private void adopt(JolkDispatchNode dispatchNode) {
+        JolkLanguage lang = com.oracle.truffle.api.TruffleLanguage.LanguageReference.create(JolkLanguage.class).get(null);
+        DispatchNodeWrapper wrapper = new DispatchNodeWrapper(dispatchNode);
+        new JolkRootNode(lang, wrapper).getCallTarget(); // Calling getCallTarget() triggers adoption
+    }
+
+    /**
      * Tests that raw JVM `null` values returned from interop calls are
      * "lifted" to {@link JolkNothing.INSTANCE} (Identity Restitution).
      * This specifically targets the `if (result == null)` check in `doDispatch`.
      */
     @Test
-    @Disabled("TODO reactivate when interop is finalized")
     void testIdentityRestitutionForNull() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+        eval(""); // Ensure the language and context are initialized
         JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
-        // Use a standard Java Map (Host Object) to test raw null restitution.
-        // Host objects are allowed to return raw nulls via Interop, which 
-        // Jolk must then lift to Nothing.
-        Map<String, Object> hostMap = new HashMap<>();
-        // We wrap the host object in a Polyglot Value to ensure it is treated as a 
-        // Host Object with member support by the InteropLibrary.
-        Object wrappedMap = context.asValue(hostMap);
 
-        Object result = dispatchNode.executeDispatch(wrappedMap, "get", new Object[]{"missingKey"});
-        assertEquals(JolkNothing.INSTANCE, result, "Raw JVM null should be restituted to JolkNothing.INSTANCE.");
+        context.enter();
+        try {
+            // Resolve the language reference while the context is entered.
+            JolkLanguage lang = com.oracle.truffle.api.TruffleLanguage.LanguageReference.create(JolkLanguage.class).get(null);
+
+            // We create a RootNode to establish a proper execution boundary.
+            JolkRootNode root = new JolkRootNode(lang, new DispatchNodeWrapper(dispatchNode));
+
+            // IMPORTANT: Use context.asValue(target).execute(...) instead of target.call(...)
+            // This ensures the AtomicReference is properly wrapped as a guest-visible HostObject.
+            // We wrap the CallTarget in a JolkClosure to make it executable via the Polyglot API.
+            JolkClosure closure = new JolkClosure(root.getCallTarget());
+            Value executable = context.asValue(closure);
+            Value result = executable.execute(new AtomicReference<>(null));
+            
+            // Verify that the result is JolkNothing by checking its Jolk class.
+            assertEquals("Nothing", result.invokeMember("class").getMetaSimpleName(), 
+                "Raw JVM null from host must be lifted to the Jolk 'Nothing' identity.");
+        } finally {
+            context.leave();
+        }
     }
 
     /**

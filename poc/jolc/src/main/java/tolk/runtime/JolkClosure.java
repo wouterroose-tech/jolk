@@ -40,10 +40,12 @@ public class JolkClosure implements TruffleObject {
             captures[0] = env;
             System.arraycopy(arguments, 0, captures, 1, arguments.length);
             
-            return callTarget.call(captures);
+            Object result = callTarget.call(captures);
+            return result == null ? JolkNothing.INSTANCE : result;
         }
         // Method mode: the receiver is already at index 0
-        return callTarget.call(arguments);
+        Object result = callTarget.call(arguments);
+        return result == null ? JolkNothing.INSTANCE : result;
     }
 
 

@@ -3,7 +3,9 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import tolk.language.JolkLanguage;
+import tolk.runtime.JolkNothing;
 
 ///
 /// The root node of a Jolk execution tree.
@@ -45,20 +47,23 @@ public final class JolkRootNode extends RootNode {
     @Override
     public Object execute(VirtualFrame frame) {
         if (isMethod) {
+            Object result;
             try {
-                return bodyNode.executeGeneric(frame);
+                result = bodyNode.executeGeneric(frame);
             } catch (JolkReturnException e) {
                 // In Jolk, the return target is the arguments array (lexical environment)
                 // of the 'Home' method. We verify if this activation's environment
                 // matches the target stored in the exception.
                 if (e.getTarget() == frame.getArguments()) {
-                    return e.getResult();
+                    result = e.getResult();
                 } else {
                     throw e;
                 }
             }
+            return (result == null || InteropLibrary.getUncached().isNull(result)) ? JolkNothing.INSTANCE : result;
         } else {
-            return bodyNode.executeGeneric(frame);
+            Object result = bodyNode.executeGeneric(frame);
+            return (result == null || InteropLibrary.getUncached().isNull(result)) ? JolkNothing.INSTANCE : result;
         }
     }
 

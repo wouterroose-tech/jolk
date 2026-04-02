@@ -86,19 +86,32 @@ public abstract class JolkDispatchNode extends Node {
 
     /// ### Fast Path for `Nothing`
     /// This specialization creates a high-speed path for messages sent to `JolkNothing.INSTANCE`.
-    /// By handling this singleton type directly, we avoid the overhead of a full dynamic dispatch.
-    @Specialization(limit = "1")
-    protected Object doNothing(JolkNothing receiver, String selector, Object[] arguments,
-                                @CachedLibrary("receiver") InteropLibrary interop) {
+    /// It also handles **Receiver Restitution**, treating a raw Java `null` as the 
+    /// Jolk `Nothing` identity to ensure safe message absorption.
+    @Specialization(guards = "isNothing(receiver)", limit = "1")
+    protected Object doNothing(Object receiver, String selector, Object[] arguments,
+                                @CachedLibrary("getNothing()") InteropLibrary interop) {
         try {
             // The logic for how Nothing responds is correctly encapsulated in JolkNothing itself.
             // This specialization simply provides a direct, cached route to that logic.
-            return interop.invokeMember(receiver, selector, arguments);
+            // We pass the singleton instance as the receiver to ensure the Interop protocol 
+            // remains stable even if the raw input was a JVM null.
+            Object result = interop.invokeMember(JolkNothing.INSTANCE, selector, arguments);
+            // Identity Restitution Protocol
+            return (result == null || InteropLibrary.getUncached().isNull(result)) ? JolkNothing.INSTANCE : result;
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }
+    }
+
+    protected boolean isNothing(Object receiver) {
+        return receiver == null || receiver == JolkNothing.INSTANCE || InteropLibrary.getUncached().isNull(receiver);
+    }
+
+    protected JolkNothing getNothing() {
+        return JolkNothing.INSTANCE;
     }
 
     /// ### Fast Path for Longs
@@ -130,8 +143,8 @@ public abstract class JolkDispatchNode extends Node {
         }
         try {
             Object result = interop.invokeMember((Object) receiver, selector, arguments);
-            // Identity Restitution: We lift raw JVM nulls into the Nothing singleton.
-            if (result == null) {
+            // Identity Restitution Protocol
+            if (result == null || InteropLibrary.getUncached().isNull(result)) {
                 return JolkNothing.INSTANCE;
             }
             return result;
@@ -168,7 +181,8 @@ public abstract class JolkDispatchNode extends Node {
         }
         try {
             Object result = interop.invokeMember((Object) receiver, selector, arguments);
-            if (result == null) {
+            // Identity Restitution Protocol
+            if (result == null || InteropLibrary.getUncached().isNull(result)) {
                 return JolkNothing.INSTANCE;
             }
             return result;
@@ -183,23 +197,31 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(replaces = {"doNothing", "doLong", "doBoolean"}, limit = "3")
     protected Object doDispatch(Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
+        InteropLibrary uncached = InteropLibrary.getUncached();
         try {
-            // Apply the Jolk Object Protocol to all objects
+            // Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
+            if (receiver == null || interop.isNull(receiver)) {
+                return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, uncached);
+            }
+
+            // Identity Restitution Protocol: Intercept intrinsic messages for all objects
             if (isObjectIntrinsic(selector)) {
                 return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
             }
 
-            Object result = interop.invokeMember(receiver, selector, arguments);
-            
-            // Identity Restitution Protocol:
-            if (result == null) {
+            Object result = interop.invokeMember((Object) receiver, selector, arguments);
+
+            // Identity Restitution Protocol: Ensure no raw JVM null or Interop null leaks.
+            if (result == null || (result != JolkNothing.INSTANCE && uncached.isNull(result))) {
                 return JolkNothing.INSTANCE;
             }
             return result;
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
-            throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+            // Use the full class name to distinguish between Value wrappers and internal HostObjects.
+            String receiverStr = (receiver == null) ? "null" : receiver.getClass().getName() + " [" + receiver + "]";
+            throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiverStr, e);
         }
     }
 
@@ -274,7 +296,10 @@ public abstract class JolkDispatchNode extends Node {
                 case "??" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     // Identity-Based Flow Control: execute fallback only if receiver is Nothing.
-                    if (receiver == JolkNothing.INSTANCE) return genericInterop.execute(arguments[0]);
+                    if (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver)) {
+                        Object result = genericInterop.execute(arguments[0]);
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                    }
                     return receiver;
                 }
                 case "hash" -> { 
@@ -288,30 +313,38 @@ public abstract class JolkDispatchNode extends Node {
                 case "isPresent" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (receiver instanceof JolkMatch match) return match.isPresent();
-                    return receiver != JolkNothing.INSTANCE;
+                    return receiver != null && receiver != JolkNothing.INSTANCE && !interop.isNull(receiver);
                 }
                 case "isEmpty" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (receiver instanceof JolkMatch match) return !match.isPresent();
-                    return receiver == JolkNothing.INSTANCE;
+                    return receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver);
                 }
                 case "ifPresent" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
+                    if (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver)) return JolkNothing.INSTANCE;
                     if (receiver instanceof JolkMatch match) {
                         if (match.isPresent()) {
                             Object val = match.getValue();
-                            return genericInterop.execute(arguments[0], val == null ? JolkNothing.INSTANCE : val);
+                            Object result = genericInterop.execute(arguments[0], (val == null || genericInterop.isNull(val)) ? JolkNothing.INSTANCE : val);
+                            return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
                         }
                         return JolkNothing.INSTANCE;
                     }
-                    return genericInterop.execute(arguments[0], receiver);
+                    Object result = genericInterop.execute(arguments[0], receiver);
+                    return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
                 }
                 case "ifEmpty" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver == JolkNothing.INSTANCE) return genericInterop.execute(arguments[0]);
+                    if (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver)) {
+                        Object result = genericInterop.execute(arguments[0]);
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                    }
                     if (receiver instanceof JolkMatch match) {
-                        if (!match.isPresent()) return genericInterop.execute(arguments[0]);
+                        if (!match.isPresent()) {
+                            Object result = genericInterop.execute(arguments[0]);
+                            return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        }
                         return receiver;
                     }
                     return receiver;
@@ -331,25 +364,33 @@ public abstract class JolkDispatchNode extends Node {
                 }
                 case "?" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver instanceof Boolean b && b) return genericInterop.execute(arguments[0]);
+                    if (receiver instanceof Boolean b && b) {
+                        Object result = genericInterop.execute(arguments[0]);
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                    }
                     return receiver; // Binary branching returns receiver
                 }
                 case "?!" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver instanceof Boolean b && !b) return genericInterop.execute(arguments[0]);
+                    if (receiver instanceof Boolean b && !b) {
+                        Object result = genericInterop.execute(arguments[0]);
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                    }
                     return receiver;
                 }
                 case "? :" -> {
                     if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
                     if (receiver instanceof Boolean b) {
-                        return b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                        Object result = b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
                     }
                     return JolkNothing.INSTANCE;
                 }
                 case "?! :" -> {
                     if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
                     if (receiver instanceof Boolean b) {
-                        return !b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                        Object result = !b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
                     }
                     return JolkNothing.INSTANCE;
                 }

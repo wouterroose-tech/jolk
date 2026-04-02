@@ -41,6 +41,16 @@ public final class JolkNothing implements TruffleObject {
         return "null";
     }
 
+    @ExportMessage
+    public boolean hasMetaObject() {
+        return true;
+    }
+
+    @ExportMessage
+    public Object getMetaObject() {
+        return NOTHING_TYPE;
+    }
+
     /**
      * ### isBoolean
      * 

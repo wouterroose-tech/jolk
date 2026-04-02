@@ -1,12 +1,17 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import tolk.runtime.JolkNothing;
 
 /// Represents a member (field or method) definition in a class.
 @NodeInfo(language = "Jolk", description = "The abstract syntax tree node for a class member definition.")
-public class JolkMemberNode extends JolkNode {
+@ExportLibrary(InteropLibrary.class)
+public class JolkMemberNode extends JolkNode implements TruffleObject {
 
     private final String name;
     private final JolkNode body;
@@ -55,6 +60,12 @@ public class JolkMemberNode extends JolkNode {
         return this;
     }
 
+    @ExportMessage
+    public boolean isExecutable() {
+        return true;
+    }
+
+    @ExportMessage
     public Object execute(Object[] arguments) {
         Object result = body.executeGeneric(null);
         return result == null ? JolkNothing.INSTANCE : result;

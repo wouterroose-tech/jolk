@@ -47,16 +47,12 @@ public class JolcMetaProtocolTest extends JolcTestBase {
     void testMetaFieldAccessors() {
         String source = """
             class MetaTest {
-                meta constant Long FORTY_TWO = 42;
                 meta Long META_VAL = 0;
-                meta Long fortyTwo() { ^ FORTY_TWO }
             }""";
         Value meta = eval(source);
         // access meta constant 
-        assertEquals(42, meta.invokeMember("FORTY_TWO").asLong());
         assertEquals(0, meta.invokeMember("META_VAL").asLong());
-        assertEquals(42, meta.invokeMember("fortyTwo").asLong());
-        assertEquals(meta, meta.invokeMember("META_VAL", 42L));
+        assertEquals(meta, meta.invokeMember("META_VAL", 42));
         assertEquals(42, meta.invokeMember("META_VAL").asLong());
     }
 
@@ -68,6 +64,24 @@ public class JolcMetaProtocolTest extends JolcTestBase {
         Value instanceB = eval(classB).invokeMember("new");
         // access projected meta constant 
         assertEquals(42, instanceB.invokeMember("val").asLong());
+    }
+
+    /**
+     * Verifies the fallback resolution where a bare uppercase identifier
+     * inside an instance method is resolved by sending a message to
+     * the class object (the meta-receiver).
+     */
+    @Test
+    void testResolveMetaConstantFallback() {
+        String source = """
+            class MetaFallbackTest {
+                meta constant Long FORTY_TWO = 42;
+                Long fortyTwo() { ^ FORTY_TWO }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertEquals(42, meta.invokeMember("FORTY_TWO").asLong());
+        assertEquals(42, instance.invokeMember("fortyTwo").asLong());
     }
 
 }

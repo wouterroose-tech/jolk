@@ -57,20 +57,20 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
      * message send to a meta-receiver (e.g. for internal constants like FORTY_TWO).
      */
     @Test
-    @Disabled("activate once the fallback logic is implemented in JolkReadTypeNode")
+    //@Disabled("activate once the fallback logic is implemented in JolkReadTypeNode")
     void testResolveMetaConstantFallback() {
         String constantName = "FORTY_TWO";
         long expectedValue = 42L;
 
-        // In Jolk, constants represent meta-state. We populate the metaFields 
-        // map (arg 9) to ensure the node resolves the identifier via the 
-        // interop.readMember() protocol.
-        Map<String, Object> metaFields = new HashMap<>();
-        metaFields.put(constantName, expectedValue);
+        // In Jolk, a class object is an instance. Meta-constants are exposed as 
+        // meta-members of that class object. We populate the runtimeMetaMembers 
+        // map (arg 8) with an executable member to satisfy the #invokeMember protocol.
+        Map<String, Object> mockMetaMembers = new HashMap<>();
+        mockMetaMembers.put(constantName, new JolkMemberNode(constantName, new JolkLiteralNode(expectedValue)));
         
         JolkMetaClass metaReceiverObj = new JolkMetaClass(
             "Constants", null, JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
-            Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), metaFields
+            Collections.emptyMap(), Collections.emptyMap(), mockMetaMembers, Collections.emptyMap()
         );
 
         // Setup the node with a receiver that returns our meta-object

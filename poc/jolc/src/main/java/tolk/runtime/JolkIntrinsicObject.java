@@ -7,8 +7,13 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
 /// # JolkIntrinsicObject
 /// 
-/// Defines the common protocol for intrinsic Jolk objects that provide
-/// access to their meta-awareness (MetaClass) and the standard object protocol.
+/// Defines the **Jolk Core Protocol**—the foundational set of messages that every 
+/// identity in the Jolk ecosystem must understand.
+/// 
+/// This interface serves as the **Shared Implementation Provider**. It allows 
+/// native [JolkObject] instances, primitive prototypes, and augmented host 
+/// classes (via `delegateTo`) to share a consistent, high-level behavioral 
+/// contract without duplicating logic in the Truffle runtime. It must extend TruffleObject.
 /// 
 public interface JolkIntrinsicObject {
 
@@ -24,11 +29,13 @@ public interface JolkIntrinsicObject {
     /// Dispatches standard Jolk Object Protocol messages.
     /// This ensures consistent behavior between JolkObject and JolkException.
     /// 
-    /// @param receiver The object receiving the message.
-    /// @param member The selector name.
-    /// @param arguments The message arguments.
-    /// @param interop Cached interop library.
-    /// @return The result of the message send.
+    /// ### Standard Selectors:
+    /// - `==`, `!=`: **Identity Parity** (Reference equality).
+    /// - `~~`, `!~`: **Equivalence** (Structural/State equality).
+    /// - `??`: **Null-Coalescing** (Safe navigation fallback).
+    /// - `ifPresent`, `ifEmpty`: **Identity-Based Flow Control**.
+    /// - `class`: **Meta-Awareness** lookup.
+    /// - `instanceOf`: **Type-Gate** pattern matching.
     /// 
     default Object invokeIntrinsicMember(Object receiver, String member, Object[] arguments, InteropLibrary interop) 
             throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
@@ -60,10 +67,12 @@ public interface JolkIntrinsicObject {
             }
             case "hash" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                if (receiver == null || receiver == JolkNothing.INSTANCE) return 0L;
                 return (long) receiver.hashCode();
             }
             case "toString" -> {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                if (receiver == null || receiver == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
                 return receiver.toString();
             }
             case "ifPresent" -> {

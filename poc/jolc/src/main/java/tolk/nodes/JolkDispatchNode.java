@@ -4,8 +4,10 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBoolean;
-import tolk.runtime.JolkLong;
 import tolk.runtime.JolkExceptionExtension;
+
+import com.oracle.truffle.api.frame.VirtualFrame;
+import tolk.runtime.JolkLong;
 import tolk.runtime.JolkIntrinsicObject;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -17,7 +19,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.runtime.JolkMetaClass;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.nodes.Node;
 
 /// # JolkDispatchNode
 ///
@@ -64,52 +65,72 @@ import com.oracle.truffle.api.nodes.Node;
 /// This strategy ensures that common call sites with a few receiver types remain highly
 /// optimized, while still correctly handling fully dynamic scenarios.
 ///
-/// ### Node Inlining Strategy
-///
-/// Node inlining is currently explicitly disabled (`@GenerateInline(false)`) for this PoC.
-/// While inlining reduces memory footprint and improves performance by combining nodes,
-/// it requires the consuming nodes (like `JolkMessageSendNode`) to be refactored to use
-/// the Truffle DSL's `@Cached` injection rather than manual `@Child` fields.
-///
-/// To prioritize architectural clarity and simplicity during the initial implementation phase,
-/// we defer this optimization. It can be easily enabled later as part of the industrialization phase.
 @GenerateInline(false)
-public abstract class JolkDispatchNode extends Node {
+public abstract class JolkDispatchNode extends JolkNode { // Keep extending JolkNode
+
+    /**
+     * ### create
+     * 
+     * Static factory method to instantiate the node implementation. This method 
+     * delegates to the generated {@link JolkDispatchNodeGen} class.
+     * 
+     * @return An instance of the generated JolkDispatchNode.
+     */
+    public static JolkDispatchNode create() {
+        return JolkDispatchNodeGen.create();
+    }
 
     /// Executes the message dispatch.
     ///
+    /// @param frame The current execution frame.
     /// @param receiver The object receiving the message.
     /// @param selector The message name (selector).
     /// @param arguments The arguments passed to the message.
     /// @return The result of the message send.
-    /// 
-    /// @return The result of the message send.
-    public abstract Object executeDispatch(Object receiver, String selector, Object[] arguments);
+    public abstract Object executeDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments);
 
-    /// ### Fast Path for `Nothing`
-    /// This specialization creates a high-speed path for messages sent to `JolkNothing.INSTANCE`.
-    /// It also handles **Receiver Restitution**, treating a raw Java `null` as the 
-    /// Jolk `Nothing` identity to ensure safe message absorption.
+    /**
+     * This method is not intended to be called directly on a JolkDispatchNode.
+     * It is marked as `final` to satisfy the requirement from {@link JolkNode} 
+     * while shielding it from the Truffle DSL's specialization generator. 
+     */
+    @Override
+    public final Object executeGeneric(VirtualFrame frame) {
+        throw new UnsupportedOperationException("JolkDispatchNode is not designed to be executed directly via executeGeneric(VirtualFrame). Use executeDispatch instead.");
+    }
+
     @Specialization(guards = "isNothing(receiver)", limit = "1")
-    protected Object doNothing(Object receiver, String selector, Object[] arguments,
+    protected Object doNothing(Object receiver, String selector, Object[] arguments, // Maps to executeDispatch
                                 @CachedLibrary("getNothing()") InteropLibrary interop) {
+        if (isObjectIntrinsic(selector)) {
+            return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop);
+        }
+
         try {
-            // The logic for how Nothing responds is correctly encapsulated in JolkNothing itself.
-            // This specialization simply provides a direct, cached route to that logic.
-            // We pass the singleton instance as the receiver to ensure the Interop protocol 
-            // remains stable even if the raw input was a JVM null.
-            Object result = interop.invokeMember(JolkNothing.INSTANCE, selector, arguments);
-            // Identity Restitution Protocol
-            return (result == null || InteropLibrary.getUncached().isNull(result)) ? JolkNothing.INSTANCE : result;
+            // Identity Restitution Protocol: For messages not handled by intrinsics, 
+            // Nothing absorbs the message by returning itself. We delegate to the 
+            // instance via Interop to allow for guest-level extensibility.
+            return lift(interop.invokeMember(JolkNothing.INSTANCE, selector, arguments));
         } catch (JolkReturnException e) {
             throw e;
-        } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on Nothing", e);
         }
     }
 
+    /**
+     * ### isNothing
+     * 
+     * Guard used to identify if the receiver should be treated as the Jolk 
+     * Nothing identity.
+     * 
+     * @param receiver The object to check.
+     * @return true if the receiver is null or the JolkNothing instance.
+     */
     protected boolean isNothing(Object receiver) {
-        return receiver == null || receiver == JolkNothing.INSTANCE || InteropLibrary.getUncached().isNull(receiver);
+        return receiver == null || receiver == JolkNothing.INSTANCE;
     }
 
     protected JolkNothing getNothing() {
@@ -119,89 +140,84 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Fast Path for Longs
     /// Handles raw Java Longs by routing messages to the JolkLong prototype.
     @Specialization
-    protected Object doLong(Long receiver, String selector, Object[] arguments,
+    protected Object doLong(Long receiver, String selector, Object[] arguments, // Maps to executeDispatch
                            @CachedLibrary(limit = "3") InteropLibrary interop) {
-        try {
-            if (isObjectIntrinsic(selector)) {
-                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
-            }
-        } catch (JolkReturnException e) {
-            throw e;
-        } catch (Exception e) {
-             throw new RuntimeException("Error executing #" + selector + " on Long", e);
+        if (isObjectIntrinsic(selector)) {
+            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
         }
 
-        Object member = JolkLong.LONG_TYPE.lookupInstanceMember(selector);
-        if (member != null) {
-            Object[] argsWithReceiver = new Object[arguments.length + 1];
-            argsWithReceiver[0] = receiver;
-            if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
-            try {
-                // Library Mismatch: Use a generic library to execute members on a specialized receiver.
-                return InteropLibrary.getUncached().execute(member, argsWithReceiver);
-            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
-                throw new RuntimeException("Error executing #" + selector + " on Long", e);
-            }
-        }
         try {
-            Object result = interop.invokeMember((Object) receiver, selector, arguments);
-            // Identity Restitution Protocol
-            if (result == null || InteropLibrary.getUncached().isNull(result)) {
-                return JolkNothing.INSTANCE;
+            // 1. Prototype Lookup: Check for Jolk-defined arithmetic (e.g., +, -, *)
+            Object member = JolkLong.LONG_TYPE.lookupInstanceMember(selector);
+            if (member != null) {
+                Object[] argsWithReceiver = new Object[arguments.length + 1];
+                argsWithReceiver[0] = receiver;
+                if (arguments.length > 0) {
+                    System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+                }
+                // Library Mismatch: Use a generic library to execute members on a specialized receiver.
+                return lift(InteropLibrary.getUncached().execute(member, argsWithReceiver));
             }
-            return result;
+
+            // 2. Host Fallback: Dispatch to standard Java Long members (e.g. longValue, compareTo)
+            return lift(interop.invokeMember(receiver, selector, arguments));
+
+        } catch (JolkReturnException e) {
+            throw e;
         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on Long", e);
         }
     }
 
     /// ### Fast Path for Booleans
-    /// Handles raw Java Booleans by routing messages to the JolkBoolean prototype.
+    /// Handles raw Java Booleans by routing messages to the JolkBoolean prototype. This ensures
+    /// that boolean primitives can participate in Jolk's message-passing protocol.
     @Specialization
-    protected Object doBoolean(Boolean receiver, String selector, Object[] arguments,
+    protected Object doBoolean(Boolean receiver, String selector, Object[] arguments, // Maps to executeDispatch
                                @CachedLibrary(limit = "3") InteropLibrary interop) {
+        if (isObjectIntrinsic(selector)) {
+            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+        }
+
         try {
-            if (isObjectIntrinsic(selector)) {
-                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            // 1. Prototype Lookup: Check for Jolk-defined logic (e.g., &&, ||, !)
+            Object member = JolkBoolean.BOOLEAN_TYPE.lookupInstanceMember(selector);
+            if (member != null) {
+                Object[] argsWithReceiver = new Object[arguments.length + 1];
+                argsWithReceiver[0] = receiver;
+                if (arguments.length > 0) {
+                    System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+                }
+                // Library Mismatch: Use a generic library to execute members on a specialized receiver.
+                return lift(InteropLibrary.getUncached().execute(member, argsWithReceiver));
             }
+
+            // 2. Host Fallback: Dispatch to standard Java Boolean members (if any)
+            return lift(interop.invokeMember(receiver, selector, arguments));
+
         } catch (JolkReturnException e) {
             throw e;
-        } catch (Exception e) {
-             throw new RuntimeException("Error executing #" + selector + " on Boolean", e);
-        }
-        Object member = JolkBoolean.BOOLEAN_TYPE.lookupInstanceMember(selector);
-        if (member != null) {
-            Object[] argsWithReceiver = new Object[arguments.length + 1];
-            argsWithReceiver[0] = receiver;
-            if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
-            try {
-                // Library Mismatch: Use a generic library to execute members on a specialized receiver.
-                return InteropLibrary.getUncached().execute(member, argsWithReceiver);
-            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
-                throw new RuntimeException("Error executing #" + selector + " on Boolean", e);
-            }
-        }
-        try {
-            Object result = interop.invokeMember((Object) receiver, selector, arguments);
-            // Identity Restitution Protocol
-            if (result == null || InteropLibrary.getUncached().isNull(result)) {
-                return JolkNothing.INSTANCE;
-            }
-            return result;
         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on Boolean", e);
         }
     }
 
     /**
      * ### doThrowable
      * 
-     * Specialized fast path for [java.lang.Throwable] receivers. 
-     * This ensures that host exceptions correctly prioritize Jolk's 
-     * intrinsic protocol (like #throw and #class).
+     * Specialized **Intrinsic Fast Path** for host exceptions.
+     * 
+     * This specialization ensures that [java.lang.Throwable] instances prioritize 
+     * Jolk's internal control-flow logic (like `#throw`) over standard Java 
+     * member lookup. This is critical for maintaining **Shim-less Integration** 
+     * where the language must control the stack unwinding process.
      */
     @Specialization
-    protected Object doThrowable(Throwable receiver, String selector, Object[] arguments,
+    protected Object doThrowable(Throwable receiver, String selector, Object[] arguments, // Maps to executeDispatch
                                @CachedLibrary(limit = "3") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
@@ -219,14 +235,17 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Generic Dispatch
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doThrowable"}, limit = "3")
+    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doThrowable"}, limit = "3") // Maps to executeDispatch
     protected Object doDispatch(Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         InteropLibrary uncached = InteropLibrary.getUncached();
         try {
             // Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
             if (receiver == null || interop.isNull(receiver)) {
-                return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, uncached);
+                if (isObjectIntrinsic(selector)) {
+                    return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, uncached);
+                }
+                return lift(uncached.invokeMember(JolkNothing.INSTANCE, selector, arguments));
             }
 
             // Identity Restitution Protocol: Intercept intrinsic messages for all objects
@@ -234,7 +253,13 @@ public abstract class JolkDispatchNode extends Node {
                 return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
             }
 
-            // Handle #new message for HostObjects (Java classes)
+            /**
+             * ### Meta-Object Interceptor (#new)
+             * 
+             * Implements the **Unified Messaging** rule for object creation. If the receiver 
+             * is a host [Class] (MetaObject) and the selector is `#new`, we map it 
+             * directly to the Interop `instantiate` protocol to invoke the Java constructor.
+             */
             if ("new".equals(selector) && interop.isMetaObject(receiver) && interop.isInstantiable(receiver)) {
                 try {
                     return interop.instantiate(receiver, arguments);
@@ -243,13 +268,7 @@ public abstract class JolkDispatchNode extends Node {
                 }
             }
 
-            Object result = interop.invokeMember((Object) receiver, selector, arguments);
-
-            // Identity Restitution Protocol: Ensure no raw JVM null or Interop null leaks.
-            if (result == null || (result != JolkNothing.INSTANCE && uncached.isNull(result))) {
-                return JolkNothing.INSTANCE;
-            }
-            return result;
+            return lift(interop.invokeMember((Object) receiver, selector, arguments));
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
@@ -266,7 +285,8 @@ public abstract class JolkDispatchNode extends Node {
         };
     }
 
-    private Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
+    @TruffleBoundary
+    protected Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
         InteropLibrary genericInterop = InteropLibrary.getUncached();
         try {
             switch (name) {
@@ -338,11 +358,13 @@ public abstract class JolkDispatchNode extends Node {
                 }
                 case "hash" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return (long) receiver.hashCode(); 
+                    if (isNothing(receiver)) return 0L;
+                    return (long) receiver.hashCode();
                 }
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return receiver.toString(); 
+                    if (isNothing(receiver)) return JolkNothing.INSTANCE;
+                    return lift(receiver.toString());
                 }
                 case "isPresent" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -385,8 +407,7 @@ public abstract class JolkDispatchNode extends Node {
                 }
                 case "throw" -> {
                     if (receiver instanceof Throwable t) {
-                        // Performs the actual throw, bypassing Jolk logic to unwind the stack.
-                        throw throwException(t);
+                        JolkExceptionExtension.throwException(t);
                     }
                     throw new RuntimeException("The #throw selector can only be invoked on Throwable identities.");
                 }
@@ -446,20 +467,4 @@ public abstract class JolkDispatchNode extends Node {
         }
         return JolkNothing.INSTANCE;
     }
-
-    /**
-     * Performs a "sneaky throw" to propagate the original Throwable without 
-     * wrapping it in a RuntimeException, preserving its identity and stack.
-     */
-    @TruffleBoundary
-    private RuntimeException throwException(Throwable t) {
-        JolkDispatchNode.<RuntimeException>doThrow(t);
-        return null; // Satisfy compiler
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends Throwable> void doThrow(Throwable t) throws T {
-        throw (T) t;
-    }
-
 }

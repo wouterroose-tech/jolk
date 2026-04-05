@@ -15,12 +15,13 @@ public class JolkExceptionTest extends JolcTestBase {
     void testJolkExceptionCreation() {
         String myClass = """
             + java.lang.RuntimeException;
-            class MyClass { Object interrupt() { ^ RuntimeException #new } }
-            """;
+            class MyClass { Object interrupt() { ^ RuntimeException #new }
+            }""";
         
         Value instance = eval(myClass).invokeMember("new");
         assertNotNull(instance.invokeMember("interrupt"));
-        assertEquals("RuntimeException", instance.invokeMember("interrupt").asHostObject().getClass().getSimpleName());
+        Value exception = instance.invokeMember("interrupt");
+        assertEquals("RuntimeException", exception.asHostObject().getClass().getSimpleName());
     }
 
     @Test

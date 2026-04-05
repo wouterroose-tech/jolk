@@ -31,7 +31,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
     @Test
     void testNothingSilentAbsorption() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
         JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
-        Object result = dispatchNode.executeDispatch(JolkNothing.INSTANCE, "someArbitraryMessage", new Object[0]);
+        Object result = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "someArbitraryMessage", new Object[0]);
         assertEquals(JolkNothing.INSTANCE, result, "JolkNothing should absorb any message and return itself.");
     }
 
@@ -49,7 +49,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         @Override
         public Object executeGeneric(VirtualFrame frame) {
             // Use the first argument passed to the CallTarget as the receiver for dispatch.
-            return dispatchNode.executeDispatch(frame.getArguments()[0], "get", new Object[0]);
+            return dispatchNode.executeDispatch(frame, frame.getArguments()[0], "get", new Object[0]);
         }
     }
 
@@ -101,16 +101,16 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         Long receiver = 42L;
 
         // Test an intrinsic like "hash"
-        Object result = dispatchNode.executeDispatch(receiver, "hash", new Object[0]);
+        Object result = dispatchNode.executeDispatch(null, receiver, "hash", new Object[0]);
         assertEquals(42L, result, "Long intrinsic 'hash' should be handled correctly.");
 
         // Test an intrinsic like "isPresent"
-        result = dispatchNode.executeDispatch(receiver, "isPresent", new Object[0]);
+        result = dispatchNode.executeDispatch(null, receiver, "isPresent", new Object[0]);
         assertEquals(true, result, "Long intrinsic 'isPresent' should return true.");
 
         // Test a non-intrinsic (should fall through to interop or JolkLong members)
         // For this test, we'll assume JolkLong has a '+' operator
-        result = dispatchNode.executeDispatch(receiver, "+", new Object[]{10L});
+        result = dispatchNode.executeDispatch(null, receiver, "+", new Object[]{10L});
         assertEquals(52L, result, "Long '+' operator should be handled by JolkLong members.");
     }
 
@@ -123,16 +123,16 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         Boolean receiver = true;
 
         // Test an intrinsic like "isPresent"
-        Object result = dispatchNode.executeDispatch(receiver, "isPresent", new Object[0]);
+        Object result = dispatchNode.executeDispatch(null, receiver, "isPresent", new Object[0]);
         assertEquals(true, result, "Boolean intrinsic 'isPresent' should return true.");
 
         // Test an intrinsic like "isEmpty"
-        result = dispatchNode.executeDispatch(receiver, "isEmpty", new Object[0]);
+        result = dispatchNode.executeDispatch(null, receiver, "isEmpty", new Object[0]);
         assertEquals(false, result, "Boolean intrinsic 'isEmpty' should return false.");
 
         // Test a non-intrinsic (should fall through to interop or JolkBoolean members)
         // For this test, we'll assume JolkBoolean has a '!' operator
-        result = dispatchNode.executeDispatch(receiver, "!", new Object[0]);
+        result = dispatchNode.executeDispatch(null, receiver, "!", new Object[0]);
         assertEquals(false, result, "Boolean '!' operator should be handled by JolkBoolean members.");
     }
 
@@ -160,10 +160,10 @@ public class JolkDispatchNodeTest extends JolcTestBase {
     void testNullResultRestitution() {
         JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
         // Verify raw nulls from members are restituted to Nothing
-        Object result = dispatchNode.executeDispatch(JolkNothing.INSTANCE, "hash", new Object[0]);
+        Object result = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "hash", new Object[0]);
         assertEquals(0L, result);
 
-        Object str = dispatchNode.executeDispatch(JolkNothing.INSTANCE, "toString", new Object[0]);
-        assertEquals("null", str);
+        Object str = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "toString", new Object[0]);
+        assertEquals(JolkNothing.INSTANCE, str);
     }
 }

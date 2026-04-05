@@ -8,7 +8,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
  * A simple mock implementation of {@link VirtualFrame} for testing purposes.
  * It allows setting up arguments and local variables, and linking to a parent frame.
  */
-public class VirtualFrameMock implements VirtualFrame, MaterializedFrame {
+public class VirtualFrameMock implements MaterializedFrame {
     private final FrameDescriptor frameDescriptor;
     private final Object[] arguments;
     private final Object[] locals;

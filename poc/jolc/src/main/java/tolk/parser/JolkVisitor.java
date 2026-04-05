@@ -726,7 +726,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return switch (text) {
             case "null" -> new JolkLiteralNode(JolkNothing.INSTANCE);
             case "self" -> visitReservedSelf();
-            case "Self" -> isInMetaScope ? visitReservedSelf() : new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+            case "Self" -> new JolkReadTypeNode(language, currentClassName, null); // Directly resolve the current class's MetaClass
             case "true" -> new JolkLiteralNode(true);
             case "false" -> new JolkLiteralNode(false);
             default -> new JolkEmptyNode();
@@ -753,8 +753,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitType(jolkParser.TypeContext ctx) {
         String name = ctx.getText();
         // Self is a dynamic type alias referring to the current MetaClass.
-        if ("Self".equals(name)) {
-            return isInMetaScope ? visitReservedSelf() : new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+        if ("Self".equals(name)) { // Self (PascalCase) always refers to the current class's MetaClass
+            return new JolkReadTypeNode(language, currentClassName, null);
         }
         return createIdentifierNode(name);
     }

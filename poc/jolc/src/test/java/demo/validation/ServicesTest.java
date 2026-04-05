@@ -1,8 +1,9 @@
 package demo.validation;
 
+import org.graalvm.polyglot.Value;
+
 import org.junit.jupiter.api.Test;
 
-import net.bytebuddy.asm.MemberSubstitution.Source.Value;
 
 /// This test class is for testing service classes of the Jolk Demo.
 /// test parsing, creation and protocol

@@ -59,11 +59,22 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     /// @return A [JolkNode] for the entire compilation unit.
     @Override
     public JolkNode visitUnit(jolkParser.UnitContext ctx) {
-        // A unit can contain either a type declaration or an extension declaration,
-        // according to the grammar.
+        // Visit preamble directives for their side-effects (context registration)
+        if (ctx.package_decl() != null) {
+            visit(ctx.package_decl());
+        }
 
-        // TODO: Handle unit-level package_decl, expansion, projection, and annotations.
+        for (jolkParser.ExpansionContext expansionCtx : ctx.expansion()) {
+            visit(expansionCtx);
+        }
 
+        for (jolkParser.ProjectionContext projectionCtx : ctx.projection()) {
+            visit(projectionCtx);
+        }
+
+        // TODO: Handle unit-level annotations.
+
+        // The unit's primary executable node is either a type or an extension.
         if (ctx.type_decl() != null) {
             return visit(ctx.type_decl());
         }
@@ -81,8 +92,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitExpansion(jolkParser.ExpansionContext ctx) {
-        // TODO: Handle vocabulary expansion (using/+)
-        return super.visitExpansion(ctx);
+        // Resolves the namespace path (e.g. java.lang.RuntimeException) 
+        // and registers it as a Host Class in the current context.
+        String path = ctx.inclusion().namespace().getText();
+        language.getContextReference().get(null).registerHostClass(path);
+        // Currently, we return an empty node as the expansion itself does not produce executable code.
+        return new JolkEmptyNode();
     }
 
     @Override
@@ -199,7 +214,22 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     }
                 }
 
+                //TODO: Handle type contracts (extends/implements). For simplicity, we currently only support single inheritance via 'extends'.
+                String superclassName = null;
+                /*
+                if (ctx.type_bound().type_contracts() != null) {
+                    jolkParser.Type_contractsContext contracts = ctx.type_bound().type_contracts();
+                    for (int i = 0; i < contracts.getChildCount(); i++) {
+                        if ("extends".equals(contracts.getChild(i).getText())) {
+                            superclassName = contracts.type(0).getText();
+                            break;
+                        }
+                    }
+                }
+                */
+
                 this.currentClassName = oldClassName;
+                //return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
                 return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
             }
         }

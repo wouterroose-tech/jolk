@@ -44,7 +44,7 @@ public class JolkMetaClassTest {
     }
 
     @Test
-    void testIsMetaInstanceHierarchy() {
+    void testIsMetaInstanceHierarchy() throws UnsupportedMessageException {
         JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
         JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
         
@@ -57,7 +57,7 @@ public class JolkMetaClassTest {
     }
 
     @Test
-    void testIsMetaInstancePrimitives() {
+    void testIsMetaInstancePrimitives() throws UnsupportedMessageException {
         // Mocking intrinsic types by name as per implementation logic
         JolkMetaClass longClass = new JolkMetaClass("Long", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
         JolkMetaClass boolClass = new JolkMetaClass("Boolean", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
@@ -73,7 +73,7 @@ public class JolkMetaClassTest {
     }
 
     @Test
-    void testIsMetaInstanceNothing() {
+    void testIsMetaInstanceNothing() throws UnsupportedMessageException {
         JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
         // JolkNothing.INSTANCE is an instance of Nothing type and Object (by name)
         assertTrue(objClass.isMetaInstance(JolkNothing.INSTANCE), "Nothing should be instance of Object");

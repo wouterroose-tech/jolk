@@ -55,6 +55,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             className,
+            //null,
             JolkFinality.FINAL,
             JolkVisibility.PUBLIC,
             JolkArchetype.CLASS,
@@ -88,7 +89,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         instanceFields.put("x", new JolkFieldNode("x", new JolkLiteralNode(42L)));
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
-            "Point", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            "Point", 
+            //null, 
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), instanceFields, new HashMap<String, List<JolkNode>>()
         );
 
@@ -108,7 +111,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         metaMembers.put("classInfo", List.of(new JolkMethodNode("classInfo", new JolkLiteralNode("v1"), new String[0], false)));
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
-            "MetaTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            "MetaTest", 
+            //null, 
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers
         );
 
@@ -168,7 +173,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         metaMembers.put("VERSION", List.of(new JolkFieldNode("VERSION", new JolkLiteralNode(1L))));
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
-            "Config", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            "Config", 
+            //null, 
+            JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers
         );
 
@@ -189,7 +196,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         methods.add(new JolkMethodNode("val", new JolkReadArgumentNode(1, 0), new String[]{"x"}, false, 2));
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
-            "OverloadTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            "OverloadTest", 
+            //null, 
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             Map.of("val", methods), new HashMap<>(), new HashMap<>()
         );
 
@@ -212,7 +221,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         fields.put("active", new JolkFieldNode("active", "Boolean", new JolkEmptyNode()));
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
-            "HintTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            "HintTest", 
+            //null, 
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<>(), fields, new HashMap<>()
         );
 

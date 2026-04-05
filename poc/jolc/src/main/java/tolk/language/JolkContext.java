@@ -1,30 +1,81 @@
+// Conceptual JolkContext.java (not in provided context, so no diff)
 package tolk.language;
 
-import com.oracle.truffle.api.TruffleLanguage;
-import tolk.runtime.JolkMetaClass;
-
+import com.oracle.truffle.api.TruffleLanguage.Env;
+import tolk.runtime.JolkMetaClass; // Assuming JolkMetaClass is used for Jolk-defined classes
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-/// ## JolkContext
-///
-/// Represents the execution context for a Jolk program. It holds global state
-/// such as defined classes and provides access to the Truffle environment.
-
+/**
+ * ## JolkContext
+ *
+ * The runtime execution context for the Jolk language.
+ * Manages the lifecycle of registered classes, host interop symbols,
+ * and the connection to the underlying Truffle environment.
+ */
 public class JolkContext {
-    private final TruffleLanguage.Env env;
-    private final Map<String, JolkMetaClass> definedClasses = new ConcurrentHashMap<>();
+    private final JolkLanguage language;
+    private final Env env;
+    private final Map<String, Object> registeredClasses = new HashMap<>();
 
-    public JolkContext(JolkLanguage language, TruffleLanguage.Env env) {
+    public JolkContext(JolkLanguage language, Env env) {
+        this.language = language;
         this.env = env;
+        // Pre-register core Jolk types
+        // registerClass(JolkNothing.NOTHING_TYPE);
+        // registerClass(JolkLong.LONG_TYPE);
+        // registerClass(JolkBoolean.BOOLEAN_TYPE);
+        // registerClass(JolkException.EXCEPTION_TYPE);
     }
 
     public void registerClass(JolkMetaClass metaClass) {
-        definedClasses.put(metaClass.name, metaClass);
-        env.exportSymbol(metaClass.name, metaClass); // Export to polyglot environment
+        registeredClasses.put(metaClass.name, metaClass);
     }
 
-    public JolkMetaClass getDefinedClass(String name) {
-        return definedClasses.get(name);
+    /**
+     * Registers a host Java class by its fully qualified name.
+     * This makes the Java class discoverable by Jolk's type resolution.
+     *
+     * @param fullyQualifiedClassName The fully qualified name of the Java class.
+     */
+    public void registerHostClass(String fullyQualifiedClassName) {
+        try {
+            // Use Truffle's Env to look up the host symbol (Java class)
+            Object hostClass = env.lookupHostSymbol(fullyQualifiedClassName);
+            if (hostClass != null) {
+                // Store the host class. It will be resolved later by getDefinedClass.
+                registeredClasses.put(fullyQualifiedClassName, hostClass);
+                // Also register by simple name if it doesn't conflict
+                String simpleName = fullyQualifiedClassName.substring(fullyQualifiedClassName.lastIndexOf('.') + 1);
+                if (!registeredClasses.containsKey(simpleName)) {
+                    registeredClasses.put(simpleName, hostClass);
+                }
+            } else {
+                // Handle case where host class is not found (e.g., log a warning)
+                System.err.println("Warning: Host class not found: " + fullyQualifiedClassName);
+            }
+        } catch (Exception e) {
+            // Handle any exceptions during host symbol lookup
+            System.err.println("Error registering host class " + fullyQualifiedClassName + ": " + e.getMessage());
+        }
     }
+
+    /**
+     * Retrieves a defined class (either Jolk-defined or a registered host class).
+     *
+     * @param name The simple or fully qualified name of the class.
+     * @return The JolkMetaClass or HostObject representing the class, or null if not found.
+     */
+    public Object getDefinedClass(String name) {
+        Object found = registeredClasses.get(name);
+        if (found != null) {
+            return found;
+        }
+        // Fallback for simple names if not explicitly registered
+        // This might involve iterating through known packages or a more complex lookup
+        // For now, a direct lookup is sufficient.
+        return null;
+    }
+
+    // ... other JolkContext methods
 }

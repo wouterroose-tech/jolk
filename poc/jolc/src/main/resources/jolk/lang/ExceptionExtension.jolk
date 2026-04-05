@@ -1,0 +1,26 @@
+~ jolk.lang;
+
+/// # JolkExceptionExtension
+///
+/// Augments the native JVM exception hierarchy with the Jolk messaging protocol.
+/// This ensures that any Throwable is a "polite citizen" in a Jolk message chain.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+extension JolkExceptionExtension extends java.lang.RuntimeException {
+
+    /// ## message
+    /// Returns the message associated with this exception.
+    /// Maps to the native JVM getMessage() but returns it as a Jolk-compatible identity.
+    Object message() { ^ self #getMessage }
+
+    /// ## throw
+    /// Signals the immediate propagation of this identity through the stack.
+    /// The Tolk compiler flattens this into a native 'athrow' instruction.
+    ///
+    /// - **Returns**: This method does not return; it terminates the current execution path.
+    Self throw() { 
+        // Implementation provided by the JolkDispatchNode intrinsic.
+    }
+}

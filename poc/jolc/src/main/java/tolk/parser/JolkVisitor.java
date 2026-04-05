@@ -214,9 +214,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     }
                 }
 
-                //TODO: Handle type contracts (extends/implements). For simplicity, we currently only support single inheritance via 'extends'.
                 String superclassName = null;
-                /*
                 if (ctx.type_bound().type_contracts() != null) {
                     jolkParser.Type_contractsContext contracts = ctx.type_bound().type_contracts();
                     for (int i = 0; i < contracts.getChildCount(); i++) {
@@ -226,9 +224,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                         }
                     }
                 }
-                */
 
                 this.currentClassName = oldClassName;
+                //TODO: Handle type contracts (extends/implements). For simplicity, we currently only support single inheritance via 'extends'.
                 //return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
                 return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
             }
@@ -290,14 +288,21 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return super.visitType_mbr(ctx);
     }
 
-    ///
-    /// Visits an extension declaration. This is currently a placeholder.
-    ///
-    /// @param ctx The parse tree context.
-    /// @return An [JolkEmptyNode] as this feature is not yet fully implemented.
     @Override
     public JolkNode visitExtension_decl(jolkParser.Extension_declContext ctx) {
-        // Not implemented yet, return empty node to avoid null pointers.
+        // For @Intrinsic extensions, we must register the target host class 
+        // (e.g. java.lang.Throwable) in the JolkContext. This side-effect ensures 
+        // that the type identity is resolved early, allowing the Truffle Interop 
+        // protocol to correctly identify the receiver and dispatch Jolk messages 
+        // to the appropriate runtime extension (like JolkExceptionExtension).
+        if (ctx.type() != null) {
+            String targetTypePath = ctx.type().getText();
+            language.getContextReference().get(null).registerHostClass(targetTypePath);
+        }
+
+        // TODO: Handle extension method definitions for non-intrinsic extensions.
+        // Currently, we return an empty node because intrinsic logic is 
+        // provided by the Truffle runtime libraries.
         return new JolkEmptyNode();
     }
 

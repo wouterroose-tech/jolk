@@ -14,6 +14,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.runtime.JolkMetaClass;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
@@ -192,10 +193,33 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
+    /**
+     * ### doThrowable
+     * 
+     * Specialized fast path for [java.lang.Throwable] receivers. 
+     * This ensures that host exceptions correctly prioritize Jolk's 
+     * intrinsic protocol (like #throw and #class).
+     */
+    @Specialization
+    protected Object doThrowable(Throwable receiver, String selector, Object[] arguments,
+                               @CachedLibrary(limit = "3") InteropLibrary interop) {
+        if (isObjectIntrinsic(selector)) {
+            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+        }
+        try {
+            Object result = interop.invokeMember(receiver, selector, arguments);
+            return lift(result);
+        } catch (JolkReturnException e) {
+            throw e;
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+            throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+        }
+    }
+
     /// ### Generic Dispatch
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doLong", "doBoolean"}, limit = "3")
+    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doThrowable"}, limit = "3")
     protected Object doDispatch(Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         InteropLibrary uncached = InteropLibrary.getUncached();
@@ -208,6 +232,15 @@ public abstract class JolkDispatchNode extends Node {
             // Identity Restitution Protocol: Intercept intrinsic messages for all objects
             if (isObjectIntrinsic(selector)) {
                 return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+
+            // Handle #new message for HostObjects (Java classes)
+            if ("new".equals(selector) && interop.isMetaObject(receiver) && interop.isInstantiable(receiver)) {
+                try {
+                    return interop.instantiate(receiver, arguments);
+                } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                    throw new RuntimeException("Failed to instantiate host object: " + receiver + " with arguments.", e);
+                }
             }
 
             Object result = interop.invokeMember((Object) receiver, selector, arguments);
@@ -228,7 +261,7 @@ public abstract class JolkDispatchNode extends Node {
 
     boolean isObjectIntrinsic(String member) {
         return switch (member) {
-            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "?", "? :", "?!", "?! :" -> true;
+            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "throw", "?", "? :", "?!", "?! :" -> true;
             default -> false;
         };
     }
@@ -350,6 +383,13 @@ public abstract class JolkDispatchNode extends Node {
                     }
                     return receiver;
                 }
+                case "throw" -> {
+                    if (receiver instanceof Throwable t) {
+                        // Performs the actual throw, bypassing Jolk logic to unwind the stack.
+                        throw throwException(t);
+                    }
+                    throw new RuntimeException("The #throw selector can only be invoked on Throwable identities.");
+                }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (receiver instanceof JolkIntrinsicObject jo) return jo.getJolkMetaClass();
@@ -405,4 +445,20 @@ public abstract class JolkDispatchNode extends Node {
         }
         return JolkNothing.INSTANCE;
     }
+
+    /**
+     * Performs a "sneaky throw" to propagate the original Throwable without 
+     * wrapping it in a RuntimeException, preserving its identity and stack.
+     */
+    @TruffleBoundary
+    private RuntimeException throwException(Throwable t) {
+        JolkDispatchNode.<RuntimeException>doThrow(t);
+        return null; // Satisfy compiler
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void doThrow(Throwable t) throws T {
+        throw (T) t;
+    }
+
 }

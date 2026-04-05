@@ -1,5 +1,6 @@
 package tolk.parser;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -14,18 +15,19 @@ public class JolkExceptionTest extends JolcTestBase {
     void testJolkExceptionCreation() {
         String myClass = """
             + java.lang.RuntimeException;
-            class myClass { RuntimeException interrupt() { ^ RuntimeException #new } }
+            class MyClass { Object interrupt() { ^ RuntimeException #new } }
             """;
         
         Value instance = eval(myClass).invokeMember("new");
         assertNotNull(instance.invokeMember("interrupt"));
+        assertEquals("RuntimeException", instance.invokeMember("interrupt").asHostObject().getClass().getSimpleName());
     }
 
     @Test
     void testJolkExceptionExtension() {
         String myClass = """
             + java.lang.RuntimeException;
-            class myClass { Long interrupt() { ^ RuntimeException #new #throw } }
+            class MyClass { Long interrupt() { ^ RuntimeException #new #throw } }
             """;
         
         Value instance = eval(myClass).invokeMember("new");
@@ -39,7 +41,7 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.lang.RuntimeException;
             class Interrupt extends RuntimeException {  }
             """;
-        String myClass = "class myClass { Long interrupt() { ^ Interrupt #new #throw } }";
+        String myClass = "class MyClass { Long interrupt() { ^ Interrupt #new #throw } }";
         
         Value meta = eval(interrupt);
         Value instance = eval(myClass).invokeMember("new");

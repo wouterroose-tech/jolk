@@ -60,7 +60,7 @@ public final class JolkExceptionExtension {
             case "throw":
                 throw throwException(receiver);
             case "class":
-                return EXCEPTION_TYPE;
+                return receiver.getClass();
         }
 
         throw UnknownIdentifierException.create(member);
@@ -73,7 +73,7 @@ public final class JolkExceptionExtension {
 
     @ExportMessage
     static Object getMetaObject(Throwable receiver) {
-        return EXCEPTION_TYPE;
+        return receiver.getClass();
     }
 
     /**

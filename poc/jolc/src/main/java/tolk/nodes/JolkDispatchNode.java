@@ -395,9 +395,10 @@ public abstract class JolkDispatchNode extends Node {
                     if (receiver instanceof JolkIntrinsicObject jo) return jo.getJolkMetaClass();
                     if (receiver instanceof Long || receiver instanceof Integer) return JolkLong.LONG_TYPE;
                     if (receiver instanceof Boolean) return JolkBoolean.BOOLEAN_TYPE;
-                    if (receiver instanceof Throwable) return JolkExceptionExtension.EXCEPTION_TYPE;
                     if (receiver instanceof JolkMetaClass) return receiver;
-                    return JolkNothing.NOTHING_TYPE;
+                    // Identity Restitution: Use the interop protocol to resolve specific host classes
+                    // (e.g. java.lang.RuntimeException) via our extensions or host defaults.
+                    return interop.hasMetaObject(receiver) ? interop.getMetaObject(receiver) : JolkNothing.NOTHING_TYPE;
                 }
                 case "instanceOf" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);

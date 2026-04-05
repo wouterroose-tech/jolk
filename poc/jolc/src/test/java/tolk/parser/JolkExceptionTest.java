@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
-@Disabled("activate when Extension is implemented")
 public class JolkExceptionTest extends JolcTestBase {
 
     @Test
@@ -34,6 +33,7 @@ public class JolkExceptionTest extends JolcTestBase {
     }
     
     @Test
+    @Disabled("activate when Extends is implemented")
     void testJolkException() {
         String interrupt = """
             + java.lang.RuntimeException;

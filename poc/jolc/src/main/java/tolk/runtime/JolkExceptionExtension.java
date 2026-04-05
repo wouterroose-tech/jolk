@@ -1,5 +1,7 @@
 package tolk.runtime;
 
+import java.util.Collections;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -17,19 +19,16 @@ import com.oracle.truffle.api.library.ExportMessage;
  * This provides shim-less integration by allowing any Java exception to respond
  * to Jolk messages like `#message` and `#throw`.
  */
-@ExportLibrary(value = InteropLibrary.class, receiverClass = Throwable.class)
-public final class JolkExceptionExtension implements  JolkIntrinsicObject {
+@ExportLibrary(value = InteropLibrary.class, 
+               receiverClass = Throwable.class, 
+               delegateTo = JolkIntrinsicObject.class)
+public final class JolkExceptionExtension {
 
-    private static final JolkExceptionExtension INSTANCE = new JolkExceptionExtension();
+    /** The MetaClass identity for Jolk exceptions. */
+    public static final JolkMetaClass EXCEPTION_TYPE;
 
-    /**
-     * ### getJolkMetaClass
-     * 
-     * Returns the MetaClass identity for Jolk exceptions.
-     */
-    @Override
-    public JolkMetaClass getJolkMetaClass() {
-        return JolkException.EXCEPTION_TYPE;
+    static {
+        EXCEPTION_TYPE = new JolkMetaClass("Exception", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
     }
 
     @ExportMessage
@@ -40,16 +39,14 @@ public final class JolkExceptionExtension implements  JolkIntrinsicObject {
     @ExportMessage
     static Object getMembers(Throwable receiver, boolean includeInternal) {
         return new JolkMemberNames(new String[]{
-            "message", "throw", "class", "hash", "toString", 
-            "isPresent", "isEmpty", "ifPresent", "ifEmpty"
+            "throw", "class"
         });
     }
 
     @ExportMessage
     static boolean isMemberInvocable(Throwable receiver, String member) {
         return switch (member) {
-            case "message", "throw", "class", "hash", "toString", 
-                 "isPresent", "isEmpty", "ifPresent", "ifEmpty" -> true;
+            case "throw", "class" -> true;
             default -> false;
         };
     }
@@ -60,27 +57,10 @@ public final class JolkExceptionExtension implements  JolkIntrinsicObject {
             throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         
         switch (member) {
-            case "message":
-                return receiver.getMessage();
             case "throw":
-                if (receiver instanceof RuntimeException re) throw re;
-                if (receiver instanceof Error err) throw err;
-                throw new RuntimeException(receiver);
+                throw throwException(receiver);
             case "class":
-                return JolkException.EXCEPTION_TYPE;
-            case "hash":
-                return (long) receiver.hashCode();
-            case "toString":
-                return receiver.toString();
-            case "isPresent":
-                return true;
-            case "isEmpty":
-                return false;
-        }
-
-        // Handle conditional flow control if provided
-        if ("ifPresent".equals(member) && arguments.length > 0) {
-            return INSTANCE.invokeIntrinsicMember(receiver, member, arguments, InteropLibrary.getUncached());
+                return EXCEPTION_TYPE;
         }
 
         throw UnknownIdentifierException.create(member);
@@ -93,6 +73,22 @@ public final class JolkExceptionExtension implements  JolkIntrinsicObject {
 
     @ExportMessage
     static Object getMetaObject(Throwable receiver) {
-        return JolkException.EXCEPTION_TYPE;
+        return EXCEPTION_TYPE;
+    }
+
+    /**
+     * ### throwException
+     * 
+     * Perfroms a "sneaky throw" to propagate the original Throwable without 
+     * wrapping it in a RuntimeException, preserving its identity and stack.
+     */
+    private static RuntimeException throwException(Throwable t) {
+        JolkExceptionExtension.<RuntimeException>doThrow(t);
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void doThrow(Throwable t) throws T {
+        throw (T) t;
     }
 }

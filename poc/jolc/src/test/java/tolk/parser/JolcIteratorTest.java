@@ -1,6 +1,7 @@
 package tolk.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.graalvm.polyglot.Value;
@@ -16,6 +17,19 @@ public class JolcIteratorTest extends JolcTestBase {
     void testNewArray() {
         String source = """
             class MyClass {
+                ArrayList<Long> longList = ArrayList #new(); 
+                ArrayList<Long> run() { ^ ArrayList<Long> #new() }    
+        """;
+        Value instance = eval(source);
+        //assertNotNull(instance.invokeMember("longList"));
+        assertNotNull(instance.invokeMember("run"));
+    }
+
+    @Test
+    //@Disabled("Pending implementation of Iterator") 
+    void testVariadicNewArray() {
+        String source = """
+            class MyClass {
                 ArrayList<Long> longList = ArrayList #new(1, 2, 3);
                 String run(Int key) { ^ longList #at(key) }            
         """;
@@ -28,7 +42,7 @@ public class JolcIteratorTest extends JolcTestBase {
     void testArrayLiteral() {
         String source = """
             class MyClass {
-                List<Long> longList = #(1, 2, 3);
+                ArrayList<Long> longList = #(1, 2, 3);
                 String run(Int key) { ^ longList #at(key) }            
         """;
         Value instance = eval(source);

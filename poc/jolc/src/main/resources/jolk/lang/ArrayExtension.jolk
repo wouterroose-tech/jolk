@@ -26,4 +26,6 @@ extension ArrayExtension<T> on java.util.List<T> {
     /// Replaces the element at the specified position in this list with the specified element.
     ///
     /// @param index The index of the element to replace.
-    /// @param element
+    /// @param element element to be stored at the specified position
+    /// @return self
+    Self put(Int index, T element) { }

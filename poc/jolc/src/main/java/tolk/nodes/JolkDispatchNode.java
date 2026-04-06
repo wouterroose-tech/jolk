@@ -68,6 +68,10 @@ import com.oracle.truffle.api.library.CachedLibrary;
 @GenerateInline(false)
 public abstract class JolkDispatchNode extends JolkNode { // Keep extending JolkNode
 
+    public static final String[] INTRINSIC_MEMBERS = {
+        "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "throw", "?", "? :", "?!", "?! :"
+    };
+
     /**
      * ### create
      * 
@@ -129,7 +133,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
      * @param receiver The object to check.
      * @return true if the receiver is null or the JolkNothing instance.
      */
-    protected boolean isNothing(Object receiver) {
+    protected static boolean isNothing(Object receiver) {
         return receiver == null || receiver == JolkNothing.INSTANCE;
     }
 
@@ -278,15 +282,24 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         }
     }
 
-    boolean isObjectIntrinsic(String member) {
+    /**
+     * ### isObjectIntrinsic
+     * 
+     * Checks if a member name belongs to the Jolk Core Protocol (ObjectExtension).
+     * This uses a switch expression for $O(1)$ lookup performance.
+     */
+    public static boolean isObjectIntrinsic(String member) {
+        if (member == null) return false;
         return switch (member) {
-            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "throw", "?", "? :", "?!", "?! :" -> true;
+            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
+                 "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
+                 "throw", "?", "? :", "?!", "?! :" -> true;
             default -> false;
         };
     }
 
     @TruffleBoundary
-    protected Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
+    public static Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
         InteropLibrary genericInterop = InteropLibrary.getUncached();
         try {
             switch (name) {
@@ -413,7 +426,6 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (receiver instanceof JolkIntrinsicObject jo) return jo.getJolkMetaClass();
                     if (receiver instanceof Long || receiver instanceof Integer) return JolkLong.LONG_TYPE;
                     if (receiver instanceof Boolean) return JolkBoolean.BOOLEAN_TYPE;
                     if (receiver instanceof JolkMetaClass) return receiver;
@@ -465,6 +477,6 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             if (e instanceof JolkReturnException re) throw re;
             throw new RuntimeException("Intrinsic dispatch failed: #" + name, e);
         }
-        return JolkNothing.INSTANCE;
+        return null;
     }
 }

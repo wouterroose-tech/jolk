@@ -11,6 +11,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 
+import tolk.nodes.JolkDispatchNode;
 import tolk.nodes.JolkReturnException;
 
 import java.util.HashSet;
@@ -19,7 +20,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-/// # JolkMetaClass
+/// # JolkMetaClass (Meta-Object Descriptor)
 /// 
 /// Represents a Jolk Type (a meta-object) at runtime.
 ///
@@ -31,9 +32,8 @@ import java.util.Set;
 /// It also serves as a container for the definitions of members (fields and methods)
 /// that belong to instances of this type. However, it does not execute instance-level
 /// messages itself; that is the responsibility of {@link JolkObject}.
-///
 @ExportLibrary(InteropLibrary.class)
-public final class JolkMetaClass implements TruffleObject, JolkIntrinsicObject {
+public final class JolkMetaClass implements TruffleObject {
 
     public final String name;
     private final JolkMetaClass superclass;
@@ -362,6 +362,8 @@ public final class JolkMetaClass implements TruffleObject, JolkIntrinsicObject {
         keys.add("name");
         keys.add("superclass");
         keys.add("isInstance");
+        // Consistent with JolkObject: Classes are polite JoMoos
+        Collections.addAll(keys, JolkDispatchNode.INTRINSIC_MEMBERS);
         return new JolkMemberNames(keys.toArray(new String[0]));
     }
 
@@ -374,9 +376,10 @@ public final class JolkMetaClass implements TruffleObject, JolkIntrinsicObject {
         // 2. Local Meta-Intrinsics (Identity properties should not delegate)
         if (switch (member) {
             case "new", "name", "superclass", "isInstance" -> true;
-            case "class", "hash", "toString", "isPresent", "isEmpty" -> true;
             default -> false;
         }) return true;
+
+        if (JolkDispatchNode.isObjectIntrinsic(member)) return true;
 
         // 3. Meta-Inheritance check
         return superclass != null && interop.isMemberInvocable(superclass, member);
@@ -430,7 +433,7 @@ public final class JolkMetaClass implements TruffleObject, JolkIntrinsicObject {
         }
 
         // 2. Jolk Object Protocol: Classes are polite JoMoos
-        Object intrinsicResult = invokeIntrinsicMember(this, member, arguments, interop);
+        Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop);
         if (intrinsicResult != null) {
             return intrinsicResult;
         }

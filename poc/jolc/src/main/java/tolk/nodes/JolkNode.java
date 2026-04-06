@@ -38,7 +38,7 @@ public abstract class JolkNode extends Node {
      * @param value The value to lift.
      * @return The lifted value (either the original object or JolkNothing.INSTANCE).
      */
-    protected final Object lift(Object value) {
+    protected final static Object lift(Object value) {
         return (value == null || InteropLibrary.getUncached().isNull(value)) ? JolkNothing.INSTANCE : value;
     }
 

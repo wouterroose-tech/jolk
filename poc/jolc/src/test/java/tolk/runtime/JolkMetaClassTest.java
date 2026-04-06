@@ -91,7 +91,7 @@ public class JolkMetaClassTest {
         JolkMemberNames members = (JolkMemberNames) membersObj;
 
         assertTrue(members.hasArrayElements());
-        assertEquals(5, members.getArraySize());
+        assertEquals(23, members.getArraySize());
 
         Set<String> names = new HashSet<>();
         for (long i = 0; i < members.getArraySize(); i++) {

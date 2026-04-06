@@ -11,7 +11,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.CachedLibrary;
-
+import tolk.nodes.JolkDispatchNode;
 /// # JolkObject
 /// 
 /// The base class for all objects in the Jolk Object Model (JoMoo).
@@ -19,8 +19,8 @@ import com.oracle.truffle.api.library.CachedLibrary;
 /// Currently, this is just a placeholder to establish the object model structure.
 /// In the future, this class will be expanded to include fields, methods, and other features of the object model.
 /// 
-@ExportLibrary(InteropLibrary.class)
-public class JolkObject implements TruffleObject, JolkIntrinsicObject {
+@ExportLibrary(InteropLibrary.class) // JolkObject is a TruffleObject
+public class JolkObject implements TruffleObject {
 
     private final JolkMetaClass metaClass;
     private final Object[] data;
@@ -88,26 +88,15 @@ public class JolkObject implements TruffleObject, JolkIntrinsicObject {
     @ExportMessage
     public Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
         Set<String> keys = new HashSet<>(metaClass.getInstanceMemberKeys());
-        keys.add("==");
-        keys.add("!=");
-        keys.add("~~");
-        keys.add("!~");
-        keys.add("??");
-        keys.add("hash");
-        keys.add("toString");
-        keys.add("ifPresent");
-        keys.add("ifEmpty");
-        keys.add("isPresent");
-        keys.add("isEmpty");
-        keys.add("class");
-        keys.add("instanceOf");
+        // Add all intrinsic members from the ObjectExtension
+        Collections.addAll(keys, JolkDispatchNode.INTRINSIC_MEMBERS);
         return new JolkMemberNames(keys.toArray(new String[0]));
     }
 
     @ExportMessage
     public boolean isMemberInvocable(String member) {
         // An instance can invoke a member if it's an Object intrinsic or an instance member on its class.
-        return metaClass.hasInstanceMember(member) || isObjectIntrinsic(member);
+        return metaClass.hasInstanceMember(member) || JolkDispatchNode.isObjectIntrinsic(member);
     }
 
     @ExportMessage
@@ -126,8 +115,8 @@ public class JolkObject implements TruffleObject, JolkIntrinsicObject {
             return result == null ? JolkNothing.INSTANCE : result;
         }
 
-        // 2. Handle standard intrinsic protocol via common interface.
-        Object intrinsicResult = invokeIntrinsicMember(this, name, arguments, interop);
+        // 2. Handle standard intrinsic protocol via the central dispatcher (ObjectExtension).
+        Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
         if (intrinsicResult != null) {
             return intrinsicResult;
         }
@@ -155,12 +144,5 @@ public class JolkObject implements TruffleObject, JolkIntrinsicObject {
     @ExportMessage
     public String toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
         return toString();
-    }
-
-    private boolean isObjectIntrinsic(String member) {
-        return switch (member) {
-            case "==", "!=", "~~", "!~", "??", "hash", "toString", "ifPresent", "ifEmpty", "isPresent", "isEmpty", "class", "instanceOf" -> true;
-            default -> false;
-        };
     }
 }

@@ -62,9 +62,10 @@ public class DomainTest extends JolcTestBase {
         assertEquals("Doe", person.invokeMember("lastName").asString());
         assertEquals("John Doe", person.invokeMember("name").asString());
         assertEquals("Person[ssn=123456789, firstName=John, lastName=Doe]", person.invokeMember("toString").asString());
+        assertTrue(person.invokeMember("~~", person).asBoolean());
         Value person2 = this.personClass().invokeMember("new", 123456789L, "John", "Doe");
         assertTrue(person.invokeMember("~~", person2).asBoolean());
-        Value person3 = this.personClass().invokeMember("new", 123456789L, "John", "Doe");
+        Value person3 = this.personClass().invokeMember("new", 0L, "X", "X");
         assertFalse(person.invokeMember("~~", person3).asBoolean());
     }
 

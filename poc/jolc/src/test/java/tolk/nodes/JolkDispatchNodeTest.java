@@ -141,19 +141,18 @@ public class JolkDispatchNodeTest extends JolcTestBase {
      */
     @Test
     void testIsObjectIntrinsic() {
-        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create(); // Need an instance to call non-static method
-        assertTrue(dispatchNode.isObjectIntrinsic("=="));
-        assertTrue(dispatchNode.isObjectIntrinsic("!="));
-        assertTrue(dispatchNode.isObjectIntrinsic("~~"));
-        assertTrue(dispatchNode.isObjectIntrinsic("!~"));
-        assertTrue(dispatchNode.isObjectIntrinsic("??"));
-        assertTrue(dispatchNode.isObjectIntrinsic("hash"));
-        assertTrue(dispatchNode.isObjectIntrinsic("toString"));
-        assertTrue(dispatchNode.isObjectIntrinsic("class"));
-        assertTrue(dispatchNode.isObjectIntrinsic("instanceOf"));
-        assertTrue(dispatchNode.isObjectIntrinsic("isPresent"));
-        assertTrue(dispatchNode.isObjectIntrinsic("isEmpty"));
-        assertFalse(dispatchNode.isObjectIntrinsic("someOtherMessage"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("=="));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("!="));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("~~"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("!~"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("??"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("hash"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("toString"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("class"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("instanceOf"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("isPresent"));
+        assertTrue(JolkDispatchNode.isObjectIntrinsic("isEmpty"));
+        assertFalse(JolkDispatchNode.isObjectIntrinsic("someOtherMessage"));
     }
 
     @Test
@@ -164,6 +163,6 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         assertEquals(0L, result);
 
         Object str = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "toString", new Object[0]);
-        assertEquals(JolkNothing.INSTANCE, str);
+        assertEquals("null", str); // JolkNothing.toString() returns the string "null"
     }
 }

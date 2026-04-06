@@ -2,6 +2,7 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkString;
 import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBoolean;
 import tolk.runtime.JolkExceptionExtension;
@@ -104,7 +105,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     }
 
     @Specialization(guards = "isNothing(receiver)")
-    protected Object doNothing(Object receiver, String selector, Object[] arguments, // Maps to executeDispatch
+    protected Object doNothing(VirtualFrame frame, Object receiver, String selector, Object[] arguments, 
                                 @CachedLibrary("getNothing()") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop);
@@ -144,7 +145,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// ### Fast Path for Longs
     /// Handles raw Java Longs by routing messages to the JolkLong prototype.
     @Specialization
-    protected Object doLong(Long receiver, String selector, Object[] arguments, // Maps to executeDispatch
+    protected Object doLong(VirtualFrame frame, Long receiver, String selector, Object[] arguments, 
                            @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
@@ -179,7 +180,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// Handles raw Java Booleans by routing messages to the JolkBoolean prototype. This ensures
     /// that boolean primitives can participate in Jolk's message-passing protocol.
     @Specialization
-    protected Object doBoolean(Boolean receiver, String selector, Object[] arguments, // Maps to executeDispatch
+    protected Object doBoolean(VirtualFrame frame, Boolean receiver, String selector, Object[] arguments, 
                                @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
@@ -210,18 +211,50 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         }
     }
 
-    /**
-     * ### doThrowable
-     * 
-     * Specialized **Intrinsic Fast Path** for host exceptions.
-     * 
-     * This specialization ensures that [java.lang.Throwable] instances prioritize 
-     * Jolk's internal control-flow logic (like `#throw`) over standard Java 
-     * member lookup. This is critical for maintaining **Shim-less Integration** 
-     * where the language must control the stack unwinding process.
-     */
+    /// ### doString
+    /// 
+    /// Specialized **Fast Path** for host strings.
+    /// 
+    /// This specialization allows [java.lang.String] instances to participate 
+    /// in the Jolk messaging protocol by prioritizing Jolk-native string 
+    /// augmentations (defined in jolk.lang.String) before falling back to 
+    /// standard Java methods.
     @Specialization
-    protected Object doThrowable(Throwable receiver, String selector, Object[] arguments, // Maps to executeDispatch
+    protected Object doString(VirtualFrame frame, String receiver, String selector, Object[] arguments,
+                             @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+        if (isObjectIntrinsic(selector)) {
+            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+        }
+
+        try {
+            // 1. Prototype Lookup: Check for Jolk-defined string logic (e.g., #match)
+            Object member = JolkString.STRING_TYPE.lookupInstanceMember(selector);
+            if (member != null) {
+                Object[] argsWithReceiver = new Object[arguments.length + 1];
+                argsWithReceiver[0] = receiver;
+                if (arguments.length > 0) {
+                    System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+                }
+                return lift(InteropLibrary.getUncached().execute(member, argsWithReceiver));
+            }
+
+            // 2. Host Fallback: Dispatch to standard java.lang.String members
+            return lift(interop.invokeMember(receiver, selector, arguments));
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+            throw new RuntimeException("Message dispatch failed: #" + selector + " on String", e);
+        }
+    }
+
+    /// ### doThrowable
+    ///
+    /// Specialized **Intrinsic Fast Path** for host exceptions.
+    /// 
+    /// This specialization ensures that [java.lang.Throwable] instances prioritize 
+    /// Jolk's internal control-flow logic (like `#throw`) over standard Java 
+    /// member lookup. This is critical for maintaining **Shim-less Integration** 
+    /// where the language must control the stack unwinding process.
+    @Specialization
+    protected Object doThrowable(VirtualFrame frame, Throwable receiver, String selector, Object[] arguments, 
                                @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
@@ -237,10 +270,11 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     }
 
     /// ### Generic Dispatch
+    /// 
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doThrowable"}, limit = "3") // Maps to executeDispatch
-    protected Object doDispatch(Object receiver, String selector, Object[] arguments,
+    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doString", "doThrowable"}, limit = "3") // Maps to executeDispatch
+    protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         InteropLibrary uncached = InteropLibrary.getUncached();
         try {
@@ -255,6 +289,23 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // Identity Restitution Protocol: Intercept intrinsic messages for all objects
             if (isObjectIntrinsic(selector)) {
                 return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+
+            // 3. Jolk Prototype Lookup (Megamorphic / Generic Path)
+            // Check if the receiver matches a Jolk intrinsic prototype.
+            JolkMetaClass meta = null;
+            if (receiver instanceof Long || receiver instanceof Integer) meta = JolkLong.LONG_TYPE;
+            else if (receiver instanceof Boolean) meta = JolkBoolean.BOOLEAN_TYPE;
+            else if (receiver instanceof String) meta = JolkString.STRING_TYPE;
+
+            if (meta != null) {
+                Object member = meta.lookupInstanceMember(selector);
+                if (member != null) {
+                    Object[] argsWithReceiver = new Object[arguments.length + 1];
+                    argsWithReceiver[0] = receiver;
+                    System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+                    return lift(InteropLibrary.getUncached().execute(member, argsWithReceiver));
+                }
             }
 
             /**
@@ -380,7 +431,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 }
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (isNothing(receiver)) return JolkNothing.INSTANCE;
+                    if (isNothing(receiver)) return "null";
                     return lift(receiver.toString());
                 }
                 case "isPresent" -> {

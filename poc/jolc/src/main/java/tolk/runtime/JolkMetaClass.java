@@ -182,6 +182,8 @@ public final class JolkMetaClass implements TruffleObject {
                     this.defaultFieldValues[idx] = 0L;
                 } else if (isBooleanHint(hint)) {
                     this.defaultFieldValues[idx] = false;
+                } else if (isStringHint(hint)) {
+                    this.defaultFieldValues[idx] = "";
                 } else if (val instanceof JolkMetaClass || val == null || val instanceof String) {
                     // Other classes (including sentinels for non-intrinsics) or explicit nulls default to Nothing.
                     this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
@@ -206,6 +208,8 @@ public final class JolkMetaClass implements TruffleObject {
                         this.metaFieldValues[idx] = 0L;
                     } else if (isBooleanHint(hint)) {
                         this.metaFieldValues[idx] = false;
+                    } else if (isStringHint(hint)) {
+                        this.metaFieldValues[idx] = "";
                     } else {
                         this.metaFieldValues[idx] = JolkNothing.INSTANCE;
                     }
@@ -234,6 +238,11 @@ public final class JolkMetaClass implements TruffleObject {
         if (hint == null) return false;
         return hint.equalsIgnoreCase("Boolean") 
             || hint.equalsIgnoreCase("jolk.lang.Boolean");
+    }
+
+    public static boolean isStringHint(String hint) {
+        if (hint == null) return false;
+        return hint.equalsIgnoreCase("String") || hint.equalsIgnoreCase("jolk.lang.String");
     }
 
     @ExportMessage
@@ -283,7 +292,12 @@ public final class JolkMetaClass implements TruffleObject {
             if (isBooleanHint(this.name)) return true;
         }
 
-        // 4. Handle standard JolkObjects by walking their class hierarchy.
+        // 4. Handle Jolk's intrinsic `String` archetype.
+        if (instance instanceof String) {
+            if (isStringHint(this.name)) return true;
+        }
+
+        // 5. Handle standard JolkObjects by walking their class hierarchy.
         if (instance instanceof JolkObject jolkObject) {
             JolkMetaClass current = jolkObject.getJolkMetaClass();
             while (current != null) {
@@ -292,16 +306,15 @@ public final class JolkMetaClass implements TruffleObject {
             }
         }
 
-        // 5. Root Object Fallback: JolkObjects, Nothing, and primitives are instances of Object.
+        // 6. Root Object Fallback: JolkObjects, Nothing, and primitives are instances of Object.
         // Note: During message dispatch, specialized MetaClasses (Boolean/Long) must be 
         // registered before the root Object archetype to avoid shadowing specialized members.
         if (this.superclass == null && "Object".equals(this.name)) {
             return instance instanceof JolkObject || instance == JolkNothing.INSTANCE || 
-                   interop.isNumber(instance) || interop.isBoolean(instance);
+                   interop.isNumber(instance) || interop.isBoolean(instance) || instance instanceof String;
         }
 
-        // 6. For the PoC, other Java objects (e.g., String) are not considered
-        // instances of any Jolk type to ensure runtime safety.
+        // 7. For the PoC, other host objects are not considered instances of Jolk types.
         return false;
     }
 

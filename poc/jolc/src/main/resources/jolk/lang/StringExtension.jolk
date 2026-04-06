@@ -1,0 +1,27 @@
+~ jolk.lang;
+
+/// # StringExtension
+///
+/// Augments the native JVM String class with the Jolk messaging protocol.
+/// This ensures that any String is a "polite citizen" in a Jolk message chain.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+extension StringExtension on java.lang.String {
+
+    /// ## +
+    /// Concatenates this string with another object, 
+    /// converting the other object to a string if necessary.
+    ///
+    /// - **Returns**: This method does not return; it terminates the current execution path.
+    String +(String string) { 
+        // Implementation provided by the Tolk Engine.
+        // return self.concat(string);
+    }
+
+    Boolean matches(String regex) {
+        // Implementation provided by the Tolk Engine.
+        // Pattern.matches(regex, self)
+    }
+}

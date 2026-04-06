@@ -73,7 +73,6 @@ public class JolcBooleanTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("Message dispatch not yet implemented for the PoC.")
     void testObjectProtocol() {
         String source = """
             class ProtoTest {

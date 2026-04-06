@@ -768,6 +768,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             if ("Long".equals(name) || "Int".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLong.LONG_TYPE);
             if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBoolean.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
+            if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkString.STRING_TYPE);
 
             // Priority 2: Current Class Reference
             if (name.equals(currentClassName)) return new JolkReadTypeNode(language, name, null);
@@ -791,7 +792,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return new JolkLiteralNode(Long.parseUnsignedLong(ctx.NumberLiteral().getText()));
             
         if (ctx.StringLiteral() != null) {
-            // TODO: Implementation for StringLiteral
+            String text = ctx.StringLiteral().getText();
+            // Remove the surrounding quotes
+            String val = text.substring(1, text.length() - 1);
+            return new JolkLiteralNode(val);
         }
 
         if (ctx.CharLiteral() != null) {

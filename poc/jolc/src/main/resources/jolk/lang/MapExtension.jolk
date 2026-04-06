@@ -1,0 +1,49 @@
+~ jolk.lang;
+
+/// # Map
+///
+/// The **Map** is an associative archetype that reifies the relationship between a domain and a codomain.
+///
+/// The parenthesis, `#( )`, denotes this associative environment. It uses the entry operator (`->`) 
+/// to link keys to values.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+extension MapExtension<K, V> on java.util.Map<K, V> {
+
+    /// Creates a new Map containing the provided keys and values.
+    /// Arguments are flattened: key1, value1, key2, value2...
+    meta Map<K, V> new(Object... entries) { }
+
+    /// Returns the value to which the specified key is mapped.
+    ///
+    /// @param key the key whose associated value is to be returned
+    /// @return the value or null
+    V atKey(K key) { 
+        // Maps to java.util.Map.get(key)
+    }
+
+    /// Associates the specified value with the specified key.
+    ///
+    /// @param key key with which the specified value is to be associated
+    /// @param value value to be associated with the specified key
+    /// @return self (Fluent Initialisation)
+    Self put(K key, V value) {
+        // Maps to java.util.Map.put(key, value)
+    }
+
+    /// Returns a Set view of the keys contained in this map.
+    Set<K> keys() { }
+
+    /// Returns a Collection view of the values contained in this map.
+    Array<V> values() { }
+
+    /// Performs the given action for each entry in this map.
+    ///
+    /// @param action The action to be performed for each entry
+    Self forEach(Closure<K, V> action) { }
+
+    /// Returns true if this map contains a mapping for the specified key.
+    Boolean hasKey(K key) { }
+}

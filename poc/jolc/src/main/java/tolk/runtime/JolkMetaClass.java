@@ -395,14 +395,14 @@ public final class JolkMetaClass implements TruffleObject {
         // 2. Local Meta-Intrinsics: Identity properties specific to this class
         switch (member) {
             case "new":
-                if (arguments.length != 0) {
-                    // Support Canonical #new if arguments match field count
-                    if (arguments.length == totalFieldCount) {
-                        return new JolkObject(this, arguments);
-                    }
-                    throw ArityException.create(totalFieldCount, totalFieldCount, arguments.length);
+                // Canonical #new logic: Only applies if no explicit meta-method named 'new' exists.
+                // This allows the variadic 'meta Map new(Object...)' to take precedence.
+                if (arguments.length == 0) return new JolkObject(this);
+                
+                if (arguments.length == totalFieldCount) {
+                    return new JolkObject(this, arguments);
                 }
-                return new JolkObject(this);
+                throw ArityException.create(totalFieldCount, totalFieldCount, arguments.length);
             case "name":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return name;

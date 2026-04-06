@@ -37,6 +37,10 @@ public class JolkIdentityNode extends JolkExpressionNode {
             boolean eq = n1.longValue() == n2.longValue();
             return negate ? !eq : eq;
         }
+        if (left instanceof Boolean b1 && right instanceof Boolean b2) {
+            boolean eq = b1.booleanValue() == b2.booleanValue();
+            return negate ? !eq : eq;
+        }
         if (left instanceof String s1 && right instanceof String s2) {
             boolean eq = s1.equals(s2);
             return negate ? !eq : eq;

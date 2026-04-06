@@ -3,8 +3,8 @@ package tolk.nodes;
 import com.oracle.truffle.api.dsl.TypeSystem;
 
 import tolk.runtime.JolkNothing;
-import tolk.runtime.JolkBoolean;
-import tolk.runtime.JolkLong;
+import tolk.runtime.JolkBooleanExtension;
+import tolk.runtime.JolkLongExtension;
 import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkObject;
 
@@ -20,8 +20,8 @@ import tolk.runtime.JolkObject;
     long.class,
     boolean.class,
     String.class,
-    JolkBoolean.class,
-    JolkLong.class,
+    JolkBooleanExtension.class,
+    JolkLongExtension.class,
     JolkMatch.class,
     JolkNothing.class,
     JolkObject.class

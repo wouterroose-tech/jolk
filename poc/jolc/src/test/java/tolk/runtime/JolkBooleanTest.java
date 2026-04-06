@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JolkBooleanTest {
 
     private Object getOperation(String opName) {
-        Object op = JolkBoolean.BOOLEAN_TYPE.lookupInstanceMember(opName);
+        Object op = JolkBooleanExtension.BOOLEAN_TYPE.lookupInstanceMember(opName);
         assertNotNull(op, "Operation " + opName + " should be defined in JolkBoolean.BOOLEAN_TYPE");
         return op;
     }
@@ -146,7 +146,7 @@ public class JolkBooleanTest {
         assertFalse((Boolean) execute(getOperation("isEmpty"), false));
 
         // Class
-        assertEquals(JolkBoolean.BOOLEAN_TYPE, execute(getOperation("class"), true));
+        assertEquals(JolkBooleanExtension.BOOLEAN_TYPE, execute(getOperation("class"), true));
     }
 
     @Test
@@ -172,7 +172,7 @@ public class JolkBooleanTest {
     @Test
     void testInstanceOf() throws Exception {
         Object op = getOperation("instanceOf");
-        Object match = execute(op, true, JolkBoolean.BOOLEAN_TYPE);
+        Object match = execute(op, true, JolkBooleanExtension.BOOLEAN_TYPE);
         assertTrue((Boolean) InteropLibrary.getUncached().invokeMember(match, "isPresent"));
     }
 

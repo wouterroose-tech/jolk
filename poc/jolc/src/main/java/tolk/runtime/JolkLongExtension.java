@@ -18,7 +18,7 @@ import java.util.Map;
 /// in the polyglot runtime, this class holds the MetaClass definition (`LONG_TYPE`)
 /// and the implementations of the intrinsic operations (addition, comparison, etc.).
 ///
-public final class JolkLong {
+public final class JolkLongExtension {
 
     public static final JolkMetaClass LONG_TYPE;
 
@@ -61,7 +61,7 @@ public final class JolkLong {
         LONG_TYPE = new JolkMetaClass("Long", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, metaMembers);
     }
 
-    private JolkLong() {
+    private JolkLongExtension() {
     }
 
     public static Long asLong(Object arg) {

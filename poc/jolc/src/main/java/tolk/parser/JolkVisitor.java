@@ -765,10 +765,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // 2. Semantic Casing: Uppercase names are Meta-Objects (Types/Constants)
         if (Character.isUpperCase(name.charAt(0))) {
             // Priority 1: Intrinsic Types (Resolved as static literals for performance)
-            if ("Long".equals(name) || "Int".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLong.LONG_TYPE);
-            if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBoolean.BOOLEAN_TYPE);
+            if ("Long".equals(name) || "Int".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLongExtension.LONG_TYPE);
+            if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBooleanExtension.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
-            if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkString.STRING_TYPE);
+            if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkStringExtension.STRING_TYPE);
 
             // Priority 2: Current Class Reference
             if (name.equals(currentClassName)) return new JolkReadTypeNode(language, name, null);

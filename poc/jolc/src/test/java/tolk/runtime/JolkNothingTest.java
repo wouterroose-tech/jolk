@@ -117,7 +117,7 @@ public class JolkNothingTest {
         assertTrue((Boolean) InteropLibrary.getUncached().invokeMember(match, "isPresent"));
         
         // Test against an unrelated type
-        Object noMatch = InteropLibrary.getUncached().invokeMember(nothing, "instanceOf", JolkLong.LONG_TYPE);
+        Object noMatch = InteropLibrary.getUncached().invokeMember(nothing, "instanceOf", JolkLongExtension.LONG_TYPE);
         assertFalse((Boolean) InteropLibrary.getUncached().invokeMember(noMatch, "isPresent"));
     }
 

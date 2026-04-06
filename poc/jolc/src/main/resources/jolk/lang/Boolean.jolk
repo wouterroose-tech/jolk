@@ -12,16 +12,21 @@
 ///
 /// @author Wouter Roose
 
-@Longrinsic
-public final class Boolean extends Object {
+@Intrinsic // Marks this as a Jolk intrinsic for compiler optimization
+extension BooleanExtension on java.lang.Boolean {
+
+    /// The canonical identity for the 'true' state.
+    meta constant Self TRUE = true;
+    /// The canonical identity for the 'false' state.
+    meta constant Self FALSE = false;
 
     /// Logical AND. 
     /// Returns true if both this identity and the other are true.
-    Self &&(Boolean other) { }
+    Boolean &&(java.lang.Boolean other) { }
 
     /// Logical OR. 
     /// Returns true if either this identity or the other is true.
-    Self ||(Boolean other) { }
+    Boolean ||(java.lang.Boolean other) { }
 
     /// Logical NOT. 
     /// Returns the inverse of this boolean identity.
@@ -29,15 +34,15 @@ public final class Boolean extends Object {
 
     /// Executes the provided closure if this identity is true.
     /// Corresponds to the `?` operator in the expression grammar.
-    Self ?(Closure action) { }
+    Self ?(Closure<Self> action) { }
 
     /// Executes the provided closure if this identity is false.
     /// Corresponds to the `?!` operator in the expression grammar.
-    Self ?!(Closure action) { }
+    Self ?!(Closure<Self> action) { }
 
     /// Represents the alternative branch in a message chain.
     /// Typically sent following a `?` or `?!` message to implement else-logic.
-    Self :(Closure action) { }
+    Self :(Closure<Self> action) { }
 
     /// Returns a string representation of this boolean identity.
     /// Results in either "true" or "false".

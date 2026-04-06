@@ -19,7 +19,7 @@ import java.util.Map;
 /// and the implementations for the intrinsic logical operations and 
 /// control-flow messages.
 ///
-public final class JolkBoolean {
+public final class JolkBooleanExtension {
 
     public static final JolkMetaClass BOOLEAN_TYPE;
 
@@ -50,7 +50,7 @@ public final class JolkBoolean {
         BOOLEAN_TYPE = new JolkMetaClass("Boolean", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, Map.of());
     }
 
-    private JolkBoolean() {
+    private JolkBooleanExtension() {
     }
 
     public static Boolean asBoolean(Object arg) {

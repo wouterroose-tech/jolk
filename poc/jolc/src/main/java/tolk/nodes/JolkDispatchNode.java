@@ -2,14 +2,14 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.GenerateInline;
 import tolk.runtime.JolkNothing;
-import tolk.runtime.JolkString;
+import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkMatch;
-import tolk.runtime.JolkBoolean;
+import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkExceptionExtension;
 
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import tolk.runtime.JolkLong;
+import tolk.runtime.JolkLongExtension;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -153,8 +153,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     protected Object doLong(VirtualFrame frame, Long receiver, String selector, Object[] arguments, 
                            @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         try {
-            // 1. Prototype Lookup: Check for Jolk-defined arithmetic (e.g., +, -, *)
-            Object member = JolkLong.LONG_TYPE.lookupInstanceMember(selector);
+            // 1. Prototype Lookup: Check for Jolk-defined arithmetic extensions
+            Object member = JolkLongExtension.LONG_TYPE.lookupInstanceMember(selector);
             if (member != null) {
                 Object[] argsWithReceiver = new Object[arguments.length + 1];
                 argsWithReceiver[0] = receiver;
@@ -196,8 +196,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     protected Object doBoolean(VirtualFrame frame, Boolean receiver, String selector, Object[] arguments, 
                                @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         try {
-            // 1. Prototype Lookup: Check for Jolk-defined logic (e.g., &&, ||, !)
-            Object member = JolkBoolean.BOOLEAN_TYPE.lookupInstanceMember(selector);
+            // 1. Prototype Lookup: Check for Jolk-defined boolean extensions
+            Object member = JolkBooleanExtension.BOOLEAN_TYPE.lookupInstanceMember(selector);
             if (member != null) {
                 Object[] argsWithReceiver = new Object[arguments.length + 1];
                 argsWithReceiver[0] = receiver;
@@ -261,8 +261,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 if (interop.isString(arg)) return receiver.contains(interop.asString(arg));
             }
 
-            // 1. Prototype Lookup: Check for Jolk-defined string logic (e.g., #match)
-            Object member = JolkString.STRING_TYPE.lookupInstanceMember(selector);
+            // 1. Prototype Lookup: Check for Jolk-defined string extensions (e.g., #match)
+            Object member = JolkStringExtension.STRING_TYPE.lookupInstanceMember(selector);
             if (member != null) {
                 Object[] argsWithReceiver = new Object[arguments.length + 1];
                 argsWithReceiver[0] = receiver;
@@ -347,9 +347,9 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // 3. Jolk Prototype Lookup (Megamorphic / Generic Path)
             // Check if the receiver matches a Jolk intrinsic prototype.
             JolkMetaClass meta = null;
-            if (receiver instanceof Long || receiver instanceof Integer) meta = JolkLong.LONG_TYPE;
-            else if (receiver instanceof Boolean) meta = JolkBoolean.BOOLEAN_TYPE;
-            else if (receiver instanceof String) meta = JolkString.STRING_TYPE;
+            if (receiver instanceof Long || receiver instanceof Integer) meta = JolkLongExtension.LONG_TYPE;
+            else if (receiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
+            else if (receiver instanceof String) meta = JolkStringExtension.STRING_TYPE;
 
             if (meta != null) {
                 Object member = meta.lookupInstanceMember(selector);
@@ -439,6 +439,9 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                     if (receiver instanceof Number n1 && other instanceof Number n2) {
                         return n1.longValue() == n2.longValue();
                     }
+                    if (receiver instanceof Boolean b1 && other instanceof Boolean b2) {
+                        return b1.booleanValue() == b2.booleanValue();
+                    }
                     if (receiver instanceof String s1 && other instanceof String s2) {
                         return s1.equals(s2);
                     }
@@ -467,6 +470,9 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                     // Identity Congruence: intrinsic types match by value
                     if (receiver instanceof Number n1 && other instanceof Number n2) {
                         return n1.longValue() != n2.longValue();
+                    }
+                    if (receiver instanceof Boolean b1 && other instanceof Boolean b2) {
+                        return b1.booleanValue() != b2.booleanValue();
                     }
                     if (receiver instanceof String s1 && other instanceof String s2) {
                         return !s1.equals(s2);
@@ -570,8 +576,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (receiver instanceof Long || receiver instanceof Integer) return JolkLong.LONG_TYPE;
-                    if (receiver instanceof Boolean) return JolkBoolean.BOOLEAN_TYPE;
+                    if (receiver instanceof Long || receiver instanceof Integer) return JolkLongExtension.LONG_TYPE;
+                    if (receiver instanceof Boolean) return JolkBooleanExtension.BOOLEAN_TYPE;
                     if (receiver instanceof JolkMetaClass) return receiver;
                     // Identity Restitution: Use the interop protocol to resolve specific host classes
                     // (e.g. java.lang.RuntimeException) via our extensions or host defaults.
@@ -702,11 +708,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         for (int i = 0; i < arguments.length; i++) {
             Object arg = arguments[i];
             if (arg == null || arg == JolkNothing.INSTANCE) unboxed[i] = null;
-            //TODO will this even work? a JolkLong doensn't "ccontain the value" of a long,
-            // it's just a wrapper around it. We need to make sure that the JolkLong.asLong 
-            // method is properly unboxing the value for this to work.
-            else if (arg instanceof JolkLong jl) unboxed[i] = JolkLong.asLong(jl);
-            else if (arg instanceof JolkBoolean jb) unboxed[i] = JolkBoolean.asBoolean(jb);
+            else if (arg instanceof JolkLongExtension jl) unboxed[i] = JolkLongExtension.asLong(jl);
+            else if (arg instanceof JolkBooleanExtension jb) unboxed[i] = JolkBooleanExtension.asBoolean(jb);
             else if (interop.isString(arg)) {
                 try { unboxed[i] = interop.asString(arg); } catch (UnsupportedMessageException e) { unboxed[i] = arg; }
             } else if (interop.isNumber(arg)) {
@@ -746,5 +749,60 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         } catch (SecurityException e) {
         }
         return null;
+    }
+
+    /**
+     * ### matchArguments
+     * 
+     * Matches provided arguments against a parameter signature, handling 
+     * Java varargs by wrapping trailing arguments into an array.
+     */
+    private static Object[] matchArguments(Class<?>[] types, boolean isVarArgs, Object[] args) {
+        if (!isVarArgs) {
+            return (types.length == args.length) ? args : null;
+        }
+        
+        int fixedCount = types.length - 1;
+        if (args.length < fixedCount) return null;
+
+        Object[] result = new Object[types.length];
+        System.arraycopy(args, 0, result, 0, fixedCount);
+
+        // Wrap trailing arguments into the varargs array component
+        Class<?> varArgType = types[fixedCount].getComponentType();
+        int varArgLen = args.length - fixedCount;
+        Object varArgsArray = java.lang.reflect.Array.newInstance(varArgType, varArgLen);
+        for (int i = 0; i < varArgLen; i++) {
+            java.lang.reflect.Array.set(varArgsArray, i, args[fixedCount + i]);
+        }
+        result[fixedCount] = varArgsArray;
+        
+        return result;
+    }
+
+    /**
+     * ### coerceArguments
+     * 
+     * Implements **Guided Coercion** for the reflection boundary. It ensures that 
+     * Jolk's 64-bit Longs are narrowed to match the target Java parameter types 
+     * (int, short, byte) where necessary.
+     */
+    private static Object[] coerceArguments(Class<?>[] types, Object[] args) {
+        Object[] coerced = new Object[args.length];
+        for (int i = 0; i < args.length; i++) {
+            Object arg = args[i];
+            Class<?> target = types[i];
+            if (arg instanceof Long l) {
+                if (target == int.class || target == Integer.class) coerced[i] = l.intValue();
+                else if (target == short.class || target == Short.class) coerced[i] = l.shortValue();
+                else if (target == byte.class || target == Byte.class) coerced[i] = l.byteValue();
+                else if (target == double.class || target == Double.class) coerced[i] = l.doubleValue();
+                else if (target == float.class || target == Float.class) coerced[i] = l.floatValue();
+                else coerced[i] = arg;
+            } else {
+                coerced[i] = arg;
+            }
+        }
+        return coerced;
     }
 }

@@ -1,0 +1,27 @@
+~ jolk.lang;
+
+/// # Iterator
+///
+/// The **Iterator** extension bridges the Java iteration substrate with 
+/// Jolk's message-passing semantics.
+
+@Intrinsic
+extension IteratorExtension<T> on java.util.Iterator<T> {
+
+    /// Creates an iterable containing the provided elements.
+    meta Iterator<T> new(T... elements) { }
+
+    /// Returns the next element in the iteration.
+    T next() { }
+
+    /// Returns true if the iteration has more elements.
+    Boolean hasNext() { }
+
+    /// Performs the given action for each remaining element until all elements 
+    /// have been processed or the action throws an exception.
+    ///
+    /// @param action The action to be performed for each element
+    Self forEach(Closure<T> action) {
+        [ self #hasNext ] #while [ action #apply(self #next) ]
+    }
+}

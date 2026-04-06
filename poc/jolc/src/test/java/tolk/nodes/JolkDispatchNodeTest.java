@@ -7,7 +7,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import org.graalvm.polyglot.Value;
 import tolk.language.JolkLanguage;
-import tolk.runtime.JolkString;
+import tolk.runtime.JolkStringExtension;
 
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
@@ -138,7 +138,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
     }
 
     /**
-     * Tests that messages to raw Java {@link String} are routed to {@link JolkString#STRING_TYPE}.
+     * Tests that messages to raw Java {@link String} are routed to {@link JolkStringExtension#STRING_TYPE}.
      */
     @Test
     void testStringRouting() {

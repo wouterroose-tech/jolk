@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JolkLongTest {
 
     private Object getOperation(String opName) {
-        Object op = JolkLong.LONG_TYPE.lookupInstanceMember(opName);
+        Object op = JolkLongExtension.LONG_TYPE.lookupInstanceMember(opName);
         assertNotNull(op, "Operation " + opName + " should be defined in JolkLong.LONG_TYPE");
         return op;
     }
@@ -215,7 +215,7 @@ public class JolkLongTest {
     void testClassAccessor() throws Exception {
         Object op = getOperation("class");
         Object result = execute(op, 42L);
-        assertEquals(JolkLong.LONG_TYPE, result);
+        assertEquals(JolkLongExtension.LONG_TYPE, result);
     }
 
     @Test
@@ -223,7 +223,7 @@ public class JolkLongTest {
         Object op = getOperation("instanceOf");
 
         // Test against Int type
-        Object match = execute(op, 42L, JolkLong.LONG_TYPE);
+        Object match = execute(op, 42L, JolkLongExtension.LONG_TYPE);
         assertTrue((Boolean) InteropLibrary.getUncached().invokeMember(match, "isPresent"));
 
         // Test against an unrelated type (using Nothing type as dummy unrelated)

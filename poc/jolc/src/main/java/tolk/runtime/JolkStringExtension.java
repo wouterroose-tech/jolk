@@ -9,16 +9,15 @@ import com.oracle.truffle.api.library.ExportMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * # JolkString
- * 
- * The runtime representation of the Jolk `String` type definition.
- * 
- * Strings in Jolk are represented by raw `java.lang.String` objects. This class 
- * holds the MetaClass definition (`STRING_TYPE`) and the intrinsic implementations 
- * for string operations like concatenation (`+`).
- */
-public final class JolkString {
+/// # JolkString
+/// 
+/// The runtime representation of the Jolk `String` type definition.
+/// 
+/// Strings in Jolk are represented by raw `java.lang.String` objects. This class 
+/// holds the MetaClass definition (`STRING_TYPE`) and the intrinsic implementations 
+/// for string operations like concatenation (`+`).
+/// 
+public final class JolkStringExtension {
 
     public static final JolkMetaClass STRING_TYPE;
 
@@ -41,7 +40,7 @@ public final class JolkString {
         STRING_TYPE = new JolkMetaClass("String", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, Map.of());
     }
 
-    private JolkString() {}
+    private JolkStringExtension() {}
 
     @ExportLibrary(InteropLibrary.class)
     public static final class StringAdd implements TruffleObject {

@@ -7,6 +7,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import org.graalvm.polyglot.Value;
 import tolk.language.JolkLanguage;
+import tolk.runtime.JolkString;
 
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
@@ -134,6 +135,85 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         // For this test, we'll assume JolkBoolean has a '!' operator
         result = dispatchNode.executeDispatch(null, receiver, "!", new Object[0]);
         assertEquals(false, result, "Boolean '!' operator should be handled by JolkBoolean members.");
+    }
+
+    /**
+     * Tests that messages to raw Java {@link String} are routed to {@link JolkString#STRING_TYPE}.
+     */
+    @Test
+    void testStringRouting() {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        String receiver = "hello";
+
+        // Jolk-native extension: #matches
+        Object matches = dispatchNode.executeDispatch(null, receiver, "matches", new Object[]{"h.*o"});
+        assertEquals(true, matches, "JolkString 'matches' method should work correctly.");
+
+        // Host fallback: #length
+        Object len = dispatchNode.executeDispatch(null, receiver, "length", new Object[0]);
+        assertEquals(5L, len);
+
+        // Host fallback: #toUpperCase
+        Object upper = dispatchNode.executeDispatch(null, receiver, "toUpperCase", new Object[0]);
+        assertEquals("HELLO", upper);
+    }
+
+    /**
+     * Tests the Meta-Object Interceptor which allows sending #new to Java classes.
+     */
+    @Test
+    void testMetaObjectNew() {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        Class<?> receiver = java.lang.StringBuilder.class;
+
+        // Jolk Unified Messaging: Class #new(...) maps to instantiation
+        Object instance = dispatchNode.executeDispatch(null, receiver, "new", new Object[]{"init"});
+        assertTrue(instance instanceof StringBuilder);
+        assertEquals("init", instance.toString());
+    }
+
+    /**
+     * Verifies Identity Congruence for intrinsic types (matching by value, not reference).
+     */
+    @Test
+    void testIdentityCongruence() {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        // Create Longs outside the JVM cache (-128 to 127)
+        Long a = Long.valueOf(1000);
+        Long b = Long.valueOf(1000);
+
+        assertNotSame(a, b);
+        Object isEqual = dispatchNode.executeDispatch(null, a, "==", new Object[]{b});
+        assertEquals(true, isEqual, "Large Longs must match by value in the Jolk Identity protocol.");
+        
+        Object isEquivalent = dispatchNode.executeDispatch(null, "str", "~~", new Object[]{new String("str")});
+        assertEquals(true, isEquivalent, "Strings must match by value equivalence.");
+    }
+
+    /**
+     * Verifies the ternary logic and null-coalescing intrinsic dispatch.
+     */
+    @Test
+    void testComplexIntrinsics() {
+        JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+        
+        // ?? (Null-coalesce)
+        JolkClosure fallback = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode("fallback"), "test", false).getCallTarget());
+        Object res1 = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "??", new Object[]{fallback});
+        assertEquals("fallback", res1);
+
+        Object res2 = dispatchNode.executeDispatch(null, "present", "??", new Object[]{fallback});
+        assertEquals("present", res2);
+
+        // ? : (Ternary)
+        JolkClosure thenBranch = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode(1L), "test", false).getCallTarget());
+        JolkClosure elseBranch = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode(2L), "test", false).getCallTarget());
+        
+        Object branchT = dispatchNode.executeDispatch(null, true, "? :", new Object[]{thenBranch, elseBranch});
+        assertEquals(1L, branchT);
+        
+        Object branchF = dispatchNode.executeDispatch(null, false, "? :", new Object[]{thenBranch, elseBranch});
+        assertEquals(2L, branchF);
     }
 
     /**

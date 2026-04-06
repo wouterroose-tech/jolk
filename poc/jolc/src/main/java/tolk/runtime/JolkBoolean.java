@@ -53,7 +53,7 @@ public final class JolkBoolean {
     private JolkBoolean() {
     }
 
-    static Boolean asBoolean(Object arg) {
+    public static Boolean asBoolean(Object arg) {
         if (arg instanceof Boolean b) return b;
         return null;
     }

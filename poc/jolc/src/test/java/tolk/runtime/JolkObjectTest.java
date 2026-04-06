@@ -1,9 +1,12 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.interop.InteropLibrary;
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -156,6 +159,70 @@ public class JolkObjectTest extends JolcTestBase {
         Value otherMeta = eval("class OtherType {}");
         Value noMatch = instance.invokeMember("instanceOf", otherMeta);
         assertEquals("Match.empty", noMatch.toString(), "Should return Match.empty for unrelated types");
+    }
+
+    @Test
+    void testMetaObjectInterop() {
+        String source = "class MetaTest {}";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+
+        assertFalse(instance.getMetaObject().isNull(), "Instance should report having a meta-object.");
+        assertEquals(meta, instance.getMetaObject(), "The meta-object should be the JolkMetaClass.");
+    }
+
+    @Test
+    void testGetMembersComposition() throws Exception {
+        // Define a class with one field and one method
+        Map<String, Object> fields = Collections.singletonMap("data", "Long");
+        Map<String, Object> methods = Collections.singletonMap("perform", JolkNothing.INSTANCE);
+        JolkMetaClass meta = new JolkMetaClass("CompTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, methods, fields, Collections.emptyMap());
+        
+        JolkObject obj = new JolkObject(meta);
+        InteropLibrary interop = InteropLibrary.getUncached();
+        
+        Object members = interop.getMembers(obj);
+        assertTrue(interop.hasArrayElements(members));
+        
+        boolean foundField = false;
+        boolean foundMethod = false;
+        boolean foundIntrinsic = false;
+
+        long size = interop.getArraySize(members);
+        for (long i = 0; i < size; i++) {
+            String name = (String) interop.readArrayElement(members, i);
+            if ("data".equals(name)) foundField = true;
+            if ("perform".equals(name)) foundMethod = true;
+            if ("hash".equals(name)) foundIntrinsic = true;
+        }
+
+        assertTrue(foundField, "Should include instance fields");
+        assertTrue(foundMethod, "Should include instance methods");
+        assertTrue(foundIntrinsic, "Should include intrinsic protocol members");
+    }
+
+    @Test
+    void testConstructorFallbackToDefaults() {
+        Map<String, Object> fields = Collections.singletonMap("val", "Long");
+        JolkMetaClass meta = new JolkMetaClass("CtorTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+        
+        // Provide wrong number of arguments (arity mismatch for canonical #new)
+        // JolkObject constructor should fall back to defaults
+        JolkObject obj = new JolkObject(meta, new Object[]{10L, 20L}); 
+        assertEquals(0L, obj.getFieldValue(0), "Should fall back to default field values on arity mismatch");
+    }
+
+    @Test
+    void testResultRestitution() throws Exception {
+        // Create a method that returns raw Java null
+        JolkClosure nullReturner = new JolkClosure(new JolkClosureTest.TestRootNode(args -> null).getCallTarget());
+        Map<String, Object> members = Collections.singletonMap("getNull", nullReturner);
+        JolkMetaClass meta = new JolkMetaClass("RestitutionTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+        
+        JolkObject obj = new JolkObject(meta);
+        Object result = InteropLibrary.getUncached().invokeMember(obj, "getNull");
+        
+        assertEquals(JolkNothing.INSTANCE, result, "Raw null results from methods must be lifted to JolkNothing.");
     }
 
     @Test

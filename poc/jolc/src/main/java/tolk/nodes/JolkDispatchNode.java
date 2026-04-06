@@ -107,10 +107,6 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     @Specialization(guards = "isNothing(receiver)")
     protected Object doNothing(VirtualFrame frame, Object receiver, String selector, Object[] arguments, 
                                 @CachedLibrary("getNothing()") InteropLibrary interop) {
-        if (isObjectIntrinsic(selector)) {
-            return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop);
-        }
-
         try {
             // Identity Restitution Protocol: For messages not handled by intrinsics, 
             // Nothing absorbs the message by returning itself. We delegate to the 
@@ -118,7 +114,16 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             return lift(interop.invokeMember(JolkNothing.INSTANCE, selector, arguments));
         } catch (JolkReturnException e) {
             throw e;
-        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+        } catch (UnknownIdentifierException e) {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop);
+            }
+            try {
+                return lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Nothing", e);
+            }
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         } catch (Exception e) {
             throw new RuntimeException("Error executing #" + selector + " on Nothing", e);
@@ -147,10 +152,6 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     @Specialization
     protected Object doLong(VirtualFrame frame, Long receiver, String selector, Object[] arguments, 
                            @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
-        if (isObjectIntrinsic(selector)) {
-            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
-        }
-
         try {
             // 1. Prototype Lookup: Check for Jolk-defined arithmetic (e.g., +, -, *)
             Object member = JolkLong.LONG_TYPE.lookupInstanceMember(selector);
@@ -163,13 +164,25 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 // Library Mismatch: Use a generic library to execute members on a specialized receiver.
                 return lift(InteropLibrary.getUncached().execute(member, argsWithReceiver));
             }
+            
+            // Identity-Based Flow Control: #?? on a non-null Long always returns the receiver.
+            if (arguments.length == 1 && "??".equals(selector)) return receiver;
 
             // 2. Host Fallback: Dispatch to standard Java Long members (e.g. longValue, compareTo)
             return lift(interop.invokeMember(receiver, selector, arguments));
 
         } catch (JolkReturnException e) {
             throw e;
-        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+        } catch (UnknownIdentifierException e) {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+            try {
+                return lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Long", e);
+            }
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         } catch (Exception e) {
             throw new RuntimeException("Error executing #" + selector + " on Long", e);
@@ -182,10 +195,6 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     @Specialization
     protected Object doBoolean(VirtualFrame frame, Boolean receiver, String selector, Object[] arguments, 
                                @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
-        if (isObjectIntrinsic(selector)) {
-            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
-        }
-
         try {
             // 1. Prototype Lookup: Check for Jolk-defined logic (e.g., &&, ||, !)
             Object member = JolkBoolean.BOOLEAN_TYPE.lookupInstanceMember(selector);
@@ -199,12 +208,24 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 return lift(InteropLibrary.getUncached().execute(member, argsWithReceiver));
             }
 
+            // Identity-Based Flow Control: #?? on a non-null Boolean always returns the receiver.
+            if (arguments.length == 1 && "??".equals(selector)) return receiver;
+
             // 2. Host Fallback: Dispatch to standard Java Boolean members (if any)
             return lift(interop.invokeMember(receiver, selector, arguments));
 
         } catch (JolkReturnException e) {
             throw e;
-        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+        } catch (UnknownIdentifierException e) {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+            try {
+                return lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Boolean", e);
+            }
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         } catch (Exception e) {
             throw new RuntimeException("Error executing #" + selector + " on Boolean", e);
@@ -222,11 +243,24 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     @Specialization
     protected Object doString(VirtualFrame frame, String receiver, String selector, Object[] arguments,
                              @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
-        if (isObjectIntrinsic(selector)) {
-            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
-        }
-
         try {
+            // Shim-less Optimization: Direct dispatch for common String methods 
+            // where Interop might treat the receiver as a value rather than an object.
+            if (arguments.length == 0) {
+                if ("length".equals(selector)) return (long) receiver.length();
+                if ("isEmpty".equals(selector)) return receiver.isEmpty();
+                if ("toUpperCase".equals(selector)) return lift(receiver.toUpperCase());
+                if ("toLowerCase".equals(selector)) return lift(receiver.toLowerCase());
+                if ("trim".equals(selector)) return lift(receiver.trim());
+            }
+            // Identity-Based Flow Control: #?? optimization for non-null Strings
+            if (arguments.length == 1 && "??".equals(selector)) return receiver;
+
+            if (arguments.length == 1 && "contains".equals(selector)) {
+                Object arg = arguments[0];
+                if (interop.isString(arg)) return receiver.contains(interop.asString(arg));
+            }
+
             // 1. Prototype Lookup: Check for Jolk-defined string logic (e.g., #match)
             Object member = JolkString.STRING_TYPE.lookupInstanceMember(selector);
             if (member != null) {
@@ -240,7 +274,16 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
 
             // 2. Host Fallback: Dispatch to standard java.lang.String members
             return lift(interop.invokeMember(receiver, selector, arguments));
-        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+        } catch (UnknownIdentifierException e) {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+            try {
+                return lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on String", e);
+            }
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on String", e);
         }
     }
@@ -256,16 +299,26 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     @Specialization
     protected Object doThrowable(VirtualFrame frame, Throwable receiver, String selector, Object[] arguments, 
                                @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
-        if (isObjectIntrinsic(selector)) {
-            return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
-        }
         try {
             Object result = interop.invokeMember(receiver, selector, arguments);
             return lift(result);
         } catch (JolkReturnException e) {
             throw e;
-        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
-            throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+        } catch (UnknownIdentifierException e) {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+            try {
+                return lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Throwable", e);
+            }
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+            try {
+                return lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Throwable", e);
+            }
         }
     }
 
@@ -283,12 +336,12 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 if (isObjectIntrinsic(selector)) {
                     return dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, uncached);
                 }
-                return lift(uncached.invokeMember(JolkNothing.INSTANCE, selector, arguments));
-            }
-
-            // Identity Restitution Protocol: Intercept intrinsic messages for all objects
-            if (isObjectIntrinsic(selector)) {
-                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+                try {
+                    return lift(uncached.invokeMember(JolkNothing.INSTANCE, selector, arguments));
+                } catch (UnknownIdentifierException e) {
+                    // Identity Restitution: Fallback to host member heuristic for Nothing
+                    return lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
+                }
             }
 
             // 3. Jolk Prototype Lookup (Megamorphic / Generic Path)
@@ -315,18 +368,35 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
              * is a host [Class] (MetaObject) and the selector is `#new`, we map it 
              * directly to the Interop `instantiate` protocol to invoke the Java constructor.
              */
-            if ("new".equals(selector) && interop.isMetaObject(receiver) && interop.isInstantiable(receiver)) {
+            if ("new".equals(selector) && (receiver instanceof Class || interop.isMetaObject(receiver) || interop.isInstantiable(receiver))) {
                 try {
-                    return interop.instantiate(receiver, arguments);
-                } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                    if (interop.isInstantiable(receiver)) {
+                        return lift(interop.instantiate(receiver, arguments));
+                    }
+                    return lift(dispatchHostMember(receiver, selector, arguments));
+                } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException | RuntimeException e) {
                     throw new RuntimeException("Failed to instantiate host object: " + receiver + " with arguments.", e);
                 }
             }
 
-            return lift(interop.invokeMember((Object) receiver, selector, arguments));
+            try {
+                return lift(interop.invokeMember((Object) receiver, selector, arguments));
+            } catch (UnknownIdentifierException e) {
+                // Identity Restitution Protocol: Intrinsic messages act as a fallback 
+                // for all objects that do not explicitly override them.
+                if (isObjectIntrinsic(selector)) {
+                    return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+                }
+                // Impedance Resolution: Fallback to host member heuristic
+                try {
+                    return lift(dispatchHostMember(receiver, selector, arguments));
+                } catch (UnknownIdentifierException ex) {
+                    throw new RuntimeException("Message dispatch failed: #" + selector, e);
+                }
+            }
         } catch (JolkReturnException e) {
             throw e;
-        } catch (UnsupportedMessageException | ArityException | UnknownIdentifierException | UnsupportedTypeException e) {
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             // Use the full class name to distinguish between Value wrappers and internal HostObjects.
             String receiverStr = (receiver == null) ? "null" : receiver.getClass().getName() + " [" + receiver + "]";
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiverStr, e);
@@ -363,6 +433,16 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                     Object other = arguments[0];
                     // Identity short-circuit: same instance is always identical.
                     if (receiver == other) return true;
+
+                    // Identity Congruence: intrinsic types match by value to ensure identity 
+                    // is tied to value regardless of boxed storage.
+                    if (receiver instanceof Number n1 && other instanceof Number n2) {
+                        return n1.longValue() == n2.longValue();
+                    }
+                    if (receiver instanceof String s1 && other instanceof String s2) {
+                        return s1.equals(s2);
+                    }
+
                     // Only use InteropLibrary.isIdentical if both are interoperable types.
                     // Otherwise, for distinct plain Java Objects, they are not identical.
                     if (receiver instanceof TruffleObject || other instanceof TruffleObject ||
@@ -383,6 +463,15 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     Object other = arguments[0];
                     if (receiver == other) return false;
+
+                    // Identity Congruence: intrinsic types match by value
+                    if (receiver instanceof Number n1 && other instanceof Number n2) {
+                        return n1.longValue() != n2.longValue();
+                    }
+                    if (receiver instanceof String s1 && other instanceof String s2) {
+                        return !s1.equals(s2);
+                    }
+
                     // Only use InteropLibrary.isIdentical if both are interoperable types.
                     // Otherwise, for distinct plain Java Objects, they are not identical.
                     if (receiver instanceof TruffleObject || other instanceof TruffleObject ||
@@ -531,6 +620,130 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         } catch (Throwable e) {
             if (e instanceof JolkReturnException re) throw re;
             throw new RuntimeException("Intrinsic dispatch failed: #" + name, e);
+        }
+        return null;
+    }
+
+    /**
+     * ### dispatchHostMember
+     * 
+     * Implements the **Shim-less Integration** heuristic by attempting to map a Jolk 
+     * selector to a native Java member on a host object. It attempts the exact name, 
+     * followed by common Java Bean patterns (get/is/set) and public field access.
+     * 
+     * @param receiver The host object receiving the message.
+     * @param selector The Jolk selector (e.g., "name").
+     * @param arguments The call arguments.
+     * @return The result of the invocation or the receiver in case of a setter.
+     * @throws UnknownIdentifierException If no matching host member is found.
+     */
+    @TruffleBoundary
+    private static Object dispatchHostMember(Object receiver, String selector, Object[] arguments) throws UnknownIdentifierException {
+        InteropLibrary interop = InteropLibrary.getUncached();
+        String capitalized = capitalize(selector);
+
+        // 1. Try Method/Getter/Field candidates (exact, get, is)
+        String[] candidates = {selector, "get" + capitalized, "is" + capitalized};
+        for (String candidate : candidates) {
+            try {
+                if (interop.isMemberInvocable(receiver, candidate)) {
+                    return interop.invokeMember(receiver, candidate, arguments);
+                }
+            } catch (UnknownIdentifierException e) {
+                // continue
+            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                throw new RuntimeException(e);
+            }
+            
+            // Impedance Resolution: Fallback to Java Reflection for types that 
+            // Interop treats as values without members (String, Long, Boolean).
+            Object reflected = tryInvokeViaReflection(receiver, candidate, arguments);
+            if (reflected != null) return reflected;
+
+            // Support for public fields (Impedance Resolution)
+            if (arguments.length == 0 && interop.isMemberReadable(receiver, candidate)) {
+                try {
+                    return interop.readMember(receiver, candidate);
+                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                    // continue
+                }
+            }
+        }
+
+        // 2. Try Setter candidate (Fluent Pattern: #name(val) -> returns receiver)
+        if (arguments.length == 1) {
+            String setter = "set" + capitalized;
+            if (interop.isMemberInvocable(receiver, setter)) {
+                try {
+                    interop.invokeMember(receiver, setter, arguments);
+                    return receiver; 
+                } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        throw UnknownIdentifierException.create(selector);
+    }
+
+    private static String capitalize(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
+    @TruffleBoundary
+    private static Object tryInvokeViaReflection(Object receiver, String methodName, Object[] arguments) {
+        InteropLibrary interop = InteropLibrary.getUncached();
+        
+        // Impedance Resolution: Prepare unboxed arguments for Java Reflection.
+        // Jolk identities (JolkLong, JolkBoolean) and polyglot types must be 
+        // converted to standard Java types to match reflection signatures.
+        Object[] unboxed = new Object[arguments.length];
+        for (int i = 0; i < arguments.length; i++) {
+            Object arg = arguments[i];
+            if (arg == null || arg == JolkNothing.INSTANCE) unboxed[i] = null;
+            //TODO will this even work? a JolkLong doensn't "ccontain the value" of a long,
+            // it's just a wrapper around it. We need to make sure that the JolkLong.asLong 
+            // method is properly unboxing the value for this to work.
+            else if (arg instanceof JolkLong jl) unboxed[i] = JolkLong.asLong(jl);
+            else if (arg instanceof JolkBoolean jb) unboxed[i] = JolkBoolean.asBoolean(jb);
+            else if (interop.isString(arg)) {
+                try { unboxed[i] = interop.asString(arg); } catch (UnsupportedMessageException e) { unboxed[i] = arg; }
+            } else if (interop.isNumber(arg)) {
+                try { unboxed[i] = interop.asLong(arg); } catch (UnsupportedMessageException e) { unboxed[i] = arg; }
+            } else {
+                unboxed[i] = arg;
+            }
+        }
+
+        try {
+            // 1. Meta-Object Instantiation: If selector is #new and receiver is a Class, 
+            // map directly to constructors to support Jolk's object creation protocol.
+            if ("new".equals(methodName) && receiver instanceof Class<?> clazz) {
+                for (java.lang.reflect.Constructor<?> c : clazz.getConstructors()) {
+                    if (c.getParameterCount() == unboxed.length) {
+                        try {
+                            return lift(c.newInstance(unboxed));
+                        } catch (Exception e) {
+                            // continue to next candidate
+                        }
+                    }
+                }
+            }
+
+            // 2. Member Invocation: Simple heuristic for Shim-less Integration.
+            // Allows Jolk to reach native methods on types like String and Long 
+            // which are often treated as "memberless" values by standard Interop.
+            for (java.lang.reflect.Method m : receiver.getClass().getMethods()) {
+                if (m.getName().equals(methodName) && m.getParameterCount() == unboxed.length) {
+                    try {
+                        return lift(m.invoke(receiver, unboxed));
+                    } catch (Exception e) {
+                        // continue to next candidate
+                    }
+                }
+            }
+        } catch (SecurityException e) {
         }
         return null;
     }

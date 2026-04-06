@@ -35,9 +35,8 @@ public final class JolkString {
         members.put("isEmpty", new StringIsEmpty());
         members.put("class", new StringClassAccessor());
         members.put("instanceOf", new StringInstanceOf());
+        // Jolk String-specific methods
         members.put("matches", new StringMatches());
-        members.put("length", new StringLength());
-        members.put("contains", new StringContains());
 
         STRING_TYPE = new JolkMetaClass("String", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, Map.of());
     }
@@ -127,26 +126,6 @@ public final class JolkString {
             String receiver = (String) arguments[0];
             String regex = String.valueOf(arguments[1]);
             return receiver.matches(regex);
-        }
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    public static final class StringLength implements TruffleObject {
-        @ExportMessage public boolean isExecutable() { return true; }
-        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-            return (long) ((String) arguments[0]).length();
-        }
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    public static final class StringContains implements TruffleObject {
-        @ExportMessage public boolean isExecutable() { return true; }
-        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            String receiver = (String) arguments[0];
-            String other = String.valueOf(arguments[1]);
-            return receiver.contains(other);
         }
     }
 }

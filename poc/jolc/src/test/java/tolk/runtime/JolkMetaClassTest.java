@@ -73,6 +73,13 @@ public class JolkMetaClassTest {
     }
 
     @Test
+    void testIsMetaInstanceString() throws UnsupportedMessageException {
+        JolkMetaClass stringClass = new JolkMetaClass("String", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        assertTrue(stringClass.isMetaInstance("hello"), "Java String should be instance of Jolk String archetype");
+        assertFalse(stringClass.isMetaInstance(123L), "Long should not be instance of String");
+    }
+
+    @Test
     void testIsMetaInstanceNothing() throws UnsupportedMessageException {
         JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
         // JolkNothing.INSTANCE is an instance of Nothing type and Object (by name)
@@ -127,6 +134,18 @@ public class JolkMetaClassTest {
     }
 
     @Test
+    void testInvokeIntrinsicArity() {
+        // #name takes 0 args
+        assertThrows(ArityException.class, () -> metaClass.invokeMember("name", new Object[]{"extra"}));
+        
+        // #superclass takes 0 args
+        assertThrows(ArityException.class, () -> metaClass.invokeMember("superclass", new Object[]{"extra"}));
+        
+        // #isInstance takes 1 arg
+        assertThrows(ArityException.class, () -> metaClass.invokeMember("isInstance", new Object[]{}));
+    }
+
+    @Test
     void testCanonicalNewWithFields() throws Exception {
         Map<String, Object> fields = Collections.singletonMap("val", null);
         // Constructor: name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers
@@ -142,6 +161,43 @@ public class JolkMetaClassTest {
         
         Object result = InteropLibrary.getUncached().execute(accessorObj, new Object[]{instance});
         assertEquals("data", result, "Canonical constructor should initialize field");
+    }
+
+    @Test
+    void testDefaultValueInitialization() {
+        Map<String, Object> fields = new java.util.LinkedHashMap<>();
+        fields.put("id", null);             // Should default to 0L
+        fields.put("active", "Boolean");    // Hint: Boolean -> false
+        fields.put("name", "String");       // Hint: String -> ""
+        fields.put("other", "OtherClass");  // Unknown -> Nothing
+
+        JolkMetaClass meta = new JolkMetaClass("HintTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+        Object[] defaults = meta.getDefaultFieldValues();
+
+        assertEquals(0L, defaults[0], "id should default to 0L");
+        assertEquals(false, defaults[1], "Boolean hint should default to false");
+        assertEquals("", defaults[2], "String hint should default to empty string");
+        assertEquals(JolkNothing.INSTANCE, defaults[3], "Unrecognized hint should default to Nothing");
+    }
+
+    @Test
+    void testMetaFieldStorage() throws Exception {
+        Map<String, Object> metaFields = Collections.singletonMap("count", "Long");
+        // constructor handles registering accessors in metaMembers
+        JolkMetaClass meta = new JolkMetaClass("StaticTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
+                                              Collections.emptyMap(), Collections.emptyMap(), new java.util.HashMap<>(), metaFields);
+        
+        InteropLibrary interop = InteropLibrary.getUncached();
+        
+        // Initial default (from hint "Long")
+        assertEquals(0L, interop.invokeMember(meta, "count"), "Meta field should initialize from hint");
+
+        // Update via synthesized accessor
+        // Jolk Protocol: meta accessors return self on write
+        Object result = interop.invokeMember(meta, "count", 42L);
+        assertEquals(meta, result);
+        
+        assertEquals(42L, interop.invokeMember(meta, "count"), "Meta field should store updated value");
     }
 
     @Test

@@ -76,6 +76,7 @@ public class JolcStringTest extends JolcTestBase {
             class ConcatTest {
                 Long length(String str) { ^ str #length() }
                 Boolean contains(String a, String b) { ^ a #contains(b) }
+                String toUpperCase(String str) { ^ str #toUpperCase() }
             }
             """;
         Value instance = eval(source).invokeMember("new");
@@ -83,5 +84,6 @@ public class JolcStringTest extends JolcTestBase {
         assertEquals(0L, instance.invokeMember("length", "").asLong());
         assertTrue(instance.invokeMember("contains", "hello", "ell").asBoolean());
         assertFalse(instance.invokeMember("contains", "hello", "world").asBoolean());
+        assertEquals("HELLO", instance.invokeMember("toUpperCase", "hello").asString());
     }
 }

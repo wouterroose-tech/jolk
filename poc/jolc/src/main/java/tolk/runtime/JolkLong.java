@@ -64,7 +64,7 @@ public final class JolkLong {
     private JolkLong() {
     }
 
-    static Long asLong(Object arg) {
+    public static Long asLong(Object arg) {
         if (arg instanceof Long l) return l;
         if (arg instanceof Integer i) return i.longValue();
         return null;

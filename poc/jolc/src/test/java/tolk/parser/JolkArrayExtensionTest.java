@@ -1,0 +1,72 @@
+package tolk.parser;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import tolk.JolcTestBase;
+import tolk.runtime.JolkNothing;
+
+public class JolkArrayExtensionTest extends JolcTestBase {
+
+    @Test
+    void testNewArray() {
+        String source = """
+            class MyClass {
+                ArrayList<Long> longList = ArrayList #new; 
+                ArrayList<Long> run() { ^ ArrayList<Long> #new }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        Value longList = instance.invokeMember("longList");
+        assertNotNull(longList, "Field 'longList' should be initialized.");
+        assertNotEquals(JolkNothing.INSTANCE, longList);
+        assertTrue(longList.isHostObject(), "Result of ArrayList #new should be a Host Object.");
+        assertEquals(ArrayList.class, longList.asHostObject().getClass());
+        
+        Value runValue = instance.invokeMember("run");
+        assertNotNull(runValue, "Method 'run' should return a value.");
+        // Verify the result is a native Java ArrayList (Shim-less Integration)
+        assertTrue(runValue.isHostObject(), "Result of ArrayList #new should be a Host Object.");
+        assertEquals(ArrayList.class, runValue.asHostObject().getClass());
+    }
+
+    @Test
+    void testVariadicNewArray() {
+        String source = """
+            class MyClass {
+                ArrayList<Long> longList = ArrayList #new(1, 2, 3);
+                Long run(Int key) { ^ longList #get(key) }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        Value longList = instance.invokeMember("longList");
+        assertEquals(3, ((List<?>) longList.asHostObject()).size());
+        assertNotNull(longList);
+        assertEquals(ArrayList.class, longList.asHostObject().getClass());
+        assertEquals(1, instance.invokeMember("run", 0).asLong());
+    }
+
+    @Test
+    @Disabled("Pending implementation of Array Literal") 
+    void testArrayLiteral() {
+        String source = """
+            class MyClass {
+                ArrayList<Long> longList = #(1, 2, 3);
+                String run(Int key) { ^ longList #get(key) }            
+            }""";
+        Value instance = eval(source);
+        assertEquals(2, instance.invokeMember("get", 1));
+        assertNull(instance.invokeMember("get", 0));
+    }
+
+}

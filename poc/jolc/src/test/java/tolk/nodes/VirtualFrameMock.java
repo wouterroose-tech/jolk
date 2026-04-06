@@ -50,7 +50,6 @@ public class VirtualFrameMock implements MaterializedFrame {
         return this;
     }
 
-    @Override
     public VirtualFrame getParentFrame() {
         return parentFrame;
     }

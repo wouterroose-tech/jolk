@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class JolkContext {
     private final JolkLanguage language;
-    private final Env env;
+    public final Env env;
     private final Map<String, Object> registeredClasses = new HashMap<>();
 
     public JolkContext(JolkLanguage language, Env env) {

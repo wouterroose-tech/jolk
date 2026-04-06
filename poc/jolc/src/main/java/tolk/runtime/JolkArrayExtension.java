@@ -48,7 +48,7 @@ public class JolkArrayExtension {
             @Override
             public Object execute(Object[] args) throws ArityException {
                 if (args.length != 2) throw ArityException.create(1, 1, args.length - 1);
-                List<?> list = (List<?>) args[0];
+                List<?> list = (List<?>) unwrap(args[0]);
                 int index = ((Number) args[1]).intValue();
                 return lift(list.get(index));
             }
@@ -59,7 +59,7 @@ public class JolkArrayExtension {
             @Override
             public Object execute(Object[] args) throws ArityException {
                 if (args.length != 3) throw ArityException.create(2, 2, args.length - 1);
-                List<Object> list = (List<Object>) args[0];
+                List<Object> list = (List<Object>) unwrap(args[0]);
                 int index = ((Number) args[1]).intValue();
                 list.set(index, args[2]);
                 return args[0]; 
@@ -78,7 +78,7 @@ public class JolkArrayExtension {
             public Object execute(Object[] args) {
                 // args[0] is the MetaClass; trailing args are the elements.
                 Object[] elements = Arrays.copyOfRange(args, 1, args.length);
-                return new ArrayList<>(Arrays.asList(elements));
+                return lift(new ArrayList<>(Arrays.asList(elements)));
             }
         });
     }

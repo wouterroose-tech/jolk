@@ -740,9 +740,11 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
      */
     @Override
     public JolkNode visitType(jolkParser.TypeContext ctx) {
-        String name = ctx.getText();
-        // Self is a dynamic type alias referring to the current MetaClass.
-        if ("Self".equals(name)) { // Self (PascalCase) always refers to the current class's MetaClass
+        // We extract the base identifier (MetaId), as generics are erased at runtime in the PoC.
+        // This ensures that 'ArrayList<Long>' is resolved as 'ArrayList'.
+        String name = (ctx.MetaId() != null) ? ctx.MetaId().getText() : ctx.getText();
+
+        if ("Self".equals(name)) {
             return new JolkReadTypeNode(language, currentClassName, null);
         }
         return createIdentifierNode(name);
@@ -769,6 +771,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBooleanExtension.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
             if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkStringExtension.STRING_TYPE);
+            
+            // Support for the Array archetype via common Java collection aliases.
+            if ("Array".equals(name) || "List".equals(name) || "ArrayList".equals(name)) 
+                return new JolkLiteralNode(tolk.runtime.JolkArrayExtension.ARRAY_TYPE);
 
             // Priority 2: Current Class Reference
             if (name.equals(currentClassName)) return new JolkReadTypeNode(language, name, null);

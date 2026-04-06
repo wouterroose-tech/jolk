@@ -39,7 +39,12 @@ public abstract class JolkNode extends Node {
      * @return The lifted value (either the original object or JolkNothing.INSTANCE).
      */
     protected final static Object lift(Object value) {
-        return (value == null || InteropLibrary.getUncached().isNull(value)) ? JolkNothing.INSTANCE : value;
+        if (value == null || InteropLibrary.getUncached().isNull(value)) return JolkNothing.INSTANCE;
+        if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof com.oracle.truffle.api.interop.TruffleObject) {
+            return value;
+        }
+        // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
+        return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
     }
 
     /**

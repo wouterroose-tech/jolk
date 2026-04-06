@@ -37,6 +37,13 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
     }
 
     /**
+     * Returns the current Jolk context from the thread-local state.
+     */
+    public static JolkContext getContext() {
+        return REFERENCE.get(null);
+    }
+
+    /**
      * ### getLanguage
      * 
      * Helper to resolve the Jolk language instance from a node.

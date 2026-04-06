@@ -43,7 +43,7 @@ typed_params    : annotated_type ( InstanceId (COMMA annotated_type InstanceId)*
 annotated_type  : annotation* type ;
 vararg_id	    : SPREAD InstanceId ;
 
-extension_decl  : EXTENSION MetaId EXTENDS type LBRACE extension_mbr* RBRACE ;
+extension_decl  : EXTENSION MetaId ON type LBRACE extension_mbr* RBRACE ;
 extension_mbr   : annotation* modifiers method ;
 
 annotation      : AT identifier (LPAREN annotation_args? RPAREN)? ;
@@ -120,6 +120,7 @@ RECORD: 'record';
 ENUM: 'enum';
 PROTOCOL: 'protocol';
 EXTENSION: 'extension';
+ON: 'on';
 IMPLEMENTS: 'implements';
 EXTENDS: 'extends';
 PUBLIC: 'public';

@@ -161,7 +161,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	annotated_type  = { annotation } type
 	annotation      = "@" identifier [ "(" ... ")" ]
 	vararg_id       = "..." instance_id
-	extension_decl  = "extension" meta_id "extends" type "{" { extension_mbr } "}"
+	extension_decl  = "extension" meta_id "on" type "{" { extension_mbr } "}"
 	extension_mbr   = { annotation } [ visibility ] [finality] method
 
 	block           = "{" [ statements ] "}"
@@ -495,7 +495,7 @@ Syntactically, value types follow the same unified messaging and declaration rul
 Jolk's system leverages extensions to provide behavioural augmentation to existing JVM types, such as String or List without modifying the original source code.
 
 	@Intrinsic  
-	extension JolkStringExtension extends String {
+	extension StringExtension on String {
 	
 	    /// Iterate over each character.  
 	    String forEach(Closure action) [

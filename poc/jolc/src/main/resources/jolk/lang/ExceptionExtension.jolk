@@ -8,7 +8,7 @@
 /// @author Wouter Roose
 
 @Intrinsic
-extension ExceptionExtension extends java.lang.Throwable {
+extension ExceptionExtension on java.lang.Throwable {
 
     /// ## throw
     /// Signals the immediate propagation of this identity through the stack.

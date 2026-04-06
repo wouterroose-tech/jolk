@@ -142,27 +142,19 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.type_bound() != null && ctx.type_bound().type() != null) {
             JolkFinality finality = JolkFinality.OPEN;
             JolkVisibility visibility = JolkVisibility.PUBLIC; // Jolk types default to PUBLIC
-            // Iterate children to robustly check for 'final' keyword, handling potential
-            // grammar variations (e.g. grouped modifiers vs direct finality rule).
-            for (int i = 0; i < ctx.getChildCount(); i++) {
-                var child = ctx.getChild(i);
-                if (child == ctx.archetype()) {
-                    break;
-                }
-                String text = child.getText();
-                if (text.contains("final")) {
+
+            if (ctx.modifiers() != null) {
+                String modsText = ctx.modifiers().getText();
+                if (modsText.contains("final")) {
                     finality = JolkFinality.FINAL;
-                    break;
-                } else if (text.contains("abstract")) {
+                } else if (modsText.contains("abstract")) {
                     finality = JolkFinality.ABSTRACT;
-                    break;
                 }
-                
-                // Check for visibility modifiers
-                if (text.contains("private")) visibility = JolkVisibility.PRIVATE;
-                else if (text.contains("protected")) visibility = JolkVisibility.PROTECTED;
-                else if (text.contains("package")) visibility = JolkVisibility.PACKAGE;
-                else if (text.contains("public")) visibility = JolkVisibility.PUBLIC;
+
+                if (modsText.contains("private")) visibility = JolkVisibility.PRIVATE;
+                else if (modsText.contains("protected")) visibility = JolkVisibility.PROTECTED;
+                else if (modsText.contains("package")) visibility = JolkVisibility.PACKAGE;
+                else if (modsText.contains("public")) visibility = JolkVisibility.PUBLIC;
             }
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
@@ -217,11 +209,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 String superclassName = null;
                 if (ctx.type_bound().type_contracts() != null) {
                     jolkParser.Type_contractsContext contracts = ctx.type_bound().type_contracts();
-                    for (int i = 0; i < contracts.getChildCount(); i++) {
-                        if ("extends".equals(contracts.getChild(i).getText())) {
-                            superclassName = contracts.type(0).getText();
-                            break;
-                        }
+                    if (contracts.EXTENDS() != null) {
+                        superclassName = contracts.type(0).getText();
                     }
                 }
 

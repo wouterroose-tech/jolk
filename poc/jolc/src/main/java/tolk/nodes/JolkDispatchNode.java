@@ -8,7 +8,6 @@ import tolk.runtime.JolkExceptionExtension;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import tolk.runtime.JolkLong;
-import tolk.runtime.JolkIntrinsicObject;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -284,9 +283,13 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
 
     /**
      * ### isObjectIntrinsic
-     * 
-     * Checks if a member name belongs to the Jolk Core Protocol (ObjectExtension).
-     * This uses a switch expression for $O(1)$ lookup performance.
+     *
+     * Checks if a member name belongs to the Jolk Core Protocol. This method 
+     * serves as the runtime implementation of the 
+     * `extension ObjectExtension on java.lang.Object` declaration.
+     *
+     * @param member The selector name to check.
+     * @return true if the selector is a Jolk intrinsic.
      */
     public static boolean isObjectIntrinsic(String member) {
         if (member == null) return false;

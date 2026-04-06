@@ -15,8 +15,13 @@
 ///
 /// @author Wouter Roose
 
+/**
+ * ### ObjectExtension
+ * 
+ * The root behavioral augmentation for the Jolk environment.
+ */
 @Intrinsic
-extension ObjectExtension extends java.lang.Object {
+extension ObjectExtension on java.lang.Object {
 
     /// ## ~~
     /// Performs a semantic equivalent check.

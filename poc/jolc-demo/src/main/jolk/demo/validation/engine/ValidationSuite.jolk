@@ -16,7 +16,7 @@ using java.util.function.Function;
 
 abstract class ValidationSuite<T> extends Validation<T> {
 
-    constant Array<Node<T>> nodes = Array #new;
+    stable Array<Node<T>> nodes = #[];
 
     /// Adds a validation constraint to this ruleset.
     final Self add(Constraint<T> constraint) {

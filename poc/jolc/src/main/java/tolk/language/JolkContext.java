@@ -3,6 +3,11 @@ package tolk.language;
 
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import tolk.runtime.JolkMetaClass; // Assuming JolkMetaClass is used for Jolk-defined classes
+import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkLongExtension;
+import tolk.runtime.JolkBooleanExtension;
+import tolk.runtime.JolkStringExtension;
+import tolk.runtime.JolkArrayExtension;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,11 +26,13 @@ public class JolkContext {
     public JolkContext(JolkLanguage language, Env env) {
         this.language = language;
         this.env = env;
-        // Pre-register core Jolk types
-        // registerClass(JolkNothing.NOTHING_TYPE);
-        // registerClass(JolkLong.LONG_TYPE);
-        // registerClass(JolkBoolean.BOOLEAN_TYPE);
-        // registerClass(JolkException.EXCEPTION_TYPE);
+        // Jolk Archetype Registration: Establish the Core Kernel identities 
+        // within the context registry to ensure Protocol Standardisation.
+        registerClass(JolkNothing.NOTHING_TYPE);
+        registerClass(JolkBooleanExtension.BOOLEAN_TYPE);
+        registerClass(JolkLongExtension.LONG_TYPE);
+        registerClass(JolkStringExtension.STRING_TYPE);
+        registerClass(JolkArrayExtension.ARRAY_TYPE);
     }
 
     public void registerClass(JolkMetaClass metaClass) {

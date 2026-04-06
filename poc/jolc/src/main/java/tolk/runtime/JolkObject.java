@@ -3,6 +3,7 @@ package tolk.runtime;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -39,6 +40,11 @@ public class JolkObject implements TruffleObject {
         }
     }
 
+    /**
+     * ### getJolkMetaClass
+     * 
+     * @return The {@link JolkMetaClass} that describes this instance.
+     */
     public JolkMetaClass getJolkMetaClass() {
         return metaClass;
     }

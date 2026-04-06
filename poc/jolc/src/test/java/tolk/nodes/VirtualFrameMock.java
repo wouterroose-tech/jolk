@@ -36,18 +36,8 @@ public class VirtualFrameMock implements MaterializedFrame {
     }
 
     @Override
-    public Object getObject(FrameSlot slot) {
-        return FrameUtil.getObject(this, slot);
-    }
-
-    @Override
     public void setObject(int slotIndex, Object value) {
         locals[slotIndex] = value;
-    }
-
-    @Override
-    public void setObject(FrameSlot slot, Object value) {
-        FrameUtil.setObject(this, slot, value);
     }
 
     @Override

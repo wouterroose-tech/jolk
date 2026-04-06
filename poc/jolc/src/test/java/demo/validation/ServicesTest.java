@@ -4,11 +4,13 @@ import org.graalvm.polyglot.Value;
 
 import org.junit.jupiter.api.Test;
 
+import tolk.JolcTestBase;
+
 
 /// This test class is for testing service classes of the Jolk Demo.
 /// test parsing, creation and protocol
 
-public class ServicesTest {
+public class ServicesTest extends JolcTestBase {
 
     private Value geoGraphicalServiceClass() {
         String source = """

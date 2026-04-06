@@ -6,6 +6,7 @@ import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBoolean;
 import tolk.runtime.JolkExceptionExtension;
 
+import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import tolk.runtime.JolkLong;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -102,7 +103,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         throw new UnsupportedOperationException("JolkDispatchNode is not designed to be executed directly via executeGeneric(VirtualFrame). Use executeDispatch instead.");
     }
 
-    @Specialization(guards = "isNothing(receiver)", limit = "1")
+    @Specialization(guards = "isNothing(receiver)")
     protected Object doNothing(Object receiver, String selector, Object[] arguments, // Maps to executeDispatch
                                 @CachedLibrary("getNothing()") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
@@ -144,7 +145,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// Handles raw Java Longs by routing messages to the JolkLong prototype.
     @Specialization
     protected Object doLong(Long receiver, String selector, Object[] arguments, // Maps to executeDispatch
-                           @CachedLibrary(limit = "3") InteropLibrary interop) {
+                           @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
         }
@@ -179,7 +180,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// that boolean primitives can participate in Jolk's message-passing protocol.
     @Specialization
     protected Object doBoolean(Boolean receiver, String selector, Object[] arguments, // Maps to executeDispatch
-                               @CachedLibrary(limit = "3") InteropLibrary interop) {
+                               @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
         }
@@ -221,7 +222,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
      */
     @Specialization
     protected Object doThrowable(Throwable receiver, String selector, Object[] arguments, // Maps to executeDispatch
-                               @CachedLibrary(limit = "3") InteropLibrary interop) {
+                               @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (isObjectIntrinsic(selector)) {
             return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
         }

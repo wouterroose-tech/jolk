@@ -32,6 +32,15 @@ import java.util.Set;
 /// It also serves as a container for the definitions of members (fields and methods)
 /// that belong to instances of this type. However, it does not execute instance-level
 /// messages itself; that is the responsibility of {@link JolkObject}.
+/**
+ * ### JolkMetaClass
+ * 
+ * Represents a Jolk Type (a meta-object) at runtime.
+ *
+ * It handles meta-level messages such as `#new` and type introspection.
+ * 
+ * @author Wouter Roose
+ */
 @ExportLibrary(InteropLibrary.class)
 public final class JolkMetaClass implements TruffleObject {
 
@@ -118,7 +127,14 @@ public final class JolkMetaClass implements TruffleObject {
         initializeDefaultValues();
     }
 
-    @Override
+    /**
+     * ### getJolkMetaClass
+     * 
+     * Returns the meta-identity of this object. In the Jolk Meta-Object Protocol,
+     * classes (MetaClasses) act as their own meta-identities.
+     * 
+     * @return This MetaClass instance.
+     */
     public JolkMetaClass getJolkMetaClass() {
         return this; // In the PoC, classes are their own meta-identities.
     }
@@ -143,44 +159,6 @@ public final class JolkMetaClass implements TruffleObject {
             metaAccessorCache.put(name, accessor);
         }
         return accessor;
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    public static final class JolkMetaFieldAccessor implements TruffleObject {
-        private final String fieldName;
-        private final int index;
-        private final boolean isStable;
-
-        public JolkMetaFieldAccessor(String fieldName, int index, boolean isStable) {
-            this.fieldName = fieldName;
-            this.index = index;
-            this.isStable = isStable;
-        }
-
-        @ExportMessage
-        public boolean isExecutable() { return true; }
-
-        @ExportMessage
-        public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
-            if (arguments.length < 1) throw ArityException.create(1, 2, arguments.length);
-            
-            if (!(arguments[0] instanceof JolkMetaClass receiver)) {
-                throw UnsupportedTypeException.create(arguments, "Receiver must be a JolkMetaClass");
-            }
-
-            if (arguments.length == 1) {
-                Object result = receiver.getMetaFieldValue(index);
-                // Identity Restitution Protocol: Ensure no raw JVM null or Interop null leaks.
-                return (result == null || (result != JolkNothing.INSTANCE && InteropLibrary.getUncached().isNull(result))) ? JolkNothing.INSTANCE : result;
-            } else {
-                if (isStable) {
-                    throw UnsupportedTypeException.create(arguments, "Cannot modify stable/constant meta field: " + fieldName);
-                }
-                Object value = arguments[1];
-                receiver.setMetaFieldValue(index, value);
-                return receiver;
-            }
-        }
     }
 
     /**
@@ -532,10 +510,10 @@ public final class JolkMetaClass implements TruffleObject {
         public boolean isExecutable() {
             return true;
         }
-
+    
         @ExportMessage
         public Object execute(Object[] arguments,
-                       @Cached("createBinaryProfile()") ConditionProfile lengthProfile) throws ArityException, UnsupportedTypeException {
+                       @Cached(value = "create()", inline = false) ConditionProfile lengthProfile) throws ArityException, UnsupportedTypeException {
             
             if (arguments.length < 1) throw ArityException.create(1, 2, arguments.length);
             

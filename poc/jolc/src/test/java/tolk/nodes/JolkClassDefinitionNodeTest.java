@@ -55,7 +55,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             className,
-            //null,
+            null,
             JolkFinality.FINAL,
             JolkVisibility.PUBLIC,
             JolkArchetype.CLASS,
@@ -90,7 +90,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "Point", 
-            //null, 
+            null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), instanceFields, new HashMap<String, List<JolkNode>>()
         );
@@ -112,7 +112,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "MetaTest", 
-            //null, 
+            null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers
         );
@@ -174,7 +174,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "Config", 
-            //null, 
+            null, 
             JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers
         );
@@ -197,7 +197,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "OverloadTest", 
-            //null, 
+            null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             Map.of("val", methods), new HashMap<>(), new HashMap<>()
         );
@@ -222,7 +222,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "HintTest", 
-            //null, 
+            null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<>(), fields, new HashMap<>()
         );

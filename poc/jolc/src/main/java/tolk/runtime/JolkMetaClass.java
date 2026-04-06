@@ -37,9 +37,11 @@ import java.util.Set;
 @ExportLibrary(InteropLibrary.class)
 public final class JolkMetaClass implements TruffleObject {
 
-    public static final String[] INTRINSIC_MEMBERS = {
-        "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", "throw", "?", "? :", "?!", "?! :"
-    };
+    public static final Set<String> INTRINSIC_MEMBERS = Set.of(
+        "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
+        "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
+        "throw", "?", "? :", "?!", "?! :"
+    );
 
     public final String name;
     private final JolkMetaClass superclass;
@@ -367,7 +369,7 @@ public final class JolkMetaClass implements TruffleObject {
         keys.add("superclass");
         keys.add("isInstance");
         // Consistent with JolkObject: Classes are polite JoMoos
-        Collections.addAll(keys, INTRINSIC_MEMBERS);
+        keys.addAll(INTRINSIC_MEMBERS);
         return new JolkMemberNames(keys.toArray(new String[0]));
     }
 
@@ -446,13 +448,10 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     public static boolean isObjectIntrinsic(String member) {
-        if (member == null) return false;
-        return switch (member) {
-            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
-                 "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
-                 "throw", "?", "? :", "?!", "?! :" -> true;
-            default -> false;
-        };
+        // Using a Set.contains with interned strings allows Graal 
+        // to optimize this check into a bit-mask or a high-speed 
+        // jump table if the set is small and the string is a constant.
+        return member != null && INTRINSIC_MEMBERS.contains(member);
     }
 
     @TruffleBoundary

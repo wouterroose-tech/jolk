@@ -29,6 +29,7 @@ import tolk.runtime.JolkClosure;
 public class JolkClassDefinitionNode extends JolkExpressionNode {
 
     private final String className;
+    private final String superclassName;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
     private final JolkArchetype archetype;
@@ -42,6 +43,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * Primary constructor for defining a Jolk type with its members.
      *
      * @param className The name of the class.
+     * @param superclassName The name of the superclass (may be null).
      * @param finality The finality (OPEN, FINAL, etc).
      * @param visibility The visibility (PUBLIC, PRIVATE, etc).
      * @param archetype The archetype (CLASS, RECORD, etc).
@@ -50,8 +52,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * @param metaMembers Map of meta-members (static methods/fields).
      */
     @SuppressWarnings("unchecked")
-    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, ?> instanceMethods, Map<String, ?> instanceFields, Map<String, ?> metaMembers) {
+    public JolkClassDefinitionNode(String className, String superclassName, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, ?> instanceMethods, Map<String, ?> instanceFields, Map<String, ?> metaMembers) {
         this.className = className;
+        this.superclassName = superclassName;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
@@ -67,7 +70,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * context. The language will be resolved dynamically during execution.
      */
     public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(className, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+        this(className, null, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
     }
 
     @Override
@@ -79,6 +82,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         Map<String, Object> runtimeInstanceFields = new LinkedHashMap<>();
         Map<String, Object> runtimeMetaMembers = new LinkedHashMap<>();
         Map<String, Object> runtimeMetaFields = new LinkedHashMap<>();
+
+        // Resolve superclass identity
+        Object superclass = (superclassName != null) ? context.getDefinedClass(superclassName) : null;
 
         // Jolk Structural Preamble: Populate keys and hints before MetaClass construction.
         // This ensures the MetaClass calculates the correct 'totalFieldCount' and arity 
@@ -106,7 +112,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // Jolk Lifecycle Protocol: Instantiate and Register the Identity BEFORE 
         // populating members (Hydration). This allows methods created during hydration to 
         // resolve the class name via the registry.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, null, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, (JolkMetaClass) superclass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
         
         context.registerClass(newMetaClass);
 

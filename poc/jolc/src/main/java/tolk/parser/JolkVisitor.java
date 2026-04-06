@@ -158,7 +158,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
-                String className = typeContext.MetaId().getText();
+                String className = typeContext.MetaId().getText().intern();
                 // Track the current class for 'Self' resolution
                 String oldClassName = this.currentClassName;
                 this.currentClassName = className;
@@ -210,14 +210,13 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 if (ctx.type_bound().type_contracts() != null) {
                     jolkParser.Type_contractsContext contracts = ctx.type_bound().type_contracts();
                     if (contracts.EXTENDS() != null) {
-                        superclassName = contracts.type(0).getText();
+                        superclassName = contracts.type(0).getText().intern();
                     }
                 }
 
                 this.currentClassName = oldClassName;
-                //TODO: Handle type contracts (extends/implements). For simplicity, we currently only support single inheritance via 'extends'.
-                //return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
-                return new JolkClassDefinitionNode(className, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
+                // Support for single inheritance via 'extends'.
+                return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
             }
         }
         return new JolkEmptyNode();
@@ -326,8 +325,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // The 'stable' keyword signals instance-level immutability.
         // We check for the terminal presence to set the stability flag.
         boolean isStable = ctx.STABLE() != null;
-        String name = ctx.identifier().getText();
-        String typeName = ctx.type().getText();
+        String name = ctx.identifier().getText().intern();
+        String typeName = ctx.type().getText().intern();
         JolkNode initializer = new JolkEmptyNode();
         if (ctx.assignment() != null) {
             initializer = visit(ctx.assignment());
@@ -347,8 +346,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
         // Constants are implicitly stable (immutable) identities.
-        String name = ctx.binding().identifier().getText();
-        String typeName = ctx.type().getText();
+        String name = ctx.binding().identifier().getText().intern();
+        String typeName = ctx.type().getText().intern();
         JolkNode initializer = visit(ctx.binding().expression());
 
         if (!scopes.isEmpty()) {
@@ -365,7 +364,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitBinding(jolkParser.BindingContext ctx) {
-        String name = ctx.identifier().getText();
+        String name = ctx.identifier().getText().intern();
         JolkNode expression = visit(ctx.expression());
 
         // Resolve lexical scope
@@ -395,7 +394,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
-        String name = ctx.selector_id().getText();
+        String name = ctx.selector_id().getText().intern();
 
         // Signature Fence: Identify if this is a Command method (implicit self return).
         // If the return type is 'Self' or the class name, it follows the Self-Return Contract.
@@ -735,7 +734,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
-        return createIdentifierNode(ctx.getText());
+        return createIdentifierNode(ctx.getText().intern());
     }
 
     @Override
@@ -753,7 +752,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitType(jolkParser.TypeContext ctx) {
         // We extract the base identifier (MetaId), as generics are erased at runtime in the PoC.
         // This ensures that 'ArrayList<Long>' is resolved as 'ArrayList'.
-        String name = (ctx.MetaId() != null) ? ctx.MetaId().getText() : ctx.getText();
+        String name = (ctx.MetaId() != null) ? ctx.MetaId().getText().intern() : ctx.getText().intern();
 
         if ("Self".equals(name)) {
             return new JolkReadTypeNode(language, currentClassName, null);

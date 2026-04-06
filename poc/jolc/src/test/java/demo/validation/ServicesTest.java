@@ -2,6 +2,9 @@ package demo.validation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -46,14 +49,16 @@ public class ServicesTest extends JolcTestBase {
     @Disabled("activate when Record is implemented")
     void testCity() {
         Value city = this.cityClass().invokeMember("new", 12345, "New York", "NY");
-        //assertEquals(12345L, city.invokeMember("zipcode"));
+        assertEquals(12345L, city.invokeMember("zipcode"));
         assertEquals("New York", city.invokeMember("name"));
         assertEquals("NY", city.invokeMember("province"));
     }
 
     @Test
-    @Disabled("activate when Array is implemented")
     void testGeoGraphicalService() {
-        Value service = this.geoGraphicalServiceClass().invokeMember("new");
+        Value service = this.geoGraphicalServiceClass();
+        Value mechelen = service.invokeMember("MECHELEN");
+        assertEquals(4, ((ArrayList<?>) mechelen.asHostObject()).size());
+        assertEquals(2800L, ((ArrayList<?>) mechelen.asHostObject()).get(0));
     }
 }

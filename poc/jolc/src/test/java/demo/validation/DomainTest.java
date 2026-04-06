@@ -54,7 +54,6 @@ public class DomainTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("activate when String is implemented")
     void testPerson() {
         Value person = this.personClass().invokeMember("new", 123456789L, "John", "Doe");
         assertEquals(123456789L, person.invokeMember("ssn").asLong());

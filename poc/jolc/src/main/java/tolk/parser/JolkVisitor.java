@@ -813,38 +813,44 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitList_literal(jolkParser.List_literalContext ctx) {
-        // TODO: Handle collection literals (#[...], #{...}, #(...))
-        return super.visitList_literal(ctx);
+        if (ctx.array_literal() != null) return visit(ctx.array_literal());
+        if (ctx.set_literal() != null) return visit(ctx.set_literal());
+        if (ctx.map_literal() != null) return visit(ctx.map_literal());
+        return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitArray_literal(jolkParser.Array_literalContext ctx) {
-        // TODO: Handle array literal synthesis
-        return super.visitArray_literal(ctx);
+        // Collection Literal Synthesis: #[1, 2, 3] -> Array #new(1, 2, 3)
+        // This converts the bracketed literal into a standard variadic message 
+        // send to the Array meta-object, supporting Unified Messaging.
+        JolkNode receiver = new JolkLiteralNode(tolk.runtime.JolkArrayExtension.ARRAY_TYPE);
+        JolkNode[] args = extractLiteralList(ctx.literal_list());
+        return new JolkMessageSendNode(receiver, "new", args);
     }
 
     @Override
     public JolkNode visitSet_literal(jolkParser.Set_literalContext ctx) {
         // TODO: Handle set literal synthesis
-        return super.visitSet_literal(ctx);
+        return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitMap_literal(jolkParser.Map_literalContext ctx) {
         // TODO: Handle map literal synthesis
-        return super.visitMap_literal(ctx);
+        return new JolkEmptyNode();
     }
 
-    @Override
-    public JolkNode visitLiteral_list(jolkParser.Literal_listContext ctx) {
-        // TODO: Handle collection element list
-        return super.visitLiteral_list(ctx);
-    }
-
-    @Override
-    public JolkNode visitMap_list(jolkParser.Map_listContext ctx) {
-        // TODO: Handle map entry list
-        return super.visitMap_list(ctx);
+    /**
+     * ### extractLiteralList
+     * 
+     * Helper to extract an array of JolkNodes from a comma-separated literal list.
+     */
+    private JolkNode[] extractLiteralList(jolkParser.Literal_listContext ctx) {
+        if (ctx == null || ctx.expression() == null) return new JolkNode[0];
+        return ctx.expression().stream()
+                  .map(this::visit)
+                  .toArray(JolkNode[]::new);
     }
 
     @Override

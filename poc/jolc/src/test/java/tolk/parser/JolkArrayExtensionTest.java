@@ -57,16 +57,17 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Pending implementation of Array Literal") 
     void testArrayLiteral() {
         String source = """
             class MyClass {
-                ArrayList<Long> longList = #(1, 2, 3);
-                String run(Int key) { ^ longList #at(key) }            
+                ArrayList<Long> longList = #[1, 2, 3];
+                Long run(Int key) { ^ longList #at(key) }            
             }""";
-        Value instance = eval(source);
-        assertEquals(2, instance.invokeMember("run", 1));
-        assertNull(instance.invokeMember("run", 0));
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        Value longList = instance.invokeMember("longList");
+        assertEquals(3, ((List<?>) longList.asHostObject()).size());
+        assertEquals(1L, instance.invokeMember("run", 0).asLong()); 
     }
 
 }

@@ -396,6 +396,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
         String name = ctx.selector_id().getText();
+
+        // Signature Fence: Identify if this is a Command method (implicit self return).
+        // If the return type is 'Self' or the class name, it follows the Self-Return Contract.
+        String returnType = ctx.type() != null ? ctx.type().getText() : null;
+        boolean isCommand = returnType == null || "Self".equals(returnType) || returnType.equals(currentClassName);
+
         String[] params = new String[0];
         boolean isVariadic = false;
         if (ctx.typed_params() != null) {
@@ -421,6 +427,11 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         try {
             if (ctx.block() != null) {
                 body = visit(ctx.block());
+                if (isCommand) {
+                    // Synthesized Return: Append 'self' to the block. If an explicit '^' 
+                    // was hit, the JolkReturnException will bypass this node.
+                    body = new JolkBlockNode(new JolkNode[]{body, visitReservedSelf()});
+                }
             }
             frameSlots = methodScope.size();
         } finally {

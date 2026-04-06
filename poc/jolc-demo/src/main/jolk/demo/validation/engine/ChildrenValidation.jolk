@@ -35,11 +35,11 @@ package final class ChildrenValidation<T, R> extends Node<T> {
     /// ## accept
     /// Propagates the validation to each of the subject's children provided by the supplier.
     @Override
-    package Self accept(T subject, E executionContext) {
+    package accept(T subject, E executionContext) {
         self #delegate(supplier #apply(subject), executionContext);
     }
 
-    private Self delegate(List<R> children, E executionContext) {
+    private delegate(List<R> children, E executionContext) {
         children #isEmpty [^self];
         [ StructuredTaskScope #open(Joiner #allSuccessfulOrThrow) ]
             #try [ scope ->

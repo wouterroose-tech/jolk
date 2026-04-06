@@ -24,7 +24,6 @@ public class JolkContextTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled
     void testContextInitialize() {
         JolkContext jolkContext = getJolkContext();
         assertNotNull(jolkContext, "The JolkContext should be accessible from the polyglot context.");

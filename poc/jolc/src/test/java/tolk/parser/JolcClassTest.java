@@ -86,15 +86,13 @@ public class JolcClassTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("TODO: Implement synthesized self return for methods with empty bodies, then re-enable this test.")
     void testClassWithMethodWithSynthesizedSelfReturn_TODO() {
         String className = "MyClass";
-        String source = "final class " + className + " { Self me() {  } }";
+        String source = "final class " + className + " { me() {  } }";
         Value meta = eval(className, source);
         Value instance = meta.invokeMember("new");
         assertTrue(instance.hasMembers());
         assertTrue(instance.hasMember("me"));
-        //TODO: Implement synthesized self return for methods with empty bodies, then re-enable this test.
         assertEquals(instance, instance.invokeMember("me"), "The explicit method 'me' should return 'self'.");
     }
 

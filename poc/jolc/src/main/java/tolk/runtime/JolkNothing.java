@@ -8,6 +8,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import java.util.HashMap;
 import java.util.Collections;
 import java.util.Map;
 
@@ -28,8 +29,9 @@ public final class JolkNothing implements TruffleObject {
     public static final JolkMetaClass NOTHING_TYPE;
 
     static {
-        Map<String, Object> members = Collections.singletonMap("new", new NothingNew());
-        NOTHING_TYPE = new JolkMetaClass("Nothing", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), members);
+        Map<String, Object> members = new HashMap<>();
+        members.put("new", new NothingNew());
+        NOTHING_TYPE = new JolkMetaClass("Nothing", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, new HashMap<>(), members);
     }
 
     private JolkNothing() {

@@ -155,7 +155,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	assignment      = "=" expression
 	field           = ["stable"] type identifier [ assignment ]
 	enum            = meta_id [ arguments ] ";"
-	method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
+	method          = [ "lazy" ] [ type_args ] [ type ] selector_id "(" [ typed_params ] ")" ( block | ";" )
 	selector_id     = identifier | operator
 	typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 	annotated_type  = { annotation } type
@@ -918,7 +918,30 @@ The **Set** represents a collection of unique identities, excising duplication a
 
 The **Map** is an associative archetype that reifies the relationship between a domain and a codomain. The parenthesis, `#( )`, denotes this associative environment, distinguishing the mapping of a domain from the containment of a set or the logic of a block. It uses the entry operator (`->`) to link keys to values. It responds to key-based retrieval (`#atKey:`) and domain inspections.
 
-By standardising on these three archetypes, Tolk applies Protocol Standardisation. This maintains a single, dense model through a 1:1 mapping between mathematical concept and syntactic form.
+The **Iterator** is the kinetic substrate for traversal. In the Jolk model, it is not a passive cursor but a message-driven engine of discovery. It responds to `#next` to yield the next identity and `#hasNext` to signal the continuity of the flow.
+
+By standardising on these archetypes and their supporting iterators, Tolk applies Protocol Standardisation. This maintains a single, dense model through a 1:1 mapping between mathematical concept and syntactic form.
+
+### Iterator Extension
+
+To support the seamless integration of Java's iteration patterns into Jolk's message flow, the kernel provides an extension for the native Java Iterator.
+
+```jolk
+@Intrinsic
+extension IteratorExtension<T> on java.util.Iterator<T> {
+    
+    /// Yields the next identity in the sequence.
+    T next() { }
+
+    /// Signals if the sequence contains further identities.
+    Boolean hasNext() { }
+
+    /// Consumes the remaining flow via a closure.
+    Self forEach(Closure<T> action) { 
+        [ self #hasNext ] #while [ action #apply(self #next) ]
+    }
+}
+```
 
 
 ### Augmented Types

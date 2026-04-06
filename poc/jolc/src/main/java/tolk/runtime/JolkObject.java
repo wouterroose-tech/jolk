@@ -4,6 +4,7 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -23,6 +24,15 @@ import tolk.nodes.JolkDispatchNode;
 /// 
 @ExportLibrary(InteropLibrary.class) // JolkObject is a TruffleObject
 public class JolkObject implements TruffleObject {
+
+    /**
+     * The root MetaClass for the Jolk Object-Model.
+     * This identity has no superclass and serves as the terminus 
+     * for all message dispatch delegation.
+     */
+    public static final JolkMetaClass OBJECT_TYPE = new JolkMetaClass(
+        "Object", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, new HashMap<>(), new HashMap<>()
+    );
 
     private final JolkMetaClass metaClass;
     private final Object[] data;

@@ -27,12 +27,12 @@ package abstract class Validation<T> extends Node<T> {
 
     /// Continue the navigation if scope is applicable and preconditions are satisfied.
     @Override
-    package final Self accept(T subject, ExecutionContext executionContext) {
+    package final accept(T subject, ExecutionContext executionContext) {
         self #satisfiesPreCondition(subject, executionContext) ? self #doAccept(subject, executionContext)
     }
 
     /// Visitor Pattern Continuation.
-    package abstract Self doAccept(T subject, ExecutionContext executionContext);
+    package abstract doAccept(T subject, ExecutionContext executionContext);
 
     /// Returns the interrupt identity to use when this validation fails.
     ///

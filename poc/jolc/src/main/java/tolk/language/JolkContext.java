@@ -4,6 +4,7 @@ package tolk.language;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import tolk.runtime.JolkMetaClass; // Assuming JolkMetaClass is used for Jolk-defined classes
 import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkObject;
 import tolk.runtime.JolkLongExtension;
 import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkStringExtension;
@@ -27,7 +28,13 @@ public class JolkContext {
         this.language = language;
         this.env = env;
         // Jolk Archetype Registration: Establish the Core Kernel identities 
-        // within the context registry to ensure Protocol Standardisation.
+        // within the context registry to ensure Protocol Standardisation. 
+        
+        // 1. Root Identity: Must be initialized first to avoid circular loading errors
+        // in specialized extensions that depend on the Object superclass.
+        registerClass(JolkObject.OBJECT_TYPE);
+
+        // 2. Specialized Archetypes
         registerClass(JolkNothing.NOTHING_TYPE);
         registerClass(JolkBooleanExtension.BOOLEAN_TYPE);
         registerClass(JolkLongExtension.LONG_TYPE);

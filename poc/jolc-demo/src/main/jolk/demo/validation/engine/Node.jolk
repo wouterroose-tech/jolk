@@ -17,5 +17,5 @@ package demo.validation.engine;
 package abstract class Node<T> {
 
     /// Visits this node with the given subject and execution context.
-    package abstract Self accept(T subject, ExecutionContext executionContext);
+    package abstract accept(T subject, ExecutionContext executionContext);
 }

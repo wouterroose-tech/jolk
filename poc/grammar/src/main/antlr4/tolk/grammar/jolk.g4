@@ -37,7 +37,7 @@ binding         : identifier ASSIGN expression ;
 assignment      : ASSIGN expression ;
 enum_constant   : MetaId arguments? ';' ;
 
-method          : LAZY? type_args? type selector_id LPAREN typed_params? RPAREN ( block | ';' ) ;
+method          : LAZY? type_args? type? selector_id LPAREN typed_params? RPAREN ( block | ';' ) ;
 selector_id     : identifier | operator ;
 typed_params    : annotated_type ( InstanceId (COMMA annotated_type InstanceId)* (COMMA annotated_type vararg_id)? | vararg_id ) ;
 annotated_type  : annotation* type ;

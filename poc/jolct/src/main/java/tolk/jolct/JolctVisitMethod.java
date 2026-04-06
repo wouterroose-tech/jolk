@@ -79,15 +79,18 @@ public class JolctVisitMethod {
         if (body != null && !body.isEmpty()) {
             sb.append(body);
         }
-        boolean explicitReturn = isLastStatementVoid(ctx.block());
+        boolean isVoidPath = isLastStatementVoid(ctx.block());
         // If the method has an explicit return type and the last statement is void,
         // add a return statement. If not, it is not conclusive and will generate
         // a compile error forcing the developer to add an explicit return.
-        if (explicitReturn && !isConstructor) {
-            if ("Self".equals(ctx.type().getText())) {
-                Type_declContext typeDecl = (Type_declContext) ctx.getParent().getParent()
-                        .getParent();
-                boolean isFinal = isFinal(typeDecl);
+        if (isVoidPath && !isConstructor) {
+            if (ctx.type() == null || "Self".equals(ctx.type().getText())) {
+                boolean isFinal = false;
+                // Safely resolve the finality of the parent container
+                Object container = ctx.getParent().getParent().getParent();
+                if (container instanceof Type_declContext typeDecl) {
+                    isFinal = isFinal(typeDecl);
+                }
    
                 sb.append("return ");
                 if (isFinal) {
@@ -95,6 +98,12 @@ public class JolctVisitMethod {
                 } else {
                     sb.append("(Self) this;\n");
                 }
+            } else if ("boolean".equals(returnType)) {
+                // Coverage for boolean overrides like equals
+                sb.append("return false;\n");
+            } else if ("long".equals(returnType) || "int".equals(returnType)) {
+                // Coverage for numerical query fallbacks
+                sb.append("return 0L;\n");
             } else {
                 sb.append("return null;\n");
             }
@@ -103,6 +112,10 @@ public class JolctVisitMethod {
     }
 
     private String getReturnType(MethodContext ctx) {
+        if (ctx.type() == null) {
+            // Jolk Signature Fence: Omitted type implies Command (returns self)
+            return visitor.currentClass;
+        }
         String returnType = visitor.visit(ctx.type());
         if ("Self".equals(returnType)) {
             if (ctx.getParent().getParent().getParent() instanceof Type_declContext) {

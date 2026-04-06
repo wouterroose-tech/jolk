@@ -26,7 +26,7 @@ field           = [ "stable" ] type identifier [ assignment ]
 binding         = identifier assignment
 assignment      = "=" expression
 enum            = meta_id [ arguments ] ";"
-method          = [ "lazy" ] [ type_args ] type selector_id "(" [ typed_params ] ")" ( block | ";" )
+method          = [ "lazy" ] [ type_args ] [ type ] selector_id "(" [ typed_params ] ")" ( block | ";" )
 typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 annotated_type  = { annotation } type
 vararg_id	    = "..." instance_id

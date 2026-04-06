@@ -30,7 +30,7 @@ package final class ChildValidation<T, R> extends Node<T> {
     /// - **subject**: The parent entity.
     /// - **executionContext**: The shared industrial state.
     @Override
-    package Self accept(T subject, ExecutionContext executionContext) {
+    package accept(T subject, ExecutionContext executionContext) {
         self #supplier #apply(subject) #ifPresent [ child -> validation #accept(child, executionContext) ]
     }
 }

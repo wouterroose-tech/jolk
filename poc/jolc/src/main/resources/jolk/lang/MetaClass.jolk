@@ -9,7 +9,7 @@
 ///
 /// @author Wouter Roose
 
-@Intrinsic("java.lang.Class")
+@Intrinsic
 class MetaClass<T extends Object> {
 
     /// ## new

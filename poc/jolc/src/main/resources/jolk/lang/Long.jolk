@@ -8,7 +8,7 @@
 ///
 /// @author Wouter Roose
 
-@Intrinsic // Marks this as a Jolk intrinsic for compiler optimization
+@Intrinsic
 extension LongExtension on java.lang.Long {
 
     /// The maximum value for a Long (2^63-1).

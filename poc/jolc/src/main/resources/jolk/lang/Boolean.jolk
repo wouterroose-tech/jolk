@@ -12,7 +12,7 @@
 ///
 /// @author Wouter Roose
 
-@Intrinsic // Marks this as a Jolk intrinsic for compiler optimization
+@Intrinsic
 extension BooleanExtension on java.lang.Boolean {
 
     /// The canonical identity for the 'true' state.

@@ -15,11 +15,6 @@
 ///
 /// @author Wouter Roose
 
-/**
- * ### ObjectExtension
- * 
- * The root behavioral augmentation for the Jolk environment.
- */
 @Intrinsic
 extension ObjectExtension on java.lang.Object {
 

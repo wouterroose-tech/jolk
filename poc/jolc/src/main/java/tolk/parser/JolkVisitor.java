@@ -771,6 +771,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBooleanExtension.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
             if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkStringExtension.STRING_TYPE);
+            if ("Exception".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkExceptionExtension.EXCEPTION_TYPE);
             
             // Support for the Array archetype via common Java collection aliases.
             if ("Array".equals(name) || "List".equals(name) || "ArrayList".equals(name)) 

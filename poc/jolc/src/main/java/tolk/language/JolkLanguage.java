@@ -11,6 +11,16 @@ import tolk.grammar.jolkParser;
 import tolk.nodes.JolkRootNode;
 import tolk.parser.JolkVisitor;
 
+/// #JolkLanguage
+/// 
+/// The main entry point for the Jolk language implementation. This class is responsible for:
+/// - Registering the language with the Truffle framework.
+/// - Creating the execution context (`JolkContext`) which holds registered classes and host interop symbols.
+/// - Parsing source code using ANTLR and converting it into an executable AST.
+/// It serves as the bridge between the Truffle runtime and the Jolk-specific language semantics.
+/// 
+///  @author Wouter Roose
+///
 @TruffleLanguage.Registration(
     id = JolkLanguage.ID,
     name = "Jolk",

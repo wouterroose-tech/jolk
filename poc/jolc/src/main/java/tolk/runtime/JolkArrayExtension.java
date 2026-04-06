@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * ### JolkArrayExtension
@@ -26,18 +25,15 @@ public class JolkArrayExtension {
 
     static {
         // Jolk collections are polite citizens: they respond to standard Object protocol.
-        Map<String, Object> instanceMembers = new HashMap<>();
-        Map<String, Object> metaMembers = new HashMap<>();
-
         ARRAY_TYPE = new JolkMetaClass(
             "Array", 
             null, // Superclass resolved at runtime or defaults to Object
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
             JolkArchetype.CLASS, 
-            instanceMembers, 
+            new HashMap<>(), 
             new HashMap<>(), // Physical fields are managed by the Java substrate
-            metaMembers, 
+            new HashMap<>(), 
             new HashMap<>()
         );
 
@@ -65,8 +61,6 @@ public class JolkArrayExtension {
                 return args[0]; 
             }
         });
-
-        // --- Meta Methods ---
 
         /**
          * ### meta #new(elements...)

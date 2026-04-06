@@ -31,15 +31,9 @@ import java.util.Set;
 /// It also serves as a container for the definitions of members (fields and methods)
 /// that belong to instances of this type. However, it does not execute instance-level
 /// messages itself; that is the responsibility of {@link JolkObject}.
-/**
- * ### JolkMetaClass
- * 
- * Represents a Jolk Type (a meta-object) at runtime.
- *
- * It handles meta-level messages such as `#new` and type introspection.
- * 
- * @author Wouter Roose
- */
+/// 
+///  @author Wouter Roose
+
 @ExportLibrary(InteropLibrary.class)
 public final class JolkMetaClass implements TruffleObject {
 
@@ -84,9 +78,7 @@ public final class JolkMetaClass implements TruffleObject {
         this(name, superclass, finality, visibility, archetype, instanceMembers, Collections.emptyMap(), metaMembers, Collections.emptyMap());
     }
 
-    /**
-     * Convenience constructor for unit tests providing instance field templates.
-     */
+    // Convenience constructor for unit tests providing instance field templates
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
         this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, Collections.emptyMap());
     }

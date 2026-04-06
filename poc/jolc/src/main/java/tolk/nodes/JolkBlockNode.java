@@ -4,11 +4,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import tolk.runtime.JolkNothing;
 
-/**
- * ### JolkBlockNode
- * 
- * Executes a sequence of Jolk nodes. Returns the result of the last node.
- */
+/// ### JolkBlockNode
+/// 
+/// Executes a sequence of Jolk nodes. Returns the result of the last node.
+///
 public final class JolkBlockNode extends JolkNode {
     @Children private final JolkNode[] statements;
 

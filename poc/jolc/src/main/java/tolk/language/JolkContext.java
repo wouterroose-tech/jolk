@@ -8,16 +8,16 @@ import tolk.runtime.JolkLongExtension;
 import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkArrayExtension;
+import tolk.runtime.JolkExceptionExtension;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * ## JolkContext
- *
- * The runtime execution context for the Jolk language.
- * Manages the lifecycle of registered classes, host interop symbols,
- * and the connection to the underlying Truffle environment.
- */
+/// # JolkContext
+/// 
+/// The runtime execution context for the Jolk language.
+/// Manages the lifecycle of registered classes, host interop symbols,
+/// and the connection to the underlying Truffle environment.
+/// 
 public class JolkContext {
     private final JolkLanguage language;
     public final Env env;
@@ -33,6 +33,7 @@ public class JolkContext {
         registerClass(JolkLongExtension.LONG_TYPE);
         registerClass(JolkStringExtension.STRING_TYPE);
         registerClass(JolkArrayExtension.ARRAY_TYPE);
+        registerClass(JolkExceptionExtension.EXCEPTION_TYPE);
     }
 
     public void registerClass(JolkMetaClass metaClass) {

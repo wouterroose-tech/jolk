@@ -1,35 +1,50 @@
 package tolk.runtime;
 
-/// # JolkExceptionExtension
-///
-/// Implements the Jolk **Augmentation Protocol** for [java.lang.Throwable].
-///
-/// This extension is a cornerstone of **Shim-less Integration**. It allows any native Java
-/// exception to participate in Jolk message chains as a first-class identity. Instead of 
-/// wrapping host exceptions in a guest-language proxy, this library exports the Jolk 
-/// messaging protocol directly onto the host type.
-///
-/// ### Architectural Role
-/// - **Control Flow**: Provides the `#throw` selector, allowing host exceptions to be
-///   propagated using guest syntax.
-public final class JolkExceptionExtension {
+import com.oracle.truffle.api.interop.ArityException;
+import java.util.HashMap;
+
+/**
+ * ### JolkExceptionExtension
+ * 
+ * Implements the runtime logic for the Exception archetype. 
+ * It provides the Meta-Object for the base Exception type and utility 
+ * methods for bridging Jolk exceptions with the JVM's stack unwinding.
+ */
+public class JolkExceptionExtension {
 
     /**
-     * ### throwException
-     * 
-     * Performs a **"Sneaky Throw"** to propagate the original [Throwable] without 
-     * wrapping it in a [RuntimeException]. 
-     * 
-     * This preserves the original stack trace and type identity, which is essential 
-     * for Jolk's `#catch` blocks to correctly filter by exception type.
+     * The first-class meta-object for the Exception archetype.
+     * Even though Jolk instances extend java.lang.Throwable, this 
+     * MetaClass provides the identity required for name resolution 
+     * and meta-level messaging (e.g., Exception #throw).
      */
-    public static RuntimeException throwException(Throwable t) {
-        JolkExceptionExtension.<RuntimeException>doThrow(t);
-        return null;
+    public static final JolkMetaClass EXCEPTION_TYPE;
+
+    static {
+        EXCEPTION_TYPE = new JolkMetaClass(
+            "Exception", // Nominal identity in Jolk manuscripts
+            JolkFinality.OPEN, 
+            JolkVisibility.PUBLIC, 
+            JolkArchetype.CLASS, 
+            new HashMap<>() // instance members are handled by Interop/Throwable
+        );
+
+        // meta #throw(message) -> Triggers a RuntimeException
+        EXCEPTION_TYPE.registerMetaMethod("throw", new JolkBuiltinMethod() {
+            @Override
+            public Object execute(Object[] args) throws ArityException {
+                // args[0] is EXCEPTION_TYPE; args[1] is the optional message
+                String message = (args.length > 1) ? args[1].toString() : "Jolk Exception";
+                throw new RuntimeException(message);
+            }
+        });
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Throwable> void doThrow(Throwable t) throws T {
-        throw (T) t;
+    /**
+     * Bridges a Throwable into the JVM's unwinding mechanism.
+     */
+    public static void throwException(Throwable t) {
+        if (t instanceof RuntimeException re) throw re;
+        throw new RuntimeException(t);
     }
 }

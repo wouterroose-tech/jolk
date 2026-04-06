@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
 
-public class JolcCollectionsTest extends JolcTestBase {
+public class JolcMapTest extends JolcTestBase {
 
     @Test
     @Disabled("Pending implementation of Map & String") 

@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
 
-public class JolcBindingTest  extends JolcTestBase {
+public class JolcBindingTest extends JolcTestBase {
     
     @Test
     void testFieldInitialisation() {

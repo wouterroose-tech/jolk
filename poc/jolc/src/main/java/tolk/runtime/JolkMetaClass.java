@@ -128,6 +128,24 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     /**
+     * ### registerInstanceMethod
+     * 
+     * Registers a Java-implemented method for instances of this type.
+     */
+    public void registerInstanceMethod(String name, JolkBuiltinMethod method) {
+        this.instanceMembers.put(name, method);
+    }
+
+    /**
+     * ### registerMetaMethod
+     * 
+     * Registers a Java-implemented method for the type itself (the MetaClass).
+     */
+    public void registerMetaMethod(String name, JolkBuiltinMethod method) {
+        this.metaMembers.put(name, method);
+    }
+
+    /**
      * ### getJolkMetaClass
      * 
      * Returns the meta-identity of this object. In the Jolk Meta-Object Protocol,
@@ -474,6 +492,17 @@ public final class JolkMetaClass implements TruffleObject {
             return superclass.lookupInstanceMember(sanitized);
         }
         return null;
+    }
+
+    /**
+     * ## lookupMetaMember
+     *
+     * Looks up a meta-level member (e.g., a built-in factory method like #new) 
+     * by name. This is used by the dispatch system to resolve messages 
+     * sent to the MetaClass itself.
+     */
+    public Object lookupMetaMember(String name) {
+        return metaMembers.get(name);
     }
 
     /**

@@ -6,7 +6,10 @@ import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkExceptionExtension;
+import tolk.runtime.JolkArrayExtension;
 
+import java.util.List;
+import java.util.ArrayList;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import tolk.runtime.JolkLongExtension;
@@ -288,6 +291,41 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         }
     }
 
+    /// ### Fast Path for Lists
+    /// Handles java.util.List instances by routing messages to the Jolk Array extension.
+    @Specialization
+    protected Object doList(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
+                           @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+        try {
+            // 1. Prototype Lookup: Check for Jolk-defined Array extensions (e.g., #at, #put)
+            Object member = JolkArrayExtension.ARRAY_TYPE.lookupInstanceMember(selector);
+            if (member != null) {
+                Object[] argsWithReceiver = new Object[arguments.length + 1];
+                argsWithReceiver[0] = receiver;
+                if (arguments.length > 0) {
+                    System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+                }
+                return lift(InteropLibrary.getUncached().execute(member, argsWithReceiver));
+            }
+
+            // 2. Host Fallback: Dispatch to standard java.util.List members
+            return lift(interop.invokeMember(receiver, selector, arguments));
+        } catch (UnknownIdentifierException e) {
+            if (isObjectIntrinsic(selector)) {
+                return dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            }
+            try {
+                return lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on List", e);
+            }
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+            throw new RuntimeException("Message dispatch failed: #" + selector + " on List", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on List", e);
+        }
+    }
+
     /// ### doThrowable
     ///
     /// Specialized **Intrinsic Fast Path** for host exceptions.
@@ -326,7 +364,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// 
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doString", "doThrowable"}, limit = "3") // Maps to executeDispatch
+    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doString", "doList", "doThrowable"}, limit = "3") // Maps to executeDispatch
     protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         InteropLibrary uncached = InteropLibrary.getUncached();
@@ -350,6 +388,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             if (receiver instanceof Long || receiver instanceof Integer) meta = JolkLongExtension.LONG_TYPE;
             else if (receiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
             else if (receiver instanceof String) meta = JolkStringExtension.STRING_TYPE;
+            else if (receiver instanceof List) meta = JolkArrayExtension.ARRAY_TYPE;
 
             if (meta != null) {
                 Object member = meta.lookupInstanceMember(selector);
@@ -369,6 +408,15 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
              * directly to the Interop `instantiate` protocol to invoke the Java constructor.
              */
             if ("new".equals(selector) && (receiver instanceof Class || interop.isMetaObject(receiver) || interop.isInstantiable(receiver))) {
+                // Shim-less Interceptor: Route List.class or ArrayList.class to the Jolk Array factory
+                if (receiver == List.class || receiver == ArrayList.class) {
+                    try {
+                        return JolkArrayExtension.ARRAY_TYPE.invokeMember("new", arguments);
+                    } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                        throw new RuntimeException("Failed to instantiate Jolk Array from host class: " + receiver, e);
+                    }
+                }
+                
                 try {
                     if (interop.isInstantiable(receiver)) {
                         return lift(interop.instantiate(receiver, arguments));

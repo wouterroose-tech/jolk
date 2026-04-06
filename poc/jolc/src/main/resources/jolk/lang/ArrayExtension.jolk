@@ -1,0 +1,29 @@
+~ jolk.lang;
+
+/// # Array
+///
+/// The **Array** extension bridges the Java List substrate with
+/// Jolk's message-passing semantics, providing common collection operations.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+extension ArrayExtension<T> on java.util.List<T> {
+
+    /// Creates a new Array containing the provided elements.
+    /// This is a meta-method that acts as a factory.
+    ///
+    /// @param elements The elements to include in the new array.
+    /// @return A new java.util.ArrayList containing the elements.
+    meta ArrayExtension<T> new(T... elements) { }
+
+    /// Returns the element at the specified position in this list.
+    ///
+    /// @param index The index of the element to return.
+    /// @return The element at the specified position.
+    T at(Long index) { }
+
+    /// Replaces the element at the specified position in this list with the specified element.
+    ///
+    /// @param index The index of the element to replace.
+    /// @param element

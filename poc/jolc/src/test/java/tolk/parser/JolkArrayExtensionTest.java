@@ -45,7 +45,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         String source = """
             class MyClass {
                 ArrayList<Long> longList = ArrayList #new(1, 2, 3);
-                Long run(Int key) { ^ longList #get(key) }
+                Long run(Int key) { ^ longList #at(key) }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -62,11 +62,11 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         String source = """
             class MyClass {
                 ArrayList<Long> longList = #(1, 2, 3);
-                String run(Int key) { ^ longList #get(key) }            
+                String run(Int key) { ^ longList #at(key) }            
             }""";
         Value instance = eval(source);
-        assertEquals(2, instance.invokeMember("get", 1));
-        assertNull(instance.invokeMember("get", 0));
+        assertEquals(2, instance.invokeMember("run", 1));
+        assertNull(instance.invokeMember("run", 0));
     }
 
 }

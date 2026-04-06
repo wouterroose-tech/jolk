@@ -48,6 +48,20 @@ public abstract class JolkNode extends Node {
     }
 
     /**
+     * Performs **Impedance Resolution**. If the provided value is a wrapped 
+     * Truffle Host Object, it extracts the underlying Java instance.
+     * This is used when a Jolk built-in or dispatch needs to operate on the 
+     * raw Java object behind a Truffle host wrapper.
+     */
+    protected final static Object unwrap(Object value) {
+        var env = tolk.language.JolkLanguage.getContext().env;
+        if (env.isHostObject(value)) {
+            return env.asHostObject(value);
+        }
+        return value;
+    }
+
+    /**
      * Navigates the lexical environment chain to find the arguments array at the specified depth.
      * This is the standard mechanism in Jolk for environment traversal.
      * 

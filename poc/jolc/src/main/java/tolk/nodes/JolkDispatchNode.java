@@ -364,9 +364,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         InteropLibrary uncached = InteropLibrary.getUncached();
+        Object unwrappedReceiver = unwrap(receiver); // Unwrap the receiver for type checks
         try {
             // Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
-            if (receiver == null || interop.isNull(receiver)) {
+            if (unwrappedReceiver == null || uncached.isNull(unwrappedReceiver)) {
                 if (JolkMetaClass.isObjectIntrinsic(selector)) {
                     return JolkMetaClass.dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, uncached);
                 }
@@ -381,10 +382,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // 3. Jolk Prototype Lookup (Megamorphic / Generic Path)
             // Check if the receiver matches a Jolk intrinsic prototype.
             JolkMetaClass meta = null;
-            if (receiver instanceof Long || receiver instanceof Integer) meta = JolkLongExtension.LONG_TYPE;
-            else if (receiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
-            else if (receiver instanceof String) meta = JolkStringExtension.STRING_TYPE;
-            else if (receiver instanceof List) meta = JolkArrayExtension.ARRAY_TYPE;
+            if (unwrappedReceiver instanceof Long || unwrappedReceiver instanceof Integer) meta = JolkLongExtension.LONG_TYPE;
+            else if (unwrappedReceiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
+            else if (unwrappedReceiver instanceof String) meta = JolkStringExtension.STRING_TYPE;
+            else if (unwrappedReceiver instanceof List) meta = JolkArrayExtension.ARRAY_TYPE;
 
             if (meta != null) {
                 Object member = meta.lookupInstanceMember(selector);

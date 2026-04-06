@@ -30,6 +30,18 @@ public class JolkIdentityNode extends JolkExpressionNode {
         
         // Optimization: identical references are always the same identity.
         if (left == right) return negate ? false : true;
+
+        // Identity Congruence: intrinsic types match by value to ensure identity 
+        // is tied to value regardless of boxed storage (e.g. for Long ssn).
+        if (left instanceof Number n1 && right instanceof Number n2) {
+            boolean eq = n1.longValue() == n2.longValue();
+            return negate ? !eq : eq;
+        }
+        if (left instanceof String s1 && right instanceof String s2) {
+            boolean eq = s1.equals(s2);
+            return negate ? !eq : eq;
+        }
+
         if (left == null || right == null) return negate ? true : false;
 
         InteropLibrary interop = InteropLibrary.getUncached();

@@ -1,7 +1,9 @@
 package demo.validation;
 
-import org.graalvm.polyglot.Value;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -40,4 +42,18 @@ public class ServicesTest extends JolcTestBase {
         return eval(source);
     }
 
+    @Test
+    @Disabled("activate when Record is implemented")
+    void testCity() {
+        Value city = this.cityClass().invokeMember("new", 12345, "New York", "NY");
+        //assertEquals(12345L, city.invokeMember("zipcode"));
+        assertEquals("New York", city.invokeMember("name"));
+        assertEquals("NY", city.invokeMember("province"));
+    }
+
+    @Test
+    @Disabled("activate when Array is implemented")
+    void testGeoGraphicalService() {
+        Value service = this.geoGraphicalServiceClass().invokeMember("new");
+    }
 }

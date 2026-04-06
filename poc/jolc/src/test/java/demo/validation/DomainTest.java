@@ -19,7 +19,7 @@ public class DomainTest extends JolcTestBase {
 
     private Value personClass() {
         String source = """
-            final class Person {
+            class Person {
                 public Long ssn;
                 public String firstName;
                 public String lastName;
@@ -54,7 +54,7 @@ public class DomainTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("activate when String is implemented")
+    //@Disabled("activate when String is implemented")
     void testPerson() {
         Value person = this.personClass().invokeMember("new", 123456789L, "John", "Doe");
         assertEquals(123456789L, person.invokeMember("ssn").asLong());
@@ -70,10 +70,11 @@ public class DomainTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("activate when String is implemented")
     void testContactForm() {
         Value person = this.personClass().invokeMember("new", 123456789L, "John", "Doe");
         Value form = this.contactFormClass().invokeMember("new", person, "Form", "1234");
+
+        assertEquals(person, form.invokeMember("person"));
     }
 
 }

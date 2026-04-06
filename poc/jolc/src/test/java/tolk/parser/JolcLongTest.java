@@ -40,13 +40,15 @@ public class JolcLongTest extends JolcTestBase {
 
     @Test
     void testArithmetic() {
-        String source = "class MathTest { " +
-                "Long add(Long a, Long b) { ^ a + b } " +
-                "Long sub(Long a, Long b) { ^ a - b } " +
-                "Long mul(Long a, Long b) { ^ a * b } " +
-                "Long div(Long a, Long b) { ^ a / b } " +
-                "Long mod(Long a, Long b) { ^ a % b } " +
-                "Long pow(Long a, Long b) { ^ a ** b } }";
+        String source = """
+            class MathTest {
+                Long add(Long a, Long b) { ^ a + b }
+                Long sub(Long a, Long b) { ^ a - b }
+                Long mul(Long a, Long b) { ^ a * b }
+                Long div(Long a, Long b) { ^ a / b }
+                Long mod(Long a, Long b) { ^ a % b }
+                Long pow(Long a, Long b) { ^ a ** b }
+            }""";;
         Value instance = eval(source).invokeMember("new");
         assertEquals(30L, instance.invokeMember("add", 10L, 20L).asLong());
         assertEquals(10L, instance.invokeMember("sub", 30L, 20L).asLong());
@@ -58,13 +60,15 @@ public class JolcLongTest extends JolcTestBase {
 
     @Test
     void testComparison() {
-        String source = "class CompTest { " +
-                "Boolean gt(Long a, Long b) { ^ a > b } " +
-                "Boolean lt(Long a, Long b) { ^ a < b } " +
-                "Boolean ge(Long a, Long b) { ^ a >= b } " +
-                "Boolean le(Long a, Long b) { ^ a <= b } " +
-                "Boolean eq(Long a, Long b) { ^ a == b } " +
-                "Boolean ne(Long a, Long b) { ^ a != b } }";
+        String source = """
+            class CompTest {
+                Boolean gt(Long a, Long b) { ^ a > b }
+                Boolean lt(Long a, Long b) { ^ a < b }
+                Boolean ge(Long a, Long b) { ^ a >= b }
+                Boolean le(Long a, Long b) { ^ a <= b }
+                Boolean eq(Long a, Long b) { ^ a == b }
+                Boolean ne(Long a, Long b) { ^ a != b }
+            }""";
         Value instance = eval(source).invokeMember("new");
         assertTrue(instance.invokeMember("gt", 10L, 5L).asBoolean());
         assertTrue(instance.invokeMember("lt", 5L, 10L).asBoolean());

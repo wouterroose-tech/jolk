@@ -101,12 +101,12 @@ public class JolkIdentityNodeTest {
 
     @Test
     void testNumericEquivalence() {
-        // Jolk treats 10 (Int) and 10L (Long) as equivalent (~~) but not identical (==)
+        // Jolk treats 10 (Int) and 10L (Long) as equivalent (~~) and identical (==)
         JolkNode left = createLiteralNode(10);
         JolkNode right = createLiteralNode(10L);
 
-        JolkIdentityNode identity = new JolkIdentityNode(left, right, false);
-        assertFalse((Boolean) identity.executeGeneric(null), "Different numeric types are not identical.");
+        JolkIdentityNode identity = new JolkIdentityNode(left, right, true);
+        assertFalse((Boolean) identity.executeGeneric(null), "Different numeric types are equal when their values are equal.");
 
         JolkMessageSendNode equiv = new JolkMessageSendNode(left, "~~", new JolkNode[]{right});
         assertTrue((Boolean) equiv.executeGeneric(null), "Same numeric values are equivalent.");

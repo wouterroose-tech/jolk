@@ -233,11 +233,11 @@ In Jolk, distinguishing between *Reserved Object Identifiers* and *Structural Sc
 
 **Structural Scaffolding** (Architectural Metadata): These markers tell the compiler how to organise the code into the JVM ecosystem, but they do not participate in the message-passing flow.
 
-* *Directives / Projections*: using, using meta
-* *Structure / Metadata*: package, class, value, record, enum, protocol, extension
-* *Relations / Hierarchy*: extends, implements are hierarchy markers  
-* *Access / Visibility & Finality*: public, protected, private, package, abstract, final
-* *State & Behavior Modifiers*: meta, stable, constant, lazy
+* *Directives / Projections*: `using`, `using meta`
+* *Structure / Metadata*: `package`, `class`, `value`, `record`, `enum`, `protocol`, `extension`
+* *Relations / Hierarchy*: `on`, `extends`, `implements` are hierarchy markers  
+* *Access / Visibility & Finality*: `public`, `protected`, `private`, `package`, `abstract`, `final`
+* *State & Behavior Modifiers*: `meta`, `stable`, `constant`, `lazy`
 * *Annotations*: anchored by the at-symbol (`@`).
 
 ### Lexical Anchors
@@ -371,7 +371,9 @@ Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type sy
 
 ### Fields
 
-To maintain rigorous encapsulation, direct field manipulation in Jolk is restricted to the local class scope for private fields and the inheritance hierarchy for protected fields. Even when a developer declares a field as `public`, the language does not expose the raw memory address. Instead, it constructs a *Lexical Fence*. This boundary restricts direct memory interaction—conducted via the internal terminals (`^ field` for retrieval or `field = value` for assignment)—strictly to the Archetype's internal logic.
+To maintain rigorous encapsulation, direct field manipulation in Jolk is restricted to initial binding during instance construction. Even when a developer declares a field as `public`, the language does not expose the field. Instead, it constructs a *Lexical Fence*. This boundary restricts direct field interaction—conducted via the internal terminals (`^ field` for retrieval or `field = value` for assignment)—strictly to the Archetype's internal construction logic.
+
+The *Field Entropy*, Value stability (`constant`) and instance-level stability (`stable`) enforce predictable access patterns by ensuring that a field, once bound, remains logically unchanged or non-assignable.
 
 External state interaction is managed through *Implicit Field Encapsulation*, a protocol synthesised by the compiler that provides an automatic *Fluent API*. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent stable values within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that *State Integrity* is maintained through an immutable contract of message pivots, effectively preventing encapsulation leaks.
 
@@ -495,7 +497,7 @@ Syntactically, value types follow the same unified messaging and declaration rul
 
 ### Extension
 
-Jolk's system leverages extensions to provide behavioural augmentation to existing JVM types, such as String or List without modifying the original source code.
+Jolk's system leverages extensions to provide behavioural augmentation to existing JVM types. By defining an extension on java.lang.Object, Jolk integrates every JVM entity—from third-party classes to raw arrays—as a first-class JoMoo recipient. This replaces rigid hierarchies with dynamic mappings, allowing the Tolk Engine to project Jolk logic onto the Java substrate. More specific extensions can be defined for classes such as `String`, `Collection`, and `Exception` to provide domain-specific message handling while maintaining Identity Congruence across the environment.
 
 	@Intrinsic  
 	extension StringExtension on String {
@@ -819,9 +821,9 @@ This transition from observation to construction ensures Dispatch Invariability;
 
 ## Core Type System
 
-*The Sparse Type System*: Jolk operates as a *Semantic Overlay*; it enhances native Java identities with Jolk-native protocols to achieve Industrial Sovereignty without isolation. The Jolk Core Type System establishes a unified foundation for the language by seamlessly integrating native Java capabilities with refined, message-based semantics. Rather than acting as a simple wrapper, this system governs the identity and behaviour of every entity through a strategic hierarchy of Intrinsic, Augmented, and Shim-less types, providing the behavioral substrate for Jolk Archetypes and host identities alike. 
+*The Sparse Type System*: Jolk operates as a *Semantic Overlay*; it enhances native Java identities with Jolk protocols to achieve Industrial Sovereignty without isolation. This architecture is powered by *Type Coalescence*—the structural process by which the high-level JoMoo protocol is projected onto the existing Java substrate to eliminate metadata overhead.
 
-
+The Jolk Core Type System establishes a unified foundation for the language by seamlessly integrating native Java capabilities with refined, message-based semantics. Rather than acting as a simple wrapper, this system governs the identity and behaviour of every entity through Intrinsic types and Extensions, providing the behavioral substrate for Jolk Archetypes and host identities alike.
 
 At its heart, the system treats foundational concepts like `Metaclass`, `Boolean`, and `Nothing` as First-Class Identities, ensuring that even the most basic data structures conform to Jolk's "solid" safety and ergonomic standards. By synthesising these elements, the Core Type System allows developers to leverage the full power of the JVM ecosystem while operating within a consistent, modern, and highly predictable architectural framework.
 
@@ -902,62 +904,9 @@ This architecture allows developers to define templates like `#withResource` tha
 
 In Jolk the distinction between Intrinsic, Transparent, and Opaque selectors defines the boundary between structural control and functional data. This division allows the Jolk developer to extend the language with custom control structures (Transparent).
 
-### Core Collection Types
-
-Jolk provides three fundamental collection protocols, each anchored by a unique lexical shorthand that mirrors its mathematical origin. Since Jolk adopts the Java Collections Framework natively, these protocols are projected onto host types via Implicit Extensions.
-
-The **Array** is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at:`) and stack-based operations (`#push:`, `#pop:`).
-
-	@Intrinsic
-	extension ArrayExtension<T> on java.util.List<T> { {
-	
-	    meta Array<T> new(T... elements) { }
-	
-	    T at(Int index) { }
-
-	    Self put(Int index, T element) { }
-	    <R> Array<R> map(Closure<R> mapper) { }
-	}
-
-The **Set** represents a collection of unique identities, excising duplication and disregarding ordinality. Its literal, `#{ }`, uses the brace, the canonical symbol of Set Theory.  Membership is defined by identity, not position. It responds to membership queries (`#includes:`) and mathematical unions.
-
-The **Map** is an associative archetype that reifies the relationship between a domain and a codomain. The parenthesis, `#( )`, denotes this associative environment, distinguishing the mapping of a domain from the containment of a set or the logic of a block. It uses the entry operator (`->`) to link keys to values. It responds to key-based retrieval (`#atKey:`) and domain inspections.
-
-The **Iterator** is the kinetic substrate for traversal. In the Jolk model, it is not a passive cursor but an augmented message-driven engine of discovery.
-
-By standardising on these archetypes and their supporting iterators, Tolk applies Protocol Standardisation. This maintains a single, dense model through a 1:1 mapping between mathematical concept and syntactic form.
-
-### Iterator Extension
-
-To support the seamless integration of Java's iteration patterns into Jolk's message flow, the kernel provides an extension for the native Java Iterator.
-
-```jolk
-@Intrinsic
-extension IteratorExtension<T> on java.util.Iterator<T> {
-    
-    /// Yields the next identity in the sequence.
-    T next() { }
-
-    /// Signals if the sequence contains further identities.
-    Boolean hasNext() { }
-
-    /// Consumes the remaining flow via a closure.
-    Self forEach(Closure<T> action) { 
-        [ self #hasNext ] #while [ action #apply(self #next) ]
-    }
-}
-```
-
-
-### Augmented Types
-
-Augmented Types represent a sophisticated hybridisation where the compiler adopts native Java structures, such as java.lang.Class, java.lang.Object or java.lang.Exception, and enhances them with JOLK-specific semantics. Rather than acting as a passive wrapper, the jolc compiler actively refines these types by injecting new, high-level selectors, enforcing null-safe intrinsic mappings for core operations like equality, and shadowing legacy Java methods that contradict JOLK’s safety model. This "Native Synthesis" ensures that every object in the ecosystem—whether native to JOLK or imported from a Java library—conforms to a consistent, modern interface.
-
 **MetaClass**
 
-The MetaClass establishes every Type as a first-class citizen by centralising the Type Protocol (e.g., `#new`, `#name`).
-
-Jolk reifies each class as a first-class Meta-Object. While standard Java resolves meta calls via early binding—preventing method overriding—Jolk treats every Type as an instance of the MetaClass intrinsic, enabling Virtual Static Dispatch.
+The MetaClass establishes every Type as a first-class citizen by centralising the Type Protocol (e.g., `#new`, `#name`). Jolk reifies each class as a first-class Meta-Object. While standard Java resolves meta calls via early binding—preventing method overriding—Jolk treats every Type as an instance of the MetaClass intrinsic, enabling Virtual Static Dispatch.
 
 This architecture allows the MetaClass intrinsic to govern Identity-level logic through a formal hierarchy. When a subclass invokes `super #new()`, the system routes the message to the Parent Identity’s meta-stratum rather than a static pointer. Consequently, class-level behaviours like Mechanical Birth participate in a rigorous inheritance model, ensuring instantiation is a flexible, message-driven process rather than a rigid JVM constraint.
 
@@ -1023,15 +972,58 @@ There is no `jolk.lang.Object` root class. Instead, Jolk defines the *Core Objec
 	
 	}
 
-### The "Shim-less" classes
+### Type Coalescence
+
+*Type Coalescence* is the strategy for Extensions. Because a Coalesced Extension (such as an `Array` projected onto a `java.util.List`) must remain a valid Java identity for ecosystem interoperability, it cannot be erased. Types represent a hybridisation where the compiler adopts native Java structures, such as java.lang.Class, java.lang.Object or java.lang.Exception, and enhances them with JOLK-specific semantics. Rather than acting as a passive wrapper, the jolc compiler actively refines these types by injecting new, high-level selectors, enforcing null-safe intrinsic mappings for core operations like equality, and shadowing legacy Java methods that contradict JOLK’s safety model. This "Native Synthesis" ensures that every object in the ecosystem—whether native to JOLK or imported from a Java library—conforms to a consistent, modern interface.
 
 Jolk achieves *Shim-less* Integration by adopting native Java types for its most critical structures. `java.util.List` is augmented with the `Array` protocol, and `java.lang.Throwable` is augmented with the `Exception` protocol.
+When you interact with a Java object, the jolc compiler "sees through" the Java signature and maps Jolk messages directly to their corresponding Java methods at compile time. This means calling `#name` on a Java bean is automatically transpiled to `.name()` in the resulting bytecode. This ensures full compatibility with Java collections and libraries while maintaining Jolk's clean, message-passing syntax.
 
-When you interact with a Java object, the jolc compiler "sees through" the Java signature and maps Jolk messages directly to their corresponding Java methods at compile time. This means calling `#name` on a Java bean is automatically transpiled to `.name()` in the resulting bytecode.
+Because this approach is binary-compatible, you can pass Jolk objects into existing Java APIs without any conversion logic or memory overhead. You get the ergonomics of a modern language with the massive reach and performance of the established Java ecosystem. 
 
-Because this approach is binary-compatible, you can pass Jolk objects into existing Java APIs without any conversion logic or memory overhead. You get the ergonomics of a modern language with the massive reach and performance of the established Java ecosystem.
+**Collection Types**
 
-The jolc compiler achieves shim-less integration by using the compile-time reflection to dynamically resolve Jolk messages to native Java members. It applies a heuristic search—matching a message like `#name` to `name()`, or a public field—to emit direct Java calls in the final bytecode. This ensures full compatibility with Java collections and libraries while maintaining Jolk's clean, message-passing syntax.
+Jolk provides three fundamental collection protocols, each anchored by a unique lexical shorthand that mirrors its mathematical origin. Since Jolk adopts the Java Collections Framework natively, these protocols are projected onto host types via Implicit Extensions.
+
+The `Array` is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at`) and stream-based protocol (`#map`).
+
+	@Intrinsic
+	extension ArrayExtension<T> on java.util.List<T> { {
+	
+	    meta Array<T> new(T... elements) { }
+	    T at(Int index) { }
+	    Self put(Int index, T element) { }
+	    <R> Array<R> map(Closure<R> mapper) { }
+	}
+
+The `Set` represents a collection of unique identities, excising duplication and disregarding ordinality. Its literal, `#{ }`, uses the brace, the canonical symbol of Set Theory.  Membership is defined by identity, not position. It responds to membership queries (`#includes:`) and mathematical unions.
+
+The `Map` is an associative archetype that reifies the relationship between a domain and a codomain. The parenthesis, `#( )`, denotes this associative environment, distinguishing the mapping of a domain from the containment of a set or the logic of a block. It uses the entry operator (`->`) to link keys to values. It responds to key-based retrieval (`#atKey:`) and domain inspections.
+
+The `Iterator` is the kinetic substrate for traversal. In the Jolk model, it is not a passive cursor but an augmented message-driven engine of discovery.
+
+By standardising on these archetypes and their supporting iterators, Tolk applies Protocol Standardisation. This maintains a single, dense model through a 1:1 mapping between mathematical concept and syntactic form.
+
+**Iterator**
+
+To support the seamless integration of Java's iteration patterns into Jolk's message flow, the kernel provides an extension for the native Java Iterator.
+
+```jolk
+@Intrinsic
+extension IteratorExtension<T> on java.util.Iterator<T> {
+    
+    /// Yields the next identity in the sequence.
+    T next() { }
+
+    /// Signals if the sequence contains further identities.
+    Boolean hasNext() { }
+
+    /// Consumes the remaining flow via a closure.
+    Self forEach(Closure<T> action) { 
+        [ self #hasNext ] #while [ action #apply(self #next) ]
+    }
+}
+```
 
 ## Language Highlights
 
@@ -1063,9 +1055,9 @@ The jolc compiler achieves shim-less integration by using the compile-time refle
 
 *Predicate Assertion*: A message signifier (`?` / `?!`) that merges a state query with a logical expectation, allowing the compiler to branch execution directly from the message intent without procedural negation.
 
-*Reified Closures*: Jolk closures are native identities that maintain a link to their home environment. They utilize **Dual-Stratum Projection**:
-  - **Inline Projection**: For control flow (`?`), the closure boundary is erased, and logic is merged into the caller's stack.
-  - **Interop Projection**: When passed to Java, the closure is projected as an opaque functional interface (Lambda).
+*Reified Closures*: Jolk closures are native identities that maintain a structural link to their lexical environment through Dual-Stratum projection:
+  - **Inline Projection**: For control-flow structures, the closure boundary is erased, enabling In-place Execution where the logic is merged directly into the calling method.
+  - **Unbounded Projection**: When passed as a parameter or crossing method boundaries, the closure is projected as an Opaque Functional Interface, facilitating seamless interop while maintaining Identity Congruence.
 
 *Return Authority*: The ability of a closure to command its defining method to finish immediately via the caret (`^`), supported across both projection strata.
 
@@ -1087,7 +1079,7 @@ The jolc compiler achieves shim-less integration by using the compile-time refle
 
 *Syntactic Fluidity*: A Bracket-Light design that prioritizes fluid syntax to maximise structural density by eliminating redundant delimiters and reducing the cognitive overhead
 
-*Modifiers*: Jolk distinguishes Value Stability (constant) from structural constraints (final) and instance-level stability (stable), utilising public defaults for types and methods to maximise Structural Density—reflecting the industrial reality of 80%—while enforcing Encapsulation through a private default for fields; however, Meta Constants permit direct access through Import Lenses.
+*Modifiers*: Jolk distinguishes structural constraints (`final`) from value stability (`constant`) and instance-level stability (`stable`), utilising `public` defaults for types and methods to maximise structural density—reflecting the industrial reality of 80%—while enforcing encapsulation through a `private` default for fields; however, meta constants permit direct access through import lenses.
 
 ## Heritage & Foundation
 
@@ -1114,6 +1106,8 @@ The jolc compiler achieves shim-less integration by using the compile-time refle
 *Receiver Retention*: while the behavior is identical to Smalltalk's ergonomics, Receiver Retention is a sanitization layer designed to preserve the "message-passing soul" of the language when operating as a "polite citizen" within the procedural constraints of the Java Virtual Machine
 
 *Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the Visibility and Variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[14], Ruby[15] and Perl[16].
+
+*Extension*: While the syntax borrows from the ergonomics of Dart, the semantics are more Lisp-centric.
 
 ---
 
@@ -1546,6 +1540,10 @@ The Tolk compiler reconciles fluid syntactic messages with rigid JVM performance
 
 When interacting with Java libraries, the Tolk compiler employs Guided Unboxing. If a Java method expects a primitive int, Jolk passes the raw value; if it expects a java.lang.Integer object, the compiler handles the boxing transparently.
 
+**Identity Erasure**
+
+Identity Erasure (Total Scalar Replacement) is the primary optimization for Intrinsics. When the Tolk Engine identifies a numeric or boolean identity that does not escape its lexical scope, the "object" is shattered, and the header is stripped, leaving only raw 64-bit data in the registers.
+
 **Universal Message Resolution**
 
 Jolk achieves full Java compatibility by acting as a "semantic envoy" that maps its message-centric philosophy onto the high-performance substrate of the Java Virtual Machine (JVM). Rather than replacing the Java ecosystem, it choreographs it through *Direct Type Aliasing*. This mechanism maps operators like `+` to internal method names and uses JVM Attributes for annotations, while kernel types like `String` and `Int` serve as direct aliases for their JVM counterparts. To maintain stability and ensure seamless interoperation with enterprise libraries, Jolk retains standard angle bracket notation for generics and strictly adheres to the JVM’s type erasure model.
@@ -1644,15 +1642,15 @@ Regardless of whether the outcome is a named synthetic variable or an anonymous 
 
 ### The Self-Return Contract
 
-The _Jolk_ environment manages terminal states through the _Self-Return Contract_, an architecture verified by the _VoidPathDetector_ that ensures expression-oriented ergonomics remain compatible with the statement-bound JVM. It employs a tiered strategy to distinguish between local path closure and global flow control.
+The Jolk environment manages terminal states through the *Self-Return Contract*, an architecture that ensures expression-oriented ergonomics remain compatible with the statement-bound JVM. It employs a tiered strategy to distinguish between local path closure and global flow control.
 
-*   _Automatic Return Injection_: For _Inlined Paths_, the compiler identifies any _Structural Void_—a local path without an explicit exit—and injects a `return self;` statement. This deterministic injection eliminates "Missing Return" errors and reinforces a fluent API. During _Static Flattening_, the compiler merges the closure's logic directly into the parent method, converting returns into native JVM jump instructions to remove object allocation overhead.
+* *Synthezised Return*: For *Inlined Paths*, the compiler identifies any *Structural Void*—a local path without an explicit exit—and injects a `^ self;` statement. This deterministic injection reinforces a fluent API.
 
-*   _Non-Local Returns**: For _Escaping Paths_, a _Reified Closure_ can trigger a `^` return to exit its _Home Context_ rather than its immediate stack frame. This is achieved via a "tunneling" effect—a controlled stack unwinding that bypasses intermediate frames—allowing functional pipelines to dictate imperative control flow across disparate call stacks.
+* *Non-Local Returns*: For *Escaping Paths*, a *Reified Closure* can trigger a `^` return to exit its *Home Context* rather than its immediate stack frame. This is achieved via a "tunneling" effect—a controlled stack unwinding that bypasses intermediate frames—allowing functional pipelines to dictate imperative control flow across disparate call stacks.
 
-Full _Control Flow Analysis (CFA)_ resolves non-deterministic exit points like exceptions. If a guaranteed terminal state cannot be determined, a `NonTerminalPathError` terminates compilation, ensuring that explicit developer intervention with `^` is required only where the fluid messaging paradigm reaches its structural limit.
+* *Control Flow Analysis* resolves non-deterministic exit points like exceptions. If a guaranteed terminal state cannot be determined, a compilation error is listed, ensuring that explicit developer intervention with `^` is required only where the fluid messaging paradigm reaches its structural limit.
 
-To avoid the "Procedural Dead End" of Java `void` methods, the Tolk compiler applies the _Receiver Retention_ protocol. When a Jolk object interacts with a Java method that returns `void`, the compiler uses _Semantic Flattening_ to manipulate the JVM operand stack directly. By emitting a `DUP` instruction before the call, it duplicates the receiver's reference. After the `void` method call completes—leaving the stack empty—the duplicated reference remains, ensuring `self` is implicitly returned. This sanitisation at the _Metaboundary_ preserves the continuous message flow of Jolk's fluent API, even when interacting with procedural Java code.
+To avoid the "Procedural Dead End" of Java `void` methods, the Tolk compiler applies the *Receiver Retention* protocol. When a Jolk object interacts with a Java method that returns `void`, the compiler uses semantic flattening to manipulate the JVM operand stack directly. By emitting a `DUP` instruction before the call, it duplicates the receiver's reference. After the `void` method call completes—leaving the stack empty—the duplicated reference remains, ensuring `self` is implicitly returned. This sanitisation at the *Metaboundary* preserves the continuous message flow of Jolk's fluent API, even when interacting with procedural Java code.
 
 ### The Reified Block and the Architecture of Closure Projection
 
@@ -1848,7 +1846,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **Deterministic Omission**: The mechanism where the absence of a factual result is treated as a predictable signal, allowing the engine to prune execution branches without triggering structural failure.  
 **Fluid Messaging**: A keyword-less computational model where logic and arithmetic are implemented as formal message sends rather than hardcoded procedural keywords.  
 **Guided Coercion**: The active, type-aware alignment of differing numerical identities to a common protocol, requiring explicit guidance (e.g., `#asInt`) for any lossy transition.  
-**Identity Congruence**: The architectural mandate ensuring a singular logical representation for all entities—including complex objects, primitives, and absence—regardless of their physical storage format.  
+**Identity Congruence**: The singular logical representation for all entities—including complex objects, primitives, and absence—by aligning the abstract identity defined in the Manuscript with the physical representation of the substrate.
 **Identity Erasure**: A performance strategy where the engine physically strips away object structures and headers at the machine level, replacing them with raw CPU registers or bit-patterns.  
 **Identity Restitution**: A metaboundary protocol that "lifts" raw JVM `null` pointers into the `Nothing` singleton to ensure they can safely receive messages.  
 **Industrial Sovereignty**: The state where a language maintains absolute authority over its execution path and memory layout, ensuring intent is never compromised by the "inference fog" of external frameworks.  

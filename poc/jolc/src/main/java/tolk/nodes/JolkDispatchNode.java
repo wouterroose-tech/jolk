@@ -333,6 +333,13 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     @Specialization
     protected Object doThrowable(VirtualFrame frame, Throwable receiver, String selector, Object[] arguments, 
                                @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+        if ("throw".equals(selector)) {
+            if (arguments.length != 0) {
+                throw new RuntimeException("The instance #throw selector does not accept arguments. Use the meta Exception #throw(message) instead.");
+            }
+            JolkExceptionExtension.throwException(receiver);
+            return JolkNothing.INSTANCE;
+        }
         try {
             Object result = interop.invokeMember(receiver, selector, arguments);
             return lift(result);
@@ -464,7 +471,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return switch (member) {
             case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
                  "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
-                 "throw", "?", "? :", "?!", "?! :" -> true;
+                 "?", "? :", "?!", "?! :" -> true;
             default -> false;
         };
     }
@@ -613,12 +620,6 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                         return receiver;
                     }
                     return receiver;
-                }
-                case "throw" -> {
-                    if (receiver instanceof Throwable t) {
-                        JolkExceptionExtension.throwException(t);
-                    }
-                    throw new RuntimeException("The #throw selector can only be invoked on Throwable identities.");
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);

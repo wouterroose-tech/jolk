@@ -1,6 +1,8 @@
 package tolk.runtime;
 
 import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+
 import java.util.HashMap;
 
 /**
@@ -28,6 +30,18 @@ public class JolkExceptionExtension {
             JolkArchetype.CLASS, 
             new HashMap<>() // instance members are handled by Interop/Throwable
         );
+
+        // #throw -> Bridges the identity into the JVM's unwinding mechanism.
+        EXCEPTION_TYPE.registerInstanceMethod("throw", new JolkBuiltinMethod() {
+            @Override
+            public Object execute(Object[] args) throws ArityException, UnsupportedTypeException {
+                if (args.length != 1) throw ArityException.create(1, 1, args.length);
+                if (args[0] instanceof Throwable t) {
+                    throwException(t);
+                }
+                throw new RuntimeException("The #throw selector can only be invoked on Throwable identities.");
+            }
+        });
 
         // meta #throw(message) -> Triggers a RuntimeException
         EXCEPTION_TYPE.registerMetaMethod("throw", new JolkBuiltinMethod() {

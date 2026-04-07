@@ -40,7 +40,7 @@ public final class JolkMetaClass implements TruffleObject {
     public static final Set<String> INTRINSIC_MEMBERS = Set.of(
         "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
         "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
-        "throw", "?", "? :", "?!", "?! :"
+        "?", "? :", "?!", "?! :"
     );
 
     public final String name;
@@ -524,10 +524,6 @@ public final class JolkMetaClass implements TruffleObject {
                         return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
                     }
                     return receiver;
-                }
-                case "throw" -> {
-                    if (receiver instanceof Throwable t) JolkExceptionExtension.throwException(t);
-                    throw new RuntimeException("The #throw selector can only be invoked on Throwable identities.");
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);

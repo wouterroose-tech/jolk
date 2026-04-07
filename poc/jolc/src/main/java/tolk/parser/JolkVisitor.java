@@ -13,6 +13,8 @@ import tolk.grammar.jolkBaseVisitor;
 import tolk.language.JolkLanguage;
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.grammar.jolkParser;
+import tolk.nodes.JolkArithmeticNodeGen;
+import tolk.nodes.JolkComparisonNode;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkBlockNode;
 import tolk.nodes.JolkReadEnvironmentNode;
@@ -558,7 +560,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.term().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.term(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = new JolkComparisonNode(left, op, right);
         }
         return left;
     }
@@ -569,7 +571,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.factor().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.factor(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkArithmeticNodeGen.create(op, left, right);
         }
         return left;
     }
@@ -580,7 +582,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.unary().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.unary(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkArithmeticNodeGen.create(op, left, right);
         }
         return left;
     }
@@ -601,7 +603,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.powOp() != null) {
             String op = ctx.powOp().getText();
             JolkNode right = visit(ctx.unary());
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkArithmeticNodeGen.create(op, left, right);
         }
         if (ctx.NULL_COALESCE() != null) {
             // Lazy Evaluation: The fallback expression must be wrapped in a closure.

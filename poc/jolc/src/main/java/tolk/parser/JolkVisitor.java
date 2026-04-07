@@ -18,6 +18,8 @@ import tolk.nodes.JolkComparisonNode;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkBlockNode;
 import tolk.nodes.JolkReadEnvironmentNode;
+import tolk.nodes.JolkLogicalNodeGen;
+import tolk.nodes.JolkUnaryNodeGen;
 import tolk.nodes.JolkReadTypeNode;
 import tolk.nodes.JolkReturnNode;
 import tolk.nodes.JolkClosureNode;
@@ -486,7 +488,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.logic_and().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.logic_and(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkLogicalNodeGen.create(op, right, left);
         }
         return left;
     }
@@ -497,7 +499,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.inclusive_or().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.inclusive_or(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkLogicalNodeGen.create(op, right, left);
         }
         return left;
     }
@@ -594,7 +596,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         }
         String op = ctx.getChild(0).getText();
         JolkNode operand = visit(ctx.unary());
-        return new JolkMessageSendNode(operand, op, new JolkNode[0]);
+        return JolkUnaryNodeGen.create(op, operand);
     }
 
     @Override

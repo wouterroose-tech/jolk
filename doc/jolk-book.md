@@ -683,7 +683,7 @@ In practice, the operator eliminates the syntactic density of manual identity ch
 	result = data != null ? data : defaultJoMoo;
 	result = data ?? defaultJoMoo;
 
-This feature is fundamental to the _Self-Return Contract_. It guarantees that a message chain yields a valid terminal state even when intermediate lookups fail. By anchoring ergonomic fluidity to this identity-check, the developer ensures that every logical path concludes with a valid object, satisfying the requirements of the _VoidPathDetector_ without the need for redundant imperative guards.
+This feature is fundamental to the *Self-Return Contract*. It guarantees that a message chain yields a valid terminal state even when intermediate lookups fail. By anchoring ergonomic fluidity to this identity-check, the developer ensures that every logical path concludes with a valid object, satisfying the requirements of the _VoidPathDetector_ without the need for redundant imperative guards.
 
 ### Operator Overloading
 
@@ -758,6 +758,16 @@ The `#case` selector acts as a logic gate that evaluates a closure only if the r
 
 Pattern Matching results in a `Match<T>` to drive logic flow through a message chain, whereas `Optional<T>` is used to represent the state of a value that may be absent over time..
 
+### Return & Self-return contract
+
+Jolk’s return rule is a hybrid architectural model. At its core, the language employs the caret symbol (`^`) for explicit returns, ensuring type safety and allowing for early exits. For Self-returning methods, because `Self` (PascalCase) is a dynamic, context-aware reference to the current type definition, the mapping ensures that methods are automatically subclass-safe. The language reinforces its Semantic Casing rules, where the type identity (`Self`) naturally governs the return of the instance (`self`).
+
+For closures and logic blocks, Jolk adheres to the principle of Implicit Expression Evaluation. The last expression in any block is automatically returned as its result, allowing control-flow structures to function as value-yielding expressions. These closure returns are designed for intuitive flow control through Non-Local Returns, allowing a Jolk closure to "reach out" and command its defining method to finish immediately. This makes functional patterns—such as custom search blocks—feel significantly more natural.
+
+In Jolk, the Signature Fence establishes the lexical boundary for this behaviour: when a method omits a return type, the Tolk compiler classifies it as a Command and enforces an implicit return of `self`, sustaining a "Fluent by Default" architecture. Conversely, Query Methods with explicit return types, such as `Int` or `String`, require the mandatory use of the Return Operator (`^`). If execution reaches the end of such a block without a caret, the semantic analyser raises a type mismatch error.
+
+By combining these rules—explicit carets, implicit self-returns, the Self alias, and block-level evaluation—Jolk achieves a "Keyword-Lean Flow" that remains semantically clear while strictly adhering to its unified messaging model.
+
 ### Exceptions
 
 While Jolk utilizes the standard Java Exception hierarchy, it eliminates checked exceptions. Following the design of languages like Kotlin[10], Jolk does not force the developer to catch exceptions, allowing them to propagate through the call hierarchy. In Jolk, exception handling is implemented through unified message passing rather than procedural keywords like `try`, `catch`, or `throw`. This approach treats error handling as a library feature where logic is executed by sending messages to closures. Closure is a primitive kernel class with provides `#catch`, `#finally` methods.
@@ -798,16 +808,6 @@ For code that must execute regardless of whether an error occurred, Jolk uses th
     [ file #open(fileName) ]  
         #catch [ IOException e -> ... ]  
         #finally [ file #close ]
-
-### Return
-
-Jolk’s return rule is a hybrid architectural model. At its core, the language employs the caret symbol (`^`) for explicit returns, ensuring type safety and allowing for early exits. For Self-returning methods, because `Self` (PascalCase) is a dynamic, context-aware reference to the current type definition, the mapping ensures that methods are automatically subclass-safe. The language reinforces its Semantic Casing rules, where the type identity (`Self`) naturally governs the return of the instance (`self`).
-
-For closures and logic blocks, Jolk adheres to the principle of Implicit Expression Evaluation. The last expression in any block is automatically returned as its result, allowing control-flow structures to function as value-yielding expressions. These closure returns are designed for intuitive flow control through Non-Local Returns, allowing a Jolk closure to "reach out" and command its defining method to finish immediately. This makes functional patterns—such as custom search blocks—feel significantly more natural.
-
-In Jolk, the Signature Fence establishes the lexical boundary for this behaviour: when a method omits a return type, the Tolk compiler classifies it as a Command and enforces an implicit return of `self`, sustaining a "Fluent by Default" architecture. Conversely, Query Methods with explicit return types, such as `Int` or `String`, require the mandatory use of the Return Operator (`^`). If execution reaches the end of such a block without a caret, the semantic analyser raises a type mismatch error.
-
-By combining these rules—explicit carets, implicit self-returns, the Self alias, and block-level evaluation—Jolk achieves a "Keyword-Lean Flow" that remains semantically clear while strictly adhering to its unified messaging model.
 
 ## Reflection & Meta-programming
 
@@ -1630,15 +1630,15 @@ Jolk creation methods transpile directly into standard Java `<init>` methods. Th
 
 ### Ternary Expression Projection
 
-The projection of a ternary expression in _Jolk_ is governed by _Structural Displacement_, necessitated by the divergence between Jolk’s expression-oriented grammar and the statement-bound nature of the JVM. This deterministic transformation ensures the preservation of side-effects through _Statement Lifting_.
+The projection of a ternary expression in Jolk is governed by *Structural Displacement*, necessitated by the divergence between Jolk’s expression-oriented grammar and the statement-bound nature of the JVM. This deterministic transformation ensures the preservation of side-effects through *Statement Lifting*.
 
-In an assignment context, such as `Closure b = c ? [a; b] : [b; a]`, the visitor performs _Variable Promotion_. It lifts the declaration of the identifier `b` and converts the ternary into a standard `if-else` block, where the final expression of each Jolk branch is promoted to an explicit assignment. For complex nesting, such as `a = (c ? [x] : [y]) + z`, the transpiler implements _Synthetic Variable Injection_. By generating a named intermediate variable, such as `_tmp1`, to capture the branch result before the addition occurs, the transpiler bridges the gap between fluid ergonomics and rigid Java structure, adding a specific slot to the Java method scope.
+In an assignment context, such as `Closure b = c ? [a; b] : [b; a]`, the visitor performs *Variable Promotion*. It lifts the declaration of the identifier `b` and converts the ternary into a standard `if-else` block, where the final expression of each Jolk branch is promoted to an explicit assignment. For complex nesting, such as `a = (c ? [x] : [y]) + z`, the transpiler implements *Synthetic Variable Injection*. By generating a named intermediate variable, such as `_tmp1`, to capture the branch result before the addition occurs, the transpiler bridges the gap between fluid ergonomics and rigid Java structure, adding a specific slot to the Java method scope.
 
-The direct-to-bytecode compiler achieves higher _structural density_ by bypassing named intermediate storage in favour of the JVM Operand Stack. During the evaluation of `a = (c ? [x] : [y]) + z`, the compiler treats the ternary not as a statement to be unrolled, but as a sequence of jump and push operations. The condition `c` triggers a branch via `ifeq` or `goto` instructions; regardless of the path taken, the resulting value is pushed directly onto the operand stack. The subsequent loading of `z` and the execution of the addition occur on these stack-resident values. This _Direct Projection_ maintains high structural density by treating the stack as a continuous, anonymous buffer for intermediate results, operating strictly within the stack height limit.
+The direct-to-bytecode compiler achieves higher *structural density* by bypassing named intermediate storage in favour of the JVM Operand Stack. During the evaluation of `a = (c ? [x] : [y]) + z`, the compiler treats the ternary not as a statement to be unrolled, but as a sequence of jump and push operations. The condition `c` triggers a branch via `ifeq` or `goto` instructions; regardless of the path taken, the resulting value is pushed directly onto the operand stack. The subsequent loading of `z` and the execution of the addition occur on these stack-resident values. This *Direct Projection* maintains high structural density by treating the stack as a continuous, anonymous buffer for intermediate results, operating strictly within the stack height limit.
 
-The _VoidPathDetector_ ensures a unified terminal state across both strategies. In a return context, such as `^ c ? [a] : [b]`, the transpiler applies _Return Promotion_, prefixing each lifted branch with a Java `return` keyword within the generated `if-else` structure. Conversely, the compiler ensures that the appropriate return instruction, such as `ireturn` or `areturn`, immediately follows the stack resolution. While the transpiler must re-assemble a split expression into multiple lines of source, the compiler simply executes the final operation on the stack head.
+The *VoidPathDetector* ensures a unified terminal state across both strategies. In a return context, such as `^ c ? [a] : [b]`, the transpiler applies *Return Promotion*, prefixing each lifted branch with a Java `return` keyword within the generated `if-else` structure. Conversely, the compiler ensures that the appropriate return instruction, such as `ireturn` or `areturn`, immediately follows the stack resolution. While the transpiler must re-assemble a split expression into multiple lines of source, the compiler simply executes the final operation on the stack head.
 
-Regardless of whether the outcome is a named synthetic variable or an anonymous stack transition, the transformation remains a strictly mechanical mapping of the _Abstract Syntax Tree_, ensuring the _Self-Return Contract_ is satisfied in every architectural context.
+Regardless of whether the outcome is a named synthetic variable or an anonymous stack transition, the transformation remains a strictly mechanical mapping of the *Abstract Syntax Tree*, ensuring the *Self-Return Contract* is satisfied in every architectural context.
 
 ### The Self-Return Contract
 

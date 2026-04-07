@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /// ## JolkExpressionNothingTest
 ///
 ///
-public class JolcExpressionTest extends JolcTestBase {
+public class JolkExpressionTest extends JolcTestBase {
 
     @Test
     void testExpression() {

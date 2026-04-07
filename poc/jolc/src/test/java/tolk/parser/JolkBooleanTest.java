@@ -12,7 +12,7 @@ import tolk.JolcTestBase;
 ///
 /// Verifies the language's behavior when defining Boolean fields.
 ///
-public class JolcBooleanTest extends JolcTestBase {
+public class JolkBooleanTest extends JolcTestBase {
 
     @Test
     void testBooleanField() {

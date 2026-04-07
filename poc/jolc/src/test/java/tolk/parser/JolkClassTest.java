@@ -13,7 +13,7 @@ import tolk.JolcTestBase;
 /// 
 /// Verifies the language's behavior when defining classes.
 ///
-public class JolcClassTest extends JolcTestBase {
+public class JolkClassTest extends JolcTestBase {
 
     private Value eval(String className, String source) {
         // Value is a polyglot representation of the result of evaluating the class definition.

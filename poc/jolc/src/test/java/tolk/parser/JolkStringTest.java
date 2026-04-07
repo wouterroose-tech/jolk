@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
 
-public class JolcStringTest extends JolcTestBase {
+public class JolkStringTest extends JolcTestBase {
 
     @Test
     void testStringField() {

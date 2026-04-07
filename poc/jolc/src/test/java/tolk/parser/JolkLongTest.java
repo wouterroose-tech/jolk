@@ -12,7 +12,7 @@ import tolk.JolcTestBase;
 /// 
 /// Verifies the language's behavior when defining Long fields.
 ///
-public class JolcLongTest extends JolcTestBase {
+public class JolkLongTest extends JolcTestBase {
 
     @Test
     void testLongField() {

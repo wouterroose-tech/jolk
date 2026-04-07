@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /// ## JolkExpressionNothingTest
 ///
 ///
-public class JolcExpressionNothingTest extends JolcTestBase {
+public class JolkNothingTest extends JolcTestBase {
 
     private Value eval(String className, String source) {
         Value result = eval(source);

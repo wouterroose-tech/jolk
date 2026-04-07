@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
 
-public class JolcMetaProtocolTest extends JolcTestBase {
+public class JolkMetaProtocolTest extends JolcTestBase {
 
     
     @Test

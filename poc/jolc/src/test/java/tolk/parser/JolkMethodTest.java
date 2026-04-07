@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
 
-public class JolcMethodTest  extends JolcTestBase {
+public class JolkMethodTest  extends JolcTestBase {
 
     @Test
     void testMethodWithParameter() {

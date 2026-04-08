@@ -588,17 +588,22 @@ In Jolk, class-level constants are reified as Meta-Objects within the Meta-Objec
 	    // ...  
 	}
 
-In Jolk, the use of a meta field acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains Semantic Integrity by preserving the link to the parent object (e.g., Math) while removing the syntactic noise of explicit message selectors. Though it appears as a bare variable, the Tolk engine recognises the lens and applies Semantic Flattening, "intrinsifying" the access.
 
-	// symbolic directive for
+**Meta Projection (&)**
+
+In Jolk, the use of a meta field *Projection* through the `&` / `using meta` acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains Semantic Integrity by preserving the link to the parent object (e.g., Math) while removing the syntactic noise of explicit message selectors. Though it appears as a bare variable, the Tolk engine recognises the lens and applies Semantic Flattening, "intrinsifying" the access.
+
+This mechanism allows for a more fluid and less verbose syntax when accessing meta-level constants or methods. For example, instead of repeatedly using `Math #PI`, you can project `PI` into the local scope, allowing direct access as `PI`. The compiler ensures that this syntactic sugar is resolved efficiently, often by inlining the access to the original meta-object. This approach enhances readability and reduces cognitive load, especially in code that frequently references meta-level entities.
+
+	// Symbolic directive for projecting a meta constant
 	// using meta jolk.lang.Math.PI;
 	& jolk.lang.Math.PI;
 
-    // standard message send  
-    x = 2 * r * Math #PI;
+	// Standard message send
+	x = 2 * r * Math #PI;
 
-    // lens approach  
-    x = 2 * r * PI;
+	// Lens approach (after projection)
+	x = 2 * r * PI;
 
 **Assignment**
 

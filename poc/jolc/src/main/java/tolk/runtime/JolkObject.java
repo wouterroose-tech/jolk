@@ -103,10 +103,7 @@ public class JolkObject implements TruffleObject {
 
     @ExportMessage
     public Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
-        Set<String> keys = new HashSet<>(metaClass.getInstanceMemberKeys());
-        // Add all intrinsic members from the ObjectExtension
-        keys.addAll(JolkMetaClass.INTRINSIC_MEMBERS);
-        return new JolkMemberNames(keys.toArray(new String[0]));
+        return metaClass.getInstanceMemberNames();
     }
 
     @ExportMessage

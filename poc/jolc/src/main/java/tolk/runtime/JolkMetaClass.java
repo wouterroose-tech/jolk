@@ -63,9 +63,16 @@ public final class JolkMetaClass implements TruffleObject {
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
     // Meta-level field storage
+    private final int totalMetaFieldCount;
     private final Map<String, Integer> metaFieldIndices;
     private final Object[] metaFieldValues;
     private final Map<String, JolkMetaFieldAccessor> metaAccessorCache;
+
+    // Optimized consolidated registries
+    private final Map<String, Object> instanceRegistry;
+    private final Map<String, Object> metaRegistry;
+    private JolkMemberNames cachedInstanceMemberNames;
+    private JolkMemberNames cachedMetaMemberNames;
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
         this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>());
@@ -110,17 +117,44 @@ public final class JolkMetaClass implements TruffleObject {
         this.metaFieldIndices = new HashMap<>();
         this.metaAccessorCache = new HashMap<>();
         
-        this.metaFieldValues = new Object[metaFields.size()];
-        int mIdx = 0;
+        // Consolidated Meta-Field Layout: Support inheritance by stacking slots
+        int currentMetaIndex = (superclass != null) ? superclass.getMetaFieldCount() : 0;
         for (String fieldName : metaFields.keySet()) {
-            metaFieldIndices.put(fieldName, mIdx++);
-            // Auto-register meta field accessors in the meta-member map
-            if (!this.metaMembers.containsKey(fieldName)) {
+            metaFieldIndices.put(fieldName, currentMetaIndex++);
+            // Force registration of accessors to ensure placeholders from preamble are replaced.
+            // This ensures the Consolidated Registry contains invocable accessors rather than placeholders.
+            Object existing = this.metaMembers.get(fieldName);
+            if (existing == null || existing == JolkNothing.INSTANCE) {
                 this.metaMembers.put(fieldName, getMetaAccessor(fieldName, false));
             }
         }
+        this.totalMetaFieldCount = currentMetaIndex;
+        this.metaFieldValues = new Object[totalMetaFieldCount];
 
         initializeDefaultValues();
+
+        // --- Performance Optimization: Consolidated Flattened Registry ---
+
+        // 1. Instance Stratum Flattening
+        this.instanceRegistry = new HashMap<>();
+        if (superclass != null) {
+            this.instanceRegistry.putAll(superclass.instanceRegistry);
+        }
+        for (String fieldName : this.instanceFields.keySet()) {
+            this.instanceRegistry.put(fieldName, accessorCache.get(fieldName));
+        }
+        this.instanceRegistry.putAll(this.instanceMembers);
+
+        // 2. Meta Stratum Flattening (Industrial O(1) Lookup)
+        this.metaRegistry = new HashMap<>();
+        if (superclass != null) {
+            this.metaRegistry.putAll(superclass.metaRegistry);
+        }
+        this.metaRegistry.putAll(this.metaMembers);
+
+        // 3. Cache Initialization
+        refreshInstanceMemberCache();
+        refreshMetaMemberCache();
     }
 
     /**
@@ -128,17 +162,22 @@ public final class JolkMetaClass implements TruffleObject {
      * 
      * Registers a Java-implemented method for instances of this type.
      */
-    public void registerInstanceMethod(String name, JolkBuiltinMethod method) {
+    public void registerInstanceMethod(String name, Object method) {
         this.instanceMembers.put(name, method);
+        // Ensure the consolidated registry and interop caches stay in sync
+        this.instanceRegistry.put(name, method);
+        refreshInstanceMemberCache();
     }
 
     /**
      * ### registerMetaMethod
      * 
-     * Registers a Java-implemented method for the type itself (the MetaClass).
+     * Registers a Java-implemented method for the type itself (the MetaClass) and refreshes caches.
      */
-    public void registerMetaMethod(String name, JolkBuiltinMethod method) {
+    public void registerMetaMethod(String name, Object method) {
         this.metaMembers.put(name, method);
+        this.metaRegistry.put(name, method);
+        refreshMetaMemberCache();
     }
 
     /**
@@ -184,6 +223,8 @@ public final class JolkMetaClass implements TruffleObject {
     public void initializeDefaultValues() {
         if (superclass != null) {
             System.arraycopy(superclass.defaultFieldValues, 0, this.defaultFieldValues, 0, superclass.totalFieldCount);
+            // Synchronize inherited meta-fields
+            System.arraycopy(superclass.metaFieldValues, 0, this.metaFieldValues, 0, superclass.totalMetaFieldCount);
         }
         for (Map.Entry<String, Object> entry : instanceFields.entrySet()) {
             Integer idx = fieldIndices.get(entry.getKey());
@@ -192,7 +233,7 @@ public final class JolkMetaClass implements TruffleObject {
                 // Robust Hint Detection: Resolve the type name from MetaClasses, Strings, or Host Classes.
                 String hint = resolveTypeHint(val);
 
-                if (isLongHint(hint) || (val == null && entry.getKey().equalsIgnoreCase("id"))) {
+                if (isLongHint(hint) || ((val == null || val == JolkNothing.INSTANCE) && entry.getKey().equalsIgnoreCase("id"))) {
                     this.defaultFieldValues[idx] = 0L;
                 } else if (isBooleanHint(hint)) {
                     this.defaultFieldValues[idx] = false;
@@ -218,7 +259,7 @@ public final class JolkMetaClass implements TruffleObject {
                 // Otherwise, it's a concrete initializer value.
                 if (val instanceof JolkMetaClass || val instanceof String) {
                     String hint = resolveTypeHint(val);
-                    if (isLongHint(hint) || (val == null && entry.getKey().equalsIgnoreCase("id"))) {
+                    if (isLongHint(hint) || ((val == null || val == JolkNothing.INSTANCE) && entry.getKey().equalsIgnoreCase("id"))) {
                         this.metaFieldValues[idx] = 0L;
                     } else if (isBooleanHint(hint)) {
                         this.metaFieldValues[idx] = false;
@@ -362,21 +403,14 @@ public final class JolkMetaClass implements TruffleObject {
     @ExportMessage
     public Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
         // This returns the members of the META-OBJECT, not the instance.
-        Set<String> keys = new HashSet<>(metaMembers.keySet());
-        keys.add("new");
-        keys.add("name");
-        keys.add("superclass");
-        keys.add("isInstance");
-        // Consistent with JolkObject: Classes are polite JoMoos
-        keys.addAll(INTRINSIC_MEMBERS);
-        return new JolkMemberNames(keys.toArray(new String[0]));
+        return cachedMetaMemberNames;
     }
 
     @ExportMessage
     public boolean isMemberInvocable(String member) {
         InteropLibrary interop = InteropLibrary.getUncached();
-        // 1. Local Meta-Members (Methods and Field Accessors)
-        if (metaMembers.containsKey(member)) return true;
+        // 1. Consolidated Meta-Members (Methods and Field Accessors)
+        if (metaRegistry.containsKey(member)) return true;
         
         // 2. Local Meta-Intrinsics (Identity properties should not delegate)
         if (switch (member) {
@@ -385,16 +419,14 @@ public final class JolkMetaClass implements TruffleObject {
         }) return true;
 
         if (isObjectIntrinsic(member)) return true;
-
-        // 3. Meta-Inheritance check
-        return superclass != null && interop.isMemberInvocable(superclass, member);
+        return false;
     }
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         InteropLibrary interop = InteropLibrary.getUncached();
-        if (metaMembers.containsKey(member)) {
-            Object memberObj = metaMembers.get(member);
+        if (metaRegistry.containsKey(member)) {
+            Object memberObj = metaRegistry.get(member);
             // Jolk Protocol: Every method call must include the receiver as the first argument.
             Object[] metaArguments = new Object[arguments.length + 1];
             metaArguments[0] = this;
@@ -426,15 +458,6 @@ public final class JolkMetaClass implements TruffleObject {
             case "isInstance":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return isMetaInstance(arguments[0]);
-        }
-
-        // 3. Meta-Inheritance: Delegate to superclass meta-stratum
-        if (superclass != null) {
-            try {
-                return interop.invokeMember(superclass, member, arguments);
-            } catch (UnknownIdentifierException e) {
-                // fall through to generic protocol
-            }
         }
 
         // 2. Jolk Object Protocol: Classes are polite JoMoos
@@ -598,35 +621,17 @@ public final class JolkMetaClass implements TruffleObject {
      * @return `true` if an instance member with that name exists.
      */
     public boolean hasInstanceMember(String name) {
-        String sanitized = name;
-        return instanceMembers.containsKey(sanitized) || instanceFields.containsKey(sanitized);
+        return instanceRegistry.containsKey(name);
     }
 
     /**
      * ## lookupInstanceMember
      *
-     * Looks up an instance member (e.g., a `JolkClosure`) by name.
+     * Looks up an instance member (method or field accessor) by name.
+     * This is O(1) and non-recursive due to hierarchy flattening.
      */
     public Object lookupInstanceMember(String name) {
-        String sanitized = name;
-        Object member = instanceMembers.get(sanitized);
-        if (member != null) {
-            // If the parser erroneously puts the field definition in instanceMembers,
-            // we detect the duplicate and prefer the synthetic accessor.
-            if (instanceFields.containsKey(sanitized) && instanceFields.get(sanitized) == member) {
-                return accessorCache.get(sanitized);
-            }
-            return member;
-        }
-        // Virtual Field Strategy: Hydrate a specialized node if the field exists.
-        if (instanceFields.containsKey(sanitized)) {
-            return accessorCache.get(sanitized);
-        }
-        // Recurse up the hierarchy
-        if (superclass != null) {
-            return superclass.lookupInstanceMember(sanitized);
-        }
-        return null;
+        return instanceRegistry.get(name);
     }
 
     /**
@@ -637,7 +642,7 @@ public final class JolkMetaClass implements TruffleObject {
      * sent to the MetaClass itself.
      */
     public Object lookupMetaMember(String name) {
-        return metaMembers.get(name);
+        return metaRegistry.get(name);
     }
 
     /**
@@ -646,9 +651,35 @@ public final class JolkMetaClass implements TruffleObject {
      * @return A set of all instance member names.
      */
     public Set<String> getInstanceMemberKeys() {
-        Set<String> keys = new HashSet<>(instanceMembers.keySet());
-        keys.addAll(instanceFields.keySet());
-        return keys;
+        return instanceRegistry.keySet();
+    }
+
+    /**
+     * Returns the pre-calculated Interop member collection for instances.
+     */
+    public JolkMemberNames getInstanceMemberNames() {
+        return cachedInstanceMemberNames;
+    }
+
+    public int getMetaFieldCount() {
+        return totalMetaFieldCount;
+    }
+
+    private void refreshInstanceMemberCache() {
+        Set<String> instanceKeys = new HashSet<>(instanceRegistry.keySet());
+        instanceKeys.addAll(INTRINSIC_MEMBERS);
+        this.cachedInstanceMemberNames = new JolkMemberNames(instanceKeys.toArray(new String[0]));
+    }
+
+    private void refreshMetaMemberCache() {
+        Set<String> metaKeys = new HashSet<>(this.metaRegistry.keySet());
+        // Standard Meta-Object Protocol members
+        metaKeys.add("new");
+        metaKeys.add("name");
+        metaKeys.add("superclass");
+        metaKeys.add("isInstance");
+        metaKeys.addAll(INTRINSIC_MEMBERS);
+        this.cachedMetaMemberNames = new JolkMemberNames(metaKeys.toArray(new String[0]));
     }
 
     public int getFieldCount() {

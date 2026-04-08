@@ -96,7 +96,11 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 if (node instanceof JolkMethodNode) {
                     runtimeMetaMembers.put(entry.getKey(), JolkNothing.INSTANCE);
                 } else if (node instanceof JolkFieldNode) {
-                    runtimeMetaFields.put(entry.getKey(), JolkNothing.INSTANCE);
+                    JolkFieldNode field = (JolkFieldNode) node;
+                    // Pass the type name as a hint for correct default value initialization
+                    runtimeMetaFields.put(entry.getKey(), (field.getInitializer() instanceof JolkEmptyNode) ? field.getTypeName() : JolkNothing.INSTANCE);
+                    // Ensure the key exists in the member map to reserve the slot for the accessor
+                    runtimeMetaMembers.put(entry.getKey(), JolkNothing.INSTANCE);
                 }
             }
         }
@@ -119,7 +123,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         for (Map.Entry<String, List<JolkMethodNode>> entry : instanceMethods.entrySet()) {
             List<JolkMethodNode> methods = entry.getValue();
             // Create a dispatcher if multiple arities exist for the same name
-            runtimeMembers.put(entry.getKey(), createMethodClosure(lang, methods));
+            newMetaClass.registerInstanceMethod(entry.getKey(), createMethodClosure(lang, methods));
         }
 
         for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
@@ -143,17 +147,21 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             for (JolkNode node : nodes) {
                 if (node instanceof JolkMethodNode m) methods.add(m);
                 else if (node instanceof JolkFieldNode field) {
-                    JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
-                    Object initialValue = lift(root.getCallTarget().call());
-                    runtimeMetaFields.put(name, initialValue);
-                    // Note: In case of field/method collision, we store the field accessor separately
-                    // so the dispatcher can include it.
-                    runtimeMetaMembers.put(name, newMetaClass.getMetaAccessor(name, field.isStable()));
+                    if (!(field.getInitializer() instanceof JolkEmptyNode)) {
+                        JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
+                        Object initialValue = lift(root.getCallTarget().call());
+                        // Update both the storage slot and the map hint for initializeDefaultValues
+                        newMetaClass.setMetaFieldValue(name, initialValue);
+                        runtimeMetaFields.put(name, initialValue);
+                    }
+                    // Note: In case of field/method collision, we register the accessor so the 
+                    // optimized registry can resolve it.
+                    newMetaClass.registerMetaMethod(name, newMetaClass.getMetaAccessor(name, field.isStable()));
                 }
             }
             
             if (!methods.isEmpty()) {
-                runtimeMetaMembers.put(name, createMethodClosure(lang, methods));
+                newMetaClass.registerMetaMethod(name, createMethodClosure(lang, methods));
             }
         }
 

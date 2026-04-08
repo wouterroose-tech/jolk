@@ -159,7 +159,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
      */
     @Specialization(guards = "isControlFlow(selector)")
     protected Object doControlFlow(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
-                                  @Cached IndirectCallNode callNode,
+                                  @Shared("callNode") @Cached IndirectCallNode callNode,
                                   @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         
         // Shared Absence Logic: Handles Nothing, null, and empty Matches
@@ -228,7 +228,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
      */
     @Specialization(guards = "isTimes(selector)")
     protected Object doTimes(VirtualFrame frame, Long receiver, String selector, Object[] arguments,
-                             @Cached IndirectCallNode callNode) {
+                             @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure closure) {
             for (long i = 0; i < receiver; i++) {
                 // Pass the environment and the current iteration number to the closure.
@@ -241,75 +241,6 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
 
     protected static boolean isTimes(String selector) {
         return "times".equals(selector);
-    }
-
-    /**
-     * ### Fast Path for Closure-based Control Flow
-     * 
-     * Handles #ifPresent and #ifEmpty by directly executing the JolkClosure via 
-     * an IndirectCallNode. This enables Truffle to perform inlining of the 
-     * closure body, significantly improving performance compared to interop execution.
-     */
-    @Specialization(guards = "isControlFlow(selector)")
-    protected Object doControlFlow(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
-                                  @Cached IndirectCallNode callNode,
-                                  @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
-        
-        // Shared Absence Logic: Handles Nothing, null, and empty Matches
-        boolean isAbsent = (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver));
-        if (receiver instanceof JolkMatch match) {
-            isAbsent = !match.isPresent();
-        }
-
-        if (arguments.length == 1 && arguments[0] instanceof JolkClosure closure) {
-            switch (selector) {
-                case "ifPresent" -> {
-                    if (!isAbsent) {
-                        Object val = (receiver instanceof JolkMatch match) ? match.getValue() : receiver;
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment(), lift(val)}));
-                    }
-                    return JolkNothing.INSTANCE;
-                }
-                case "ifEmpty" -> {
-                    if (isAbsent) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
-                    }
-                    return receiver;
-                }
-                case "??" -> {
-                    if (isAbsent) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
-                    }
-                    return receiver;
-                }
-                case "?" -> {
-                    if (receiver instanceof Boolean b && b) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
-                    }
-                    return receiver;
-                }
-                case "?!" -> {
-                    if (receiver instanceof Boolean b && !b) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
-                    }
-                    return receiver;
-                }
-            }
-        }
-
-        // Atomic Ternary with two branches: (condition ? [then] : [else])
-        if (arguments.length == 2 && arguments[0] instanceof JolkClosure thenC && arguments[1] instanceof JolkClosure elseC) {
-            if ("? :".equals(selector) && receiver instanceof Boolean b) {
-                JolkClosure branch = b ? thenC : elseC;
-                return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
-            }
-            if ("?! :".equals(selector) && receiver instanceof Boolean b) {
-                JolkClosure branch = !b ? thenC : elseC;
-                return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
-            }
-        }
-        // Fallback to boundary for non-closure arguments or unhandled control flow
-        return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
     }
 
     protected static boolean isControlFlow(String selector) {

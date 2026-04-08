@@ -9,7 +9,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import java.util.HashMap;
-import java.util.Collections;
 import java.util.Map;
 
 /// # JolkNothing

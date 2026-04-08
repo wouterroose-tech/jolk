@@ -26,6 +26,31 @@ public class JolkClosure implements TruffleObject {
         this.environment = environment;
     }
 
+    /**
+     * ### getCallTarget
+     * 
+     * Provides access to the executable target for optimized execution via 
+     * {@link com.oracle.truffle.api.nodes.IndirectCallNode}.
+     */
+    public CallTarget getCallTarget() {
+        return callTarget;
+    }
+
+    /**
+     * ### getEnvironment
+     * 
+     * Returns the captured lexical environment. This is passed as the first 
+     * argument to the call target during execution.
+     */
+    public MaterializedFrame getEnvironment() {
+        return environment;
+    }
+
+    @Override
+    public String toString() {
+        return "[Closure]";
+    }
+
     @ExportMessage
     public boolean isExecutable() {
         return true;

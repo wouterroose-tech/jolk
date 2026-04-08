@@ -27,6 +27,6 @@ public class JolkMessageSendNode extends JolkExpressionNode {
             args[i] = argumentNodes[i].executeGeneric(frame);
         }
         
-        return dispatchNode.executeDispatch(frame, receiver, selector, args);
+        return dispatchNode.execute(frame, receiver, selector, args);
     }
 }

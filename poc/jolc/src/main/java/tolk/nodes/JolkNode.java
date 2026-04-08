@@ -38,7 +38,7 @@ public abstract class JolkNode extends Node {
      * @param value The value to lift.
      * @return The lifted value (either the original object or JolkNothing.INSTANCE).
      */
-    protected final static Object lift(Object value) {
+    public final static Object lift(Object value) {
         if (value == null || InteropLibrary.getUncached().isNull(value)) return JolkNothing.INSTANCE;
         if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof com.oracle.truffle.api.interop.TruffleObject) {
             return value;
@@ -53,7 +53,7 @@ public abstract class JolkNode extends Node {
      * This is used when a Jolk built-in or dispatch needs to operate on the 
      * raw Java object behind a Truffle host wrapper.
      */
-    protected final static Object unwrap(Object value) {
+    public final static Object unwrap(Object value) {
         var env = tolk.language.JolkLanguage.getContext().env;
         if (env.isHostObject(value)) {
             return env.asHostObject(value);

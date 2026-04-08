@@ -1,6 +1,7 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -41,13 +42,15 @@ public abstract class JolkUnaryNode extends JolkExpressionNode {
 
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object value) {
-        return dispatchNode.executeDispatch(frame, value, operator, new Object[0]);
+        return dispatchNode.execute(frame, value, operator, new Object[0]);
     }
 
+    @Idempotent
     protected boolean isNot() {
         return "!".equals(operator);
     }
 
+    @Idempotent
     protected boolean isNegation() {
         return "-".equals(operator);
     }

@@ -37,10 +37,10 @@ public class JolkComparisonNode extends JolkExpressionNode {
                 case "<" -> l1 < l2;
                 case ">=" -> l1 >= l2;
                 case "<=" -> l1 <= l2;
-                default -> dispatchNode.executeDispatch(frame, left, operator, new Object[]{right});
+                default -> dispatchNode.execute(frame, left, operator, new Object[]{right});
             };
         }
 
-        return dispatchNode.executeDispatch(frame, left, operator, new Object[]{right});
+        return dispatchNode.execute(frame, left, operator, new Object[]{right});
     }
 }

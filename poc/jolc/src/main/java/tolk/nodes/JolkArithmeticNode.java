@@ -60,6 +60,6 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      */
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object left, Object right) {
-        return dispatchNode.executeDispatch(frame, left, operator, new Object[]{right});
+        return dispatchNode.execute(frame, left, operator, new Object[]{right});
     }
 }

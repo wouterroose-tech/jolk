@@ -1,6 +1,9 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.GenerateInline;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Shared;
+
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkMatch;
@@ -9,8 +12,9 @@ import tolk.runtime.JolkExceptionExtension;
 import tolk.runtime.JolkArrayExtension;
 
 import java.util.List;
+import tolk.runtime.JolkClosure;
+import com.oracle.truffle.api.nodes.IndirectCallNode;
 import java.util.ArrayList;
-import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import tolk.runtime.JolkLongExtension;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -91,7 +95,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// @param selector The message name (selector).
     /// @param arguments The arguments passed to the message.
     /// @return The result of the message send.
-    public abstract Object executeDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments);
+    public abstract Object execute(VirtualFrame frame, Object receiver, String selector, Object[] arguments);
 
     /**
      * This method is not intended to be called directly on a JolkDispatchNode.
@@ -100,7 +104,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
      */
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
-        throw new UnsupportedOperationException("JolkDispatchNode is not designed to be executed directly via executeGeneric(VirtualFrame). Use executeDispatch instead.");
+        throw new UnsupportedOperationException("JolkDispatchNode is not designed to be executed directly via executeGeneric(VirtualFrame). Use execute(...) instead.");
     }
 
     @Specialization(guards = "isNothing(receiver)")
@@ -144,6 +148,82 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
 
     protected JolkNothing getNothing() {
         return JolkNothing.INSTANCE;
+    }
+
+    /**
+     * ### Fast Path for Closure-based Control Flow
+     * 
+     * Handles #ifPresent and #ifEmpty by directly executing the JolkClosure via 
+     * an IndirectCallNode. This enables Truffle to perform inlining of the 
+     * closure body, significantly improving performance compared to interop execution.
+     */
+    @Specialization(guards = "isControlFlow(selector)")
+    protected Object doControlFlow(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
+                                  @Cached IndirectCallNode callNode,
+                                  @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+        
+        // Shared Absence Logic: Handles Nothing, null, and empty Matches
+        boolean isAbsent = (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver));
+        if (receiver instanceof JolkMatch match) {
+            isAbsent = !match.isPresent();
+        }
+
+        if (arguments.length == 1 && arguments[0] instanceof JolkClosure closure) {
+            switch (selector) {
+                case "ifPresent" -> {
+                    if (!isAbsent) {
+                        Object val = (receiver instanceof JolkMatch match) ? match.getValue() : receiver;
+                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment(), lift(val)}));
+                    }
+                    return JolkNothing.INSTANCE;
+                }
+                case "ifEmpty" -> {
+                    if (isAbsent) {
+                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                    }
+                    return receiver;
+                }
+                case "??" -> {
+                    if (isAbsent) {
+                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                    }
+                    return receiver;
+                }
+                case "?" -> {
+                    if (receiver instanceof Boolean b && b) {
+                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                    }
+                    return receiver;
+                }
+                case "?!" -> {
+                    if (receiver instanceof Boolean b && !b) {
+                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                    }
+                    return receiver;
+                }
+            }
+        }
+
+        // Atomic Ternary with two branches: (condition ? [then] : [else])
+        if (arguments.length == 2 && arguments[0] instanceof JolkClosure thenC && arguments[1] instanceof JolkClosure elseC) {
+            if ("? :".equals(selector) && receiver instanceof Boolean b) {
+                JolkClosure branch = b ? thenC : elseC;
+                return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
+            }
+            if ("?! :".equals(selector) && receiver instanceof Boolean b) {
+                JolkClosure branch = !b ? thenC : elseC;
+                return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
+            }
+        }
+        // Fallback to boundary for non-closure arguments or unhandled control flow
+        return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+    }
+
+    protected static boolean isControlFlow(String selector) {
+        return switch (selector) {
+            case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :" -> true;
+            default -> false;
+        };
     }
 
     /// ### Fast Path for Longs
@@ -367,7 +447,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// 
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doLong", "doBoolean", "doString", "doList", "doThrowable"}, limit = "3") // Maps to executeDispatch
+    @Specialization(replaces = {"doNothing", "doControlFlow", "doLong", "doBoolean", "doString", "doList", "doThrowable"}, limit = "3") // Maps to execute
     protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         InteropLibrary uncached = InteropLibrary.getUncached();

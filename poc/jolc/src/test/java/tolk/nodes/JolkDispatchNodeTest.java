@@ -35,7 +35,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
-            Object result = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "someArbitraryMessage", new Object[0]);
+            Object result = dispatchNode.execute(null, JolkNothing.INSTANCE, "someArbitraryMessage", new Object[0]);
             assertEquals(JolkNothing.INSTANCE, result, "JolkNothing should absorb any message and return itself.");
         } finally {
             context.leave();
@@ -56,7 +56,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         @Override
         public Object executeGeneric(VirtualFrame frame) {
             // Use the first argument passed to the CallTarget as the receiver for dispatch.
-            return dispatchNode.executeDispatch(frame, frame.getArguments()[0], "get", new Object[0]);
+            return dispatchNode.execute(frame, frame.getArguments()[0], "get", new Object[0]);
         }
     }
 
@@ -111,15 +111,15 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             Long receiver = 42L;
 
             // Test an intrinsic like "hash"
-            Object result = dispatchNode.executeDispatch(null, receiver, "hash", new Object[0]);
+            Object result = dispatchNode.execute(null, receiver, "hash", new Object[0]);
             assertEquals(42L, result, "Long intrinsic 'hash' should be handled correctly.");
 
             // Test an intrinsic like "isPresent"
-            result = dispatchNode.executeDispatch(null, receiver, "isPresent", new Object[0]);
+            result = dispatchNode.execute(null, receiver, "isPresent", new Object[0]);
             assertEquals(true, result, "Long intrinsic 'isPresent' should return true.");
 
             // Test a non-intrinsic (should fall through to interop or JolkLong members)
-            result = dispatchNode.executeDispatch(null, receiver, "+", new Object[]{10L});
+            result = dispatchNode.execute(null, receiver, "+", new Object[]{10L});
             assertEquals(52L, result, "Long '+' operator should be handled by JolkLong members.");
         } finally {
             context.leave();
@@ -138,15 +138,15 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             Boolean receiver = true;
 
             // Test an intrinsic like "isPresent"
-            Object result = dispatchNode.executeDispatch(null, receiver, "isPresent", new Object[0]);
+            Object result = dispatchNode.execute(null, receiver, "isPresent", new Object[0]);
             assertEquals(true, result, "Boolean intrinsic 'isPresent' should return true.");
 
             // Test an intrinsic like "isEmpty"
-            result = dispatchNode.executeDispatch(null, receiver, "isEmpty", new Object[0]);
+            result = dispatchNode.execute(null, receiver, "isEmpty", new Object[0]);
             assertEquals(false, result, "Boolean intrinsic 'isEmpty' should return false.");
 
             // Test a non-intrinsic (should fall through to interop or JolkBoolean members)
-            result = dispatchNode.executeDispatch(null, receiver, "!", new Object[0]);
+            result = dispatchNode.execute(null, receiver, "!", new Object[0]);
             assertEquals(false, result, "Boolean '!' operator should be handled by JolkBoolean members.");
         } finally {
             context.leave();
@@ -165,15 +165,15 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             String receiver = "hello";
 
             // Jolk-native extension: #matches
-            Object matches = dispatchNode.executeDispatch(null, receiver, "matches", new Object[]{"h.*o"});
+            Object matches = dispatchNode.execute(null, receiver, "matches", new Object[]{"h.*o"});
             assertEquals(true, matches, "JolkString 'matches' method should work correctly.");
 
             // Host fallback: #length
-            Object len = dispatchNode.executeDispatch(null, receiver, "length", new Object[0]);
+            Object len = dispatchNode.execute(null, receiver, "length", new Object[0]);
             assertEquals(5L, len);
 
             // Host fallback: #toUpperCase
-            Object upper = dispatchNode.executeDispatch(null, receiver, "toUpperCase", new Object[0]);
+            Object upper = dispatchNode.execute(null, receiver, "toUpperCase", new Object[0]);
             assertEquals("HELLO", upper);
         } finally {
             context.leave();
@@ -192,7 +192,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             Class<?> receiver = java.lang.StringBuilder.class;
 
             // Jolk Unified Messaging: Class #new(...) maps to instantiation
-            Object rawInstance = dispatchNode.executeDispatch(null, receiver, "new", new Object[]{"init"});
+            Object rawInstance = dispatchNode.execute(null, receiver, "new", new Object[]{"init"});
             Value instance = context.asValue(rawInstance); // Wrap in Polyglot Value
             assertTrue(instance.isHostObject(), "Result should be a host object.");
             assertEquals("init", instance.asHostObject().toString()); // Unwrap to StringBuilder for assertions
@@ -215,10 +215,10 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             Long b = Long.valueOf(1000);
 
             assertNotSame(a, b);
-            Object isEqual = dispatchNode.executeDispatch(null, a, "==", new Object[]{b});
+            Object isEqual = dispatchNode.execute(null, a, "==", new Object[]{b});
             assertEquals(true, isEqual, "Large Longs must match by value in the Jolk Identity protocol.");
             
-            Object isEquivalent = dispatchNode.executeDispatch(null, "str", "~~", new Object[]{new String("str")});
+            Object isEquivalent = dispatchNode.execute(null, "str", "~~", new Object[]{new String("str")});
             assertEquals(true, isEquivalent, "Strings must match by value equivalence.");
         } finally {
             context.leave();
@@ -237,20 +237,20 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             
             // ?? (Null-coalesce)
             JolkClosure fallback = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode("fallback"), "test", false).getCallTarget());
-            Object res1 = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "??", new Object[]{fallback});
+            Object res1 = dispatchNode.execute(null, JolkNothing.INSTANCE, "??", new Object[]{fallback});
             assertEquals("fallback", res1);
 
-            Object res2 = dispatchNode.executeDispatch(null, "present", "??", new Object[]{fallback});
+            Object res2 = dispatchNode.execute(null, "present", "??", new Object[]{fallback});
             assertEquals("present", res2);
 
             // ? : (Ternary)
             JolkClosure thenBranch = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode(1L), "test", false).getCallTarget());
             JolkClosure elseBranch = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode(2L), "test", false).getCallTarget());
             
-            Object branchT = dispatchNode.executeDispatch(null, true, "? :", new Object[]{thenBranch, elseBranch});
+            Object branchT = dispatchNode.execute(null, true, "? :", new Object[]{thenBranch, elseBranch});
             assertEquals(1L, branchT);
             
-            Object branchF = dispatchNode.executeDispatch(null, false, "? :", new Object[]{thenBranch, elseBranch});
+            Object branchF = dispatchNode.execute(null, false, "? :", new Object[]{thenBranch, elseBranch});
             assertEquals(2L, branchF);
         } finally {
             context.leave();
@@ -283,10 +283,10 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
             // Verify raw nulls from members are restituted to Nothing
-            Object result = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "hash", new Object[0]);
+            Object result = dispatchNode.execute(null, JolkNothing.INSTANCE, "hash", new Object[0]);
             assertEquals(0L, result);
 
-            Object str = dispatchNode.executeDispatch(null, JolkNothing.INSTANCE, "toString", new Object[0]);
+            Object str = dispatchNode.execute(null, JolkNothing.INSTANCE, "toString", new Object[0]);
             assertEquals("null", str); // JolkNothing.toString() returns the string "null"
         } finally {
             context.leave();

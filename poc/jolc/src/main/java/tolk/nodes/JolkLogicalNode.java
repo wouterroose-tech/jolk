@@ -46,7 +46,7 @@ public abstract class JolkLogicalNode extends JolkExpressionNode {
         }
         
         // Fallback for right-hand side if it's not a boolean (Custom Messaging)
-        return dispatchNode.executeDispatch(frame, left, operator, new Object[]{right});
+        return dispatchNode.execute(frame, left, operator, new Object[]{right});
     }
 
     /**
@@ -59,6 +59,6 @@ public abstract class JolkLogicalNode extends JolkExpressionNode {
 
         // Dispatch for custom operator overloading
         Object right = rightNode.executeGeneric(frame);
-        return dispatchNode.executeDispatch(frame, left, operator, new Object[]{right});
+        return dispatchNode.execute(frame, left, operator, new Object[]{right});
     }
 }

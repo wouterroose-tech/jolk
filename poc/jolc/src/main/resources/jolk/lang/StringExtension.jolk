@@ -1,9 +1,10 @@
 ~ jolk.lang;
 
-/// # StringExtension
+/// # String
 ///
-/// Augments the native JVM String class with the Jolk messaging protocol.
-/// This ensures that any String is a "polite citizen" in a Jolk message chain.
+/// The **String** extension augments the native JVM String class with the 
+/// Jolk messaging protocol. This ensures that any String is a "polite citizen" 
+/// in a Jolk message chain.
 ///
 /// @author Wouter Roose
 

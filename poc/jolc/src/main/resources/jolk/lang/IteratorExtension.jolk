@@ -4,6 +4,8 @@
 ///
 /// The **Iterator** extension bridges the Java iteration substrate with 
 /// Jolk's message-passing semantics.
+///
+/// @author Wouter Roose
 
 @Intrinsic
 extension IteratorExtension<T> on java.util.Iterator<T> {

@@ -1,17 +1,16 @@
 ~ jolk.lang;
 
-/// # ObjectExtension
+/// # Object
 ///
-/// Augments [java.lang.Object] with the **Jolk Core Protocol**.
+/// The **Object** extension augments [java.lang.Object] with the **Jolk Core Protocol**.
 ///
 /// This extension is the foundation of **Shim-less Integration**. By augmenting the 
 /// root of the Java hierarchy, every JVM identity automatically participates in 
 /// Jolk's unified messaging model without requiring proxies or wrappers.
 ///
-/// jolk.lang.Object is the base class for all Jolk objects, and this extension ensures
-/// that all Java objects also conform to Jolk's core messaging protocol. 
-/// This allows for seamless interoperability between Jolk and Java code, 
-/// enabling Jolk's powerful features to be used with any Java object.
+/// This ensures that all Java objects conform to Jolk's core messaging protocol, 
+/// allowing for seamless interoperability and enabling Jolk's powerful features 
+/// to be used with any Java object.
 ///
 /// @author Wouter Roose
 

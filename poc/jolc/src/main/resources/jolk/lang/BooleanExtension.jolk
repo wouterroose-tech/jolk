@@ -1,7 +1,7 @@
 ~ jolk.lang;
 
 /// # Boolean
-
+///
 /// The **Boolean** type represents a logical identity with two possible states: 
 /// `true` and `false`. In Jolk, Booleans are first-class identities that 
 /// encapsulate branching behavior and logical operations through message passing.
@@ -9,6 +9,9 @@
 /// This archetype replaces traditional control-flow keywords (if/else) with 
 /// polymorphic dispatch, allowing boolean singletons to decide which execution 
 /// paths to realize.
+/// 
+/// This extension implements the **Core Boolean Protocol**, 
+/// projecting Jolk branching logic onto the Java Virtual Machine.
 ///
 /// @author Wouter Roose
 

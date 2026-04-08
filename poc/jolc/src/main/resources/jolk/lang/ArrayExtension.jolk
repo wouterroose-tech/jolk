@@ -2,8 +2,14 @@
 
 /// # Array
 ///
-/// The **Array** extension bridges the Java List substrate with
-/// Jolk's message-passing semantics, providing common collection operations.
+/// The **Array** extension augments [java.util.List] with the **Jolk Core Protocol**.
+///
+/// The Array is a linear continuum of ordered facts, serving as the primary vehicle 
+/// for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—
+/// the universal symbol for the matrix and vector. This liberates the symbol to serve 
+/// a singular purpose: the variadic birth of an ordered sequence. Every element is 
+/// indexed by its position. It responds to positional messages (`#at`) and stream-based 
+/// protocol (`#map`).
 ///
 /// @author Wouter Roose
 
@@ -29,5 +35,5 @@ extension ArrayExtension<T> on java.util.List<T> {
     /// @param element element to be stored at the specified position
     /// @return self
     Self put(Int index, T element) { }
-
+    
 }

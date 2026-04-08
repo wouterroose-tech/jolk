@@ -915,70 +915,20 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitStatements(jolkParser.StatementsContext ctx) {
         // Preserves all statements by wrapping them in a BlockNode.
         List<JolkNode> nodes = new ArrayList<>();
-        for (var stmtCtx : ctx.statement()) {
-            nodes.add(visit(stmtCtx));
+        List<jolkParser.StatementContext> statements = ctx.statement();
+        for (int i = 0; i < statements.size(); i++) {
+            JolkNode node = visit(statements.get(i));
+            nodes.add(node);
+            
+            if (node instanceof JolkReturnNode && i < statements.size() - 1) {
+                // ### Dead Code Detection
+                // In alignment with Jolk's 'Engineered Integrity', unreachable code 
+                // is treated as a terminal semantic error rather than being silently ignored.
+                int line = statements.get(i + 1).getStart().getLine();
+                throw new RuntimeException("Jolk Semantic Error [line " + line + "]: Unreachable code detected after return terminal (^).");
+            }
         }
         return new JolkBlockNode(nodes.toArray(new JolkNode[0]));
-    }
-
-    @Override
-    public JolkNode visitReturnOp(jolkParser.ReturnOpContext ctx) {
-        // TODO: Implementation for returnOp (^)
-        return super.visitReturnOp(ctx);
-    }
-
-    @Override
-    public JolkNode visitCondOp(jolkParser.CondOpContext ctx) {
-        // TODO: Implementation for condOp (?, ?!)
-        return super.visitCondOp(ctx);
-    }
-
-    @Override
-    public JolkNode visitOperator(jolkParser.OperatorContext ctx) {
-        // TODO: Implementation for generic operator mapping
-        return super.visitOperator(ctx);
-    }
-
-    @Override
-    public JolkNode visitPayload(jolkParser.PayloadContext ctx) {
-        // TODO: Implementation for message payload (arguments or closure)
-        return super.visitPayload(ctx);
-    }
-
-    @Override
-    public JolkNode visitArguments(jolkParser.ArgumentsContext ctx) {
-        // TODO: Implementation for parenthesized arguments
-        return super.visitArguments(ctx);
-    }
-
-    @Override
-    public JolkNode visitStat_params(jolkParser.Stat_paramsContext ctx) {
-        // TODO: Implementation for closure parameter block
-        return super.visitStat_params(ctx);
-    }
-
-    @Override
-    public JolkNode visitInferred_params(jolkParser.Inferred_paramsContext ctx) {
-        // TODO: Implementation for inferred closure parameters
-        return super.visitInferred_params(ctx);
-    }
-
-    @Override
-    public JolkNode visitSelector(jolkParser.SelectorContext ctx) {
-        // TODO: Implementation for selector anchor (#)
-        return super.visitSelector(ctx);
-    }
-
-    @Override
-    public JolkNode visitSelf_type(jolkParser.Self_typeContext ctx) {
-        // TODO: Implementation for Self type resolution
-        return super.visitSelf_type(ctx);
-    }
-
-    @Override
-    public JolkNode visitSelf_instance(jolkParser.Self_instanceContext ctx) {
-        // TODO: Implementation for self instance resolution
-        return super.visitSelf_instance(ctx);
     }
 
     // --- Parameter Parsing Helpers ---

@@ -34,6 +34,26 @@ extension ArrayExtension<T> on java.util.List<T> {
     /// @param index The index of the element to replace.
     /// @param element element to be stored at the specified position
     /// @return self
-    Self put(Int index, T element) { }
+    Self put(Long index, T element) { }
+
+    /// ## map
+    /// Projects every identity in the array into a new form via the mapper closure.
+    ///
+    /// - **mapper**: A Closure that receives an element and returns a new value.
+    /// - **Returns**: A new Array containing the results of the projection.
+    <R> Array<R> map(Closure<R> mapper) { }
+
+    /// ## filter
+    /// Prunes the array, retaining only the identities that satisfy the predicate.
+    ///
+    /// - **predicate**: A Closure that returns true for elements to keep.
+    /// - **Returns**: A new Array containing the filtered subset.
+    Array<T> filter(Closure<Boolean> predicate) { }
+
+    /// Returns whether any elements of this array match the provided predicate.
+    ///
+    /// @param predicate a non-interfering, stateless predicate to apply to each element
+    /// @return true if any elements match the predicate, otherwise false
+    Boolean anyMatch(Predicate<? super T> predicate) { }
     
 }

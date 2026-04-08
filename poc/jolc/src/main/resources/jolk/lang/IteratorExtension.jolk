@@ -26,4 +26,19 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
     Self forEach(Closure<T> action) {
         [ self #hasNext ] #while [ action #apply(self #next) ]
     }
+
+    /// ## map
+    /// Returns a new Iterator that lazily projects elements via the mapper closure.
+    ///
+    /// - **mapper**: A Closure that defines the transformation.
+    /// - **Returns**: A transformed Iterator.
+    <R> Iterator<R> map(Closure<R> mapper) { }
+
+    /// ## filter
+    /// Returns a new Iterator that lazily skips elements that do not satisfy 
+    /// the predicate.
+    ///
+    /// - **predicate**: A Closure returning true for elements to include.
+    /// - **Returns**: A filtered Iterator.
+    Iterator<T> filter(Closure<Boolean> predicate) { }
 }

@@ -3,20 +3,8 @@ package tolk.nodes;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
-
-import tolk.runtime.JolkNothing;
-import tolk.runtime.JolkStringExtension;
-import tolk.runtime.JolkMatch;
-import tolk.runtime.JolkBooleanExtension;
-import tolk.runtime.JolkExceptionExtension;
-import tolk.runtime.JolkArrayExtension;
-
-import java.util.List;
-import tolk.runtime.JolkClosure;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-import java.util.ArrayList;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import tolk.runtime.JolkLongExtension;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -25,8 +13,21 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import tolk.runtime.JolkMetaClass;
 import com.oracle.truffle.api.library.CachedLibrary;
+
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+
+import tolk.runtime.JolkClosure;
+import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkStringExtension;
+import tolk.runtime.JolkMatch;
+import tolk.runtime.JolkBooleanExtension;
+import tolk.runtime.JolkExceptionExtension;
+import tolk.runtime.JolkArrayExtension;
+import tolk.runtime.JolkLongExtension;
+import tolk.runtime.JolkMetaClass;
 
 /// # JolkDispatchNode
 ///
@@ -106,6 +107,35 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     public final Object executeGeneric(VirtualFrame frame) {
         throw new UnsupportedOperationException("JolkDispatchNode is not designed to be executed directly via executeGeneric(VirtualFrame). Use execute(...) instead.");
     }
+
+    // --- Helper methods for @Specialization guards ---
+    protected static boolean isTimes(String selector) {
+        return "times".equals(selector);
+    }
+
+    protected static boolean isFilter(String selector) {
+        return "filter".equals(selector);
+    }
+
+    protected static boolean isForEach(String selector) {
+        return "forEach".equals(selector);
+    }
+
+    protected static boolean isMap(String selector) {
+        return "map".equals(selector);
+    }
+
+    protected static boolean isAnyMatch(String selector) {
+        return "anyMatch".equals(selector);
+    }
+
+    protected static boolean isControlFlow(String selector) {
+        return switch (selector) {
+            case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :" -> true;
+            default -> false;
+        };
+    }
+    // --- End of Helper methods ---
 
     @Specialization(guards = "isNothing(receiver)")
     protected Object doNothing(VirtualFrame frame, Object receiver, String selector, Object[] arguments, 
@@ -239,15 +269,112 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         throw new RuntimeException("Invalid arguments for #times: expected a single closure.");
     }
 
-    protected static boolean isTimes(String selector) {
-        return "times".equals(selector);
+    /**
+     * ### Fast Path for Array Filtering (#filter)
+     * 
+     * Implements the filter protocol for java.util.List. The IndirectCallNode 
+     * allows Graal to inline the predicate logic.
+     */
+    @Specialization(guards = "isFilter(selector)")
+    protected Object doFilter(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
+                              @Shared("callNode") @Cached IndirectCallNode callNode) {
+        if (arguments.length == 1 && arguments[0] instanceof JolkClosure predicate) {
+            List<Object> result = new ArrayList<>();
+            for (Object item : receiver) {
+                Object matches = callNode.call(predicate.getCallTarget(), new Object[]{predicate.getEnvironment(), lift(item)});
+                if (matches instanceof Boolean b && b) {
+                    result.add(lift(item));
+                }
+            }
+            return lift(result);
+        }
+        throw new RuntimeException("Invalid arguments for #filter: expected a single closure.");
     }
 
-    protected static boolean isControlFlow(String selector) {
-        return switch (selector) {
-            case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :" -> true;
-            default -> false;
-        };
+    /**
+     * ### Fast Path for Array AnyMatch (#anyMatch)
+     * 
+     * Implements the anyMatch protocol for java.util.List. The IndirectCallNode 
+     * allows Graal to inline the predicate logic. It returns true as soon as 
+     * the predicate returns true for any element, otherwise false.
+     */
+    @Specialization(guards = "isAnyMatch(selector)")
+    protected Object doAnyMatch(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
+                                @Shared("callNode") @Cached IndirectCallNode callNode) {
+        if (arguments.length == 1 && arguments[0] instanceof JolkClosure predicate) {
+            for (Object item : receiver) {
+                Object matches = callNode.call(predicate.getCallTarget(), new Object[]{predicate.getEnvironment(), lift(item)});
+                if (matches instanceof Boolean b && b) {
+                    return lift(true); // Found a match, return true
+                }
+            }
+            return lift(false); // No match found
+        }
+        throw new RuntimeException("Invalid arguments for #anyMatch: expected a single closure.");
+    }
+
+    /**
+     * ### Fast Path for Iterator Traversal (#forEach)
+     * 
+     * Projects the kinetic substrate of an Iterator directly into a message-passing 
+     * loop. This is the implementation of the IteratorExtension.
+     */
+    @Specialization(guards = "isForEach(selector)")
+    protected Object doIteratorForEach(VirtualFrame frame, java.util.Iterator<?> receiver, String selector, Object[] arguments,
+                                       @Shared("callNode") @Cached IndirectCallNode callNode) {
+        if (arguments.length == 1 && arguments[0] instanceof JolkClosure action) {
+            while (receiver.hasNext()) {
+                callNode.call(action.getCallTarget(), new Object[]{action.getEnvironment(), lift(receiver.next())});
+            }
+            return JolkNothing.INSTANCE;
+        }
+        throw new RuntimeException("Invalid arguments for #forEach: expected a single closure.");
+    }
+
+    /**
+     * ### Fast Path for Map Iteration (#forEach)
+     * 
+     * Maps the associative archetype to a two-argument closure.
+     */
+    @Specialization(guards = "isForEach(selector)")
+    protected Object doMapForEach(VirtualFrame frame, Map<?, ?> receiver, String selector, Object[] arguments,
+                                  @Shared("callNode") @Cached IndirectCallNode callNode) {
+        if (arguments.length == 1 && arguments[0] instanceof JolkClosure action) {
+            for (Map.Entry<?, ?> entry : receiver.entrySet()) {
+                // Jolk Map #forEach sends (key, value) to the closure
+                callNode.call(action.getCallTarget(), new Object[]{
+                    action.getEnvironment(), 
+                    lift(entry.getKey()), 
+                    lift(entry.getValue())
+                });
+            }
+            return lift(receiver);
+        }
+        throw new RuntimeException("Invalid arguments for #forEach: expected a single closure.");
+    }
+
+    /**
+     * ### Fast Path for Array Projection (#map)
+     * 
+     * Implements the Stream Protocol for java.util.List. While this looks like 
+     * it creates an intermediate list, Graal's Partial Escape Analysis (PEA) 
+     * and Loop Fusion will "boil away" the intermediate allocation when 
+     * messages are chained, resulting in zero-overhead single-pass execution.
+     */
+    @Specialization(guards = "isMap(selector)")
+    protected Object doMap(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
+                           @Shared("callNode") @Cached IndirectCallNode callNode) {
+        if (arguments.length == 1 && arguments[0] instanceof JolkClosure mapper) {
+            List<Object> result = new ArrayList<>(receiver.size());
+            for (Object item : receiver) {
+                // The IndirectCallNode allows Graal to inline the closure logic 
+                // directly into this loop.
+                Object projected = callNode.call(mapper.getCallTarget(), new Object[]{mapper.getEnvironment(), lift(item)});
+                result.add(projected);
+            }
+            return lift(result);
+        }
+        throw new RuntimeException("Invalid arguments for #map: expected a single closure.");
     }
 
     /// ### Fast Path for Longs
@@ -471,7 +598,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     ///
     /// This is the fallback for any object that is not `JolkNothing`. It uses a polymorphic
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
-    @Specialization(replaces = {"doNothing", "doTimes", "doControlFlow", "doLong", "doBoolean", "doString", "doList", "doThrowable"}, limit = "3") // Maps to execute
+    @Specialization(replaces = {"doNothing", "doTimes", "doMap", "doFilter", "doAnyMatch", "doIteratorForEach", "doMapForEach", "doControlFlow", "doLong", "doBoolean", "doString", "doList", "doThrowable"}, limit = "3") // Maps to execute
     protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                 @CachedLibrary("receiver") InteropLibrary interop) {
         InteropLibrary uncached = InteropLibrary.getUncached();
@@ -527,6 +654,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 }
                 
                 try {
+                    // Truffle DSL can sometimes generate ambiguous specializations if two methods
+                    // have the same guard and receiver type. Adding explicit 'replaces'
+                    // annotations helps the DSL resolve this ambiguity, ensuring that
+                    // only one specialization is chosen for a given receiver/selector combination.
                     if (interop.isInstantiable(receiver)) {
                         return lift(interop.instantiate(receiver, arguments));
                     }
@@ -875,9 +1006,11 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // map directly to constructors to support Jolk's object creation protocol.
             if ("new".equals(methodName) && receiver instanceof Class<?> clazz) {
                 for (java.lang.reflect.Constructor<?> c : clazz.getConstructors()) {
-                    if (c.getParameterCount() == unboxed.length) {
+                    Object[] matched = matchArguments(c.getParameterTypes(), c.isVarArgs(), unboxed);
+                    if (matched != null) {
+                        Object[] coerced = coerceArguments(c.getParameterTypes(), matched);
                         try {
-                            return lift(c.newInstance(unboxed));
+                            return lift(c.newInstance(coerced));
                         } catch (Exception e) {
                             // continue to next candidate
                         }
@@ -889,15 +1022,20 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // Allows Jolk to reach native methods on types like String and Long 
             // which are often treated as "memberless" values by standard Interop.
             for (java.lang.reflect.Method m : receiver.getClass().getMethods()) {
-                if (m.getName().equals(methodName) && m.getParameterCount() == unboxed.length) {
-                    try {
-                        return lift(m.invoke(receiver, unboxed));
-                    } catch (Exception e) {
-                        // continue to next candidate
+                if (m.getName().equals(methodName)) {
+                    Object[] matched = matchArguments(m.getParameterTypes(), m.isVarArgs(), unboxed);
+                    if (matched != null) {
+                        Object[] coerced = coerceArguments(m.getParameterTypes(), matched);
+                        try {
+                                return lift(m.invoke(receiver, coerced));
+                        } catch (Exception e) {
+                            // continue to next candidate
+                        }
                     }
                 }
             }
         } catch (SecurityException e) {
+            // Reflection may be restricted in some environments; fail silently to allow other dispatch paths.
         }
         return null;
     }

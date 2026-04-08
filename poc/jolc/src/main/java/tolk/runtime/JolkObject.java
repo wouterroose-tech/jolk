@@ -42,6 +42,8 @@ public class JolkObject implements TruffleObject {
 
     public JolkObject(JolkMetaClass metaClass, Object[] args) {
         this.metaClass = metaClass;
+        // Ensure structural layout is finalized before allocating the state substrate
+        this.metaClass.initializeDefaultValues();
         this.data = new Object[metaClass.getFieldCount()];
         if (args != null && args.length == data.length) {
             System.arraycopy(args, 0, data, 0, data.length);

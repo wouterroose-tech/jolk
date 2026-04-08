@@ -6,6 +6,7 @@ import tolk.runtime.JolkMetaClass; // Assuming JolkMetaClass is used for Jolk-de
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkObject;
 import tolk.runtime.JolkLongExtension;
+import tolk.runtime.JolkMetaClass.JolkMetaClassPlaceholder;
 import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkArrayExtension;
@@ -44,7 +45,14 @@ public class JolkContext {
     }
 
     public void registerClass(JolkMetaClass metaClass) {
-        registeredClasses.put(metaClass.name, metaClass);
+        Object existing = registeredClasses.get(metaClass.name);
+        if (existing instanceof JolkMetaClassPlaceholder placeholder) {
+            // If a placeholder exists, replace it with the actual class.
+            // The placeholder's references will now point to the actual class.
+            placeholder.updatePlaceholder(metaClass);
+        } else {
+            registeredClasses.put(metaClass.name, metaClass);
+        }
     }
 
     /**
@@ -90,6 +98,25 @@ public class JolkContext {
         // This might involve iterating through known packages or a more complex lookup
         // For now, a direct lookup is sufficient.
         return null;
+    }
+
+    /**
+     * Retrieves a defined class, or creates a placeholder if it's a forward reference.
+     * This is crucial for handling superclass resolution when the superclass might be
+     * defined later in the source file.
+     *
+     * @param name The simple or fully qualified name of the class.
+     * @return The JolkMetaClass (real or placeholder) or null if it's a host class that cannot be extended.
+     */
+    public JolkMetaClass getOrCreateClass(String name) {
+        Object found = registeredClasses.get(name);
+        if (found instanceof JolkMetaClass metaClass) {
+            return metaClass;
+        }
+        // If not found or not a JolkMetaClass (e.g., a host class), create a placeholder.
+        JolkMetaClassPlaceholder placeholder = new JolkMetaClassPlaceholder(name);
+        registeredClasses.put(name, placeholder);
+        return placeholder;
     }
 
     // ... other JolkContext methods

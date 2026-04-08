@@ -7,6 +7,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import tolk.language.JolkLanguage;
 import tolk.language.JolkContext;
@@ -83,8 +84,15 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         Map<String, Object> runtimeMetaMembers = new LinkedHashMap<>();
         Map<String, Object> runtimeMetaFields = new LinkedHashMap<>();
 
-        // Resolve superclass identity
-        Object superclass = (superclassName != null) ? context.getDefinedClass(superclassName) : null;
+        JolkMetaClass superMetaClass = null;
+        if (superclassName != null) {
+            // Use getOrCreateClass to handle forward references.
+            // It will return an existing JolkMetaClass or a JolkMetaClassPlaceholder.
+            superMetaClass = context.getOrCreateClass(superclassName);
+            if (superMetaClass == null) {
+                throw new RuntimeException("Superclass not found or cannot be extended: " + superclassName);
+            }
+        }
 
         // Jolk Structural Preamble: Populate keys and hints before MetaClass construction.
         // This ensures the MetaClass calculates the correct 'totalFieldCount' and arity 
@@ -116,33 +124,20 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // Jolk Lifecycle Protocol: Instantiate and Register the Identity BEFORE 
         // populating members (Hydration). This allows methods created during hydration to 
         // resolve the class name via the registry.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, (JolkMetaClass) superclass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
-        
-        context.registerClass(newMetaClass);
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
 
         for (Map.Entry<String, List<JolkMethodNode>> entry : instanceMethods.entrySet()) {
             List<JolkMethodNode> methods = entry.getValue();
-            // Create a dispatcher if multiple arities exist for the same name
-            newMetaClass.registerInstanceMethod(entry.getKey(), createMethodClosure(lang, methods));
-        }
-
-        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
-            JolkFieldNode fieldNode = entry.getValue();
-            if (!(fieldNode.getInitializer() instanceof JolkEmptyNode)) {
-                // Instance field initializers: evaluate the initializer to get the template value.
-                // Note: For the PoC, we evaluate at class-definition time to ensure slots contain values.
-                JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
-                runtimeInstanceFields.put(entry.getKey(), lift(root.getCallTarget().call()));
-            } else {
-                // If no initializer, the type hint was already passed.
-                runtimeInstanceFields.put(entry.getKey(), fieldNode.getTypeName());
-            }
+            JolkClosure closure = createMethodClosure(lang, methods);
+            // BINDING PROTOCOL: Associate super calls with the class identity
+            for (JolkMethodNode m : methods) bindSuperNodes(m.getBody(), newMetaClass);
+            newMetaClass.registerInstanceMethod(entry.getKey(), closure);
         }
 
         for (Map.Entry<String, List<JolkNode>> entry : metaMembers.entrySet()) {
             String name = entry.getKey();
             List<JolkNode> nodes = entry.getValue();
-            List<JolkMethodNode> methods = new java.util.ArrayList<>();
+            List<JolkMethodNode> methods = new ArrayList<>();
             
             for (JolkNode node : nodes) {
                 if (node instanceof JolkMethodNode m) methods.add(m);
@@ -161,14 +156,48 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             }
             
             if (!methods.isEmpty()) {
-                newMetaClass.registerMetaMethod(name, createMethodClosure(lang, methods));
+                JolkClosure closure = createMethodClosure(lang, methods);
+                for (JolkMethodNode m : methods) bindSuperNodes(m.getBody(), newMetaClass);
+                newMetaClass.registerMetaMethod(name, closure);
             }
         }
 
-        // Jolk Lifecycle Protocol: Synchronize structural templates after hydration.
+        // Jolk Lifecycle Protocol: Publish the identity to the context only after
+        // all methods and meta-members are bound. This ensures that any hydration
+        // triggered by forward-references (placeholders) sees the actual closures.
+        context.registerClass(newMetaClass);
+
+        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
+            JolkFieldNode fieldNode = entry.getValue();
+            if (!(fieldNode.getInitializer() instanceof JolkEmptyNode)) {
+                // Instance field initializers: evaluate at class-definition time.
+                // This is now safe because the class is registered and hydrated if needed.
+                JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
+                runtimeInstanceFields.put(entry.getKey(), lift(root.getCallTarget().call()));
+            } else {
+                runtimeInstanceFields.put(entry.getKey(), fieldNode.getTypeName());
+            }
+        }
+
+        // Synchronize defaults one last time to capture evaluated field initializers.
         newMetaClass.initializeDefaultValues();
 
         return newMetaClass;
+    }
+
+    /**
+     * Traverses the method AST to bind all `super` call sites to the current class identity.
+     */
+    private void bindSuperNodes(JolkNode node, JolkMetaClass holderClass) {
+        if (node == null) return;
+        if (node instanceof JolkSuperMessageSendNode superNode) {
+            superNode.setHolderClass(holderClass);
+        }
+        for (com.oracle.truffle.api.nodes.Node child : node.getChildren()) {
+            if (child instanceof JolkNode jolkChild) {
+                bindSuperNodes(jolkChild, holderClass);
+            }
+        }
     }
 
     private JolkClosure createMethodClosure(JolkLanguage lang, List<JolkMethodNode> methods) {

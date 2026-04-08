@@ -9,6 +9,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.nodes.JolkReturnException;
@@ -34,16 +35,16 @@ import java.util.Set;
 ///  @author Wouter Roose
 
 @ExportLibrary(InteropLibrary.class)
-public final class JolkMetaClass implements TruffleObject {
+public class JolkMetaClass implements TruffleObject {
 
     public static final Set<String> INTRINSIC_MEMBERS = Set.of(
-        "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
+        "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
         "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
         "?", "? :", "?!", "?! :"
     );
 
-    public final String name;
-    private final JolkMetaClass superclass;
+    public String name;
+    private JolkMetaClass superclass;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
     private final JolkArchetype archetype;
@@ -56,23 +57,24 @@ public final class JolkMetaClass implements TruffleObject {
     // Cache synthetic accessors to prevent allocation on every lookup
     private final Map<String, JolkSyntheticAccessor> accessorCache;
     // Total number of fields including hierarchy
-    private final int totalFieldCount;
+    private int totalFieldCount;
     // Default field values
-    private final Object[] defaultFieldValues;
+    private Object[] defaultFieldValues;
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
     // Meta-level field storage
-    private final int totalMetaFieldCount;
+    private int totalMetaFieldCount;
     private final Map<String, Integer> metaFieldIndices;
-    private final Object[] metaFieldValues;
+    private Object[] metaFieldValues;
     private final Map<String, JolkMetaFieldAccessor> metaAccessorCache;
 
     // Optimized consolidated registries
-    private final Map<String, Object> instanceRegistry;
-    private final Map<String, Object> metaRegistry;
+    private Map<String, Object> instanceRegistry;
+    private Map<String, Object> metaRegistry;
     private JolkMemberNames cachedInstanceMemberNames;
     private JolkMemberNames cachedMetaMemberNames;
+    private boolean hydrated = false;
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
         this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>());
@@ -102,8 +104,30 @@ public final class JolkMetaClass implements TruffleObject {
         this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.fieldIndices = new HashMap<>();
         this.accessorCache = new HashMap<>();
-        
-        // Calculate field layout: Start after superclass fields to support inheritance
+        this.metaMembers = metaMembers;
+        this.metaFieldIndices = new HashMap<>();
+        this.metaAccessorCache = new HashMap<>();
+    }
+
+    /**
+     * Performs **Late Flattening**.
+     * 
+     * Registries and field layouts are calculated on-demand. This solves forward 
+     * references because a subclass can be created before its superclass is fully 
+     * defined, as long as both are defined before the first message is sent.
+     */
+    protected synchronized void ensureHydrated() {
+        if (hydrated) return;
+        // If this is a placeholder, its hydration will be handled by updatePlaceholder.
+        if (this instanceof JolkMetaClassPlaceholder) {
+            return;
+        }
+        // Ensure superclass is fully hydrated before accessing its members or registries.
+        if (superclass != null) {
+            superclass.ensureHydrated();
+        }
+
+        // 1. Calculate Instance Field Layout
         int currentIndex = (superclass != null) ? superclass.getFieldCount() : 0;
         for (String fieldName : instanceFields.keySet()) {
             fieldIndices.put(fieldName, currentIndex);
@@ -111,48 +135,32 @@ public final class JolkMetaClass implements TruffleObject {
             currentIndex++;
         }
         this.totalFieldCount = currentIndex;
-        
         this.defaultFieldValues = new Object[totalFieldCount];
-        this.metaMembers = metaMembers; // Maintain reference to allow deferred hydration
-        this.metaFieldIndices = new HashMap<>();
-        this.metaAccessorCache = new HashMap<>();
-        
-        // Consolidated Meta-Field Layout: Support inheritance by stacking slots
+
+        // 2. Calculate Meta Field Layout
         int currentMetaIndex = (superclass != null) ? superclass.getMetaFieldCount() : 0;
         for (String fieldName : metaFields.keySet()) {
             metaFieldIndices.put(fieldName, currentMetaIndex++);
-            // Force registration of accessors to ensure placeholders from preamble are replaced.
-            // This ensures the Consolidated Registry contains invocable accessors rather than placeholders.
-            Object existing = this.metaMembers.get(fieldName);
-            if (existing == null || existing == JolkNothing.INSTANCE) {
+            if (this.metaMembers.get(fieldName) == null || this.metaMembers.get(fieldName) == JolkNothing.INSTANCE) {
                 this.metaMembers.put(fieldName, getMetaAccessor(fieldName, false));
             }
         }
         this.totalMetaFieldCount = currentMetaIndex;
         this.metaFieldValues = new Object[totalMetaFieldCount];
 
-        initializeDefaultValues();
-
-        // --- Performance Optimization: Consolidated Flattened Registry ---
-
-        // 1. Instance Stratum Flattening
+        // 3. Consolidate Flattened Registries (Industrial O(1) Lookup)
         this.instanceRegistry = new HashMap<>();
-        if (superclass != null) {
-            this.instanceRegistry.putAll(superclass.instanceRegistry);
-        }
-        for (String fieldName : this.instanceFields.keySet()) {
-            this.instanceRegistry.put(fieldName, accessorCache.get(fieldName));
-        }
-        this.instanceRegistry.putAll(this.instanceMembers);
-
-        // 2. Meta Stratum Flattening (Industrial O(1) Lookup)
         this.metaRegistry = new HashMap<>();
         if (superclass != null) {
+            this.instanceRegistry.putAll(superclass.instanceRegistry);
             this.metaRegistry.putAll(superclass.metaRegistry);
         }
+        for (String fieldName : this.instanceFields.keySet()) this.instanceRegistry.put(fieldName, accessorCache.get(fieldName));
+        this.instanceRegistry.putAll(this.instanceMembers);
         this.metaRegistry.putAll(this.metaMembers);
 
-        // 3. Cache Initialization
+        this.hydrated = true;
+        syncDefaultValues(); // Now safe to call as it's not a placeholder
         refreshInstanceMemberCache();
         refreshMetaMemberCache();
     }
@@ -164,6 +172,7 @@ public final class JolkMetaClass implements TruffleObject {
      */
     public void registerInstanceMethod(String name, Object method) {
         this.instanceMembers.put(name, method);
+        if (!hydrated) return;
         // Ensure the consolidated registry and interop caches stay in sync
         this.instanceRegistry.put(name, method);
         refreshInstanceMemberCache();
@@ -176,6 +185,7 @@ public final class JolkMetaClass implements TruffleObject {
      */
     public void registerMetaMethod(String name, Object method) {
         this.metaMembers.put(name, method);
+        if (!hydrated) return;
         this.metaRegistry.put(name, method);
         refreshMetaMemberCache();
     }
@@ -192,15 +202,23 @@ public final class JolkMetaClass implements TruffleObject {
         return this; // In the PoC, classes are their own meta-identities.
     }
 
+    public JolkMetaClass getSuperclass() {
+        return superclass;
+    }
+
     public Object getMetaFieldValue(int index) {
+        ensureHydrated();
         return metaFieldValues[index];
     }
 
     public void setMetaFieldValue(int index, Object value) {
+        ensureHydrated();
         metaFieldValues[index] = value;
+        if (!hydrated) return; // If still not hydrated (e.g., placeholder), do nothing.
     }
 
     public void setMetaFieldValue(String name, Object value) {
+        ensureHydrated();
         Integer idx = metaFieldIndices.get(name);
         if (idx != null) metaFieldValues[idx] = value;
     }
@@ -220,11 +238,28 @@ public final class JolkMetaClass implements TruffleObject {
      * Re-scans the instanceFields map to establish the template values for new 
      * instances. This is called after the hydration phase in the definition node.
      */
+    /**
+     * ### initializeDefaultValues
+     * 
+     * Public entry point used by the definition node to synchronize structural 
+     * templates. In the Late Flattening model, this triggers full hydration 
+     * to ensure indices and registries are prepared for use.
+     */
     public void initializeDefaultValues() {
+        ensureHydrated();
+    }
+
+    private void syncDefaultValues() {
         if (superclass != null) {
-            System.arraycopy(superclass.defaultFieldValues, 0, this.defaultFieldValues, 0, superclass.totalFieldCount);
+            // Ensure superclass is hydrated so its default arrays are allocated.
+            superclass.ensureHydrated();
+            if (superclass.defaultFieldValues != null) {
+                System.arraycopy(superclass.defaultFieldValues, 0, this.defaultFieldValues, 0, superclass.totalFieldCount);
+            }
             // Synchronize inherited meta-fields
-            System.arraycopy(superclass.metaFieldValues, 0, this.metaFieldValues, 0, superclass.totalMetaFieldCount);
+            if (superclass.metaFieldValues != null) {
+                System.arraycopy(superclass.metaFieldValues, 0, this.metaFieldValues, 0, superclass.totalMetaFieldCount);
+            }
         }
         for (Map.Entry<String, Object> entry : instanceFields.entrySet()) {
             Integer idx = fieldIndices.get(entry.getKey());
@@ -380,7 +415,8 @@ public final class JolkMetaClass implements TruffleObject {
      */
     @ExportMessage
     public boolean isMemberReadable(String member) {
-        return metaMembers.containsKey(member);
+        ensureHydrated();
+        return metaRegistry.containsKey(member);
     }
 
     /**
@@ -390,8 +426,11 @@ public final class JolkMetaClass implements TruffleObject {
      */
     @ExportMessage
     public Object readMember(String member) throws UnknownIdentifierException {
-        Object val = metaMembers.get(member);
-        if (val == null) throw UnknownIdentifierException.create(member);
+        ensureHydrated();
+        Object val = metaRegistry.get(member);
+        if (val == null) {
+            throw UnknownIdentifierException.create(member);
+        }
         return val;
     }
 
@@ -402,13 +441,14 @@ public final class JolkMetaClass implements TruffleObject {
 
     @ExportMessage
     public Object getMembers(boolean includeInternal) throws UnsupportedMessageException {
+        ensureHydrated();
         // This returns the members of the META-OBJECT, not the instance.
         return cachedMetaMemberNames;
     }
 
     @ExportMessage
     public boolean isMemberInvocable(String member) {
-        InteropLibrary interop = InteropLibrary.getUncached();
+        ensureHydrated();
         // 1. Consolidated Meta-Members (Methods and Field Accessors)
         if (metaRegistry.containsKey(member)) return true;
         
@@ -422,9 +462,21 @@ public final class JolkMetaClass implements TruffleObject {
         return false;
     }
 
-    @ExportMessage
+    /**
+     * ### invokeMember
+     * 
+     * Convenience method for calling meta-level messages from Java code or unit tests.
+     */
+    @TruffleBoundary
+    @ExportMessage.Ignore
     public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        InteropLibrary interop = InteropLibrary.getUncached();
+        return invokeMember(member, arguments, InteropLibrary.getUncached());
+    }
+
+    @ExportMessage
+    public Object invokeMember(String member, Object[] arguments,
+                        @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+        ensureHydrated();
         if (metaRegistry.containsKey(member)) {
             Object memberObj = metaRegistry.get(member);
             // Jolk Protocol: Every method call must include the receiver as the first argument.
@@ -517,7 +569,7 @@ public final class JolkMetaClass implements TruffleObject {
                 }
                 case "hash" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return (receiver == null || receiver == JolkNothing.INSTANCE) ? 0L : (long) receiver.hashCode();
+                    return (receiver == null || receiver == JolkNothing.INSTANCE) ? 0L : (long) (int) receiver.hashCode();
                 }
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -621,6 +673,7 @@ public final class JolkMetaClass implements TruffleObject {
      * @return `true` if an instance member with that name exists.
      */
     public boolean hasInstanceMember(String name) {
+        ensureHydrated();
         return instanceRegistry.containsKey(name);
     }
 
@@ -631,6 +684,7 @@ public final class JolkMetaClass implements TruffleObject {
      * This is O(1) and non-recursive due to hierarchy flattening.
      */
     public Object lookupInstanceMember(String name) {
+        ensureHydrated();
         return instanceRegistry.get(name);
     }
 
@@ -642,6 +696,7 @@ public final class JolkMetaClass implements TruffleObject {
      * sent to the MetaClass itself.
      */
     public Object lookupMetaMember(String name) {
+        ensureHydrated();
         return metaRegistry.get(name);
     }
 
@@ -651,6 +706,7 @@ public final class JolkMetaClass implements TruffleObject {
      * @return A set of all instance member names.
      */
     public Set<String> getInstanceMemberKeys() {
+        ensureHydrated();
         return instanceRegistry.keySet();
     }
 
@@ -658,20 +714,24 @@ public final class JolkMetaClass implements TruffleObject {
      * Returns the pre-calculated Interop member collection for instances.
      */
     public JolkMemberNames getInstanceMemberNames() {
-        return cachedInstanceMemberNames;
+        ensureHydrated();
+        return cachedInstanceMemberNames != null ? cachedInstanceMemberNames : new JolkMemberNames(new String[0]);
     }
 
     public int getMetaFieldCount() {
+        ensureHydrated();
         return totalMetaFieldCount;
     }
 
     private void refreshInstanceMemberCache() {
+        if (!hydrated) return; // Only refresh if hydrated
         Set<String> instanceKeys = new HashSet<>(instanceRegistry.keySet());
         instanceKeys.addAll(INTRINSIC_MEMBERS);
         this.cachedInstanceMemberNames = new JolkMemberNames(instanceKeys.toArray(new String[0]));
     }
 
     private void refreshMetaMemberCache() {
+        if (!hydrated) return; // Only refresh if hydrated
         Set<String> metaKeys = new HashSet<>(this.metaRegistry.keySet());
         // Standard Meta-Object Protocol members
         metaKeys.add("new");
@@ -683,10 +743,12 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     public int getFieldCount() {
+        ensureHydrated();
         return totalFieldCount;
     }
 
     public int getFieldIndex(String name) {
+        ensureHydrated();
         Integer index = fieldIndices.get(name);
         if (index != null) return index;
         if (superclass != null) return superclass.getFieldIndex(name);
@@ -694,7 +756,8 @@ public final class JolkMetaClass implements TruffleObject {
     }
 
     Object[] getDefaultFieldValues() {
-        return defaultFieldValues;
+        ensureHydrated();
+        return defaultFieldValues != null ? defaultFieldValues : new Object[0];
     }
 
     ///
@@ -742,6 +805,68 @@ public final class JolkMetaClass implements TruffleObject {
                 return receiver;
             }
             throw ArityException.create(1, 2, arguments.length);
+        }
+    }
+
+    /**
+     * ### JolkMetaClassPlaceholder
+     * 
+     * A specialized JolkMetaClass that acts as a forward-reference proxy. 
+     * It allows classes to be defined that extend types not yet encountered 
+     * by the parser. When the actual type is defined, the placeholder 
+     * synchronizes its internal state with the real class identity.
+     */
+    public static class JolkMetaClassPlaceholder extends JolkMetaClass {
+        private JolkMetaClass actualClass;
+
+        public JolkMetaClassPlaceholder(String name) {
+            // Initialize with minimal skeleton state. 
+            // Fields and registries will be populated during updatePlaceholder.
+            super(name, null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+                  new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+            this.hydrated = false;
+        }
+
+        /**
+         * Updates this placeholder with the actual JolkMetaClass data.
+         * This method is called when the actual definition of the forward-referenced class is processed.
+         */
+        @TruffleBoundary
+        public synchronized void updatePlaceholder(JolkMetaClass actualClass) {
+            if (this.actualClass != null) {
+                throw new IllegalStateException("JolkMetaClassPlaceholder for " + name + " already updated.");
+            }
+            // Ensure the actual class is fully hydrated before copying its state.
+            actualClass.ensureHydrated();
+            this.actualClass = actualClass;
+
+            // Identity and Hierarchy synchronization
+            this.name = actualClass.name;
+            this.superclass = actualClass.superclass;
+            
+            // Structural state synchronization
+            this.totalFieldCount = actualClass.totalFieldCount;
+            this.defaultFieldValues = actualClass.defaultFieldValues;
+            this.totalMetaFieldCount = actualClass.totalMetaFieldCount;
+            this.metaFieldValues = actualClass.metaFieldValues;
+            
+            // Registry and Cache synchronization
+            this.instanceRegistry = actualClass.instanceRegistry;
+            this.metaRegistry = actualClass.metaRegistry;
+            this.cachedInstanceMemberNames = actualClass.cachedInstanceMemberNames;
+            this.cachedMetaMemberNames = actualClass.cachedMetaMemberNames;
+            
+            this.hydrated = true;
+        }
+
+        @Override
+        protected synchronized void ensureHydrated() {
+            // No-op: The placeholder's state is strictly managed via updatePlaceholder.
+        }
+
+        @Override
+        public JolkMetaClass getJolkMetaClass() {
+            return actualClass != null ? actualClass.getJolkMetaClass() : this;
         }
     }
 }

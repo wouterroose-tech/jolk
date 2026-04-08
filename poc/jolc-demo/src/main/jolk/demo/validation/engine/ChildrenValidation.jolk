@@ -24,18 +24,10 @@ package final class ChildrenValidation<T, R> extends Node<T> {
     Function<T, List<R>> supplier;
     Validation<R> validation;
 
-    /// Constructs a new instance to validate children elements of a given parent.
-    ///
-    /// @param supplier      a function that extracts a list of children from the parent object
-    /// @param validation    the validation logic to be applied to each child element
-    meta ChildrenValidation new(Function<T, List<R>> supplier, Validation<R> validation) {
-        ^ super #new #supplier(supplier) #validation(validation)
-    }
-
     /// ## accept
     /// Propagates the validation to each of the subject's children provided by the supplier.
     @Override
-    package accept(T subject, E executionContext) {
+    accept(T subject, E executionContext) {
         self #delegate(supplier #apply(subject), executionContext);
     }
 

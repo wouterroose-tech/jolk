@@ -16,10 +16,6 @@ package final class ChildRequirementBridge<T, R> implements ChildRequirement<T, 
     ValidationSuite<T> master;
     Function<T, R> supplier;
 
-    package meta ChildRequirementBridge<T, R> new(ValidationSuite<T> master, Function<T, R> supplier) {
-        ^ super #new #master(master) #supplier(supplier)
-    }
-
     final ValidationSuite<T> add(Validation<R> validation) {
         // Construct the internal node and revert to master
         self #master #add(ChildValidation<T, R> #new(supplier, validation))

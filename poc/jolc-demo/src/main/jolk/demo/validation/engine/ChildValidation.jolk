@@ -18,19 +18,13 @@ package final class ChildValidation<T, R> extends Node<T> {
     Function<T, R> supplier;
     Validation<R> validation;
 
-    meta ChildValidation new(Function<T, R> supplier, Validation<R> validation) {
-        ^ super #new
-            #supplier(supplier)
-            #validation(validation)
-    }
-
     /// ## accept
     /// Executes the child validation logic.
     ///
     /// - **subject**: The parent entity.
     /// - **executionContext**: The shared industrial state.
     @Override
-    package accept(T subject, ExecutionContext executionContext) {
+    accept(T subject, ExecutionContext executionContext) {
         self #supplier #apply(subject) #ifPresent [ child -> validation #accept(child, executionContext) ]
     }
 }

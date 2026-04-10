@@ -38,7 +38,7 @@ import java.util.Set;
 public class JolkMetaClass implements TruffleObject {
 
     public static final Set<String> INTRINSIC_MEMBERS = Set.of(
-        "new", "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
+        "new", "catch", "finally", "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
         "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
         "?", "? :", "?!", "?! :"
     );

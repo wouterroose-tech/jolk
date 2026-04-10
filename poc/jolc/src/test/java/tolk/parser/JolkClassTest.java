@@ -41,7 +41,7 @@ public class JolkClassTest extends JolcTestBase {
         // An empty class should still have the default members from Object, as well as the class-specific members.
         assertTrue(result.hasMembers());
         // 4 base meta-members (new, name, superclass, isInstance) + 18 Jolk Object Protocol intrinsics
-        assertEquals(21, result.getMemberKeys().size());
+        assertEquals(23, result.getMemberKeys().size());
         assertTrue(result.hasMember("new"));
         assertTrue(result.hasMember("name"));
         assertTrue(result.hasMember("superclass"));
@@ -153,7 +153,7 @@ public class JolkClassTest extends JolcTestBase {
         Value result = eval(className, source);
         assertTrue(result.hasMembers());
         // 4 base meta-members (new, name, superclass, isInstance) + 18 Jolk Object Protocol intrinsics
-        assertEquals(21, result.getMemberKeys().size());
+        assertEquals(23, result.getMemberKeys().size());
         assertTrue(result.hasMember("new"));
     }
 
@@ -164,7 +164,7 @@ public class JolkClassTest extends JolcTestBase {
         Value result = eval(className, source);
         assertTrue(result.hasMembers());
         // 4 base meta-members (new, name, superclass, isInstance) + 18 Jolk Object Protocol intrinsics
-        assertEquals(21, result.getMemberKeys().size());
+        assertEquals(23, result.getMemberKeys().size());
         assertTrue(result.hasMember("new"));
     }
     

@@ -131,13 +131,21 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
 
     protected static boolean isControlFlow(String selector) {
         return switch (selector) {
-            case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :" -> true;
+            case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :", "finally" -> true;
             default -> false;
         };
     }
+
+    protected static boolean isClosureCatch(String selector) {
+        return "catch".equals(selector);
+    }
+
+    protected static boolean isClosure(Object receiver) {
+        return receiver instanceof JolkClosure;
+    }
     // --- End of Helper methods ---
 
-    @Specialization(guards = "isNothing(receiver)")
+    @Specialization(guards = {"isNothing(receiver)", "!isControlFlow(selector)", "!isClosureCatch(selector)"})
     protected Object doNothing(VirtualFrame frame, Object receiver, String selector, Object[] arguments, 
                                 @CachedLibrary("getNothing()") InteropLibrary interop) {
         try {
@@ -192,9 +200,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                                   @Shared("callNode") @Cached IndirectCallNode callNode,
                                   @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         
-        // Shared Absence Logic: Handles Nothing, null, and empty Matches
-        boolean isAbsent = (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver));
-        if (receiver instanceof JolkMatch match) {
+        Object unwrappedReceiver = unwrap(receiver);
+        // Shared Absence Logic: Handles Nothing, null, and empty Matches 
+        boolean isAbsent = (unwrappedReceiver == null || unwrappedReceiver == JolkNothing.INSTANCE || interop.isNull(unwrappedReceiver));
+        if (unwrappedReceiver instanceof JolkMatch match) {
             isAbsent = !match.isPresent();
         }
 
@@ -231,22 +240,82 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                     }
                     return receiver;
                 }
+                case "finally" -> {
+                    if (unwrappedReceiver instanceof JolkClosure protectedClosure) {
+                        // Case 1: Chained directly to a closure [ risky ] #finally [ cleanup ]
+                        Object result = JolkNothing.INSTANCE;
+                        try {
+                            result = callNode.call(protectedClosure.getCallTarget(), new Object[]{protectedClosure.getEnvironment()});
+                        } catch (JolkReturnException e) {
+                            callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
+                            throw e;
+                        } catch (Throwable t) {
+                            callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
+                            throw t;
+                        }
+                        callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
+                        return result;
+                    } else {
+                        // Case 2: Side-effect on a realized value (e.g., after #catch)
+                        callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
+                        return receiver;
+                    }
+                }
             }
         }
 
         // Atomic Ternary with two branches: (condition ? [then] : [else])
         if (arguments.length == 2 && arguments[0] instanceof JolkClosure thenC && arguments[1] instanceof JolkClosure elseC) {
-            if ("? :".equals(selector) && receiver instanceof Boolean b) {
+            if ("? :".equals(selector) && unwrappedReceiver instanceof Boolean b) {
                 JolkClosure branch = b ? thenC : elseC;
                 return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
             }
-            if ("?! :".equals(selector) && receiver instanceof Boolean b) {
+            if ("?! :".equals(selector) && unwrappedReceiver instanceof Boolean b) {
                 JolkClosure branch = !b ? thenC : elseC;
                 return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
             }
         }
         // Fallback to boundary for non-closure arguments or unhandled control flow
         return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+    }
+
+    /**
+     * ### Fast Path for Closure Exception Handling
+     * 
+     * Handles #catch on JolkClosure by routing to the closure's interop protocol.
+     * This enables exception handling for closures.
+     */
+    @Specialization(guards = {"isClosureCatch(selector)", "isClosure(receiver)"})
+    protected Object doClosureCatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
+                                   @Shared("callNode") @Cached IndirectCallNode callNode,
+                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
+        try {
+            if (receiver instanceof JolkClosure riskyClosure && arguments.length == 1 && arguments[0] instanceof JolkClosure handlerClosure) {
+                try {
+                    // 1. Try to execute the primary closure (the risky logic)
+                    return lift(callNode.call(riskyClosure.getCallTarget(), new Object[]{riskyClosure.getEnvironment()}));
+                } catch (JolkReturnException e) {
+                    throw e; // Non-local returns (^) must propagate past the catch block
+                } catch (Throwable e) {
+                    // 2. Execute the handler closure with the caught exception
+                    return lift(callNode.call(handlerClosure.getCallTarget(), new Object[]{handlerClosure.getEnvironment(), lift(e)}));
+                }
+            }
+
+            // Fallback: Fix Arity error by prepending receiver (expected 2: receiver + handler)
+            Object[] argsWithReceiver = new Object[arguments.length + 1];
+            argsWithReceiver[0] = receiver;
+            System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
+            return lift(interop.invokeMember(receiver, selector, argsWithReceiver));
+        } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
+            throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
+        }
+    }
+
+    @Specialization(guards = "isClosureCatch(selector)", replaces = "doClosureCatch")
+    protected Object doCatchPassThrough(Object receiver, String selector, Object[] arguments) {
+        // If the receiver is not a closure, the 'try' block already succeeded.
+        return receiver;
     }
 
     /**
@@ -704,7 +773,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     public static boolean isObjectIntrinsic(String member) {
         if (member == null) return false;
         return switch (member) {
-            case "new", "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
+            case "new", "catch", "finally", "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
                  "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
                  "?", "? :", "?!", "?! :" -> true;
             default -> false;

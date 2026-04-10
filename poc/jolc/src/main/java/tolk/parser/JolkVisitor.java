@@ -30,6 +30,8 @@ import tolk.nodes.JolkLiteralNode;
 import tolk.nodes.JolkMethodNode;
 import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkSelfNode;
+import tolk.nodes.JolkSuperNode;
+import tolk.nodes.JolkSuperMessageSendNode;
 import tolk.nodes.JolkNode;
 import tolk.nodes.JolkRootNode;
 import tolk.nodes.JolkReadArgumentNode;
@@ -636,7 +638,11 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     args = new JolkNode[] { visit(ctx.payload(i).closure()) };
                 }
             }
-            receiver = new JolkMessageSendNode(receiver, selector, args);
+            if (receiver instanceof JolkSuperNode) {
+                receiver = new JolkSuperMessageSendNode(selector, args);
+            } else {
+                receiver = new JolkMessageSendNode(receiver, selector, args);
+            }
         }
         return receiver;
     }
@@ -729,6 +735,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return switch (text) {
             case "null" -> new JolkLiteralNode(JolkNothing.INSTANCE);
             case "self" -> visitReservedSelf();
+            case "super" -> new JolkSuperNode();
             case "Self" -> new JolkReadTypeNode(language, currentClassName, null); // Directly resolve the current class's MetaClass
             case "true" -> new JolkLiteralNode(true);
             case "false" -> new JolkLiteralNode(false);

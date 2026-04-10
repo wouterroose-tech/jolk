@@ -44,7 +44,7 @@ public class JolkMetaClass implements TruffleObject {
     );
 
     public String name;
-    private JolkMetaClass superclass;
+    protected JolkMetaClass superclass;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
     private final JolkArchetype archetype;
@@ -57,24 +57,24 @@ public class JolkMetaClass implements TruffleObject {
     // Cache synthetic accessors to prevent allocation on every lookup
     private final Map<String, JolkSyntheticAccessor> accessorCache;
     // Total number of fields including hierarchy
-    private int totalFieldCount;
+    protected int totalFieldCount;
     // Default field values
-    private Object[] defaultFieldValues;
+    protected Object[] defaultFieldValues;
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
     // Meta-level field storage
-    private int totalMetaFieldCount;
+    protected int totalMetaFieldCount;
     private final Map<String, Integer> metaFieldIndices;
-    private Object[] metaFieldValues;
+    protected Object[] metaFieldValues;
     private final Map<String, JolkMetaFieldAccessor> metaAccessorCache;
 
     // Optimized consolidated registries
-    private Map<String, Object> instanceRegistry;
-    private Map<String, Object> metaRegistry;
-    private JolkMemberNames cachedInstanceMemberNames;
-    private JolkMemberNames cachedMetaMemberNames;
-    private boolean hydrated = false;
+    protected Map<String, Object> instanceRegistry;
+    protected Map<String, Object> metaRegistry;
+    protected JolkMemberNames cachedInstanceMemberNames;
+    protected JolkMemberNames cachedMetaMemberNames;
+    protected boolean hydrated = false;
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
         this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>());
@@ -152,8 +152,14 @@ public class JolkMetaClass implements TruffleObject {
         this.instanceRegistry = new HashMap<>();
         this.metaRegistry = new HashMap<>();
         if (superclass != null) {
-            this.instanceRegistry.putAll(superclass.instanceRegistry);
-            this.metaRegistry.putAll(superclass.metaRegistry);
+            // Defensive check: superclass registries might be null if superclass is a placeholder
+            // that hasn't been fully hydrated yet
+            if (superclass.instanceRegistry != null) {
+                this.instanceRegistry.putAll(superclass.instanceRegistry);
+            }
+            if (superclass.metaRegistry != null) {
+                this.metaRegistry.putAll(superclass.metaRegistry);
+            }
         }
         for (String fieldName : this.instanceFields.keySet()) this.instanceRegistry.put(fieldName, accessorCache.get(fieldName));
         this.instanceRegistry.putAll(this.instanceMembers);
@@ -521,6 +527,51 @@ public class JolkMetaClass implements TruffleObject {
         throw UnknownIdentifierException.create(member);
     }
 
+    @ExportMessage.Ignore
+    public static Object invokeSuperMember(JolkMetaClass receiver, JolkMetaClass startClass, String member, Object[] arguments,
+                             InteropLibrary interop) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+        if (startClass == null) {
+            throw new IllegalArgumentException("Cannot invoke super member from root object");
+        }
+        startClass.ensureHydrated();
+        Object memberObj = startClass.lookupMetaMember(member);
+        if (memberObj != null) {
+            Object[] metaArguments = new Object[arguments.length + 1];
+            metaArguments[0] = receiver;
+            if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
+            try {
+                return interop.execute(memberObj, metaArguments);
+            } catch (JolkReturnException e) {
+                throw e;
+            }
+        }
+
+        switch (member) {
+            case "new":
+                if (arguments.length == 0) return new JolkObject(receiver);
+                if (arguments.length == receiver.totalFieldCount) {
+                    return new JolkObject(receiver, arguments);
+                }
+                throw ArityException.create(receiver.totalFieldCount, receiver.totalFieldCount, arguments.length);
+            case "name":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return receiver.name;
+            case "superclass":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return receiver.superclass != null ? receiver.superclass : JolkNothing.INSTANCE;
+            case "isInstance":
+                if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                return receiver.isMetaInstance(arguments[0]);
+        }
+
+        Object intrinsicResult = dispatchObjectIntrinsic(receiver, member, arguments, interop);
+        if (intrinsicResult != null) {
+            return intrinsicResult;
+        }
+
+        throw UnknownIdentifierException.create(member);
+    }
+
     public static boolean isObjectIntrinsic(String member) {
         // Using a Set.contains with interned strings allows Graal 
         // to optimize this check into a bit-mask or a high-speed 
@@ -825,6 +876,9 @@ public class JolkMetaClass implements TruffleObject {
             super(name, null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
                   new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
             this.hydrated = false;
+            // Initialize empty registries for defensive access during hydration
+            this.instanceRegistry = new HashMap<>();
+            this.metaRegistry = new HashMap<>();
         }
 
         /**

@@ -3,6 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -60,20 +61,25 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
             ? startClass.lookupMetaMember(selector) 
             : startClass.lookupInstanceMember(selector);
 
-        if (member == null) {
-            throw new RuntimeException("Message not understood: #" + selector + " in super hierarchy of " + holderClass.name);
-        }
-
-        // 4. Evaluate arguments and execute
-        Object[] args = new Object[argumentNodes.length + 1];
-        args[0] = self; // Preserve the receiver identity
+        Object[] args = new Object[argumentNodes.length];
         for (int i = 0; i < argumentNodes.length; i++) {
-            args[i+1] = argumentNodes[i].executeGeneric(frame);
+            args[i] = argumentNodes[i].executeGeneric(frame);
         }
 
         try {
-            return lift(InteropLibrary.getUncached().execute(member, args));
-        } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+            if (member != null) {
+                Object[] executeArgs = new Object[args.length + 1];
+                executeArgs[0] = self; // Preserve the receiver identity
+                System.arraycopy(args, 0, executeArgs, 1, args.length);
+                return lift(InteropLibrary.getUncached().execute(member, executeArgs));
+            }
+            if (self instanceof JolkMetaClass metaSelf) {
+                // Meta-level super dispatch uses the superclass lookup start point but preserves
+                // the original class receiver so inherited intrinsics like #new behave correctly.
+                return lift(JolkMetaClass.invokeSuperMember(metaSelf, startClass, selector, args, InteropLibrary.getUncached()));
+            }
+            throw new RuntimeException("Message not understood: #" + selector + " in super hierarchy of " + holderClass.name);
+        } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException | UnknownIdentifierException e) {
             throw new RuntimeException("Super message dispatch failed: #" + selector + " in " + holderClass.name, e);
         }
     }

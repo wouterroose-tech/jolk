@@ -58,14 +58,19 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     void testArrayLiteral() {
         String source = """
             class MyClass {
+                ArrayList<Long> emptyList = #[];
                 ArrayList<Long> longList = #[1, 2, 3];
-                Long run(Int key) { ^ longList #at(key) }            
+                Long run(Int key) { ^ longList #at(key) }  
+                Long run() { ^ longList #put(1, 42) #at(1) }          
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
+        Value emptyList = instance.invokeMember("emptyList");
+        assertEquals(0, ((List<?>) emptyList.asHostObject()).size());
         Value longList = instance.invokeMember("longList");
         assertEquals(3, ((List<?>) longList.asHostObject()).size());
         assertEquals(1L, instance.invokeMember("run", 0).asLong()); 
+        assertEquals(42, instance.invokeMember("run").asLong()); 
     }
 
 }

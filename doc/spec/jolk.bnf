@@ -90,4 +90,4 @@ block_comment   = "/*" { char_except_star_slash } "*/"
 escape_char     = "\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "'" | "\" )
 modifier        = "#" (visibility_ops)? (finality_ops)?
 visibility_ops  = "<" | "~" | ":" | ">"
-finality_ops = "?" | "!"
+finality_ops    = "?" | "!"

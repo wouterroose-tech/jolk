@@ -4,10 +4,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.nodes.RootNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import tolk.JolcTestBase;
 import tolk.language.JolkLanguage;
 import org.graalvm.polyglot.Value;
@@ -22,6 +26,12 @@ import org.graalvm.polyglot.Value;
 public class JolkArrayExtensionTest extends JolcTestBase {
 
     private final InteropLibrary interop = InteropLibrary.getUncached();
+
+    private JolkClosure createClosure(Function<Object[], Object> logic) {
+        TestRootNode rootNode = new TestRootNode(logic);
+        CallTarget callTarget = rootNode.getCallTarget();
+        return new JolkClosure(callTarget);
+    }
 
     /**
      * Verifies the meta-level factory method for creating native lists.
@@ -136,4 +146,62 @@ public class JolkArrayExtensionTest extends JolcTestBase {
             context.leave();
         }
     }
+
+    /**
+     * Verifies the anyMatch method with closure predicate.
+     * Jolk: list #anyMatch({ |x| x > 5 })
+     */
+    @Test
+    void testAnyMatch() throws Exception {
+        eval("");
+        context.enter();
+        try {
+            // Create test data: list with elements where some satisfy the condition
+            List<Long> list = new ArrayList<>(List.of(1L, 3L, 7L, 2L));
+            Object guestList = JolkLanguage.getContext().env.asGuestValue(list);
+            
+            // Create a closure that tests if element > 5
+            JolkClosure predicate = createClosure(args -> {
+                Long element = (Long) args[0];
+                return element > 5L;
+            });
+            Object guestPredicate = JolkLanguage.getContext().env.asGuestValue(predicate);
+            
+            Object method = JolkArrayExtension.ARRAY_TYPE.lookupInstanceMember("anyMatch");
+            
+            // Execute anyMatch with the closure
+            Object rawResult = interop.execute(method, guestList, guestPredicate);
+            Value result = context.asValue(rawResult);
+            
+            // Should return true since 7 > 5
+            assertTrue(result.asBoolean());
+            
+            // Test with a list where no elements satisfy the condition
+            List<Long> noMatchList = new ArrayList<>(List.of(1L, 2L, 3L, 4L));
+            Object guestNoMatchList = JolkLanguage.getContext().env.asGuestValue(noMatchList);
+            
+            Object rawNoMatchResult = interop.execute(method, guestNoMatchList, predicate);
+            Value noMatchResult = context.asValue(rawNoMatchResult);
+            
+            // Should return false since no element > 5
+            assertFalse(noMatchResult.asBoolean());
+        } finally {
+            context.leave();
+        }
+    }
+
+    static class TestRootNode extends RootNode {
+        private final Function<Object[], Object> logic;
+
+        protected TestRootNode(Function<Object[], Object> logic) {
+            super(null);
+            this.logic = logic;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return logic.apply(frame.getArguments());
+        }
+    }
+
 }

@@ -84,4 +84,14 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         assertEquals(42, instance.invokeMember("fortyTwo").asLong());
     }
 
+    @Test
+    void testInstanceCreation() {
+        String classA = "class ClassA { Long x = 42; }";
+        String classB = "class ClassB { ClassA createA() { ^ClassA #new } }";
+        eval(classA);
+        Value instanceB = eval(classB).invokeMember("new");
+        Value instanceA = instanceB.invokeMember("createA");
+        assertEquals(42, instanceA.invokeMember("x").asLong());
+    }
+
 }

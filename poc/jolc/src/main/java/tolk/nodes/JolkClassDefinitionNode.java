@@ -205,7 +205,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             JolkMethodNode method = methods.get(0); 
             FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
             builder.addSlots(method.getFrameSlots(), FrameSlotKind.Object);
-            JolkRootNode root = new JolkRootNode(lang, builder.build(), method.getBody(), method.getName(), true);
+            // Enforce Arity: Even single methods must match the call site arity.
+            JolkNode dispatcherBody = new JolkArityDispatchNode(methods);
+            JolkRootNode root = new JolkRootNode(lang, builder.build(), dispatcherBody, method.getName(), true);
             return new JolkClosure(root.getCallTarget());
         }
 

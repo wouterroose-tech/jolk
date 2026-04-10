@@ -1,9 +1,9 @@
 package tolk.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -40,7 +40,6 @@ public class JolkInheritanceTest  extends JolcTestBase {
     }
 
     @Test
-    @Disabled("This test is currently disabled because method overriding is not yet implemented.")
     void testOverrideMethods() {
         String classA = "class ClassA { Long x() { ^ 0 } }";
         String classB = "class ClassB extends ClassA { Long x() { ^ 42 } }";
@@ -54,12 +53,19 @@ public class JolkInheritanceTest  extends JolcTestBase {
     }
 
     @Test
-    @Disabled("This test is currently disabled because method overriding is not yet implemented.")
-    void testOverrideMetaMethods() {
-        String classA = "class ClassA { Long x() { ^ 0 } }";
-        String classB = "class ClassB extends ClassA { meta new() { ^ super #new #x(42 } }";
-        Value instanceA = eval(classA).invokeMember("new");
-        assertEquals(0, instanceA.invokeMember("x").asLong());
+    void testOverrideNew() {
+        String classA = "class ClassA { Long x = 42; }";
+        String classB = "class ClassB extends ClassA { meta new() { ^super #new } }";
+        eval(classA);
+        Value instanceB = eval(classB).invokeMember("new");
+        assertTrue(instanceB.invokeMember("class").getMetaSimpleName().contains("ClassB"));
+    }
+
+    @Test
+    void testOverrideNew_2() {
+        String classA = "class ClassA { Long x; }";
+        String classB = "class ClassB extends ClassA { meta new() { ^super #new #x(42) } }";
+        eval(classA);
         Value instanceB = eval(classB).invokeMember("new");
         assertEquals(42, instanceB.invokeMember("x").asLong());
     }

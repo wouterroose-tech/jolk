@@ -15,15 +15,11 @@ class ContactFormValidation extends ValidationSuite<ContactForm> {
         ^ super #new
             //#add basic constraint
             #add(ZipConstraint #new)
-
             //#add ChildValidation via pivot pattern
             #subject[f -> f #person] #add(InssConstraint #new)
 
-            //#add nested ruleset 
-    }
-
-    meta Interrupt FORM_INTERRUPT() {
-        ^ FORM_INTERRUPT
+            // TODO
+            // #add nested ruleset 
     }
 
 }

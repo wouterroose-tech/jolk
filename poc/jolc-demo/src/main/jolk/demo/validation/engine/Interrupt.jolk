@@ -26,7 +26,5 @@ final class Interrupt extends RuntimeException {
         // Disable stack trace (writableStackTrace' = false) for performance.
         ^super #new("Validation Halt", null, false, false)
     }
-
-    meta Interrupt HALT() { ^ HALT }
     
 }

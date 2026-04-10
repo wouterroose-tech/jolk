@@ -1,6 +1,7 @@
 package tolk.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -43,7 +45,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         String source = """
             class MyClass {
                 ArrayList<Long> longList = ArrayList #new(1, 2, 3);
-                Long run(Int key) { ^ longList #at(key) }
+                Long run(Int key) { ^ self #longList #at(key) }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -60,8 +62,8 @@ public class JolkArrayExtensionTest extends JolcTestBase {
             class MyClass {
                 ArrayList<Long> emptyList = #[];
                 ArrayList<Long> longList = #[1, 2, 3];
-                Long run(Int key) { ^ longList #at(key) }  
-                Long run() { ^ longList #put(1, 42) #at(1) }          
+                Long run(Int key) { ^ self #longList #at(key) }  
+                Long run() { ^ self #longList #put(1, 42) #at(1) }          
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -71,6 +73,20 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         assertEquals(3, ((List<?>) longList.asHostObject()).size());
         assertEquals(1L, instance.invokeMember("run", 0).asLong()); 
         assertEquals(42, instance.invokeMember("run").asLong()); 
-    }
+    } 
+
+    @Test
+    @Disabled("activate when #anyMatch  & lambda support is implemented")
+    void testAnyMatch() {
+        String source = """
+            class MyClass {
+                ArrayList<Long> elements = #[1, 2, 3];
+                Long run(Long x) { ^ self #elements #anyMatch [s -> s ~~ x] }          
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertFalse(instance.invokeMember("run", 0).asBoolean()); 
+        assertTrue(instance.invokeMember("run", 2).asBoolean()); 
+    }     
 
 }

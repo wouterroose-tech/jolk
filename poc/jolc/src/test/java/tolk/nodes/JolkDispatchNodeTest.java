@@ -292,4 +292,135 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             context.leave();
         }
     }
+
+    /**
+     * Tests automatic conversion of JolkClosures to Java functional interfaces.
+     */
+    @Test
+    void testClosureToFunctionalInterfaceConversion() {
+        eval("");
+        context.enter();
+        try {
+            JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            
+            // Adopt the dispatch node like in other tests
+            JolkLanguage lang = com.oracle.truffle.api.TruffleLanguage.LanguageReference.create(JolkLanguage.class).get(null);
+            DispatchNodeWrapper wrapper = new DispatchNodeWrapper(dispatchNode);
+            new JolkRootNode(lang, wrapper).getCallTarget(); // Trigger adoption
+            
+            // Create test closures that will be converted to functional interfaces
+            JolkClosure predicateClosure = createPredicateClosure((Object x) -> (Long) x > 5L);
+            JolkClosure functionClosure = createFunctionClosure((Object x) -> (Long) x * 2L);
+            JolkClosure consumerClosure = createConsumerClosure((Object x) -> { /* no-op */ });
+            
+            // Create a list using Java directly
+            java.util.ArrayList<Long> list = new java.util.ArrayList<>();
+            list.add(1L);
+            list.add(2L);
+            list.add(3L);
+            list.add(6L);
+            list.add(7L);
+            list.add(8L);
+            
+            // Wrap in Polyglot Value
+            Value listValue = context.asValue(list);
+            
+            // Test a simple method first
+            Value toString = listValue.invokeMember("toString");
+            assertTrue(toString.isString(), "toString() should work");
+            
+            // Wrap closures in Polyglot Values
+            Value predicateValue = context.asValue(predicateClosure);
+            Value functionValue = context.asValue(functionClosure);
+            Value consumerValue = context.asValue(consumerClosure);
+            
+            // Test stream methods with functional interfaces
+            Value stream = listValue.invokeMember("stream");
+            
+            // Test Predicate conversion with filter()
+            Value filteredStream = stream.invokeMember("filter", predicateValue);
+            Value resultList = filteredStream.invokeMember("toList");
+            assertTrue(resultList.isHostObject(), "Predicate conversion should work for filter");
+            java.util.List<?> filteredList = (java.util.List<?>) resultList.asHostObject();
+            assertEquals(java.util.Arrays.asList(6L, 7L, 8L), filteredList);
+            
+            // Test Function conversion with map()
+            stream = listValue.invokeMember("stream");
+            Value mappedStream = stream.invokeMember("map", functionValue);
+            resultList = mappedStream.invokeMember("toList");
+            assertTrue(resultList.isHostObject(), "Function conversion should work for map");
+            java.util.List<?> mappedList = (java.util.List<?>) resultList.asHostObject();
+            assertEquals(java.util.Arrays.asList(2L, 4L, 6L, 12L, 14L, 16L), mappedList);
+            
+            // Test Consumer conversion with forEach()
+            stream = listValue.invokeMember("stream");
+            stream.invokeMember("forEach", consumerValue);
+            // Consumer returns void, just verify no exception was thrown
+            
+        } finally {
+            context.leave();
+        }
+    }
+
+    /**
+     * Helper class with methods that accept functional interfaces to test conversion.
+     */
+    public static class FunctionalInterfaceTestHelper {
+        public boolean testPredicate(java.util.function.Predicate<Object> predicate, Object value) {
+            return predicate.test(value);
+        }
+        
+        public Object testFunction(java.util.function.Function<Object, Object> function, Object value) {
+            return function.apply(value);
+        }
+        
+        public String testConsumer(java.util.function.Consumer<Object> consumer, Object value) {
+            consumer.accept(value);
+            return "consumed";
+        }
+        
+        public Object testSupplier(java.util.function.Supplier<Object> supplier) {
+            return supplier.get();
+        }
+    }
+
+    /**
+     * Helper methods to create JolkClosures for testing.
+     */
+    private JolkClosure createPredicateClosure(java.util.function.Predicate<Object> predicate) {
+        return new JolkClosure(null) {
+            @Override
+            public Object execute(Object[] arguments) {
+                return predicate.test(arguments[0]);
+            }
+        };
+    }
+    
+    private JolkClosure createFunctionClosure(java.util.function.Function<Object, Object> function) {
+        return new JolkClosure(null) {
+            @Override
+            public Object execute(Object[] arguments) {
+                return function.apply(arguments[0]);
+            }
+        };
+    }
+    
+    private JolkClosure createConsumerClosure(java.util.function.Consumer<Object> consumer) {
+        return new JolkClosure(null) {
+            @Override
+            public Object execute(Object[] arguments) {
+                consumer.accept(arguments[0]);
+                return JolkNothing.INSTANCE; // Return non-null value
+            }
+        };
+    }
+    
+    private JolkClosure createSupplierClosure(java.util.function.Supplier<Object> supplier) {
+        return new JolkClosure(null) {
+            @Override
+            public Object execute(Object[] arguments) {
+                return supplier.get();
+            }
+        };
+    }
 }

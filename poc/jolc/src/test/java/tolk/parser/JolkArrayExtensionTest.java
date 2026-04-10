@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -76,12 +75,11 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     } 
 
     @Test
-    @Disabled("activate when #anyMatch  & lambda support is implemented")
     void testAnyMatch() {
         String source = """
             class MyClass {
                 ArrayList<Long> elements = #[1, 2, 3];
-                Long run(Long x) { ^ self #elements #anyMatch [s -> s ~~ x] }          
+                Boolean run(Long x) { ^ self #elements #anyMatch [s -> s ~~ x] }          
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");

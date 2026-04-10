@@ -4,6 +4,7 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
+import com.oracle.truffle.dsl.processor.util.Predicate;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -12,12 +13,13 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.library.CachedLibrary;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.ArrayList;
+
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.library.CachedLibrary;
 
 import tolk.runtime.JolkClosure;
 import tolk.runtime.JolkNothing;
@@ -1004,7 +1006,9 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         for (String candidate : candidates) {
             try {
                 if (interop.isMemberInvocable(receiver, candidate)) {
-                    return interop.invokeMember(receiver, candidate, arguments);
+                    // Try to convert arguments using reflection to get parameter types
+                    Object[] convertedArgs = convertArgumentsForMethod(receiver, candidate, arguments);
+                    return interop.invokeMember(receiver, candidate, convertedArgs != null ? convertedArgs : arguments);
                 }
             } catch (UnknownIdentifierException e) {
                 // continue
@@ -1150,6 +1154,14 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
             Class<?> target = types[i];
+            
+            // TODO: Closure to Functional Interface Conversion
+            if (arg instanceof JolkClosure closure) {
+                coerced[i] = convertClosureToFunctionalInterface(closure, target);
+                if (coerced[i] != null) continue; // Conversion successful
+            }
+            
+            // Existing coercion logic
             if (arg instanceof Long l) {
                 if (target == int.class || target == Integer.class) coerced[i] = l.intValue();
                 else if (target == short.class || target == Short.class) coerced[i] = l.shortValue();
@@ -1162,5 +1174,108 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             }
         }
         return coerced;
+    }
+
+    private static Object convertClosureToFunctionalInterface(JolkClosure closure, Class<?> targetInterface) {
+        // Predicate<T> -> boolean test(T t)
+        if (targetInterface == java.util.function.Predicate.class) {
+            return (java.util.function.Predicate<Object>) (t) -> {
+                try {
+                    Object result = closure.execute(new Object[]{t});
+                    return result instanceof Boolean ? (Boolean) result : false;
+                } catch (Exception e) {
+                    return false;
+                }
+            };
+        }
+        
+        // Function<T,R> -> R apply(T t)
+        if (targetInterface == java.util.function.Function.class) {
+            return (java.util.function.Function<Object, Object>) (t) -> {
+                try {
+                    return closure.execute(new Object[]{t});
+                } catch (Exception e) {
+                    return null;
+                }
+            };
+        }
+        
+        // Consumer<T> -> void accept(T t)
+        if (targetInterface == java.util.function.Consumer.class) {
+            return (java.util.function.Consumer<Object>) (t) -> {
+                try {
+                    closure.execute(new Object[]{t});
+                } catch (Exception e) {
+                    // Ignore
+                }
+            };
+        }
+        
+        // Supplier<T> -> T get()
+        if (targetInterface == java.util.function.Supplier.class) {
+            return (java.util.function.Supplier<Object>) () -> {
+                try {
+                    return closure.execute(new Object[0]);
+                } catch (Exception e) {
+                    return null;
+                }
+            };
+        }
+        
+        // BiFunction<T,U,R> -> R apply(T t, U u)
+        if (targetInterface == java.util.function.BiFunction.class) {
+            return (java.util.function.BiFunction<Object, Object, Object>) (t, u) -> {
+                try {
+                    return closure.execute(new Object[]{t, u});
+                } catch (Exception e) {
+                    return null;
+                }
+            };
+        }
+        
+        // BiConsumer<T,U> -> void accept(T t, U u)
+        if (targetInterface == java.util.function.BiConsumer.class) {
+            return (java.util.function.BiConsumer<Object, Object>) (t, u) -> {
+                try {
+                    closure.execute(new Object[]{t, u});
+                } catch (Exception e) {
+                    // Ignore
+                }
+            };
+        }
+        
+        // BiPredicate<T,U> -> boolean test(T t, U u)
+        if (targetInterface == java.util.function.BiPredicate.class) {
+            return (java.util.function.BiPredicate<Object, Object>) (t, u) -> {
+                try {
+                    Object result = closure.execute(new Object[]{t, u});
+                    return result instanceof Boolean ? (Boolean) result : false;
+                } catch (Exception e) {
+                    return false;
+                }
+            };
+        }
+        
+        // Not a supported functional interface
+        return null;
+    }
+
+    /**
+     * Attempts to convert arguments for a method call by inspecting the method signature via reflection.
+     */
+    @TruffleBoundary
+    private static Object[] convertArgumentsForMethod(Object receiver, String methodName, Object[] arguments) {
+        try {
+            // Use reflection to find the method and get parameter types
+            for (java.lang.reflect.Method m : receiver.getClass().getMethods()) {
+                if (m.getName().equals(methodName) && m.getParameterCount() == arguments.length) {
+                    Class<?>[] paramTypes = m.getParameterTypes();
+                    return coerceArguments(paramTypes, arguments);
+                }
+            }
+        } catch (SecurityException e) {
+            // Reflection may be restricted
+        }
+        return null; // No conversion applied
     }
 }

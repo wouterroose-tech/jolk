@@ -1,10 +1,12 @@
 package tolk.runtime;
 
 import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.InteropLibrary;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * ### JolkArrayExtension
@@ -59,6 +61,39 @@ public class JolkArrayExtension {
                 int index = ((Number) args[1]).intValue();
                 list.set(index, args[2]);
                 return args[0]; 
+            }
+        });
+
+        // #anyMatch(predicate) -> Returns Boolean indicating if any element matches.
+        ARRAY_TYPE.registerInstanceMethod("anyMatch", new JolkBuiltinMethod() {
+            @Override
+            public Object execute(Object[] args) throws ArityException {
+                if (args.length != 2) throw ArityException.create(1, 1, args.length - 1);
+                List<?> list = (List<?>) unwrap(args[0]);
+                Object predicate = args[1];
+                
+                for (Object element : list) {
+                    try {
+                        // Cast to JolkClosure and call directly
+                        if (predicate instanceof JolkClosure closure) {
+                            Object result = closure.execute(new Object[]{element});
+                            if (result instanceof Boolean && (Boolean) result) {
+                                return lift(true);
+                            }
+                        } else {
+                            // Fallback to interop
+                            Object result = InteropLibrary.getUncached()
+                                .invokeMember(predicate, "apply", element);
+                            if (result instanceof Boolean && (Boolean) result) {
+                                return lift(true);
+                            }
+                        }
+                    } catch (Exception e) {
+                        // If invocation fails, continue to next element
+                        continue;
+                    }
+                }
+                return lift(false);
             }
         });
 

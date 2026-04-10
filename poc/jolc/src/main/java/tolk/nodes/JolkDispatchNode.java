@@ -642,7 +642,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
              * is a host [Class] (MetaObject) and the selector is `#new`, we map it 
              * directly to the Interop `instantiate` protocol to invoke the Java constructor.
              */
-            if ("new".equals(selector) && (receiver instanceof Class || interop.isMetaObject(receiver) || interop.isInstantiable(receiver))) {
+            if ("new".equals(selector) && !(receiver instanceof JolkMetaClass) && (receiver instanceof Class || interop.isMetaObject(receiver) || interop.isInstantiable(receiver))) {
                 // Shim-less Interceptor: Route List.class, ArrayList.class, or the Jolk Array MetaClass 
                 // to the specialized Array factory logic.
                 if (receiver == List.class || receiver == ArrayList.class || receiver == JolkArrayExtension.ARRAY_TYPE) {
@@ -704,7 +704,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     public static boolean isObjectIntrinsic(String member) {
         if (member == null) return false;
         return switch (member) {
-            case "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
+            case "new", "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
                  "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
                  "?", "? :", "?!", "?! :" -> true;
             default -> false;

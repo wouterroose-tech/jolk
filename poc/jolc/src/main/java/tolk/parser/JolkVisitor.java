@@ -624,24 +624,30 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             receiver = new JolkEmptyNode();
         }
 
-        for (int i = 0; i < ctx.selector().size(); i++) {
-            String selector = ctx.selector(i).identifier().getText();
-            JolkNode[] args = new JolkNode[0];
-            if (ctx.payload(i) != null) {
-                if (ctx.payload(i).arguments() != null) {
-                    var exprs = ctx.payload(i).arguments().expression();
-                    args = new JolkNode[exprs.size()];
-                    for (int j = 0; j < exprs.size(); j++) {
-                        args[j] = visit(exprs.get(j));
+        // Aligned Child Traversal: In ANTLR4, optional children (like payload?) are not padded 
+        // in their respective lists. We must traverse the actual child sequence to correctly 
+        // pair selectors with their immediate payloads.
+        for (int i = 0; i < ctx.getChildCount(); i++) {
+            var child = ctx.getChild(i);
+            if (child instanceof jolkParser.SelectorContext selectorCtx) {
+                String selector = selectorCtx.identifier().getText();
+                JolkNode[] args = new JolkNode[0];
+
+                // Check if the immediately following child is a payload
+                if (i + 1 < ctx.getChildCount() && ctx.getChild(i + 1) instanceof jolkParser.PayloadContext payloadCtx) {
+                    if (payloadCtx.arguments() != null) {
+                        var exprs = payloadCtx.arguments().expression();
+                        args = new JolkNode[exprs.size()];
+                        for (int j = 0; j < exprs.size(); j++) args[j] = visit(exprs.get(j));
+                    } else if (payloadCtx.closure() != null) {
+                        args = new JolkNode[] { visit(payloadCtx.closure()) };
                     }
-                } else if (ctx.payload(i).closure() != null) {
-                    args = new JolkNode[] { visit(ctx.payload(i).closure()) };
+                    i++; // Consume the payload child
                 }
-            }
-            if (receiver instanceof JolkSuperNode) {
-                receiver = new JolkSuperMessageSendNode(selector, args);
-            } else {
-                receiver = new JolkMessageSendNode(receiver, selector, args);
+
+                receiver = (receiver instanceof JolkSuperNode)
+                    ? new JolkSuperMessageSendNode(selector, args)
+                    : new JolkMessageSendNode(receiver, selector, args);
             }
         }
         return receiver;

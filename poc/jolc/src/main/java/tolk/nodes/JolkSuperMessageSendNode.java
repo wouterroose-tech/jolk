@@ -58,7 +58,7 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
         // 3. Perform Member Lookup bypassing the receiver's class overrides
         // We distinguish between instance-level super and meta-level super calls.
         Object member = (self instanceof JolkMetaClass) 
-            ? startClass.lookupMetaMember(selector) 
+            ? (JolkMetaClass.isObjectIntrinsic(selector) ? null : startClass.lookupMetaMember(selector))
             : startClass.lookupInstanceMember(selector);
 
         Object[] args = new Object[argumentNodes.length];

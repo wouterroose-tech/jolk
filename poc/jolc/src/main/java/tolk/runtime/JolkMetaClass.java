@@ -38,7 +38,7 @@ import java.util.Set;
 public class JolkMetaClass implements TruffleObject {
 
     public static final Set<String> INTRINSIC_MEMBERS = Set.of(
-        "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
+        "new", "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
         "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
         "?", "? :", "?!", "?! :"
     );
@@ -534,7 +534,7 @@ public class JolkMetaClass implements TruffleObject {
             throw new IllegalArgumentException("Cannot invoke super member from root object");
         }
         startClass.ensureHydrated();
-        Object memberObj = startClass.lookupMetaMember(member);
+        Object memberObj = isObjectIntrinsic(member) ? null : startClass.lookupMetaMember(member);
         if (memberObj != null) {
             Object[] metaArguments = new Object[arguments.length + 1];
             metaArguments[0] = receiver;
@@ -548,11 +548,13 @@ public class JolkMetaClass implements TruffleObject {
 
         switch (member) {
             case "new":
+                // Arity 0: Default birth
                 if (arguments.length == 0) return new JolkObject(receiver);
+                // Arity N: Canonical birth matching field layout
                 if (arguments.length == receiver.totalFieldCount) {
                     return new JolkObject(receiver, arguments);
                 }
-                throw ArityException.create(receiver.totalFieldCount, receiver.totalFieldCount, arguments.length);
+                throw ArityException.create(0, receiver.totalFieldCount, arguments.length);
             case "name":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return receiver.name;

@@ -72,4 +72,26 @@ public class JolkBindingTest extends JolcTestBase {
         assertEquals(42L, instance.invokeMember("val").asLong());
     }
 
+    @Test
+    void testReservedFieldName() {
+        String source = """
+            class MyClass {
+                Long value = 42; 
+                Long getValue() { ^ value }
+                Long getValue(Long x) {
+                    Long value = x;
+                    ^ value
+                }
+                Long run() {
+                    ^self #getValue(self #value)
+                }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertEquals(42L, instance.invokeMember("value").asLong());
+        assertEquals(42L, instance.invokeMember("getValue").asLong());
+        assertEquals(42L, instance.invokeMember("getValue", 42).asLong());
+        assertEquals(42L, instance.invokeMember("run").asLong());
+    }
+
 }

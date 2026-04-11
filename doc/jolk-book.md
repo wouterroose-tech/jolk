@@ -173,6 +173,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	exclusive_or    = bitwise_and { "|!" bitwise_and }
 	bitwise_and     = equality { "&" equality }
 	equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
+	comparison      = term { ( ">" | ">=" | "<" | "<=" ) term } 
 	comparison      = bitshift { ( ">" | ">=" | "<" | "<=" ) bitshift }
 	bitshift        = term { ( "<<" | ">>" | ">>>" ) term }
 	term            = factor { ( "+" | "-" ) factor }

@@ -1,17 +1,17 @@
 package tolk.runtime;
 
 import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.nodes.JolkDispatchNode;
 
 /// # JolkObject
@@ -21,8 +21,8 @@ import tolk.nodes.JolkDispatchNode;
 /// Currently, this is just a placeholder to establish the object model structure.
 /// In the future, this class will be expanded to include fields, methods, and other features of the object model.
 /// 
-@ExportLibrary(InteropLibrary.class) // JolkObject is a TruffleObject
-public class JolkObject implements TruffleObject {
+@ExportLibrary(InteropLibrary.class)
+public class JolkObject extends DynamicObject {
 
     /// The root MetaClass for the Jolk Object-Model.
     /// This identity has no superclass and serves as the terminus
@@ -32,21 +32,27 @@ public class JolkObject implements TruffleObject {
     );
 
     private final JolkMetaClass metaClass;
-    private final Object[] data;
 
     public JolkObject(JolkMetaClass metaClass) {
         this(metaClass, null);
     }
 
     public JolkObject(JolkMetaClass metaClass, Object[] args) {
+        super(metaClass.getInstanceShape()); // Initialize DynamicObject with the shape
         this.metaClass = metaClass;
         // Ensure structural layout is finalized before allocating the state substrate
         this.metaClass.initializeDefaultValues();
-        this.data = new Object[metaClass.getFieldCount()];
-        if (args != null && args.length == data.length) {
-            System.arraycopy(args, 0, data, 0, data.length);
-        } else {
-            System.arraycopy(metaClass.getDefaultFieldValues(), 0, data, 0, data.length);
+
+        DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
+        Object[] defaultValues = metaClass.getDefaultFieldValues();
+        String[] allFieldNames = metaClass.getFlattenedFieldNames();
+
+        // Selection Logic: Populate from provided arguments (canonical #new) 
+        // or fallback to the template defaults.
+        Object[] sourceValues = (args != null && args.length == allFieldNames.length) ? args : defaultValues;
+
+        for (int i = 0; i < allFieldNames.length; i++) {
+            objLib.put(this, allFieldNames[i], sourceValues[i]);
         }
     }
 
@@ -55,29 +61,6 @@ public class JolkObject implements TruffleObject {
     /// Returns the {@link JolkMetaClass} that describes this instance.
     public JolkMetaClass getJolkMetaClass() {
         return metaClass;
-    }
-
-    Object getFieldValue(String name) {
-        int index = metaClass.getFieldIndex(name);
-        return getFieldValue(index);
-    }
-
-    Object getFieldValue(int index) {
-        if (index >= 0 && index < data.length) {
-            return data[index];
-        }
-        return null;
-    }
-
-    void setFieldValue(String name, Object value) {
-        int index = metaClass.getFieldIndex(name);
-        setFieldValue(index, value);
-    }
-
-    void setFieldValue(int index, Object value) {
-        if (index >= 0 && index < data.length) {
-            data[index] = value;
-        }
     }
 
     @ExportMessage
@@ -94,6 +77,20 @@ public class JolkObject implements TruffleObject {
         return metaClass;
     }
 
+    /**
+     * Bridge method for unit tests to verify state. 
+     * Maps the legacy index-based access to the modern Shape-based model.
+     */
+    @TruffleBoundary
+    public Object getFieldValue(int index) {
+        String[] names = metaClass.getFlattenedFieldNames();
+        if (index >= 0 && index < names.length) {
+            // Use the uncached library for manual testing access
+            return DynamicObjectLibrary.getUncached().getOrDefault(this, names[index], JolkNothing.INSTANCE);
+        }
+        return JolkNothing.INSTANCE;
+    }
+
     @ExportMessage
     public boolean hasMembers() {
         return true;
@@ -106,13 +103,31 @@ public class JolkObject implements TruffleObject {
 
     @ExportMessage
     public boolean isMemberInvocable(String member) {
-        // An instance can invoke a member if it's an Object intrinsic or an instance member on its class.
-        return metaClass.hasInstanceMember(member) || JolkDispatchNode.isObjectIntrinsic(member);
+        // Recognise methods, intrinsics, and fields as invocable targets
+        return metaClass.hasInstanceMember(member) 
+            || JolkDispatchNode.isObjectIntrinsic(member)
+            || metaClass.getFieldIndex(member) != -1;
+    }
+
+    @ExportMessage
+    public boolean isMemberReadable(String member) {
+        return metaClass.getFieldIndex(member) != -1;
+    }
+
+    @ExportMessage
+    public Object readMember(String member,
+                             @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException {
+        if (metaClass.getFieldIndex(member) != -1) {
+            return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
+        }
+        throw UnknownIdentifierException.create(member);
     }
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
-                        @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+                        @CachedLibrary(limit = "3") InteropLibrary interop,
+                        @CachedLibrary("this") DynamicObjectLibrary objLib) 
+                        throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         String name = member;
 
         // 1. Prioritize user-defined members for overridable selectors.
@@ -124,6 +139,19 @@ public class JolkObject implements TruffleObject {
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
             Object result = interop.execute(instanceMember, argsWithReceiver);
             return result == null ? JolkNothing.INSTANCE : result;
+        }
+
+        // 2. Property Projection: Map message sends to DynamicObject slot access
+        if (metaClass.getFieldIndex(name) != -1) {
+            if (arguments.length == 0) {
+                // Getter Pattern: #field
+                return objLib.getOrDefault(this, name, JolkNothing.INSTANCE);
+            } else if (arguments.length == 1) {
+                // Setter Pattern: #field(val) -> Returns Self (Fluent Contract)
+                objLib.put(this, name, arguments[0]);
+                return this;
+            }
+            throw ArityException.create(0, 1, arguments.length);
         }
 
         // 2. Handle standard intrinsic protocol via the central dispatcher (ObjectExtension).

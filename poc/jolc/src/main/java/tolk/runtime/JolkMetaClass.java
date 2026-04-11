@@ -1,5 +1,6 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -10,11 +11,11 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.CachedLibrary;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.nodes.JolkReturnException;
 
 import java.util.HashSet;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -48,8 +49,8 @@ public class JolkMetaClass implements TruffleObject {
     private final Map<String, Object> instanceFields;
     // Map field names to their array index for O(1) access
     private final Map<String, Integer> fieldIndices;
-    // Cache synthetic accessors to prevent allocation on every lookup
-    private final Map<String, JolkSyntheticAccessor> accessorCache;
+    // The Truffle Shape defining the memory layout for instances
+    private Shape instanceShape;
     // Total number of fields including hierarchy
     protected int totalFieldCount;
     // Default field values
@@ -68,6 +69,7 @@ public class JolkMetaClass implements TruffleObject {
     protected Map<String, Object> metaRegistry;
     protected JolkMemberNames cachedInstanceMemberNames;
     protected JolkMemberNames cachedMetaMemberNames;
+    protected String[] flattenedFieldNames;
     protected boolean hydrated = false;
     // Enum constants cache for ENUM archetype
     private final Map<String, JolkEnumConstant> enumConstants = new HashMap<>();
@@ -97,9 +99,8 @@ public class JolkMetaClass implements TruffleObject {
         this.archetype = archetype;
         this.instanceMembers = instanceMembers;
         this.instanceFields = instanceFields;
-        this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.fieldIndices = new HashMap<>();
-        this.accessorCache = new HashMap<>();
+        this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.metaMembers = metaMembers;
         this.metaFieldIndices = new HashMap<>();
         this.metaAccessorCache = new HashMap<>();
@@ -122,11 +123,20 @@ public class JolkMetaClass implements TruffleObject {
         }
 
         // 1. Calculate Instance Field Layout
-        int currentIndex = (superclass != null) ? superclass.getFieldCount() : 0;
+        int superCount = (superclass != null) ? superclass.getFieldCount() : 0;
+        this.flattenedFieldNames = new String[superCount + instanceFields.size()];
+        if (this.instanceShape == null) {
+            this.instanceShape = (superclass != null) ? superclass.instanceShape : Shape.newBuilder().build();
+        }
+        
+        if (superclass != null) {
+            System.arraycopy(superclass.getFlattenedFieldNames(), 0, this.flattenedFieldNames, 0, superCount);
+        }
+
+        int currentIndex = superCount;
         for (String fieldName : instanceFields.keySet()) {
-            fieldIndices.put(fieldName, currentIndex);
-            accessorCache.put(fieldName, new JolkSyntheticAccessor(fieldName, currentIndex));
-            currentIndex++;
+            this.fieldIndices.put(fieldName, currentIndex++);
+            this.flattenedFieldNames[currentIndex - 1] = fieldName;
         }
         this.totalFieldCount = currentIndex;
         this.defaultFieldValues = new Object[totalFieldCount];
@@ -155,7 +165,6 @@ public class JolkMetaClass implements TruffleObject {
                 this.metaRegistry.putAll(superclass.metaRegistry);
             }
         }
-        for (String fieldName : this.instanceFields.keySet()) this.instanceRegistry.put(fieldName, accessorCache.get(fieldName));
         this.instanceRegistry.putAll(this.instanceMembers);
         this.metaRegistry.putAll(this.metaMembers);
 
@@ -218,6 +227,14 @@ public class JolkMetaClass implements TruffleObject {
 
     public JolkMetaClass getSuperclass() {
         return superclass;
+    }
+
+    public JolkFinality getFinality() {
+        return finality;
+    }
+
+    public JolkVisibility getVisibility() {
+        return visibility;
     }
 
     public Object getMetaFieldValue(int index) {
@@ -491,8 +508,8 @@ public class JolkMetaClass implements TruffleObject {
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
                         @CachedLibrary(limit = "3") InteropLibrary interop,
-                        @Cached(value = "member", allowUncached = true) String cachedMember,
-                        @Cached(value = "doLookupMeta(this, member)", allowUncached = true) Object cachedValue) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+                        @Cached(value = "member", allowUncached = true, neverDefault = false) String cachedMember,
+                        @Cached(value = "doLookupMeta(this, member)", allowUncached = true, neverDefault = false) Object cachedValue) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         ensureHydrated();
 
         if (member.equals(cachedMember) && cachedValue != null) {
@@ -687,6 +704,9 @@ public class JolkMetaClass implements TruffleObject {
         if (!hydrated) return; // Only refresh if hydrated
         Set<String> instanceKeys = new HashSet<>(instanceRegistry.keySet());
         instanceKeys.addAll(JolkIntrinsicProtocol.INTRINSIC_MEMBERS);
+        if (flattenedFieldNames != null) {
+            instanceKeys.addAll(Arrays.asList(flattenedFieldNames));
+        }
         this.cachedInstanceMemberNames = new JolkMemberNames(instanceKeys.toArray(new String[0]));
     }
 
@@ -720,52 +740,29 @@ public class JolkMetaClass implements TruffleObject {
         return defaultFieldValues != null ? defaultFieldValues : new Object[0];
     }
 
-    ///
-    /// ## JolkSyntheticAccessor
-    ///
-    /// Implements the "Virtual Field Strategy" by acting as a dynamic accessor node.
-    /// It handles both read (getter) and write (setter) operations based on the
-    /// number of arguments provided, supporting the Jolk fluent setter pattern.
-    ///
-    @ExportLibrary(InteropLibrary.class)
-    public static final class JolkSyntheticAccessor implements TruffleObject {
-        private final String fieldName;
-        private final int index;
+    public Shape getInstanceShape() {
+        ensureHydrated();
+        return instanceShape;
+    }
 
-        public JolkSyntheticAccessor(String fieldName, int index) {
-            this.fieldName = fieldName;
-            this.index = index;
-        }
+    /**
+     * Returns the full set of instance field names across the hierarchy in layout order.
+     *
+     * @return An array of flattened field names.
+     */
+    public String[] getFlattenedFieldNames() {
+        ensureHydrated();
+        return flattenedFieldNames != null ? flattenedFieldNames : new String[0];
+    }
 
-        @ExportMessage
-        public boolean isExecutable() {
-            return true;
-        }
-    
-        @ExportMessage
-        public Object execute(Object[] arguments,
-                       @Cached(value = "create()", inline = false) ConditionProfile lengthProfile) throws ArityException, UnsupportedTypeException {
-            
-            if (arguments.length < 1) throw ArityException.create(1, 2, arguments.length);
-            
-            // Argument 0 is the receiver (JolkObject)
-            if (!(arguments[0] instanceof JolkObject receiver)) {
-                throw UnsupportedTypeException.create(arguments, "Receiver must be a JolkObject");
-            }
-
-            if (lengthProfile.profile(arguments.length == 1)) {
-                // Getter: #x -> returns value
-                Object result = receiver.getFieldValue(index);
-                // Identity Restitution Protocol: Ensure no raw JVM null or Interop null leaks.
-                return (result == null || (result != JolkNothing.INSTANCE && InteropLibrary.getUncached().isNull(result))) ? JolkNothing.INSTANCE : result;
-            } else if (lengthProfile.profile(arguments.length >= 2)) {
-                // Setter: #x(value) -> returns Self (for fluent chaining)
-                Object value = arguments[1];
-                receiver.setFieldValue(index, value);
-                return receiver;
-            }
-            throw ArityException.create(1, 2, arguments.length);
-        }
+    /**
+     * Returns an array of instance field names defined for this meta-class.
+     *
+     * @return An array of field names.
+     */
+    public String[] getInstanceFieldNames() {
+        ensureHydrated();
+        return instanceFields.keySet().toArray(new String[0]);
     }
 
     /**
@@ -813,6 +810,8 @@ public class JolkMetaClass implements TruffleObject {
             this.totalMetaFieldCount = actualClass.totalMetaFieldCount;
             this.metaFieldValues = actualClass.metaFieldValues;
             
+            this.flattenedFieldNames = actualClass.flattenedFieldNames;
+
             // Registry and Cache synchronization
             this.instanceRegistry = actualClass.instanceRegistry;
             this.metaRegistry = actualClass.metaRegistry;

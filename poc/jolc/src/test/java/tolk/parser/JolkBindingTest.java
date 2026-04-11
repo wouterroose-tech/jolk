@@ -21,7 +21,7 @@ public class JolkBindingTest extends JolcTestBase {
     
     @Test
     void testFieldAccessors() {
-        String source = "class MyClass { Long x;}";
+        String source = "class MyClass { Long x; }";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
@@ -38,6 +38,7 @@ public class JolkBindingTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         
         // field access in method
+        assertEquals(42L, instance.invokeMember("x").asLong());
         assertEquals(42L, instance.invokeMember("val").asLong());
     }
 

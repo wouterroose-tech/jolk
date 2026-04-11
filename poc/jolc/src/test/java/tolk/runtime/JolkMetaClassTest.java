@@ -155,11 +155,8 @@ public class JolkMetaClassTest {
         assertTrue(instanceObj instanceof JolkObject, "Result should be a JolkObject");
         JolkObject instance = (JolkObject) instanceObj;
 
-        // Verify field value via synthesized accessor
-        Object accessorObj = containerClass.lookupInstanceMember("val");
-        assertTrue(accessorObj instanceof JolkMetaClass.JolkSyntheticAccessor);
-        
-        Object result = InteropLibrary.getUncached().execute(accessorObj, new Object[]{instance});
+        // Verify field value via interop message send (executes doShapeRead in dispatch)
+        Object result = InteropLibrary.getUncached().invokeMember(instance, "val");
         assertEquals("data", result, "Canonical constructor should initialize field");
     }
 
@@ -246,15 +243,12 @@ public class JolkMetaClassTest {
 
     @Test
     void testLookupInstanceFieldAccessor() {
-        // Verify the Virtual Field Strategy
+        // In the Shape-based model, fields are not stored as accessor objects in the registry.
         Map<String, Object> fields = Collections.singletonMap("myField", null);
         // Use the full constructor to inject fields
         JolkMetaClass fieldClass = new JolkMetaClass("FieldClass", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
         
-        assertTrue(fieldClass.hasInstanceMember("myField"), "Should report field as an instance member");
-        Object accessor = fieldClass.lookupInstanceMember("myField");
-        assertNotNull(accessor, "Should return a synthesized accessor");
-        assertTrue(accessor instanceof JolkMetaClass.JolkSyntheticAccessor, "Accessor should be of the correct synthetic type");
+        assertNull(fieldClass.lookupInstanceMember("myField"), "Fields are no longer represented by accessor objects in the registry.");
     }
 
     @Test
@@ -276,17 +270,16 @@ public class JolkMetaClassTest {
         Object instanceObj = meta.callMetaMember("new", new Object[]{10});
         JolkObject instance = (JolkObject) instanceObj;
         
-        Object accessor = meta.lookupInstanceMember("score");
         InteropLibrary interop = InteropLibrary.getUncached();
         
-        // Getter
-        assertEquals(10, interop.execute(accessor, instance));
+        // Getter Pattern: #score
+        assertEquals(10, interop.invokeMember(instance, "score"));
         
-        // Setter (Fluent: returns instance)
-        Object setRes = interop.execute(accessor, instance, 20);
+        // Setter Pattern: #score(20) -> returns instance (Self-Return Contract)
+        Object setRes = interop.invokeMember(instance, "score", 20);
         assertEquals(instance, setRes);
         
         // Check new value
-        assertEquals(20, interop.execute(accessor, instance));
+        assertEquals(20, interop.invokeMember(instance, "score"));
     }
 }

@@ -1,5 +1,9 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.object.Property;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
@@ -173,6 +177,38 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         }
     }
 
+    /**
+     * ### Fast Path for Shape-based Property Access
+     * 
+     * Specializes the dispatch for native JolkObjects. If the selector matches 
+     * a property in the cached shape, it performs a direct offset load.
+     */
+    @Specialization(guards = {
+        "receiver.getShape() == cachedShape",
+        "selector == cachedSelector",
+        "property != null"
+    }, limit = "3")
+    protected Object doShapeRead(DynamicObject receiver, String selector, Object[] arguments,
+                                @Cached("receiver.getShape()") Shape cachedShape,
+                                @Cached("selector") String cachedSelector,
+                                @Cached("cachedShape.getProperty(selector)") Property property,
+                                @CachedLibrary("receiver") DynamicObjectLibrary objLib) {
+
+        if (arguments.length == 0) {
+            // Getter Pattern: #field
+            Object result = objLib.getOrDefault(receiver, cachedSelector, JolkNothing.INSTANCE);
+            // Identity Restitution: Ensure null substrate values are lifted to Nothing
+            return (result == null) ? JolkNothing.INSTANCE : result;
+        } else if (arguments.length == 1) {
+            // Setter Pattern: #field(val)
+            objLib.put(receiver, cachedSelector, arguments[0]);
+            // Self-Return Contract: Setters return the receiver for fluent chaining
+            return receiver;
+        }
+
+        // Arity mismatch for a field access
+        throw new RuntimeException("Invalid arity for field access: " + selector);
+    }
     /**
      * ### isNothing
      * 

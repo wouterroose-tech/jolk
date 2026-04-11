@@ -75,7 +75,9 @@ We invite you to stop "calling methods" and start "sending messages." Welcome to
 
 ## Design Philosophy
 
-Jolk is architected as a minimalist language for the JVM, an exploration of Java evolution through the omission of procedural legacy and the implementation of a pure message-passing object model. This design leverages the elimination of keywords, the treatment of classes as first-class objects, and the enforcement of a unified messaging syntax.
+Jolk is architected as a high-density synthesis of Java’s structural discipline and Smalltalk’s dynamic philosophy, re-engineered for the modern GraalVM ecosystem.
+
+
 
 ### Principles
 
@@ -1091,21 +1093,23 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 ## Heritage & Foundation
 
+Jolk is a *Convergent Architecture* where the static safety of Java acts as the gatekeeper for a Smalltalk-inspired runtime. The *Java Influence* provides the structure—nominal typing, curly-brace scoping, and visibility modifiers—utilising Factory Patterns as a core language construct to govern object lifecycles strictly. The *Smalltalk Influence* provides the execution via the messaging kernel. Beyond these primary anchors, Jolk’s design is further inspired by the pragmatic ergonomics of Kotlin, the symbolic density of C#, and the pioneering meta-object research of Self and Lisp.
+
 *Smalltalk-80 Heritage*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic flow of messages" rather than procedural calls. It utilizes Keyword Selectors (using a `#` hashtag anchor) and Closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately.
 
 *Strongtalk Heritage*: Jolk incorporates a rigorous static type system inspired by Strongtalk with `< >` delimiters for generic type parameters, which enforces a formal separation between the subtype and subclass lattices. This ensures behavioural protocols are verified independently of an object's implementation lineage.
 
-*The Self Language*: The Tolk Engine’s strategy of "Semantic Flattening" is the spiritual successor to the optimization techniques developed for the Self language[13].
-
 *Java and JVM Integration*: The syntax for Structural Scaffolding—including package, import, and class—is intentionally aligned with Java to reduce cognitive load. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
 
-*Kotlin Influences*: Following Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks, and adopts a strict form of Trailing Closure Syntax.
-
-*C# Null-Coalescing*: Jolk adopts the `??` operator from C#[14], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
-
-*C# using Directive*: Jolk adopts the `C#` using directive[15] for vocabulary expansion, aliasing and constant projection.
+*The Self Language*: The Tolk Engine’s strategy of "Semantic Flattening" is the spiritual successor to the optimization techniques developed for the Self language[13].
 
 *The Null Object Pattern* in Jolk is a direct architectural evolution of concepts from both Smalltalk-80 and Kotlin, designed to handle "nothingness" as a first-class participant in the messaging flow rather than a system-collapsing failure. Jolk takes the reified identity of Smalltalk and the type-safe constraints of Kotlin, then applies Identity Restitution to preserve a pure object-oriented "World View" on the high-performant JVM.
+
+*Exceptions*: Following Smalltalk and Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks, and adopts a strict form of Trailing Closure Syntax.
+
+*Null-Coalescing*: Jolk adopts the `??` operator from C#[14], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging philosophy.
+
+*using Directive*: Jolk adopts the `C#` using directive[15] for vocabulary expansion, aliasing and constant projection.
 
 *Predicate Assertion*: in Jolk is a reconciliatory synthesis that takes the philosophical purity of Smalltalk, the syntactic ergonomics of Kotlin, and the high-performance execution of Java to create a unified messaging protocol for control flow.
 
@@ -1533,6 +1537,13 @@ These kernel types form the language's "Logic Engine":
 The `jolk.lang` class definitions for these types act as a formal "bridge" to the JVM. They provide method signatures that serve as anchors for documentation, IDE tooling, and static analysis, even though the compiler replaces the calls with direct bytecode, thus preserving the "everything is an object" model without sacrificing performance.
 
 ### Semantic Flattening
+
+The environment is designed to leverage the JVM while targeting GraalVM for maximum structural density. The execution stack is defined by a deterministic mapping of mechanics to outcomes:
+
+* *Logic*: Message Passing Eliminates static procedure calls in favour of responses.
+* *State*: Meta Constant Lenses provide immutable views.
+* *Optimisation*: GraalVM AOT/Truffle Collapses dispatch into high-density native machine code.
+* *Engine (Tolk)*: Persists Binary AST Nodes to bypass parsing overhead for instantaneous startup. |
 
 The Tolk Engine reconciles fluid syntactic messages with rigid JVM performance constraints. Through Semantic Flattening (internally "Static Analysis"), the toolchain identifies Logic Idioms—sequences of receivers, selectors, and closures—and collapses them into raw JVM opcodes. High-level constructs are projected directly into `IFEQ` or `IFEQ` instructions, achieving zero-overhead execution parity with native Java.
 

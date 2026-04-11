@@ -81,10 +81,8 @@ public class JolkObject extends DynamicObject {
         return metaClass;
     }
 
-    /**
-     * Bridge method for unit tests to verify state. 
-     * Maps the legacy index-based access to the modern Shape-based model.
-     */
+    /// Bridge method for unit tests to verify state. 
+    /// Maps the legacy index-based access to the modern Shape-based model.
     @TruffleBoundary
     public Object getFieldValue(int index) {
         String[] names = metaClass.getFlattenedFieldNames();

@@ -200,14 +200,12 @@ public class JolkMetaClass extends DynamicObject {
         }
     }
 
-    /**
-     * ### getJolkMetaClass
-     * 
-     * Returns the meta-identity of this object. In the Jolk Meta-Object Protocol,
-     * classes (MetaClasses) act as their own meta-identities.
-     * 
-     * @return This MetaClass instance.
-     */
+    /// ### getJolkMetaClass
+    /// 
+    /// Returns the meta-identity of this object. In the Jolk Meta-Object Protocol,
+    /// classes (MetaClasses) act as their own meta-identities.
+    /// 
+    /// @return This MetaClass instance.
     public JolkMetaClass getJolkMetaClass() {
         return this; // In the PoC, classes are their own meta-identities.
     }

@@ -29,30 +29,26 @@ public abstract class JolkNode extends Node {
     /// @return The result of executing this node.
     public abstract Object executeGeneric(VirtualFrame frame);
 
-    /**
-     * Performs "Identity Restitution" by lifting a potential raw Java null into the 
-     * Jolk {@link JolkNothing#INSTANCE}. This ensures that even uninitialized states 
-     * or nulls passed from the Java host can safely participate in Jolk's unified 
-     * message-passing protocol.
-     * 
-     * @param value The value to lift.
-     * @return The lifted value (either the original object or JolkNothing.INSTANCE).
-     */
+    /// Performs "Identity Restitution" by lifting a potential raw Java null into the 
+    /// Jolk {@link JolkNothing#INSTANCE}. This ensures that even uninitialized states 
+    /// or nulls passed from the Java host can safely participate in Jolk's unified 
+    /// message-passing protocol.
+    /// 
+    /// @param value The value to lift.
+    /// @return The lifted value (either the original object or JolkNothing.INSTANCE).
     public final static Object lift(Object value) {
         if (value == null || InteropLibrary.getUncached().isNull(value)) return JolkNothing.INSTANCE;
         if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof com.oracle.truffle.api.interop.TruffleObject) {
             return value;
         }
-        // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
+        /// Identity Restitution: Ensure host objects are wrapped for Interop consistency.
         return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
     }
 
-    /**
-     * Performs **Impedance Resolution**. If the provided value is a wrapped 
-     * Truffle Host Object, it extracts the underlying Java instance.
-     * This is used when a Jolk built-in or dispatch needs to operate on the 
-     * raw Java object behind a Truffle host wrapper.
-     */
+    /// Performs **Impedance Resolution**. If the provided value is a wrapped 
+    /// Truffle Host Object, it extracts the underlying Java instance.
+    /// This is used when a Jolk built-in or dispatch needs to operate on the 
+    /// raw Java object behind a Truffle host wrapper.
     public final static Object unwrap(Object value) {
         var env = tolk.language.JolkLanguage.getContext().env;
         if (env.isHostObject(value)) {
@@ -61,14 +57,12 @@ public abstract class JolkNode extends Node {
         return value;
     }
 
-    /**
-     * Navigates the lexical environment chain to find the arguments array at the specified depth.
-     * This is the standard mechanism in Jolk for environment traversal.
-     * 
-     * @param frame The starting frame.
-     * @param depth The number of levels to traverse.
-     * @return The arguments array of the target environment, or null if unreachable.
-     */
+    /// Navigates the lexical environment chain to find the arguments array at the specified depth.
+    /// This is the standard mechanism in Jolk for environment traversal.
+    /// 
+    /// @param frame The starting frame.
+    /// @param depth The number of levels to traverse.
+    /// @return The arguments array of the target environment, or null if unreachable.
     @ExplodeLoop
     protected final Object[] getTargetArgs(VirtualFrame frame, int depth) {
         Object[] current = frame.getArguments();
@@ -84,13 +78,11 @@ public abstract class JolkNode extends Node {
         return current;
     }
 
-    /**
-     * Navigates the lexical environment chain to find the Frame at the specified depth.
-     * 
-     * @param frame The starting frame.
-     * @param depth The number of levels to traverse.
-     * @return The target Frame, or null if unreachable.
-     */
+    /// Navigates the lexical environment chain to find the Frame at the specified depth.
+    /// 
+    /// @param frame The starting frame.
+    /// @param depth The number of levels to traverse.
+    /// @return The target Frame, or null if unreachable.
     @ExplodeLoop
     protected final Frame getTargetFrame(VirtualFrame frame, int depth) {
         Frame current = frame;

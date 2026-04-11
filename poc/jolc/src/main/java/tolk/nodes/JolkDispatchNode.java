@@ -59,20 +59,18 @@ import tolk.runtime.JolkIntrinsicProtocol;
 @GenerateInline(false)
 public abstract class JolkDispatchNode extends JolkNode { // Keep extending JolkNode
 
-    /**
-     * ### create
-     * 
-     * Static factory method to instantiate the node implementation. This method 
-     * delegates to the generated {@link JolkDispatchNodeGen} class.
-     * 
-     * @return An instance of the generated JolkDispatchNode.
-     */
+    /// ### create
+    /// 
+    /// Static factory method to instantiate the node implementation. This method 
+    /// delegates to the generated {@link JolkDispatchNodeGen} class.
+    /// 
+    /// @return An instance of the generated JolkDispatchNode.
     public static JolkDispatchNode create() {
         return JolkDispatchNodeGen.create();
     }
 
     /// Executes the message dispatch.
-    ///
+    /// 
     /// @param frame The current execution frame.
     /// @param receiver The object receiving the message.
     /// @param selector The message name (selector).
@@ -80,11 +78,9 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// @return The result of the message send.
     public abstract Object execute(VirtualFrame frame, Object receiver, String selector, Object[] arguments);
 
-    /**
-     * This method is not intended to be called directly on a JolkDispatchNode.
-     * It is marked as `final` to satisfy the requirement from {@link JolkNode} 
-     * while shielding it from the Truffle DSL's specialization generator. 
-     */
+    /// This method is not intended to be called directly on a JolkDispatchNode.
+    /// It is marked as `final` to satisfy the requirement from {@link JolkNode} 
+    /// while shielding it from the Truffle DSL's specialization generator. 
     @Override
     public final Object executeGeneric(VirtualFrame frame) {
         throw new UnsupportedOperationException("JolkDispatchNode is not designed to be executed directly via executeGeneric(VirtualFrame). Use execute(...) instead.");
@@ -153,12 +149,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         }
     }
 
-    /**
-     * ### Fast Path for Shape-based Property Access
-     * 
-     * Specializes the dispatch for native JolkObjects. If the selector matches 
-     * a property in the cached shape, it performs a direct offset load.
-     */
+    /// ### Fast Path for Shape-based Property Access
+    /// 
+    /// Specializes the dispatch for native JolkObjects. If the selector matches 
+    /// a property in the cached shape, it performs a direct offset load.
     @Specialization(guards = {
         "receiver.getShape() == cachedShape",
         "selector == cachedSelector",
@@ -185,15 +179,13 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         // Arity mismatch for a field access
         throw new RuntimeException("Invalid arity for field access: " + selector);
     }
-    /**
-     * ### isNothing
-     * 
-     * Guard used to identify if the receiver should be treated as the Jolk 
-     * Nothing identity.
-     * 
-     * @param receiver The object to check.
-     * @return true if the receiver is null or the JolkNothing instance.
-     */
+    /// ### isNothing
+    /// 
+    /// Guard used to identify if the receiver should be treated as the Jolk 
+    /// Nothing identity.
+    /// 
+    /// @param receiver The object to check.
+    /// @return true if the receiver is null or the JolkNothing instance.
     protected static boolean isNothing(Object receiver) {
         return receiver == null || receiver == JolkNothing.INSTANCE;
     }
@@ -202,13 +194,11 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return JolkNothing.INSTANCE;
     }
 
-    /**
-     * ### Fast Path for Closure-based Control Flow
-     * 
-     * Handles #ifPresent and #ifEmpty by directly executing the JolkClosure via 
-     * an IndirectCallNode. This enables Truffle to perform inlining of the 
-     * closure body, significantly improving performance compared to interop execution.
-     */
+    /// ### Fast Path for Closure-based Control Flow
+    /// 
+    /// Handles #ifPresent and #ifEmpty by directly executing the JolkClosure via 
+    /// an IndirectCallNode. This enables Truffle to perform inlining of the 
+    /// closure body, significantly improving performance compared to interop execution.
     @Specialization(guards = "isControlFlow(selector)")
     protected Object doControlFlow(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode,
@@ -293,12 +283,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
     }
 
-    /**
-     * ### Fast Path for Closure Exception Handling
-     * 
-     * Handles #catch on JolkClosure by routing to the closure's interop protocol.
-     * This enables exception handling for closures.
-     */
+    /// ### Fast Path for Closure Exception Handling
+    /// 
+    /// Handles #catch on JolkClosure by routing to the closure's interop protocol.
+    /// This enables exception handling for closures.
     @Specialization(guards = {"isClosureCatch(selector)", "isClosure(receiver)"})
     protected Object doClosureCatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                    @Shared("callNode") @Cached IndirectCallNode callNode,
@@ -332,13 +320,11 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return receiver;
     }
 
-    /**
-     * ### Fast Path for Long-based Iteration (#times)
-     * 
-     * Handles the `Long #times [closure]` message by directly executing the JolkClosure
-     * via an IndirectCallNode in a loop. This enables Truffle to perform inlining of the
-     * closure body, significantly improving performance compared to interop execution.
-     */
+    /// ### Fast Path for Long-based Iteration (#times)
+    /// 
+    /// Handles the `Long #times [closure]` message by directly executing the JolkClosure
+    /// via an IndirectCallNode in a loop. This enables Truffle to perform inlining of the
+    /// closure body, significantly improving performance compared to interop execution.
     @Specialization(guards = "isTimes(selector)")
     protected Object doTimes(VirtualFrame frame, Long receiver, String selector, Object[] arguments,
                              @Shared("callNode") @Cached IndirectCallNode callNode) {
@@ -352,12 +338,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         throw new RuntimeException("Invalid arguments for #times: expected a single closure.");
     }
 
-    /**
-     * ### Fast Path for Array Filtering (#filter)
-     * 
-     * Implements the filter protocol for java.util.List. The IndirectCallNode 
-     * allows Graal to inline the predicate logic.
-     */
+    /// ### Fast Path for Array Filtering (#filter)
+    /// 
+    /// Implements the filter protocol for java.util.List. The IndirectCallNode 
+    /// allows Graal to inline the predicate logic.
     @Specialization(guards = "isFilter(selector)")
     protected Object doFilter(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                               @Shared("callNode") @Cached IndirectCallNode callNode) {
@@ -374,13 +358,11 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         throw new RuntimeException("Invalid arguments for #filter: expected a single closure.");
     }
 
-    /**
-     * ### Fast Path for Array AnyMatch (#anyMatch)
-     * 
-     * Implements the anyMatch protocol for java.util.List. The IndirectCallNode 
-     * allows Graal to inline the predicate logic. It returns true as soon as 
-     * the predicate returns true for any element, otherwise false.
-     */
+    /// ### Fast Path for Array AnyMatch (#anyMatch)
+    /// 
+    /// Implements the anyMatch protocol for java.util.List. The IndirectCallNode 
+    /// allows Graal to inline the predicate logic. It returns true as soon as 
+    /// the predicate returns true for any element, otherwise false.
     @Specialization(guards = "isAnyMatch(selector)")
     protected Object doAnyMatch(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                                 @Shared("callNode") @Cached IndirectCallNode callNode) {
@@ -396,12 +378,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         throw new RuntimeException("Invalid arguments for #anyMatch: expected a single closure.");
     }
 
-    /**
-     * ### Fast Path for Iterator Traversal (#forEach)
-     * 
-     * Projects the kinetic substrate of an Iterator directly into a message-passing 
-     * loop. This is the implementation of the IteratorExtension.
-     */
+    /// ### Fast Path for Iterator Traversal (#forEach)
+    /// 
+    /// Projects the kinetic substrate of an Iterator directly into a message-passing 
+    /// loop. This is the implementation of the IteratorExtension.
     @Specialization(guards = "isForEach(selector)")
     protected Object doIteratorForEach(VirtualFrame frame, java.util.Iterator<?> receiver, String selector, Object[] arguments,
                                        @Shared("callNode") @Cached IndirectCallNode callNode) {
@@ -414,11 +394,9 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         throw new RuntimeException("Invalid arguments for #forEach: expected a single closure.");
     }
 
-    /**
-     * ### Fast Path for Map Iteration (#forEach)
-     * 
-     * Maps the associative archetype to a two-argument closure.
-     */
+    /// ### Fast Path for Map Iteration (#forEach)
+    /// 
+    /// Maps the associative archetype to a two-argument closure.
     @Specialization(guards = "isForEach(selector)")
     protected Object doMapForEach(VirtualFrame frame, Map<?, ?> receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode) {
@@ -436,14 +414,12 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         throw new RuntimeException("Invalid arguments for #forEach: expected a single closure.");
     }
 
-    /**
-     * ### Fast Path for Array Projection (#map)
-     * 
-     * Implements the Stream Protocol for java.util.List. While this looks like 
-     * it creates an intermediate list, Graal's Partial Escape Analysis (PEA) 
-     * and Loop Fusion will "boil away" the intermediate allocation when 
-     * messages are chained, resulting in zero-overhead single-pass execution.
-     */
+    /// ### Fast Path for Array Projection (#map)
+    /// 
+    /// Implements the Stream Protocol for java.util.List. While this looks like 
+    /// it creates an intermediate list, Graal's Partial Escape Analysis (PEA) 
+    /// and Loop Fusion will "boil away" the intermediate allocation when 
+    /// messages are chained, resulting in zero-overhead single-pass execution.
     @Specialization(guards = "isMap(selector)")
     protected Object doMap(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                            @Shared("callNode") @Cached IndirectCallNode callNode) {
@@ -718,13 +694,11 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 }
             }
 
-            /**
-             * ### Meta-Object Interceptor (#new)
-             * 
-             * Implements the **Unified Messaging** rule for object creation. If the receiver 
-             * is a host [Class] (MetaObject) and the selector is `#new`, we map it 
-             * directly to the Interop `instantiate` protocol to invoke the Java constructor.
-             */
+            /// ### Meta-Object Interceptor (#new)
+            /// 
+            /// Implements the **Unified Messaging** rule for object creation. If the receiver 
+            /// is a host [Class] (MetaObject) and the selector is `#new`, we map it 
+            /// directly to the Interop `instantiate` protocol to invoke the Java constructor.
             if ("new".equals(selector) && !(receiver instanceof JolkMetaClass) && (receiver instanceof Class || interop.isMetaObject(receiver) || interop.isInstantiable(receiver))) {
                 // Shim-less Interceptor: Route List.class, ArrayList.class, or the Jolk Array MetaClass 
                 // to the specialized Array factory logic.
@@ -774,16 +748,14 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         }
     }
 
-    /**
-     * ### isObjectIntrinsic
-     *
-     * Checks if a member name belongs to the Jolk Core Protocol. This method 
-     * serves as the runtime implementation of the 
-     * `extension ObjectExtension on java.lang.Object` declaration.
-     *
-     * @param member The selector name to check.
-     * @return true if the selector is a Jolk intrinsic.
-     */
+    /// ### isObjectIntrinsic
+    ///
+    /// Checks if a member name belongs to the Jolk Core Protocol. This method 
+    /// serves as the runtime implementation of the 
+    /// `extension ObjectExtension on java.lang.Object` declaration.
+    ///
+    /// @param member The selector name to check.
+    /// @return true if the selector is a Jolk intrinsic.
     public static boolean isObjectIntrinsic(String member) {
         if (member == null) return false;
         return switch (member) {
@@ -995,19 +967,17 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return null;
     }
 
-    /**
-     * ### dispatchHostMember
-     * 
-     * Implements the **Shim-less Integration** heuristic by attempting to map a Jolk 
-     * selector to a native Java member on a host object. It attempts the exact name, 
-     * followed by common Java Bean patterns (get/is/set) and public field access.
-     * 
-     * @param receiver The host object receiving the message.
-     * @param selector The Jolk selector (e.g., "name").
-     * @param arguments The call arguments.
-     * @return The result of the invocation or the receiver in case of a setter.
-     * @throws UnknownIdentifierException If no matching host member is found.
-     */
+    /// ### dispatchHostMember
+    /// 
+    /// Implements the **Shim-less Integration** heuristic by attempting to map a Jolk 
+    /// selector to a native Java member on a host object. It attempts the exact name, 
+    /// followed by common Java Bean patterns (get/is/set) and public field access.
+    /// 
+    /// @param receiver The host object receiving the message.
+    /// @param selector The Jolk selector (e.g., "name").
+    /// @param arguments The call arguments.
+    /// @return The result of the invocation or the receiver in case of a setter.
+    /// @throws UnknownIdentifierException If no matching host member is found.
     @TruffleBoundary
     private static Object dispatchHostMember(Object receiver, String selector, Object[] arguments) throws UnknownIdentifierException {
         InteropLibrary interop = InteropLibrary.getUncached();
@@ -1125,12 +1095,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return null;
     }
 
-    /**
-     * ### matchArguments
-     * 
-     * Matches provided arguments against a parameter signature, handling 
-     * Java varargs by wrapping trailing arguments into an array.
-     */
+    /// ### matchArguments
+    /// 
+    /// Matches provided arguments against a parameter signature, handling 
+    /// Java varargs by wrapping trailing arguments into an array.
     private static Object[] matchArguments(Class<?>[] types, boolean isVarArgs, Object[] args) {
         if (!isVarArgs) {
             return (types.length == args.length) ? args : null;
@@ -1272,9 +1240,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return null;
     }
 
-    /**
-     * Attempts to convert arguments for a method call by inspecting the method signature via reflection.
-     */
+    /// Attempts to convert arguments for a method call by inspecting the method signature via reflection.
     @TruffleBoundary
     private static Object[] convertArgumentsForMethod(Object receiver, String methodName, Object[] arguments) {
         try {

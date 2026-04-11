@@ -8,6 +8,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.library.CachedLibrary;
 
 /// # JolkEnumConstant
@@ -47,9 +48,16 @@ public class JolkEnumConstant implements TruffleObject {
         return enumClass;
     }
 
+    @com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
+    static Object doLookupEnumInstance(JolkEnumConstant receiver, String member) {
+        return receiver.enumClass.lookupInstanceMember(member);
+    }
+
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
-                              @CachedLibrary(limit = "3") InteropLibrary interop)
+                              @CachedLibrary(limit = "3") InteropLibrary interop,
+                              @Cached(value = "member", allowUncached = true) String cachedMember,
+                              @Cached(value = "doLookupEnumInstance(this, member)", allowUncached = true) Object cachedMemberObj)
             throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
 
         // Handle enum-specific methods
@@ -63,14 +71,25 @@ public class JolkEnumConstant implements TruffleObject {
         }
 
         // Delegate to the enum class for other methods
-        if (enumClass.hasInstanceMember(member)) {
-            Object instanceMember = enumClass.lookupInstanceMember(member);
+        Object instanceMember = null;
+        if (member.equals(cachedMember)) {
+            instanceMember = cachedMemberObj;
+        } else if (enumClass.hasInstanceMember(member)) {
+            instanceMember = enumClass.lookupInstanceMember(member);
+        }
+
+        if (instanceMember != null) {
             // Prepend 'this' (receiver) to arguments as Jolk instance members expect it
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
-            Object result = interop.execute(instanceMember, argsWithReceiver);
-            return result == null ? JolkNothing.INSTANCE : result;
+            try {
+                Object result = interop.execute(instanceMember, argsWithReceiver);
+                return result == null ? JolkNothing.INSTANCE : result;
+            } catch (UnsupportedMessageException e) {
+                 // Fallback if the member object is not executable (e.g. a field accessor that failed)
+                 throw e;
+            }
         }
 
         // Fallback to the Jolk Object Protocol (e.g. #class, #isPresent, #~~)

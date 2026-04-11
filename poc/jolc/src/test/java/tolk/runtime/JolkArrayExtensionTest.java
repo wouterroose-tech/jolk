@@ -43,7 +43,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         context.enter();
         try {
             // Use the Polyglot context to wrap the internal Truffle result
-            Object rawResult = JolkArrayExtension.ARRAY_TYPE.invokeMember("new", new Object[]{});
+            Object rawResult = JolkArrayExtension.ARRAY_TYPE.callMetaMember("new", new Object[]{});
             Value result = context.asValue(rawResult);
             
             assertNotNull(result);
@@ -64,7 +64,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         eval("");
         context.enter();
         try {
-            Object rawResult = JolkArrayExtension.ARRAY_TYPE.invokeMember("new", new Object[]{1L, 2L, 3L});
+            Object rawResult = JolkArrayExtension.ARRAY_TYPE.callMetaMember("new", new Object[]{1L, 2L, 3L});
             Value result = context.asValue(rawResult);
             
             assertNotNull(result);

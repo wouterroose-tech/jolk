@@ -119,7 +119,7 @@ public class JolkMetaClassTest {
 
     @Test
     void testInvokeNew() throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        Object result = metaClass.invokeMember("new", new Object[]{});
+        Object result = metaClass.callMetaMember("new", new Object[]{});
         assertNotNull(result, "The result of #new should not be null");
         assertTrue(result instanceof JolkObject, "The result should be an instance of JolkObject");
     }
@@ -129,20 +129,20 @@ public class JolkMetaClassTest {
         JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
         JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
 
-        assertEquals(parent, child.invokeMember("superclass", new Object[]{}), "Should return parent meta class");
-        assertEquals(JolkNothing.INSTANCE, parent.invokeMember("superclass", new Object[]{}), "Root class superclass should be Nothing");
+        assertEquals(parent, child.callMetaMember("superclass", new Object[]{}), "Should return parent meta class");
+        assertEquals(JolkNothing.INSTANCE, parent.callMetaMember("superclass", new Object[]{}), "Root class superclass should be Nothing");
     }
 
     @Test
     void testInvokeIntrinsicArity() {
         // #name takes 0 args
-        assertThrows(ArityException.class, () -> metaClass.invokeMember("name", new Object[]{"extra"}));
+        assertThrows(ArityException.class, () -> metaClass.callMetaMember("name", new Object[]{"extra"}));
         
         // #superclass takes 0 args
-        assertThrows(ArityException.class, () -> metaClass.invokeMember("superclass", new Object[]{"extra"}));
+        assertThrows(ArityException.class, () -> metaClass.callMetaMember("superclass", new Object[]{"extra"}));
         
         // #isInstance takes 1 arg
-        assertThrows(ArityException.class, () -> metaClass.invokeMember("isInstance", new Object[]{}));
+        assertThrows(ArityException.class, () -> metaClass.callMetaMember("isInstance", new Object[]{}));
     }
 
     @Test
@@ -151,7 +151,7 @@ public class JolkMetaClassTest {
         // Constructor: name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers
         JolkMetaClass containerClass = new JolkMetaClass("Container", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
 
-        Object instanceObj = containerClass.invokeMember("new", new Object[]{"data"});
+        Object instanceObj = containerClass.callMetaMember("new", new Object[]{"data"});
         assertTrue(instanceObj instanceof JolkObject, "Result should be a JolkObject");
         JolkObject instance = (JolkObject) instanceObj;
 
@@ -207,21 +207,21 @@ public class JolkMetaClassTest {
         Map<String, Object> metaMembers = Collections.singletonMap("customMeta", executable);
         JolkMetaClass meta = new JolkMetaClass("MetaWithMethod", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), metaMembers);
         
-        meta.invokeMember("customMeta", new Object[]{});
+        meta.callMetaMember("customMeta", new Object[]{});
         assertTrue(ran.get(), "Custom meta member should be invocable");
     }
 
     @Test
     void testInvokeNewWithArgumentsThrowsArityException() {
         assertThrows(ArityException.class, () -> {
-            metaClass.invokeMember("new", new Object[]{"unexpectedArg"});
+            metaClass.callMetaMember("new", new Object[]{"unexpectedArg"});
         });
     }
 
     @Test
     void testInvokeUnknownMemberThrowsException() {
         assertThrows(UnknownIdentifierException.class, () -> {
-            metaClass.invokeMember("unknown", new Object[]{});
+            metaClass.callMetaMember("unknown", new Object[]{});
         });
     }
 
@@ -273,7 +273,7 @@ public class JolkMetaClassTest {
         Map<String, Object> fields = Collections.singletonMap("score", null);
         JolkMetaClass meta = new JolkMetaClass("Score", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
         
-        Object instanceObj = meta.invokeMember("new", new Object[]{10});
+        Object instanceObj = meta.callMetaMember("new", new Object[]{10});
         JolkObject instance = (JolkObject) instanceObj;
         
         Object accessor = meta.lookupInstanceMember("score");

@@ -496,22 +496,29 @@ public class JolkMetaClass implements TruffleObject {
     }
 
     /**
-     * ### invokeMember
+     * ### callMetaMember
      * 
      * Convenience method for calling meta-level messages from Java code or unit tests.
      */
     @TruffleBoundary
-    @ExportMessage.Ignore
-    public Object invokeMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        return invokeMember(member, arguments, InteropLibrary.getUncached());
+    public Object callMetaMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+        return invokeMember(member, arguments, InteropLibrary.getUncached(), member, lookupMetaMember(member));
+    }
+
+    @TruffleBoundary
+    static Object doLookupMeta(JolkMetaClass receiver, String member) {
+        return receiver.lookupMetaMember(member);
     }
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
-                        @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+                        @CachedLibrary(limit = "3") InteropLibrary interop,
+                        @Cached(value = "member", allowUncached = true) String cachedMember,
+                        @Cached(value = "doLookupMeta(this, member)", allowUncached = true) Object cachedValue) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         ensureHydrated();
-        if (metaRegistry.containsKey(member)) {
-            Object memberObj = metaRegistry.get(member);
+
+        if (member.equals(cachedMember) && cachedValue != null) {
+            Object memberObj = cachedValue;
             // Enum constants are returned directly, not executed
             if (memberObj instanceof JolkEnumConstant) {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -525,6 +532,23 @@ public class JolkMetaClass implements TruffleObject {
                 return interop.execute(memberObj, metaArguments);
             } catch (JolkReturnException e) {
                 throw e; // Preserve signal for non-local returns
+            }
+        }
+
+        // Fallback for non-cached members
+        if (metaRegistry.containsKey(member)) {
+            Object memberObj = metaRegistry.get(member);
+            if (memberObj instanceof JolkEnumConstant) {
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return memberObj;
+            }
+            Object[] metaArguments = new Object[arguments.length + 1];
+            metaArguments[0] = this;
+            if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
+            try {
+                return interop.execute(memberObj, metaArguments);
+            } catch (JolkReturnException e) {
+                throw e;
             }
         }
 

@@ -4,7 +4,6 @@ import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
-import com.oracle.truffle.dsl.processor.util.Predicate;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
@@ -719,7 +718,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 // to the specialized Array factory logic.
                 if (receiver == List.class || receiver == ArrayList.class || receiver == JolkArrayExtension.ARRAY_TYPE) {
                     try {
-                        return JolkArrayExtension.ARRAY_TYPE.invokeMember("new", arguments);
+                        return JolkArrayExtension.ARRAY_TYPE.callMetaMember("new", arguments);
                     } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
                         throw new RuntimeException("Failed to instantiate Jolk Array from host class: " + receiver, e);
                     }

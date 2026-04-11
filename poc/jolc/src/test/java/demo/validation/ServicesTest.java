@@ -3,7 +3,6 @@ package demo.validation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Disabled;

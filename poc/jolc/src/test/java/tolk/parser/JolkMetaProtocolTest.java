@@ -3,6 +3,7 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -52,7 +53,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         Value meta = eval(source);
         // access meta constant 
         assertEquals(0, meta.invokeMember("META_VAL").asLong());
-        assertEquals(meta, meta.invokeMember("META_VAL", 42));
+        assertEquals(meta, meta.invokeMember("META_VAL", 42L)); // Ensure Long literal for consistency
         assertEquals(42, meta.invokeMember("META_VAL").asLong());
     }
 
@@ -62,7 +63,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         String classB = "class ClassB { Long val() { ^ ClassA #FORTY_TWO } }";
         eval(classA);
         Value instanceB = eval(classB).invokeMember("new");
-        // access projected meta constant 
+        // access meta constant 
         assertEquals(42, instanceB.invokeMember("val").asLong());
     }
 
@@ -92,6 +93,21 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         Value instanceB = eval(classB).invokeMember("new");
         Value instanceA = instanceB.invokeMember("createA");
         assertEquals(42, instanceA.invokeMember("x").asLong());
+    }
+
+    @Test
+    @Disabled("Requires support for meta field projection, which is not yet implemented.")
+    void testMetaFProjection() {
+        String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
+        String classB = """
+            & ClassA.FORTY_TWO;
+            class ClassB {
+                Long val() { ^ FORTY_TWO }
+            }""";
+        eval(classA);
+        Value instanceB = eval(classB).invokeMember("new");
+        // access projected meta constant 
+        assertEquals(42, instanceB.invokeMember("val").asLong());
     }
 
 }

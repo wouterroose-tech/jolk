@@ -110,8 +110,6 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                     JolkFieldNode field = (JolkFieldNode) node;
                     // Pass the type name as a hint for correct default value initialization
                     runtimeMetaFields.put(entry.getKey(), (field.getInitializer() instanceof JolkEmptyNode) ? field.getTypeName() : JolkNothing.INSTANCE);
-                    // Ensure the key exists in the member map to reserve the slot for the accessor
-                    runtimeMetaMembers.put(entry.getKey(), JolkNothing.INSTANCE);
                 }
             }
         }
@@ -159,9 +157,6 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                         newMetaClass.setMetaFieldValue(name, initialValue);
                         runtimeMetaFields.put(name, initialValue);
                     }
-                    // Note: In case of field/method collision, we register the accessor so the 
-                    // optimized registry can resolve it.
-                    newMetaClass.registerMetaMethod(name, newMetaClass.getMetaAccessor(name, field.isStable()));
                 }
             }
             

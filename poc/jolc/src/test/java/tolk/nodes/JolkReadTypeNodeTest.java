@@ -74,9 +74,6 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
 
         // Hydrate the actual value and attach the synthesized accessor
         metaReceiverObj.setMetaFieldValue(constantName, expectedValue);
-        // In Jolk, constants are accessed via synthesized accessors in the metaMembers map
-        // (passed as argument 8 in the constructor).
-        mockMetaMembers.put(constantName, metaReceiverObj.getMetaAccessor(constantName, true));
 
         // Setup the node with a receiver that returns our meta-object
         JolkNode receiverNode = new JolkLiteralNode(metaReceiverObj);
@@ -109,19 +106,6 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
         Value result = execute(node);
 
         assertTrue(isNull(result));
-    }
-
-    /**
-     * Helper to access private fields in JolkMetaClass for testing.
-     */
-    private Object getInternalField(Object instance, String fieldName) {
-        try {
-            java.lang.reflect.Field field = instance.getClass().getDeclaredField(fieldName);
-            field.setAccessible(true);
-            return field.get(instance);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private String getMetaSimpleName(Value v) {

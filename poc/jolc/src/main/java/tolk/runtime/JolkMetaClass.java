@@ -1,5 +1,7 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.interop.ArityException;
@@ -36,7 +38,7 @@ import java.util.Set;
 ///  @author Wouter Roose
 
 @ExportLibrary(InteropLibrary.class)
-public class JolkMetaClass implements TruffleObject {
+public class JolkMetaClass extends DynamicObject {
 
     public String name;
     protected JolkMetaClass superclass;
@@ -58,11 +60,8 @@ public class JolkMetaClass implements TruffleObject {
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
-    // Meta-level field storage
-    protected int totalMetaFieldCount;
-    private final Map<String, Integer> metaFieldIndices;
-    protected Object[] metaFieldValues;
-    private final Map<String, JolkMetaFieldAccessor> metaAccessorCache;
+
+    private static final Shape ROOT_META_SHAPE = Shape.newBuilder().build();
 
     // Optimized consolidated registries
     protected Map<String, Object> instanceRegistry;
@@ -92,6 +91,7 @@ public class JolkMetaClass implements TruffleObject {
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers, Map<String, Object> metaFields) {
+        super(ROOT_META_SHAPE);
         this.name = name;
         this.superclass = superclass;
         this.finality = finality;
@@ -102,8 +102,6 @@ public class JolkMetaClass implements TruffleObject {
         this.fieldIndices = new HashMap<>();
         this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.metaMembers = metaMembers;
-        this.metaFieldIndices = new HashMap<>();
-        this.metaAccessorCache = new HashMap<>();
     }
 
     /// Performs **Late Flattening**.
@@ -142,15 +140,8 @@ public class JolkMetaClass implements TruffleObject {
         this.defaultFieldValues = new Object[totalFieldCount];
 
         // 2. Calculate Meta Field Layout
-        int currentMetaIndex = (superclass != null) ? superclass.getMetaFieldCount() : 0;
-        for (String fieldName : metaFields.keySet()) {
-            metaFieldIndices.put(fieldName, currentMetaIndex++);
-            if (this.metaMembers.get(fieldName) == null || this.metaMembers.get(fieldName) == JolkNothing.INSTANCE) {
-                this.metaMembers.put(fieldName, getMetaAccessor(fieldName, false));
-            }
-        }
-        this.totalMetaFieldCount = currentMetaIndex;
-        this.metaFieldValues = new Object[totalMetaFieldCount];
+        // Meta-stratum collapse: fields are now stored directly in DynamicObject slots.
+        // Inheritance and defaults are handled during the synchronization phase.
 
         // 3. Consolidate Flattened Registries (Industrial O(1) Lookup)
         this.instanceRegistry = new HashMap<>();
@@ -238,29 +229,17 @@ public class JolkMetaClass implements TruffleObject {
     }
 
     public Object getMetaFieldValue(int index) {
-        ensureHydrated();
-        return metaFieldValues[index];
+        throw new UnsupportedOperationException("Index-based meta field access is deprecated. Use name-based property access.");
     }
 
     public void setMetaFieldValue(int index, Object value) {
-        ensureHydrated();
-        metaFieldValues[index] = value;
-        if (!hydrated) return; // If still not hydrated (e.g., placeholder), do nothing.
+        throw new UnsupportedOperationException("Index-based meta field access is deprecated. Use name-based property access.");
     }
 
     public void setMetaFieldValue(String name, Object value) {
         ensureHydrated();
-        Integer idx = metaFieldIndices.get(name);
-        if (idx != null) metaFieldValues[idx] = value;
-    }
-
-    public Object getMetaAccessor(String name, boolean isStable) {
-        JolkMetaFieldAccessor accessor = metaAccessorCache.get(name);
-        if (accessor == null || accessor.isStable != isStable) {
-            accessor = new JolkMetaFieldAccessor(name, metaFieldIndices.get(name), isStable);
-            metaAccessorCache.put(name, accessor);
-        }
-        return accessor;
+        DynamicObjectLibrary.getUncached().put(this, name, value);
+        refreshMetaMemberCache(); // Discovery Integrity: Ensure new constants are visible
     }
 
     /// ### initializeDefaultValues
@@ -273,15 +252,16 @@ public class JolkMetaClass implements TruffleObject {
     }
 
     private void syncDefaultValues() {
+        DynamicObjectLibrary metaLib = DynamicObjectLibrary.getUncached();
         if (superclass != null) {
             // Ensure superclass is hydrated so its default arrays are allocated.
             superclass.ensureHydrated();
             if (superclass.defaultFieldValues != null) {
                 System.arraycopy(superclass.defaultFieldValues, 0, this.defaultFieldValues, 0, superclass.totalFieldCount);
             }
-            // Synchronize inherited meta-fields
-            if (superclass.metaFieldValues != null) {
-                System.arraycopy(superclass.metaFieldValues, 0, this.metaFieldValues, 0, superclass.totalMetaFieldCount);
+            // Synchronize inherited meta-fields into this meta-object's slots
+            for (String key : superclass.getMetaPropertyKeys()) {
+                metaLib.put(this, key, metaLib.getOrDefault(superclass, key, JolkNothing.INSTANCE));
             }
         }
         for (Map.Entry<String, Object> entry : instanceFields.entrySet()) {
@@ -308,27 +288,25 @@ public class JolkMetaClass implements TruffleObject {
 
         // Meta-Level Primary Initializer Expansion
         for (Map.Entry<String, Object> entry : metaFields.entrySet()) {
-            Integer idx = metaFieldIndices.get(entry.getKey());
-            if (idx != null) {
+            // Only initialize if not already set by superclass or explicit value
+            if (!metaLib.containsKey(this, entry.getKey())) {
                 Object val = entry.getValue();
-
-                // If the value is a JolkMetaClass or a String, it's a type hint,
-                // so we apply default initialization based on the hint.
-                // Otherwise, it's a concrete initializer value.
+                Object resolvedVal;
                 if (val instanceof JolkMetaClass || val instanceof String) {
                     String hint = resolveTypeHint(val);
                     if (isLongHint(hint) || ((val == null || val == JolkNothing.INSTANCE) && entry.getKey().equalsIgnoreCase("id"))) {
-                        this.metaFieldValues[idx] = 0L;
+                        resolvedVal = 0L;
                     } else if (isBooleanHint(hint)) {
-                        this.metaFieldValues[idx] = false;
+                        resolvedVal = false;
                     } else if (isStringHint(hint)) {
-                        this.metaFieldValues[idx] = "";
+                        resolvedVal = "";
                     } else {
-                        this.metaFieldValues[idx] = JolkNothing.INSTANCE;
+                        resolvedVal = JolkNothing.INSTANCE;
                     }
                 } else {
-                    this.metaFieldValues[idx] = val == null ? JolkNothing.INSTANCE : val; // Use the provided concrete value
+                    resolvedVal = val == null ? JolkNothing.INSTANCE : val;
                 }
+                metaLib.put(this, entry.getKey(), resolvedVal);
             }
         }
     }
@@ -439,9 +417,11 @@ public class JolkMetaClass implements TruffleObject {
     ///
     /// Returns true if the identifier exists in the meta-member map.
     @ExportMessage
-    public boolean isMemberReadable(String member) {
+    public boolean isMemberReadable(String member,
+                                    @CachedLibrary("this") DynamicObjectLibrary objLib) {
         ensureHydrated();
         if (metaRegistry.containsKey(member)) return true;
+        if (objLib.containsKey(this, member)) return true;
         // For ENUM types, check enumConstants directly as a fallback
         if (archetype == JolkArchetype.ENUM && enumConstants.containsKey(member)) return true;
         return false;
@@ -451,9 +431,13 @@ public class JolkMetaClass implements TruffleObject {
     ///
     /// Retrieves the internal substrate object (Closure or Accessor) for a meta-member.
     @ExportMessage
-    public Object readMember(String member) throws UnknownIdentifierException {
+    public Object readMember(String member,
+                             @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException {
         ensureHydrated();
         Object val = metaRegistry.get(member);
+        if (val == null) {
+            val = objLib.getOrDefault(this, member, null);
+        }
         if (val == null && archetype == JolkArchetype.ENUM) {
             // Fallback for enum constants in case they aren't in metaRegistry
             val = enumConstants.get(member);
@@ -477,10 +461,12 @@ public class JolkMetaClass implements TruffleObject {
     }
 
     @ExportMessage
-    public boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member,
+                                     @CachedLibrary("this") DynamicObjectLibrary objLib) {
         ensureHydrated();
         // 1. Consolidated Meta-Members (Methods and Field Accessors)
         if (metaRegistry.containsKey(member)) return true;
+        if (objLib.containsKey(this, member)) return true;
         
         // 2. Local Meta-Intrinsics (Identity properties should not delegate)
         if (switch (member) {
@@ -497,7 +483,7 @@ public class JolkMetaClass implements TruffleObject {
     /// Convenience method for calling meta-level messages from Java code or unit tests.
     @TruffleBoundary
     public Object callMetaMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        return invokeMember(member, arguments, InteropLibrary.getUncached(), member, lookupMetaMember(member));
+        return invokeMember(member, arguments, InteropLibrary.getUncached(), member, lookupMetaMember(member), DynamicObjectLibrary.getUncached());
     }
 
     @TruffleBoundary
@@ -509,9 +495,10 @@ public class JolkMetaClass implements TruffleObject {
     public Object invokeMember(String member, Object[] arguments,
                         @CachedLibrary(limit = "3") InteropLibrary interop,
                         @Cached(value = "member", allowUncached = true, neverDefault = false) String cachedMember,
-                        @Cached(value = "doLookupMeta(this, member)", allowUncached = true, neverDefault = false) Object cachedValue) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+                        @Cached(value = "doLookupMeta(this, member)", allowUncached = true, neverDefault = false) Object cachedValue, // This is for methods/enum constants
+                        @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         ensureHydrated();
-
+        
         if (member.equals(cachedMember) && cachedValue != null) {
             Object memberObj = cachedValue;
             // Enum constants are returned directly, not executed
@@ -545,6 +532,19 @@ public class JolkMetaClass implements TruffleObject {
             } catch (JolkReturnException e) {
                 throw e;
             }
+        }
+
+        // 2. Property Projection for Meta-Fields (The "Collapse")
+        if (objLib.containsKey(this, member)) {
+            if (arguments.length == 0) {
+                // Getter Pattern: Type #field
+                return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
+            } else if (arguments.length == 1) {
+                // Setter Pattern: Type #field(val) -> Returns Self (Fluent Contract)
+                objLib.put(this, member, arguments[0]);
+                return this;
+            }
+            throw ArityException.create(0, 1, arguments.length);
         }
 
         // 2. Local Meta-Intrinsics: Identity properties specific to this class
@@ -695,9 +695,23 @@ public class JolkMetaClass implements TruffleObject {
         return cachedInstanceMemberNames != null ? cachedInstanceMemberNames : new JolkMemberNames(new String[0]);
     }
 
+    /**
+     * Returns the number of meta-properties currently stored in this meta-object.
+     */
     public int getMetaFieldCount() {
         ensureHydrated();
-        return totalMetaFieldCount;
+        return DynamicObjectLibrary.getUncached().getKeyArray(this).length;
+    }
+
+    public Set<String> getMetaPropertyKeys() {
+        ensureHydrated();
+        DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
+        Object[] keyArray = lib.getKeyArray(this);
+        Set<String> keys = new HashSet<>(keyArray.length);
+        for (Object key : keyArray) {
+            if (key instanceof String s) keys.add(s);
+        }
+        return keys;
     }
 
     private void refreshInstanceMemberCache() {
@@ -713,6 +727,10 @@ public class JolkMetaClass implements TruffleObject {
     private void refreshMetaMemberCache() {
         if (!hydrated) return; // Only refresh if hydrated
         Set<String> metaKeys = new HashSet<>(this.metaRegistry.keySet());
+
+        // Add Meta-Properties from DynamicObject slots
+        metaKeys.addAll(getMetaPropertyKeys());
+
         // Standard Meta-Object Protocol members
         metaKeys.add("new");
         metaKeys.add("name");
@@ -807,10 +825,14 @@ public class JolkMetaClass implements TruffleObject {
             // Structural state synchronization
             this.totalFieldCount = actualClass.totalFieldCount;
             this.defaultFieldValues = actualClass.defaultFieldValues;
-            this.totalMetaFieldCount = actualClass.totalMetaFieldCount;
-            this.metaFieldValues = actualClass.metaFieldValues;
             
             this.flattenedFieldNames = actualClass.flattenedFieldNames;
+
+            // Synchronize meta-properties
+            DynamicObjectLibrary metaLib = DynamicObjectLibrary.getUncached();
+            for (String key : actualClass.getMetaPropertyKeys()) {
+                metaLib.put(this, key, metaLib.getOrDefault(actualClass, key, JolkNothing.INSTANCE));
+            }
 
             // Registry and Cache synchronization
             this.instanceRegistry = actualClass.instanceRegistry;

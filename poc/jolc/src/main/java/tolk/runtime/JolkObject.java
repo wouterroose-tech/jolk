@@ -102,23 +102,30 @@ public class JolkObject extends DynamicObject {
     }
 
     @ExportMessage
-    public boolean isMemberInvocable(String member) {
+    public boolean isMemberInvocable(String member,
+                                     @CachedLibrary(limit = "3") InteropLibrary interop) {
         // Recognise methods, intrinsics, and fields as invocable targets
         return metaClass.hasInstanceMember(member) 
             || JolkDispatchNode.isObjectIntrinsic(member)
-            || metaClass.getFieldIndex(member) != -1;
+            || metaClass.getFieldIndex(member) != -1
+            || interop.isMemberInvocable(metaClass, member);
     }
 
     @ExportMessage
-    public boolean isMemberReadable(String member) {
-        return metaClass.getFieldIndex(member) != -1;
+    public boolean isMemberReadable(String member,
+                                    @CachedLibrary(limit = "3") InteropLibrary interop) {
+        return metaClass.getFieldIndex(member) != -1 || interop.isMemberReadable(metaClass, member);
     }
 
     @ExportMessage
     public Object readMember(String member,
-                             @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException {
+                             @CachedLibrary("this") DynamicObjectLibrary objLib,
+                             @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, UnsupportedMessageException {
         if (metaClass.getFieldIndex(member) != -1) {
             return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
+        }
+        if (interop.isMemberReadable(metaClass, member)) {
+            return interop.readMember(metaClass, member);
         }
         throw UnknownIdentifierException.create(member);
     }
@@ -154,10 +161,16 @@ public class JolkObject extends DynamicObject {
             throw ArityException.create(0, 1, arguments.length);
         }
 
-        // 2. Handle standard intrinsic protocol via the central dispatcher (ObjectExtension).
+        // 3. Handle standard intrinsic protocol via the central dispatcher (ObjectExtension).
         Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
         if (intrinsicResult != null) {
             return intrinsicResult;
+        }
+
+        // 4. Meta-Stratum Delegation (Dual-Stratum Resolution)
+        // If the selector is not an instance member, check the MetaClass identity.
+        if (interop.isMemberInvocable(metaClass, name)) {
+            return interop.invokeMember(metaClass, name, arguments);
         }
 
         throw UnknownIdentifierException.create(member);

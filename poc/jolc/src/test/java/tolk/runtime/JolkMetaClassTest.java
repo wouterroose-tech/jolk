@@ -1,6 +1,7 @@
 package tolk.runtime;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -113,13 +114,14 @@ public class JolkMetaClassTest {
 
     @Test
     void testIsMemberInvocable() {
-        assertTrue(metaClass.isMemberInvocable("new"));
-        assertFalse(metaClass.isMemberInvocable("randomMethod"));
+        DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
+        assertTrue(metaClass.isMemberInvocable("new", objLib));
+        assertFalse(metaClass.isMemberInvocable("randomMethod", objLib));
     }
 
     @Test
     void testInvokeNew() throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
-        Object result = metaClass.callMetaMember("new", new Object[]{});
+        Object result = metaClass.callMetaMember("new", new Object[]{}); // This uses the correct callMetaMember
         assertNotNull(result, "The result of #new should not be null");
         assertTrue(result instanceof JolkObject, "The result should be an instance of JolkObject");
     }
@@ -224,21 +226,24 @@ public class JolkMetaClassTest {
 
        @Test
     void testReadMemberThrowsException() {
-        assertThrows(UnknownIdentifierException.class, () -> {
-            metaClass.readMember("new");
-        });
+        DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
+        // 'new' is invocable, not readable as a direct member.
+        assertThrows(UnknownIdentifierException.class, () -> metaClass.readMember("new", objLib));
     }
     
     @Test
     void testReadMetaConstant() throws UnknownIdentifierException {
-        Object value = metaClass.readMember("VERSION");
+        DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
+        // VERSION is a meta-field
+        Object value = metaClass.readMember("VERSION", objLib);
         assertEquals(1, value);
     }
 
     @Test
     void testIsMetaMemberReadable() {
-        assertTrue(metaClass.isMemberReadable("VERSION"));
-        assertFalse(metaClass.isMemberReadable("new"));
+        DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
+        assertTrue(metaClass.isMemberReadable("VERSION", objLib));
+        assertFalse(metaClass.isMemberReadable("new", objLib));
     }
 
     @Test

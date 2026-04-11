@@ -32,6 +32,7 @@ package final class ChildrenValidation<T, R> extends Node<T> {
     }
 
     private delegate(List<R> children, E executionContext) {
+        /*
         children #isEmpty [^self];
         [ StructuredTaskScope #open(Joiner #allSuccessfulOrThrow) ]
             #try [ scope ->
@@ -40,5 +41,7 @@ package final class ChildrenValidation<T, R> extends Node<T> {
             #catch [ InterruptedException e ->
                 Thread #currentThread #interrupt;
                 RuntimeException #new("Validation interrupted.", e) #throw ]
+        */
+        children #forEach [child -> validation #accept(child, executionContext) ]
     }
 }

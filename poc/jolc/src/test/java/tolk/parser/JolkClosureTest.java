@@ -35,8 +35,8 @@ public class JolkClosureTest extends JolcTestBase {
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
-        instance.invokeMember("run"); 
-        assertEquals(42, instance.invokeMember("x").asLong()); 
+        Value result = instance.invokeMember("run"); 
+        assertEquals(42, result.asLong());
     }  
 
     @Test
@@ -44,7 +44,6 @@ public class JolkClosureTest extends JolcTestBase {
         String source = """
             class MyClass {
                 Long x;
-                // TODO: what is the advise on the implementation of closure to support this:
                 apply(Closure closure) { closure #apply(40, 2) }
                 run() { self #apply [ Long a, Long b -> self #x(a + b) ] }
             }""";
@@ -52,6 +51,21 @@ public class JolkClosureTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         instance.invokeMember("run"); 
         assertEquals(42, instance.invokeMember("x").asLong()); 
+    }  
+
+    @Test
+    void testFunction() {
+        String source = """
+            class MyClass {
+                Function<T, R> supplier;
+                Long run() {
+                    self #supplier [ Long b -> b + 2 ];
+                    ^ self #supplier #apply(40);
+                }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertEquals(42, instance.invokeMember("run").asLong()); 
     }  
 
 }

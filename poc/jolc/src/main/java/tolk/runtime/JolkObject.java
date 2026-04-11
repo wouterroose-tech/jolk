@@ -24,11 +24,9 @@ import tolk.nodes.JolkDispatchNode;
 @ExportLibrary(InteropLibrary.class) // JolkObject is a TruffleObject
 public class JolkObject implements TruffleObject {
 
-    /**
-     * The root MetaClass for the Jolk Object-Model.
-     * This identity has no superclass and serves as the terminus 
-     * for all message dispatch delegation.
-     */
+    /// The root MetaClass for the Jolk Object-Model.
+    /// This identity has no superclass and serves as the terminus
+    /// for all message dispatch delegation.
     public static final JolkMetaClass OBJECT_TYPE = new JolkMetaClass(
         "Object", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, new HashMap<>(), new HashMap<>()
     );
@@ -52,11 +50,9 @@ public class JolkObject implements TruffleObject {
         }
     }
 
-    /**
-     * ### getJolkMetaClass
-     * 
-     * @return The {@link JolkMetaClass} that describes this instance.
-     */
+    /// ### getJolkMetaClass
+    ///
+    /// Returns the {@link JolkMetaClass} that describes this instance.
     public JolkMetaClass getJolkMetaClass() {
         return metaClass;
     }
@@ -139,13 +135,11 @@ public class JolkObject implements TruffleObject {
         throw UnknownIdentifierException.create(member);
     }
 
-    /**
-     * ### toString
-     * 
-     * Returns the Jolk-standard string representation of the object.
-     * Overriding this at the Java level ensures that the [JolkDispatchNode] 
-     * intrinsic path remains consistent with the object protocol.
-     */
+    /// ### toString
+    ///
+    /// Returns the Jolk-standard string representation of the object.
+    /// Overriding this at the Java level ensures that the [JolkDispatchNode]
+    /// intrinsic path remains consistent with the object protocol.
     @Override
     public String toString() {
         return "instance of " + metaClass.name;

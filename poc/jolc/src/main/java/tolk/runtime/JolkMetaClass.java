@@ -105,13 +105,11 @@ public class JolkMetaClass implements TruffleObject {
         this.metaAccessorCache = new HashMap<>();
     }
 
-    /**
-     * Performs **Late Flattening**.
-     * 
-     * Registries and field layouts are calculated on-demand. This solves forward 
-     * references because a subclass can be created before its superclass is fully 
-     * defined, as long as both are defined before the first message is sent.
-     */
+    /// Performs **Late Flattening**.
+    ///
+    /// Registries and field layouts are calculated on-demand. This solves forward
+    /// references because a subclass can be created before its superclass is fully
+    /// defined, as long as both are defined before the first message is sent.
     protected synchronized void ensureHydrated() {
         if (hydrated) return;
         // If this is a placeholder, its hydration will be handled by updatePlaceholder.
@@ -167,11 +165,9 @@ public class JolkMetaClass implements TruffleObject {
         refreshMetaMemberCache();
     }
 
-    /**
-     * ### registerInstanceMethod
-     * 
-     * Registers a Java-implemented method for instances of this type.
-     */
+    /// ### registerInstanceMethod
+    ///
+    /// Registers a Java-implemented method for instances of this type.
     public void registerInstanceMethod(String name, Object method) {
         this.instanceMembers.put(name, method);
         if (!hydrated) return;
@@ -180,11 +176,9 @@ public class JolkMetaClass implements TruffleObject {
         refreshInstanceMemberCache();
     }
 
-    /**
-     * ### registerMetaMethod
-     * 
-     * Registers a Java-implemented method for the type itself (the MetaClass) and refreshes caches.
-     */
+    /// ### registerMetaMethod
+    ///
+    /// Registers a Java-implemented method for the type itself (the MetaClass) and refreshes caches.
     public void registerMetaMethod(String name, Object method) {
         this.metaMembers.put(name, method);
         if (!hydrated) return;
@@ -192,11 +186,9 @@ public class JolkMetaClass implements TruffleObject {
         refreshMetaMemberCache();
     }
 
-    /**
-     * ### registerEnumConstant
-     *
-     * Registers an enum constant for ENUM archetype types.
-     */
+    /// ### registerEnumConstant
+    ///
+    /// Registers an enum constant for ENUM archetype types.
     public void registerEnumConstant(String name) {
         if (archetype != JolkArchetype.ENUM) {
             throw new IllegalStateException("Cannot register enum constants on non-enum type: " + this.name);
@@ -254,19 +246,11 @@ public class JolkMetaClass implements TruffleObject {
         return accessor;
     }
 
-    /**
-     * ### initializeDefaultValues
-     * 
-     * Re-scans the instanceFields map to establish the template values for new 
-     * instances. This is called after the hydration phase in the definition node.
-     */
-    /**
-     * ### initializeDefaultValues
-     * 
-     * Public entry point used by the definition node to synchronize structural 
-     * templates. In the Late Flattening model, this triggers full hydration 
-     * to ensure indices and registries are prepared for use.
-     */
+    /// ### initializeDefaultValues
+    ///
+    /// Public entry point used by the definition node to synchronize structural
+    /// templates. In the Late Flattening model, this triggers full hydration
+    /// to ensure indices and registries are prepared for use.
     public void initializeDefaultValues() {
         ensureHydrated();
     }
@@ -434,11 +418,9 @@ public class JolkMetaClass implements TruffleObject {
         return false;
     }
 
-    /**
-     * ### isMemberReadable
-     * 
-     * Returns true if the identifier exists in the meta-member map.
-     */
+    /// ### isMemberReadable
+    ///
+    /// Returns true if the identifier exists in the meta-member map.
     @ExportMessage
     public boolean isMemberReadable(String member) {
         ensureHydrated();
@@ -448,11 +430,9 @@ public class JolkMetaClass implements TruffleObject {
         return false;
     }
 
-    /**
-     * ### readMember
-     * 
-     * Retrieves the internal substrate object (Closure or Accessor) for a meta-member.
-     */
+    /// ### readMember
+    ///
+    /// Retrieves the internal substrate object (Closure or Accessor) for a meta-member.
     @ExportMessage
     public Object readMember(String member) throws UnknownIdentifierException {
         ensureHydrated();
@@ -495,11 +475,9 @@ public class JolkMetaClass implements TruffleObject {
         return false;
     }
 
-    /**
-     * ### callMetaMember
-     * 
-     * Convenience method for calling meta-level messages from Java code or unit tests.
-     */
+    /// ### callMetaMember
+    ///
+    /// Convenience method for calling meta-level messages from Java code or unit tests.
     @TruffleBoundary
     public Object callMetaMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         return invokeMember(member, arguments, InteropLibrary.getUncached(), member, lookupMetaMember(member));

@@ -52,24 +52,20 @@ public final class JolkNothing implements TruffleObject {
         return NOTHING_TYPE;
     }
 
-    /**
-     * ### isBoolean
-     * 
-     * Identifies the `Nothing` identity as a boolean-compatible value 
-     * to support Jolk's "Neutral Response" model.
-     */
+    /// ### isBoolean
+    ///
+    /// Identifies the `Nothing` identity as a boolean-compatible value
+    /// to support Jolk's "Neutral Response" model.
     @ExportMessage
     public boolean isBoolean() {
         return true;
     }
 
-    /**
-     * ### asBoolean
-     * 
-     * Returns `false` for the `Nothing` identity, ensuring that 
-     * uninitialized states or absent results act as falsy signals 
-     * in logical contexts.
-     */
+    /// ### asBoolean
+    ///
+    /// Returns `false` for the `Nothing` identity, ensuring that
+    /// uninitialized states or absent results act as falsy signals
+    /// in logical contexts.
     @ExportMessage
     public boolean asBoolean() {
         return false;

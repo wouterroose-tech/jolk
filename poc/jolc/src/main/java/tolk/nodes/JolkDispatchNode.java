@@ -30,6 +30,7 @@ import tolk.runtime.JolkExceptionExtension;
 import tolk.runtime.JolkArrayExtension;
 import tolk.runtime.JolkLongExtension;
 import tolk.runtime.JolkMetaClass;
+import tolk.runtime.JolkIntrinsicProtocol;
 
 /// # JolkDispatchNode
 ///
@@ -158,8 +159,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException e) {
-            if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                return JolkMetaClass.dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop);
+            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                return JolkIntrinsicProtocol.dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop);
             }
             try {
                 return lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
@@ -278,7 +279,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             }
         }
         // Fallback to boundary for non-closure arguments or unhandled control flow
-        return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+        return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
     }
 
     /**
@@ -475,8 +476,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException e) {
-            if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
             }
             try {
                 return lift(dispatchHostMember(receiver, selector, arguments));
@@ -518,8 +519,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException e) {
-            if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
             }
             try {
                 return lift(dispatchHostMember(receiver, selector, arguments));
@@ -576,8 +577,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // 2. Host Fallback: Dispatch to standard java.lang.String members
             return lift(interop.invokeMember(receiver, selector, arguments));
         } catch (UnknownIdentifierException e) {
-            if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
             }
             try {
                 return lift(dispatchHostMember(receiver, selector, arguments));
@@ -609,8 +610,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // 2. Host Fallback: Dispatch to standard java.util.List members
             return lift(interop.invokeMember(receiver, selector, arguments));
         } catch (UnknownIdentifierException e) {
-            if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
             }
             try {
                 return lift(dispatchHostMember(receiver, selector, arguments));
@@ -648,8 +649,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException e) {
-            if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
             }
             try {
                 return lift(dispatchHostMember(receiver, selector, arguments));
@@ -677,8 +678,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         try {
             // Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
             if (unwrappedReceiver == null || uncached.isNull(unwrappedReceiver)) {
-                if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                    return JolkMetaClass.dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, uncached);
+                if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                    return JolkIntrinsicProtocol.dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, uncached);
                 }
                 try {
                     return lift(uncached.invokeMember(JolkNothing.INSTANCE, selector, arguments));
@@ -743,8 +744,8 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             } catch (UnknownIdentifierException e) {
                 // Identity Restitution Protocol: Intrinsic messages act as a fallback 
                 // for all objects that do not explicitly override them.
-                if (JolkMetaClass.isObjectIntrinsic(selector)) {
-                    return JolkMetaClass.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+                if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                    return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
                 }
                 // Impedance Resolution: Fallback to host member heuristic
                 try {

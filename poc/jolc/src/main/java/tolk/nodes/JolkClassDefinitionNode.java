@@ -37,6 +37,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     private final Map<String, List<JolkMethodNode>> instanceMethods;
     private final Map<String, JolkFieldNode> instanceFields;
     private final Map<String, List<JolkNode>> metaMembers;
+    private final List<String> enumConstants;
 
     /**
      * ### JolkClassDefinitionNode
@@ -51,9 +52,10 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * @param instanceMethods Map of instance methods.
      * @param instanceFields Map of instance fields.
      * @param metaMembers Map of meta-members (static methods/fields).
+     * @param enumConstants List of enum constant names (for ENUM archetype).
      */
     @SuppressWarnings("unchecked")
-    public JolkClassDefinitionNode(String className, String superclassName, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, ?> instanceMethods, Map<String, ?> instanceFields, Map<String, ?> metaMembers) {
+    public JolkClassDefinitionNode(String className, String superclassName, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, ?> instanceMethods, Map<String, ?> instanceFields, Map<String, ?> metaMembers, List<String> enumConstants) {
         this.className = className;
         this.superclassName = superclassName;
         this.finality = finality;
@@ -62,6 +64,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         this.instanceMethods = (Map<String, List<JolkMethodNode>>) (Object) instanceMethods;
         this.instanceFields = (Map<String, JolkFieldNode>) (Object) instanceFields;
         this.metaMembers = (Map<String, List<JolkNode>>) (Object) metaMembers;
+        this.enumConstants = enumConstants != null ? enumConstants : new ArrayList<>();
     }
 
     /**
@@ -71,7 +74,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * context. The language will be resolved dynamically during execution.
      */
     public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(className, null, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
+        this(className, null, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
     }
 
     @Override
@@ -125,6 +128,13 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // populating members (Hydration). This allows methods created during hydration to 
         // resolve the class name via the registry.
         JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
+
+        // Register enum constants for ENUM archetype
+        if (archetype == JolkArchetype.ENUM) {
+            for (String constantName : enumConstants) {
+                newMetaClass.registerEnumConstant(constantName);
+            }
+        }
 
         for (Map.Entry<String, List<JolkMethodNode>> entry : instanceMethods.entrySet()) {
             List<JolkMethodNode> methods = entry.getValue();

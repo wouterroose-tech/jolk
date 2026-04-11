@@ -37,12 +37,6 @@ import java.util.Set;
 @ExportLibrary(InteropLibrary.class)
 public class JolkMetaClass implements TruffleObject {
 
-    public static final Set<String> INTRINSIC_MEMBERS = Set.of(
-        "new", "catch", "finally", "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
-        "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
-        "?", "? :", "?!", "?! :"
-    );
-
     public String name;
     protected JolkMetaClass superclass;
     private final JolkFinality finality;
@@ -75,6 +69,8 @@ public class JolkMetaClass implements TruffleObject {
     protected JolkMemberNames cachedInstanceMemberNames;
     protected JolkMemberNames cachedMetaMemberNames;
     protected boolean hydrated = false;
+    // Enum constants cache for ENUM archetype
+    private final Map<String, JolkEnumConstant> enumConstants = new HashMap<>();
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
         this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>());
@@ -194,6 +190,26 @@ public class JolkMetaClass implements TruffleObject {
         if (!hydrated) return;
         this.metaRegistry.put(name, method);
         refreshMetaMemberCache();
+    }
+
+    /**
+     * ### registerEnumConstant
+     *
+     * Registers an enum constant for ENUM archetype types.
+     */
+    public void registerEnumConstant(String name) {
+        if (archetype != JolkArchetype.ENUM) {
+            throw new IllegalStateException("Cannot register enum constants on non-enum type: " + this.name);
+        }
+        int ordinal = enumConstants.size();
+        JolkEnumConstant constant = new JolkEnumConstant(this, name, ordinal);
+        enumConstants.put(name, constant);
+        // Also register as meta constant so it can be accessed as Type#CONSTANT
+        metaMembers.put(name, constant);
+        if (hydrated) {
+            metaRegistry.put(name, constant);
+            refreshMetaMemberCache();
+        }
     }
 
     /**
@@ -393,13 +409,17 @@ public class JolkMetaClass implements TruffleObject {
             if (isStringHint(this.name)) return true;
         }
 
-        // 5. Handle standard JolkObjects by walking their class hierarchy.
-        if (instance instanceof JolkObject jolkObject) {
-            JolkMetaClass current = jolkObject.getJolkMetaClass();
-            while (current != null) {
-                if (current == this) return true;
-                current = current.superclass;
+        // 5. Hierarchy Walk: Support any identity that provides a Jolk Meta-Object.
+        try {
+            Object meta = interop.hasMetaObject(instance) ? interop.getMetaObject(instance) : null;
+            if (meta instanceof JolkMetaClass current) {
+                while (current != null) {
+                    if (current == this) return true;
+                    current = current.superclass;
+                }
             }
+        } catch (UnsupportedMessageException e) {
+            // Fall through
         }
 
         // 6. Root Object Fallback: JolkObjects, Nothing, and primitives are instances of Object.
@@ -422,7 +442,10 @@ public class JolkMetaClass implements TruffleObject {
     @ExportMessage
     public boolean isMemberReadable(String member) {
         ensureHydrated();
-        return metaRegistry.containsKey(member);
+        if (metaRegistry.containsKey(member)) return true;
+        // For ENUM types, check enumConstants directly as a fallback
+        if (archetype == JolkArchetype.ENUM && enumConstants.containsKey(member)) return true;
+        return false;
     }
 
     /**
@@ -434,6 +457,10 @@ public class JolkMetaClass implements TruffleObject {
     public Object readMember(String member) throws UnknownIdentifierException {
         ensureHydrated();
         Object val = metaRegistry.get(member);
+        if (val == null && archetype == JolkArchetype.ENUM) {
+            // Fallback for enum constants in case they aren't in metaRegistry
+            val = enumConstants.get(member);
+        }
         if (val == null) {
             throw UnknownIdentifierException.create(member);
         }
@@ -485,6 +512,11 @@ public class JolkMetaClass implements TruffleObject {
         ensureHydrated();
         if (metaRegistry.containsKey(member)) {
             Object memberObj = metaRegistry.get(member);
+            // Enum constants are returned directly, not executed
+            if (memberObj instanceof JolkEnumConstant) {
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return memberObj;
+            }
             // Jolk Protocol: Every method call must include the receiver as the first argument.
             Object[] metaArguments = new Object[arguments.length + 1];
             metaArguments[0] = this;
@@ -499,6 +531,10 @@ public class JolkMetaClass implements TruffleObject {
         // 2. Local Meta-Intrinsics: Identity properties specific to this class
         switch (member) {
             case "new":
+                // For enums, new is not allowed - enum constants are accessed directly
+                if (archetype == JolkArchetype.ENUM) {
+                    throw UnsupportedMessageException.create();
+                }
                 // Canonical #new logic: Only applies if no explicit meta-method named 'new' exists.
                 // This allows the variadic 'meta Map new(Object...)' to take precedence.
                 if (arguments.length == 0) return new JolkObject(this);
@@ -519,7 +555,7 @@ public class JolkMetaClass implements TruffleObject {
         }
 
         // 2. Jolk Object Protocol: Classes are polite JoMoos
-        Object intrinsicResult = dispatchObjectIntrinsic(this, member, arguments, interop);
+        Object intrinsicResult = JolkIntrinsicProtocol.dispatchObjectIntrinsic(this, member, arguments, interop);
         if (intrinsicResult != null) {
             return intrinsicResult;
         }
@@ -536,6 +572,11 @@ public class JolkMetaClass implements TruffleObject {
         startClass.ensureHydrated();
         Object memberObj = isObjectIntrinsic(member) ? null : startClass.lookupMetaMember(member);
         if (memberObj != null) {
+            // Enum constants are returned directly, not executed
+            if (memberObj instanceof JolkEnumConstant) {
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return memberObj;
+            }
             Object[] metaArguments = new Object[arguments.length + 1];
             metaArguments[0] = receiver;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
@@ -566,7 +607,7 @@ public class JolkMetaClass implements TruffleObject {
                 return receiver.isMetaInstance(arguments[0]);
         }
 
-        Object intrinsicResult = dispatchObjectIntrinsic(receiver, member, arguments, interop);
+        Object intrinsicResult = JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, member, arguments, interop);
         if (intrinsicResult != null) {
             return intrinsicResult;
         }
@@ -575,144 +616,8 @@ public class JolkMetaClass implements TruffleObject {
     }
 
     public static boolean isObjectIntrinsic(String member) {
-        // Using a Set.contains with interned strings allows Graal 
-        // to optimize this check into a bit-mask or a high-speed 
-        // jump table if the set is small and the string is a constant.
-        return member != null && INTRINSIC_MEMBERS.contains(member);
+        return JolkIntrinsicProtocol.isObjectIntrinsic(member);
     }
-
-    @TruffleBoundary
-    public static Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
-        InteropLibrary genericInterop = InteropLibrary.getUncached();
-        try {
-            switch (name) {
-                case "==" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    Object other = arguments[0];
-                    if (receiver == other) return true;
-                    if (receiver instanceof Number n1 && other instanceof Number n2) return n1.longValue() == n2.longValue();
-                    if (receiver instanceof Boolean b1 && other instanceof Boolean b2) return b1.booleanValue() == b2.booleanValue();
-                    if (receiver instanceof String s1 && other instanceof String s2) return s1.equals(s2);
-                    if (receiver instanceof TruffleObject || other instanceof TruffleObject || isBoxed(receiver) || isBoxed(other)) {
-                        return interop.isIdentical(receiver, other, genericInterop);
-                    }
-                    return false;
-                }
-                case "!=" -> {
-                    Object eq = dispatchObjectIntrinsic(receiver, "==", arguments, interop);
-                    return (eq instanceof Boolean b) ? !b : true;
-                }
-                case "~~" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    Object other = arguments[0];
-                    if (receiver instanceof Number n1 && other instanceof Number n2) return n1.longValue() == n2.longValue();
-                    return receiver.equals(other);
-                }
-                case "!~" -> {
-                    Object eq = dispatchObjectIntrinsic(receiver, "~~", arguments, interop);
-                    return (eq instanceof Boolean b) ? !b : true;
-                }
-                case "??" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver)) {
-                        Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
-                    }
-                    return receiver;
-                }
-                case "hash" -> { 
-                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return (receiver == null || receiver == JolkNothing.INSTANCE) ? 0L : (long) (int) receiver.hashCode();
-                }
-                case "toString" -> { 
-                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return (receiver == null || receiver == JolkNothing.INSTANCE) ? "null" : receiver.toString();
-                }
-                case "isPresent" -> {
-                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (receiver instanceof JolkMatch match) return match.isPresent();
-                    return receiver != null && receiver != JolkNothing.INSTANCE && !interop.isNull(receiver);
-                }
-                case "isEmpty" -> {
-                    return !((Boolean) dispatchObjectIntrinsic(receiver, "isPresent", arguments, interop));
-                }
-                case "ifPresent" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver)) return JolkNothing.INSTANCE;
-                    Object val = (receiver instanceof JolkMatch match) ? match.getValue() : receiver;
-                    if (val == null) return JolkNothing.INSTANCE;
-                    Object result = genericInterop.execute(arguments[0], val);
-                    return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
-                }
-                case "ifEmpty" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if ((Boolean) dispatchObjectIntrinsic(receiver, "isEmpty", new Object[0], interop)) {
-                        Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
-                    }
-                    return receiver;
-                }
-                case "class" -> {
-                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (receiver instanceof Long || receiver instanceof Integer) return JolkLongExtension.LONG_TYPE;
-                    if (receiver instanceof Boolean) return JolkBooleanExtension.BOOLEAN_TYPE;
-                    if (receiver instanceof String) return JolkStringExtension.STRING_TYPE;
-                    if (receiver instanceof JolkMetaClass) return receiver;
-                    if (receiver instanceof JolkObject jo) return jo.getJolkMetaClass();
-                    return interop.hasMetaObject(receiver) ? interop.getMetaObject(receiver) : JolkNothing.NOTHING_TYPE;
-                }
-                case "instanceOf" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    Object type = arguments[0];
-                    return (genericInterop.isMetaObject(type) && genericInterop.isMetaInstance(type, receiver)) ? JolkMatch.with(receiver) : JolkMatch.empty();
-                }
-                case "?" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver instanceof Boolean b && b) {
-                        Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
-                    }
-                    return receiver;
-                }
-                case "?!" -> {
-                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (receiver instanceof Boolean b && !b) {
-                        Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
-                    }
-                    return receiver;
-                }
-                case "? :" -> {
-                    if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-                    if (receiver instanceof Boolean b) {
-                        Object result = b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
-                    }
-                    return JolkNothing.INSTANCE;
-                }
-                case "?! :" -> {
-                    if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-                    if (receiver instanceof Boolean b) {
-                        Object result = !b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
-                    }
-                    return JolkNothing.INSTANCE;
-                }
-            }
-        } catch (JolkReturnException e) {
-            throw e;
-        } catch (Throwable e) {
-            throw new RuntimeException("Intrinsic dispatch failed: #" + name, e);
-        }
-        return null;
-    }
-
-    private static boolean isBoxed(Object obj) {
-        return obj instanceof Boolean || obj instanceof Byte || obj instanceof Short ||
-               obj instanceof Integer || obj instanceof Long || obj instanceof Float ||
-               obj instanceof Double || obj instanceof Character || obj instanceof String;
-    }
-
     // --- Instance member lookup (for JolkObject) ---
 
     /**
@@ -779,7 +684,7 @@ public class JolkMetaClass implements TruffleObject {
     private void refreshInstanceMemberCache() {
         if (!hydrated) return; // Only refresh if hydrated
         Set<String> instanceKeys = new HashSet<>(instanceRegistry.keySet());
-        instanceKeys.addAll(INTRINSIC_MEMBERS);
+        instanceKeys.addAll(JolkIntrinsicProtocol.INTRINSIC_MEMBERS);
         this.cachedInstanceMemberNames = new JolkMemberNames(instanceKeys.toArray(new String[0]));
     }
 
@@ -791,7 +696,7 @@ public class JolkMetaClass implements TruffleObject {
         metaKeys.add("name");
         metaKeys.add("superclass");
         metaKeys.add("isInstance");
-        metaKeys.addAll(INTRINSIC_MEMBERS);
+        metaKeys.addAll(JolkIntrinsicProtocol.INTRINSIC_MEMBERS);
         this.cachedMetaMemberNames = new JolkMemberNames(metaKeys.toArray(new String[0]));
     }
 

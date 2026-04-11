@@ -29,14 +29,13 @@ public class JolkClosureTest extends JolcTestBase {
         String source = """
             class MyClass {
                 Long x;
-                // TODO: what is the advise on the implementation of closure to support this:
                 apply(Closure closure) { closure #apply(42) }
                 run() { self #apply [ Long v -> self #x(v) ] }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
-        Value result = instance.invokeMember("run"); 
-        assertEquals(42, result.asLong());
+       instance.invokeMember("run"); 
+        assertEquals(42, instance.invokeMember("x").asLong()); 
     }  
 
     @Test

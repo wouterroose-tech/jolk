@@ -15,6 +15,7 @@ import tolk.runtime.JolkVisibility;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,8 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             JolkArchetype.CLASS,
             Map.of("testMethod", List.of(new JolkMethodNode("testMethod", new JolkLiteralNode("success"), new String[0], false, 1))),
             new HashMap<String, JolkFieldNode>(),
-            new HashMap<String, List<JolkNode>>()
+            new HashMap<String, List<JolkNode>>(),
+            Collections.emptyList()
         );
 
         Value result = execute(node);
@@ -92,7 +94,8 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             "Point", 
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-            new HashMap<String, List<JolkMethodNode>>(), instanceFields, new HashMap<String, List<JolkNode>>()
+            new HashMap<String, List<JolkMethodNode>>(), instanceFields, new HashMap<String, List<JolkNode>>(),
+            Collections.emptyList()
         );
 
         Value metaClass = execute(node);
@@ -114,7 +117,8 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             "MetaTest", 
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-            new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers
+            new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers,
+            Collections.emptyList()
         );
 
         Value metaClass = execute(node);
@@ -176,7 +180,8 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             "Config", 
             null, 
             JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-            new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers
+            new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers,
+            Collections.emptyList()
         );
 
         Value result = execute(node);
@@ -199,7 +204,8 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             "OverloadTest", 
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-            Map.of("val", methods), new HashMap<>(), new HashMap<>()
+            Map.of("val", methods), new HashMap<>(), new HashMap<>(),
+            Collections.emptyList()
         );
 
         Value metaClass = execute(node);
@@ -224,7 +230,8 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             "HintTest", 
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-            new HashMap<>(), fields, new HashMap<>()
+            new HashMap<>(), fields, new HashMap<>(),
+            Collections.emptyList()
         );
 
         Value result = execute(node);

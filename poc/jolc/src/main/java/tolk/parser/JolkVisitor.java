@@ -181,6 +181,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 Map<String, List<JolkMethodNode>> instanceMethods = new LinkedHashMap<>(); // Instance methods
                 Map<String, JolkFieldNode> instanceFields = new LinkedHashMap<>(); // Instance fields
                 Map<String, List<JolkNode>> metaMembers = new LinkedHashMap<>(); // Can contain JolkFieldNode or JolkMethodNode
+                List<String> enumConstants = new ArrayList<>(); // Enum constant names for ENUM archetype
 
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
@@ -209,6 +210,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                         } finally {
                             this.isInMetaScope = oldMetaScope;
                         }
+                    } else if (mbr.enum_constant() != null && archetype == JolkArchetype.ENUM) {
+                        // Handle enum constants
+                        String constantName = mbr.enum_constant().MetaId().getText().intern();
+                        enumConstants.add(constantName);
                     }
                 }
 
@@ -222,7 +227,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
                 this.currentClassName = oldClassName;
                 // Support for single inheritance via 'extends'.
-                return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers);
+                return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers, enumConstants);
             }
         }
         return new JolkEmptyNode();

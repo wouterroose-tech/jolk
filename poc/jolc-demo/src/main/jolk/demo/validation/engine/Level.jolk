@@ -7,9 +7,15 @@ package demo.validation.engine;
 enum Level {
 
     // basic enum
-    ERROR;
-    WARNING;
-    INFO;
+    ERROR; WARNING; INFO; DEBUG;
+
+    Boolean isError() { ^ this == ERROR }
+    Boolean isWarning() { ^ this == WARNING }
+    Boolean isInfo() { ^ this == INFO }
+    Boolean isDebug() { ^ this == DEBUG }
+    
+    /// @Intrinsic("name") 
+    /// final String name() {  }
 
     // enum with fields
     // ERROR("E");

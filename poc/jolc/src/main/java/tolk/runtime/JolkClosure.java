@@ -20,6 +20,12 @@ import com.oracle.truffle.api.library.ExportMessage;
 /// Depending on the receiving selector, a closure interacts with its environment 
 /// via **Inline Projection** (for control flow) or **Unbounded Projection** (for 
 /// functional passing), maintaining **Return Authority** via the caret terminal.
+/// 
+/// It also serves as the foundation for **Resource Governance**. When acting as a 
+/// receiver for the `#try` message, the closure functions as a factory for an 
+/// **Atomic Resource**, ensuring that the resulting identity is bound by a 
+/// guaranteed cleanup protocol.
+/// 
 @ExportLibrary(InteropLibrary.class)
 public class JolkClosure implements TruffleObject {
     private final CallTarget callTarget;

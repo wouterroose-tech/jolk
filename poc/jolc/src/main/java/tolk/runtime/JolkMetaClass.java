@@ -7,7 +7,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
@@ -25,19 +24,15 @@ import java.util.Set;
 
 /// # JolkMetaClass (Meta-Object Descriptor)
 /// 
-/// Represents a Jolk Type (a meta-object) at runtime.
-///
-/// This is the Java implementation of the `MetaClass` concept defined in Jolk.
-/// It acts as the first-class identity for Classes, Records, and Enums. As a
-/// meta-object, it is responsible for handling meta-level messages such as
-/// `#new` (instance creation) and type introspection (`#name`, `#superclass`).
+/// Represents a Jolk Type (a meta-object) at runtime. It acts as the first-class identity 
+/// for Classes, Records, and Enums.
 /// 
-/// It also serves as a container for the definitions of members (fields and methods)
-/// that belong to instances of this type. However, it does not execute instance-level
-/// messages itself; that is the responsibility of {@link JolkObject}.
+/// As the primary engine for **Dual-Stratum Resolution**, it manages the **Consolidated 
+/// Flattened Registry**. It facilitates **Virtual Static Dispatch**, enabling class-level 
+/// behaviors to participate in a rigorous inheritance model, effectively treating every 
+/// Type as a live Identity within the **JoMoo** continuum.
 /// 
-///  @author Wouter Roose
-
+/// @author Wouter Roose
 @ExportLibrary(InteropLibrary.class)
 public class JolkMetaClass extends DynamicObject {
 

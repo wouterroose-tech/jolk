@@ -9,15 +9,15 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;
 
-/// The root of all Jolk execution nodes.
+/// # JolkNode (The AST Substrate)
 ///
-/// This class extends the Truffle `Node` and provides the basic structure for the Abstract
-/// Syntax Tree (AST) of the Jolk language. All specific Jolk nodes (for expressions, statements,
-/// etc.) will extend this class.
-///
-/// The "execute" methods are the core of the Truffle execution model. They are called to evaluate
-/// a node in the AST. We provide a generic `executeGeneric` and specialized versions for
-/// primitive types to allow for type-specific optimizations by the GraalVM compiler.
+/// The abstract base for all identities within the Jolk Abstract Syntax Tree. 
+/// It provides the structural scaffolding for the Truffle execution model, 
+/// enforcing the type system via {@link JolkTypes}.
+/// 
+/// This class implements the core protocols for **Identity Restitution** (lifting) 
+/// and **Impedance Resolution** (unwrapping), ensuring that the boundary between 
+/// the guest Jolk environment and the host JVM remains semantically secure.
 @TypeSystemReference(JolkTypes.class)
 @NodeInfo(language = "Jolk Language", description = "The abstract base node for all Jolk AST nodes")
 public abstract class JolkNode extends Node {

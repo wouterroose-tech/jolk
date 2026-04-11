@@ -36,51 +36,26 @@ import tolk.runtime.JolkLongExtension;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkIntrinsicProtocol;
 
-/// # JolkDispatchNode
+/// # JolkDispatchNode (The Message Gateway)
 ///
-/// The `JolkDispatchNode` is responsible for dispatching messages (method calls)
-/// to the receiver object. It acts as the gateway between the Jolk AST and the
-/// object's behavior.
+/// Responsible for executing the **JoMoo Dispatch** logic. It acts as the 
+/// primary gateway between the Jolk AST and object behavior, ensuring every 
+/// interaction remains a formal message send.
 ///
-/// In Jolk, every interaction is a message send. This node handles the polymorphic
-/// dispatch logic, leveraging the Truffle DSL to inline caches (ICs) for performance.
-/// It primarily uses the `InteropLibrary` to interact with objects, ensuring strict
-/// adherence to the defined protocols (including those of `JolkNothing`).
-/// 
-/// ### Specialization for `JolkNothing`
+/// ### Optimization Strategies
 ///
-/// The `doNothing` specialization provides a high-performance, monomorphic "fast path" for
-/// messages sent to the `JolkNothing.INSTANCE` singleton. In a message-passing system, the
-/// absence of a value (`null`) is a common receiver, and optimizing for it is critical.
+/// *   **Monomorphic Fast Path**: Specializes for {@link JolkNothing} to 
+///     ensure absence checks incur zero overhead.
+/// *   **Polymorphic Inline Caches (PICs)**: Utilizes `limit = "3"` to 
+///     collapse dispatch for the most frequent receiver types into 
+///     high-density machine code via **Semantic Flattening**.
+/// *   **Protocol Intrinsification**: Directly handles core control flow 
+///     messages (like `#ifPresent` and loops) by executing closures 
+///     via optimized call nodes.
 ///
-/// This specialization works by caching the `InteropLibrary` specific to the `JolkNothing`
-/// type. Since `JolkNothing` is a singleton, this cache is always hit after the first
-/// invocation, making subsequent dispatches extremely fast. The node simply delegates the
-/// message (`invokeMember`) to the `JolkNothing` object itself, which defines how it
-/// should respond to various selectors (typically by returning itself, absorbing the message).
-///
-/// ### Generic Dispatch and Polymorphic Inline Caches
-///
-/// The `doDispatch` specialization is the general-purpose, polymorphic fallback for any
-/// object that is not `JolkNothing`. It leverages Truffle's Polymorphic Inline Caches (PICs)
-/// to maintain high performance across different receiver types.
-///
-/// The `limit = "3"` directive instructs the Truffle DSL to create an inline cache that can
-/// specialize for up to three distinct receiver types. Here's how it works:
-///
-/// 1.  **Monomorphic State**: On the first invocation with a new type (e.g., `JolkMetaClass`),
-///     the node rewrites itself to include a fast `instanceof JolkMetaClass` check and caches
-///     the appropriate `InteropLibrary`.
-/// 2.  **Polymorphic State**: When a second or third new type is encountered, the node adds
-///     more `instanceof` checks, creating a chain of fast paths.
-/// 3.  **Megamorphic State**: If a fourth type is seen, the cache is considered "megamorphic."
-///     The node transitions to a more generic (and slightly slower) dispatch mechanism that
-///     can handle an unlimited number of types, typically using a hash map lookup on the
-///     receiver's class.
-///
-/// This strategy ensures that common call sites with a few receiver types remain highly
-/// optimized, while still correctly handling fully dynamic scenarios.
-///
+/// Adhering to the principle of **Industrial Sovereignty**, this node 
+/// leverages the Truffle DSL to boil away the qualitative overhead of 
+/// dynamic messaging.
 @GenerateInline(false)
 public abstract class JolkDispatchNode extends JolkNode { // Keep extending JolkNode
 

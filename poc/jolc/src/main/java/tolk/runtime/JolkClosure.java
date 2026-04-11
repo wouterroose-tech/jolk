@@ -11,6 +11,15 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 
+/// # JolkClosure (The Reified Identity)
+/// 
+/// A first-class identity representing a block of deferred logic. Unlike traditional 
+/// procedural callbacks, a Jolk Closure maintains **Scope Permeability**, retaining 
+/// a link to its lexical environment via a {@link MaterializedFrame}.
+/// 
+/// Depending on the receiving selector, a closure interacts with its environment 
+/// via **Inline Projection** (for control flow) or **Unbounded Projection** (for 
+/// functional passing), maintaining **Return Authority** via the caret terminal.
 @ExportLibrary(InteropLibrary.class)
 public class JolkClosure implements TruffleObject {
     private final CallTarget callTarget;

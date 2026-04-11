@@ -15,13 +15,16 @@ import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.nodes.JolkDispatchNode;
 
-/// # JolkObject
-/// 
-/// The base class for all objects in the Jolk Object Model (JoMoo).
-/// This includes instances of classes defined in the language, as well as any built-in objects.
-/// Currently, this is just a placeholder to establish the object model structure.
-/// In the future, this class will be expanded to include fields, methods, and other features of the object model.
-/// 
+/// # JolkObject (The JoMoo Kernel)
+///
+/// The base class for all identities in the **Jolk Message-Oriented Object (JoMoo)** model. 
+/// It represents a high-density synthesis of Java’s structural discipline and Smalltalk’s 
+/// dynamic philosophy.
+///
+/// Adhering to the principle of **Industrial Sovereignty**, this class ensures that every 
+/// interaction is a formal message send. It implements **Identity Restitution**, ensuring 
+/// that substrate-level `void` and `null` are transformed into valid terminal responses 
+/// within a **Closed-Loop Object Heap**.
 @ExportLibrary(InteropLibrary.class)
 public class JolkObject extends DynamicObject {
 

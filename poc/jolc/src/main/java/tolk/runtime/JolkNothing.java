@@ -11,14 +11,14 @@ import com.oracle.truffle.api.library.ExportMessage;
 import java.util.HashMap;
 import java.util.Map;
 
-/// # JolkNothing
+/// # JolkNothing (The Nullity Identity)
 /// 
-/// Represents the `null` or `Nothing` value in Jolk.
-///
-/// This is a singleton `TruffleObject` that aligns with Jolk's philosophy of treating
-/// `null` as a first-class identity. It does NOT implement `isNull` from `InteropLibrary`
-/// to ensure it remains a valid receiver for messages within the polyglot environment.
-///
+/// A reified, first-class identity and **Atomic Receiver** representing the fact 
+/// of absence. It implements the **Null Object Pattern**, ensuring that 
+/// uninitialized states act as valid participants in the **JoMoo** message-passing protocol.
+/// 
+/// Through **Silent Absorption**, Nothing consumes incoming messages and returns 
+/// itself, allowing message chains to collapse gracefully without structural failure.
 @ExportLibrary(InteropLibrary.class)
 public final class JolkNothing implements TruffleObject {
 

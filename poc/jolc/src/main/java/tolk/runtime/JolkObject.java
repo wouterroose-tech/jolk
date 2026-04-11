@@ -9,6 +9,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -103,7 +104,7 @@ public class JolkObject extends DynamicObject {
 
     @ExportMessage
     public boolean isMemberInvocable(String member,
-                                     @CachedLibrary(limit = "3") InteropLibrary interop) {
+                                     @Exclusive @CachedLibrary(limit = "3") InteropLibrary interop) {
         // Recognise methods, intrinsics, and fields as invocable targets
         return metaClass.hasInstanceMember(member) 
             || JolkDispatchNode.isObjectIntrinsic(member)
@@ -113,14 +114,14 @@ public class JolkObject extends DynamicObject {
 
     @ExportMessage
     public boolean isMemberReadable(String member,
-                                    @CachedLibrary(limit = "3") InteropLibrary interop) {
+                                    @Exclusive @CachedLibrary(limit = "3") InteropLibrary interop) {
         return metaClass.getFieldIndex(member) != -1 || interop.isMemberReadable(metaClass, member);
     }
 
     @ExportMessage
     public Object readMember(String member,
-                             @CachedLibrary("this") DynamicObjectLibrary objLib,
-                             @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, UnsupportedMessageException {
+                             @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib,
+                             @Exclusive @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, UnsupportedMessageException {
         if (metaClass.getFieldIndex(member) != -1) {
             return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
         }
@@ -132,8 +133,8 @@ public class JolkObject extends DynamicObject {
 
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
-                        @CachedLibrary(limit = "3") InteropLibrary interop,
-                        @CachedLibrary("this") DynamicObjectLibrary objLib) 
+                        @Exclusive @CachedLibrary(limit = "3") InteropLibrary interop,
+                        @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) 
                         throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         String name = member;
 

@@ -4,6 +4,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -418,7 +419,7 @@ public class JolkMetaClass extends DynamicObject {
     /// Returns true if the identifier exists in the meta-member map.
     @ExportMessage
     public boolean isMemberReadable(String member,
-                                    @CachedLibrary("this") DynamicObjectLibrary objLib) {
+                                    @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) {
         ensureHydrated();
         if (metaRegistry.containsKey(member)) return true;
         if (objLib.containsKey(this, member)) return true;
@@ -432,7 +433,7 @@ public class JolkMetaClass extends DynamicObject {
     /// Retrieves the internal substrate object (Closure or Accessor) for a meta-member.
     @ExportMessage
     public Object readMember(String member,
-                             @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException {
+                             @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException {
         ensureHydrated();
         Object val = metaRegistry.get(member);
         if (val == null) {
@@ -462,7 +463,7 @@ public class JolkMetaClass extends DynamicObject {
 
     @ExportMessage
     public boolean isMemberInvocable(String member,
-                                     @CachedLibrary("this") DynamicObjectLibrary objLib) {
+                                     @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) {
         ensureHydrated();
         // 1. Consolidated Meta-Members (Methods and Field Accessors)
         if (metaRegistry.containsKey(member)) return true;
@@ -496,7 +497,7 @@ public class JolkMetaClass extends DynamicObject {
                         @CachedLibrary(limit = "3") InteropLibrary interop,
                         @Cached(value = "member", allowUncached = true, neverDefault = false) String cachedMember,
                         @Cached(value = "doLookupMeta(this, member)", allowUncached = true, neverDefault = false) Object cachedValue, // This is for methods/enum constants
-                        @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+                        @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         ensureHydrated();
         
         if (member.equals(cachedMember) && cachedValue != null) {

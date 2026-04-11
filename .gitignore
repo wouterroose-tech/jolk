@@ -25,3 +25,7 @@ replay_pid*
 
 # Build output
 */*/target/
+
+#local
+.vscode/
+tmp/

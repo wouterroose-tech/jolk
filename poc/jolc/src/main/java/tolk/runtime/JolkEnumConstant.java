@@ -56,8 +56,8 @@ public class JolkEnumConstant implements TruffleObject {
     @ExportMessage
     public Object invokeMember(String member, Object[] arguments,
                               @CachedLibrary(limit = "3") InteropLibrary interop,
-                              @Cached(value = "member", allowUncached = true) String cachedMember,
-                              @Cached(value = "doLookupEnumInstance(this, member)", allowUncached = true) Object cachedMemberObj)
+                              @Cached(value = "member", allowUncached = true, neverDefault = false) String cachedMember,
+                              @Cached(value = "doLookupEnumInstance(this, member)", allowUncached = true, neverDefault = false) Object cachedMemberObj)
             throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
 
         // Handle enum-specific methods

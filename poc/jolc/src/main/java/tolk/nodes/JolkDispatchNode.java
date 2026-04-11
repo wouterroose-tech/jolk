@@ -6,6 +6,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Cached.Exclusive;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.nodes.IndirectCallNode;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -192,7 +193,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                                 @Cached("receiver.getShape()") Shape cachedShape,
                                 @Cached("selector") String cachedSelector,
                                 @Cached("cachedShape.getProperty(selector)") Property property,
-                                @CachedLibrary("receiver") DynamicObjectLibrary objLib) {
+                                @Exclusive @CachedLibrary("receiver") DynamicObjectLibrary objLib) {
 
         if (arguments.length == 0) {
             // Getter Pattern: #field

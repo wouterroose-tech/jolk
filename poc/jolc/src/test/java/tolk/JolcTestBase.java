@@ -35,6 +35,8 @@ public abstract class JolcTestBase {
                 .allowAllAccess(true)
                 .allowHostAccess(HostAccess.ALL) // Allow Jolk to access all public host (Java) members
                 .allowHostClassLookup(className -> true) // Allow Jolk to look up any Java class
+                .out(System.out)
+                .err(System.err)
                 .build();
     }
 

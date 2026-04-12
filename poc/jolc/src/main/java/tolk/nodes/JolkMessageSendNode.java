@@ -19,6 +19,18 @@ public class JolkMessageSendNode extends JolkExpressionNode {
         this.dispatchNode = JolkDispatchNode.create();
     }
 
+    public JolkNode getReceiverNode() {
+        return receiverNode;
+    }
+
+    public JolkNode[] getArgumentNodes() {
+        return argumentNodes;
+    }
+
+    public String getSelector() {
+        return selector;
+    }
+
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         Object receiver = receiverNode.executeGeneric(frame);

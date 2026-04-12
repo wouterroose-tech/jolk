@@ -32,6 +32,7 @@ import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkSuperNode;
 import tolk.nodes.JolkSuperMessageSendNode;
+import tolk.nodes.JolkTryWithResourceNode;
 import tolk.nodes.JolkNode;
 import tolk.nodes.JolkRootNode;
 import tolk.nodes.JolkReadArgumentNode;
@@ -650,9 +651,13 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                     i++; // Consume the payload child
                 }
 
-                receiver = (receiver instanceof JolkSuperNode)
-                    ? new JolkSuperMessageSendNode(selector, args)
-                    : new JolkMessageSendNode(receiver, selector, args);
+                if ("catch".equals(selector) && receiver instanceof JolkMessageSendNode previousTry && "try".equals(previousTry.getSelector()) && previousTry.getArgumentNodes().length == 1) {
+                    receiver = new JolkTryWithResourceNode(previousTry.getReceiverNode(), previousTry.getArgumentNodes()[0], args.length == 1 ? args[0] : new JolkEmptyNode());
+                } else {
+                    receiver = (receiver instanceof JolkSuperNode)
+                        ? new JolkSuperMessageSendNode(selector, args)
+                        : new JolkMessageSendNode(receiver, selector, args);
+                }
             }
         }
         return receiver;

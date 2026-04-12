@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
@@ -54,7 +55,7 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.lang.RuntimeException;
             class MyClass {
                 Long run() {
-                    [ RuntimeException #new #throw ] #catch [RuntimeException e ->  ^42 ];
+                    [ RuntimeException #new #throw ] #catch [RuntimeException e ->  ^ 42 ];
                     ^ 0
                 }
         }""";
@@ -81,6 +82,76 @@ public class JolkExceptionTest extends JolcTestBase {
     }
 
     @Test
-    void testTryCatchFinally() {
+    void testTry() {
+        String myClass = """
+            + java.lang.RuntimeException;
+            +  java.util.concurrent.StructuredTaskScope;
+            class MyClass {
+                Long run() {
+                    [ StructuredTaskScope #open ]
+                        #try [ scope -> //ignore ];
+                    ^ 0
+                }
+            }""";
+
+        Value instance = eval(myClass).invokeMember("new");
+        assertEquals(0, instance.invokeMember("run").asLong());
+    }
+
+    @Test
+    void testTryCatchChainResult() {
+        String myClass = """
+            + java.lang.RuntimeException;
+            +  java.util.concurrent.StructuredTaskScope;
+            class MyClass {
+                Long run() {
+                    ^ [ StructuredTaskScope #open ]
+                        #try [ scope -> 10 ]
+                        #catch [ RuntimeException e -> 0 ];
+                    
+                }
+            }""";
+
+        Value instance = eval(myClass).invokeMember("new");
+        assertEquals(10, instance.invokeMember("run").asLong());
+    }
+
+    @Test
+    void testTryCatchChainHandlesException() {
+        String myClass = """
+            + java.lang.RuntimeException;
+            +  java.util.concurrent.StructuredTaskScope;
+            class MyClass {
+                Long run() {
+                    ^ [ StructuredTaskScope #open ]
+                        #try [ scope -> RuntimeException #new #throw ]
+                        #catch [ RuntimeException e -> 42 ];
+                }
+            }""";
+
+        Value instance = eval(myClass).invokeMember("new");
+        assertEquals(42, instance.invokeMember("run").asLong());
+    }
+
+    @Test
+    @Disabled("activate when fork is implemented")
+    void testTryWithFork() {
+        String myClass = """
+            + java.lang.Thread;
+            + java.util.concurrent.StructuredTaskScope;
+            class MyClass {
+                Long run() {
+                    [ StructuredTaskScope #open ]
+                        #try [ scope ->
+                            10 #times [ scope #fork [  Thread #sleep(1000) ] ];
+                            scope #join
+                            ]; 
+                    ^ 42
+                }
+            } """;
+        Value instance = eval(myClass).invokeMember("new");
+        System.out.println("testTryWithFork start at: " + System.currentTimeMillis());
+        assertEquals(42, instance.invokeMember("run").asLong());
+        System.out.println("testTryWithFork stop at: " + System.currentTimeMillis());
     }
 }

@@ -4,6 +4,8 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.RootNode;
+
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -161,17 +163,21 @@ public class JolkClosureTest {
         assertTrue(closed.get(), "Resource should be closed even after exception");
     }
 
-    // --- Helpers ---
+    @Test
+    @Disabled("Activate when interop protocol is implemented")
+    void testTryWithAutoCloseableHostResource() throws Exception {
+        AtomicBoolean closed = new AtomicBoolean(false);
+        AutoCloseable resource = () -> closed.set(true);
 
-    private JolkObject createMockResource(AtomicBoolean closedSignal) {
-        JolkClosure closeAction = createClosure(args -> {
-            closedSignal.set(true);
-            return JolkNothing.INSTANCE;
+        JolkClosure provider = createClosure(args -> resource);
+        JolkClosure logic = createClosure(args -> {
+            assertNotNull(args[0]);
+            return "success";
         });
-        Map<String, Object> members = new HashMap<>();
-        members.put("close", closeAction);
-        JolkMetaClass resourceClass = new JolkMetaClass("MockResource", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
-        return new JolkObject(resourceClass);
+
+        Object result = provider.invokeMember("try", new Object[]{logic});
+        assertEquals("success", result);
+        assertTrue(closed.get(), "Host AutoCloseable resources should be closed");
     }
 
     static class TestRootNode extends RootNode {
@@ -187,4 +193,16 @@ public class JolkClosureTest {
             return logic.apply(frame.getArguments());
         }
     }
+
+    private JolkObject createMockResource(AtomicBoolean closedSignal) {
+        JolkClosure closeAction = createClosure(args -> {
+            closedSignal.set(true);
+            return JolkNothing.INSTANCE;
+        });
+        Map<String, Object> members = new HashMap<>();
+        members.put("close", closeAction);
+        JolkMetaClass resourceClass = new JolkMetaClass("MockResource", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+        return new JolkObject(resourceClass);
+    }
+    
 }

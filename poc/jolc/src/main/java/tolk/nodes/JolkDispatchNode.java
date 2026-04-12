@@ -114,6 +114,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         };
     }
 
+    protected static boolean isTry(String selector) {
+        return "try".equals(selector);
+    }
+
     protected static boolean isClosureCatch(String selector) {
         return "catch".equals(selector);
     }
@@ -281,6 +285,99 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         }
         // Fallback to boundary for non-closure arguments or unhandled control flow
         return JolkIntrinsicProtocol.dispatchObjectIntrinsic(receiver, selector, arguments, interop);
+    }
+
+    /// ### Fast Path for Closure Try-With-Resources
+    /// 
+    /// Handles `#try` when the receiver is a JolkClosure resource provider. This
+    /// specialization executes the resource factory, passes the resulting resource
+    /// into the logic closure, and guarantees cleanup via the AutoCloseable bridge.
+    @Specialization(guards = {"isTry(selector)", "isClosure(receiver)"})
+    protected Object doClosureTry(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
+                                  @Shared("callNode") @Cached IndirectCallNode callNode,
+                                  @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
+        if (arguments.length != 1 || !(arguments[0] instanceof JolkClosure logic)) {
+            throw new RuntimeException("Invalid #try call: expected a single logic closure argument.");
+        }
+
+        JolkClosure provider = (JolkClosure) receiver;
+        Object resource = callNode.call(provider.getCallTarget(), new Object[]{provider.getEnvironment()});
+        Object liftedResource = lift(resource);
+
+        Throwable thrown = null;
+        try {
+            return callNode.call(logic.getCallTarget(), new Object[]{logic.getEnvironment(), liftedResource});
+        } catch (JolkReturnException e) {
+            thrown = e;
+            throw e;
+        } catch (Throwable t) {
+            thrown = t;
+            throw t;
+        } finally {
+            closeResource(resource, thrown, interop);
+        }
+    }
+
+    private static void closeResource(Object resource, Throwable prior, InteropLibrary interop) {
+        if (resource == null || resource == JolkNothing.INSTANCE) {
+            return;
+        }
+
+        Object unwrapped = resource;
+        // Recursively unwrap host objects if possible
+        while (true) {
+            Object next = tryUnwrapOnce(unwrapped);
+            if (next == unwrapped) break;
+            unwrapped = next;
+        }
+
+        Throwable closeFailure = null;
+        try {
+            if (unwrapped instanceof AutoCloseable ac) {
+                ac.close();
+                return;
+            }
+
+            if (interop.isMemberInvocable(resource, "close")) {
+                interop.invokeMember(resource, "close");
+                return;
+            }
+            if (interop.isMemberInvocable(unwrapped, "close")) {
+                interop.invokeMember(unwrapped, "close");
+                return;
+            }
+        } catch (Throwable closeEx) {
+            closeFailure = closeEx;
+        }
+
+        if (closeFailure != null) {
+            if (prior instanceof Throwable) {
+                ((Throwable) prior).addSuppressed(closeFailure);
+            } else {
+                throw new RuntimeException("Failed to close resource", closeFailure);
+            }
+        }
+    }
+
+    /**
+     * Attempts to unwrap a host object one level. If no further unwrapping is possible, returns the same object.
+     */
+    private static Object tryUnwrapOnce(Object obj) {
+        try {
+            var env = tolk.language.JolkLanguage.getContext().env;
+            if (env != null && env.isHostObject(obj)) {
+                return env.asHostObject(obj);
+            }
+        } catch (Throwable ignored) {}
+        // Fallback for Truffle HostObject wrappers
+        if (obj != null && obj.getClass().getName().equals("com.oracle.truffle.polyglot.HostObject")) {
+            try {
+                var method = obj.getClass().getMethod("getJavaObject");
+                method.setAccessible(true);
+                return method.invoke(obj);
+            } catch (Throwable ignored) {}
+        }
+        return obj;
     }
 
     /// ### Fast Path for Closure Exception Handling

@@ -3,6 +3,7 @@ package tolk.language;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.TruffleLanguage.LanguageReference;
 import com.oracle.truffle.api.TruffleLanguage.ContextPolicy;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -33,6 +34,7 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
     public static final String MIME_TYPE = "application/x-jolk";
 
     private static final ContextReference<JolkContext> REFERENCE = ContextReference.create(JolkLanguage.class);
+    private static final LanguageReference<JolkLanguage> LANGUAGE_REFERENCE = LanguageReference.create(JolkLanguage.class);
 
     /**
      * ### getContextReference
@@ -54,11 +56,19 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
     }
 
     /**
+     * Returns the current Jolk language instance from the thread-local state.
+     */
+    public static JolkLanguage getLanguage() {
+        return LANGUAGE_REFERENCE.get(null);
+    }
+
+    /**
      * ### getLanguage
      * 
      * Helper to resolve the Jolk language instance from a node.
      */
     public static JolkLanguage getLanguage(Node node) {
+        if (node == null) return getLanguage();
         return node.getRootNode().getLanguage(JolkLanguage.class);
     }
 

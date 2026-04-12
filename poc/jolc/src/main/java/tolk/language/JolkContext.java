@@ -44,6 +44,13 @@ public class JolkContext {
         registerClass(JolkExceptionExtension.EXCEPTION_TYPE);
     }
 
+    /**
+     * Returns the language instance associated with this context.
+     */
+    public JolkLanguage getLanguage() {
+        return language;
+    }
+
     public void registerClass(JolkMetaClass metaClass) {
         Object existing = registeredClasses.get(metaClass.name);
         if (existing instanceof JolkMetaClassPlaceholder placeholder) {

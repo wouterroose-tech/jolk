@@ -214,15 +214,22 @@ public class JolkObjectTest extends JolcTestBase {
 
     @Test
     void testResultRestitution() throws Exception {
-        // Create a method that returns raw Java null
-        JolkClosure nullReturner = new JolkClosure(new JolkClosureTest.TestRootNode(args -> null).getCallTarget());
-        Map<String, Object> members = Collections.singletonMap("getNull", nullReturner);
-        JolkMetaClass meta = new JolkMetaClass("RestitutionTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
-        
-        JolkObject obj = new JolkObject(meta);
-        Object result = InteropLibrary.getUncached().invokeMember(obj, "getNull");
-        
-        assertEquals(JolkNothing.INSTANCE, result, "Raw null results from methods must be lifted to JolkNothing.");
+        eval("");
+        context.enter();
+        try {
+            var lang = tolk.language.JolkLanguage.getLanguage();
+            // Create a method that returns raw Java null
+            JolkClosure nullReturner = new JolkClosure(new JolkClosureTest.TestRootNode(lang, args -> null).getCallTarget());
+            Map<String, Object> members = Collections.singletonMap("getNull", nullReturner);
+            JolkMetaClass meta = new JolkMetaClass("RestitutionTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+            
+            JolkObject obj = new JolkObject(meta);
+            Object result = InteropLibrary.getUncached().invokeMember(obj, "getNull");
+            
+            assertEquals(JolkNothing.INSTANCE, result, "Raw null results from methods must be lifted to JolkNothing.");
+        } finally {
+            context.leave();
+        }
     }
 
     @Test

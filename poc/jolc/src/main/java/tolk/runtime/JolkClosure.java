@@ -10,6 +10,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /// # JolkClosure (The Reified Identity)
 /// 
@@ -80,12 +81,10 @@ public class JolkClosure implements TruffleObject {
             captures[0] = env;
             System.arraycopy(arguments, 0, captures, 1, arguments.length);
             
-            Object result = callTarget.call(captures);
-            return result == null ? JolkNothing.INSTANCE : result;
+            return lift(callTarget.call(captures));
         }
         // Method mode: the receiver is already at index 0
-        Object result = callTarget.call(arguments);
-        return result == null ? JolkNothing.INSTANCE : result;
+        return lift(callTarget.call(arguments));
     }
 
 
@@ -138,15 +137,66 @@ public class JolkClosure implements TruffleObject {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 Object logic = arguments[0];
                 Object resource = execute(new Object[0]);
+                Throwable thrown = null;
                 try {
                     return InteropLibrary.getUncached().execute(logic, resource);
+                } catch (Throwable t) {
+                    thrown = t;
+                    throw t;
                 } finally {
-                    if (resource != null && resource != JolkNothing.INSTANCE) {
-                        InteropLibrary.getUncached().invokeMember(resource, "close");
-                    }
+                    closeResource(resource, thrown);
                 }
             default:
                 throw UnknownIdentifierException.create(member);
         }
+    }
+
+    @TruffleBoundary
+    private static void closeResource(Object resource, Throwable prior) {
+        if (resource == null || resource == JolkNothing.INSTANCE) return;
+        
+        InteropLibrary interop = InteropLibrary.getUncached();
+        Object unwrapped = unwrap(resource);
+        
+        Throwable closeFailure = null;
+        try {
+            // 1. Host Interface Priority: Direct call to AutoCloseable if it's a Java object
+            if (unwrapped instanceof AutoCloseable ac) {
+                ac.close();
+            } 
+            // 2. Guest/Interop Protocol: Invoke #close if defined on the object
+            else if (interop.isMemberInvocable(resource, "close")) {
+                interop.invokeMember(resource, "close");
+            }
+        } catch (Throwable t) {
+            closeFailure = t;
+        }
+
+        if (closeFailure != null) {
+            if (prior != null) {
+                prior.addSuppressed(closeFailure);
+            } else {
+                throw new RuntimeException("Failed to close resource", closeFailure);
+            }
+        }
+    }
+
+    @TruffleBoundary
+    private static Object lift(Object value) {
+        if (value == null || value == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
+        if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof TruffleObject) {
+            return value;
+        }
+        // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
+        return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
+    }
+
+    @TruffleBoundary
+    private static Object unwrap(Object value) {
+        var env = tolk.language.JolkLanguage.getContext().env;
+        if (env != null && env.isHostObject(value)) {
+            return env.asHostObject(value);
+        }
+        return value;
     }
 }

@@ -24,6 +24,15 @@ public final class JolkBooleanExtension {
     public static final JolkMetaClass BOOLEAN_TYPE;
 
     static {
+        BOOLEAN_TYPE = new JolkMetaClass(
+            "Boolean", 
+            JolkFinality.FINAL, 
+            JolkVisibility.PUBLIC, 
+            JolkArchetype.CLASS, 
+            new HashMap<>(), 
+            new HashMap<>()
+        );
+
         Map<String, Object> members = new HashMap<>();
         members.put("&&", new BooleanAnd());
         members.put("||", new BooleanOr());
@@ -47,7 +56,7 @@ public final class JolkBooleanExtension {
         members.put("class", new BooleanClassAccessor());
         members.put("instanceOf", new BooleanInstanceOf());
 
-        BOOLEAN_TYPE = new JolkMetaClass("Boolean", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, Map.of());
+        for (var e : members.entrySet()) BOOLEAN_TYPE.registerInstanceMethod(e.getKey(), e.getValue());
     }
 
     private JolkBooleanExtension() {

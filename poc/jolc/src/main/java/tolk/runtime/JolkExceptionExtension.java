@@ -36,8 +36,10 @@ public class JolkExceptionExtension {
             @Override
             public Object execute(Object[] args) throws ArityException, UnsupportedTypeException {
                 if (args.length != 1) throw ArityException.create(1, 1, args.length);
-                if (args[0] instanceof Throwable t) {
+                Object unwrapped = unwrap(args[0]);
+                if (unwrapped instanceof Throwable t) {
                     throwException(t);
+                    return JolkNothing.INSTANCE;
                 }
                 throw new RuntimeException("The #throw selector can only be invoked on Throwable identities.");
             }

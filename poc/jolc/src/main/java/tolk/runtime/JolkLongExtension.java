@@ -23,6 +23,16 @@ public final class JolkLongExtension {
     public static final JolkMetaClass LONG_TYPE;
 
     static {
+        // Breaking the circularity: Assign the identity BEFORE populating members
+        LONG_TYPE = new JolkMetaClass(
+            "Long", 
+            JolkFinality.FINAL, 
+            JolkVisibility.PUBLIC, 
+            JolkArchetype.CLASS, 
+            new HashMap<>(), 
+            new HashMap<>()
+        );
+
         Map<String, Object> members = new HashMap<>();
         members.put("+", new LongAdd());
         members.put("-", new LongSubtract());
@@ -57,8 +67,10 @@ public final class JolkLongExtension {
         Map<String, Object> metaMembers = new HashMap<>();
         metaMembers.put("MIN", MIN);
         metaMembers.put("MAX", MAX);
-
-        LONG_TYPE = new JolkMetaClass("Long", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, metaMembers);
+        
+        // Hydrate the existing identity
+        for (var e : members.entrySet()) LONG_TYPE.registerInstanceMethod(e.getKey(), e.getValue());
+        for (var e : metaMembers.entrySet()) LONG_TYPE.registerMetaMethod(e.getKey(), e.getValue());
     }
 
     private JolkLongExtension() {

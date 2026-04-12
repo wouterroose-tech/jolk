@@ -5,6 +5,7 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import tolk.language.JolkLanguage;
 import tolk.nodes.JolkReturnException;
 
 import java.util.Set;
@@ -18,7 +19,7 @@ import java.util.Set;
 public final class JolkIntrinsicProtocol {
 
     public static final Set<String> INTRINSIC_MEMBERS = Set.of(
-        "new", "catch", "finally", "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
+        "new", "catch", "finally", "throw", "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
         "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
         "?", "? :", "?!", "?! :"
     );
@@ -31,9 +32,23 @@ public final class JolkIntrinsicProtocol {
 
     @TruffleBoundary
     public static Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
+        var context = JolkLanguage.getContext();
+        Object unwrapped = receiver;
+        // Impedance Resolution: Use the Context Environment to extract native host objects
+        if (context != null && context.env.isHostObject(receiver)) {
+            unwrapped = context.env.asHostObject(receiver);
+        }
         InteropLibrary genericInterop = InteropLibrary.getUncached();
         try {
             switch (name) {
+                case "throw" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    if (unwrapped instanceof Throwable t) {
+                        JolkExceptionExtension.throwException(t);
+                        return JolkNothing.INSTANCE;
+                    }
+                    throw new RuntimeException("The #throw selector can only be invoked on Throwable identities.");
+                }
                 case "==" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     Object other = arguments[0];
@@ -95,8 +110,8 @@ public final class JolkIntrinsicProtocol {
                 case "ifEmpty" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     if ((Boolean) dispatchObjectIntrinsic(receiver, "isEmpty", new Object[0], interop)) {
-                        Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        Object result = InteropLibrary.getUncached().execute(arguments[0]);
+                        return (result == null || InteropLibrary.getUncached().isNull(result)) ? JolkNothing.INSTANCE : result;
                     }
                     return receiver;
                 }
@@ -105,6 +120,7 @@ public final class JolkIntrinsicProtocol {
                     if (receiver instanceof Long || receiver instanceof Integer) return JolkLongExtension.LONG_TYPE;
                     if (receiver instanceof Boolean) return JolkBooleanExtension.BOOLEAN_TYPE;
                     if (receiver instanceof String) return JolkStringExtension.STRING_TYPE;
+                    if (unwrapped instanceof Throwable) return JolkExceptionExtension.EXCEPTION_TYPE;
                     if (receiver instanceof JolkMetaClass) return receiver;
                     if (receiver instanceof JolkObject jo) return jo.getJolkMetaClass();
                     return interop.hasMetaObject(receiver) ? interop.getMetaObject(receiver) : JolkNothing.NOTHING_TYPE;
@@ -133,7 +149,9 @@ public final class JolkIntrinsicProtocol {
                 case "? :" -> {
                     if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
                     if (receiver instanceof Boolean b) {
-                        Object result = b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                        Object result = b 
+                            ? genericInterop.execute(arguments[0]) 
+                            : genericInterop.execute(arguments[1]);
                         return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
                     }
                     return JolkNothing.INSTANCE;
@@ -141,7 +159,9 @@ public final class JolkIntrinsicProtocol {
                 case "?! :" -> {
                     if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
                     if (receiver instanceof Boolean b) {
-                        Object result = !b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
+                        Object result = !b 
+                            ? genericInterop.execute(arguments[0]) 
+                            : genericInterop.execute(arguments[1]);
                         return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
                     }
                     return JolkNothing.INSTANCE;

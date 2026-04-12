@@ -22,6 +22,15 @@ public final class JolkStringExtension {
     public static final JolkMetaClass STRING_TYPE;
 
     static {
+        STRING_TYPE = new JolkMetaClass(
+            "String", 
+            JolkFinality.FINAL, 
+            JolkVisibility.PUBLIC, 
+            JolkArchetype.CLASS, 
+            new HashMap<>(), 
+            new HashMap<>()
+        );
+
         Map<String, Object> members = new HashMap<>();
         members.put("+", new StringAdd());
         
@@ -37,7 +46,7 @@ public final class JolkStringExtension {
         // Jolk String-specific methods
         members.put("matches", new StringMatches());
 
-        STRING_TYPE = new JolkMetaClass("String", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members, Map.of());
+        for (var e : members.entrySet()) STRING_TYPE.registerInstanceMethod(e.getKey(), e.getValue());
     }
 
     private JolkStringExtension() {}

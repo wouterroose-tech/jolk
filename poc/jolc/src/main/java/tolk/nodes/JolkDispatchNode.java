@@ -780,6 +780,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             else if (unwrappedReceiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
             else if (unwrappedReceiver instanceof String) meta = JolkStringExtension.STRING_TYPE;
             else if (unwrappedReceiver instanceof List) meta = JolkArrayExtension.ARRAY_TYPE;
+            else if (unwrappedReceiver instanceof Throwable) meta = JolkExceptionExtension.EXCEPTION_TYPE;
 
             if (meta != null) {
                 Object member = meta.lookupInstanceMember(selector);
@@ -856,7 +857,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     public static boolean isObjectIntrinsic(String member) {
         if (member == null) return false;
         return switch (member) {
-            case "new", "catch", "finally", "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
+            case "new", "catch", "finally", "throw", "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
                  "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
                  "?", "? :", "?!", "?! :" -> true;
             default -> false;

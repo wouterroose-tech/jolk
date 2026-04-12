@@ -52,6 +52,10 @@ public class JolkContext {
     }
 
     public void registerClass(JolkMetaClass metaClass) {
+        if (metaClass == null) {
+            // Guard against partial static initialization cycles
+            return;
+        }
         Object existing = registeredClasses.get(metaClass.name);
         if (existing instanceof JolkMetaClassPlaceholder placeholder) {
             // If a placeholder exists, replace it with the actual class.

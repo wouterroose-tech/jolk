@@ -28,7 +28,7 @@ public class JolkExceptionTest extends JolcTestBase {
     void testJolkExceptionExtension() {
         String myClass = """
             + java.lang.RuntimeException;
-            class MyClass { Long interrupt() { ^ RuntimeException #new #throw } }
+            class MyClass { Long interrupt() { RuntimeException #new #throw } }
             """;
         
         Value instance = eval(myClass).invokeMember("new");
@@ -120,7 +120,7 @@ public class JolkExceptionTest extends JolcTestBase {
     void testTryCatchChainHandlesException() {
         String myClass = """
             + java.lang.RuntimeException;
-            +  java.util.concurrent.StructuredTaskScope;
+            + java.util.concurrent.StructuredTaskScope;
             class MyClass {
                 Long run() {
                     ^ [ StructuredTaskScope #open ]
@@ -134,8 +134,8 @@ public class JolkExceptionTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("activate when fork is implemented")
-    void testTryWithFork() {
+    @Disabled(("activvate when interop is supported in try/catch/finally"))
+    void testTryWithResource() {
         String myClass = """
             + java.lang.Thread;
             + java.util.concurrent.StructuredTaskScope;

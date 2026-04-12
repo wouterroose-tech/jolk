@@ -17,6 +17,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.TruffleContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -824,7 +825,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
 
             try {
                 return lift(interop.invokeMember((Object) receiver, selector, arguments));
-            } catch (UnknownIdentifierException e) {
+            } catch (UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
                 // Identity Restitution Protocol: Intrinsic messages act as a fallback 
                 // for all objects that do not explicitly override them.
                 if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
@@ -1088,7 +1089,14 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 if (interop.isMemberInvocable(receiver, candidate)) {
                     // Try to convert arguments using reflection to get parameter types
                     Object[] convertedArgs = convertArgumentsForMethod(receiver, candidate, arguments);
-                    return interop.invokeMember(receiver, candidate, convertedArgs != null ? convertedArgs : arguments);
+                    Object[] finalArgs = convertedArgs != null ? convertedArgs : arguments;
+                    if (convertedArgs != null) {
+                        // Identity Restitution: Coerced host objects (like Lambdas) must be lifted into TruffleObjects
+                        for (int i = 0; i < finalArgs.length; i++) {
+                            finalArgs[i] = lift(finalArgs[i]);
+                        }
+                    }
+                    return interop.invokeMember(receiver, candidate, finalArgs);
                 }
             } catch (UnknownIdentifierException e) {
                 // continue
@@ -1154,10 +1162,11 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             }
         }
 
+        Object unwrapped = unwrap(receiver);
         try {
             // 1. Meta-Object Instantiation: If selector is #new and receiver is a Class, 
             // map directly to constructors to support Jolk's object creation protocol.
-            if ("new".equals(methodName) && receiver instanceof Class<?> clazz) {
+            if ("new".equals(methodName) && unwrapped instanceof Class<?> clazz) {
                 for (java.lang.reflect.Constructor<?> c : clazz.getConstructors()) {
                     Object[] matched = matchArguments(c.getParameterTypes(), c.isVarArgs(), unboxed);
                     if (matched != null) {
@@ -1174,13 +1183,20 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
             // 2. Member Invocation: Simple heuristic for Shim-less Integration.
             // Allows Jolk to reach native methods on types like String and Long 
             // which are often treated as "memberless" values by standard Interop.
-            for (java.lang.reflect.Method m : receiver.getClass().getMethods()) {
+            if (unwrapped == null) return null;
+            Class<?> lookupClass = (unwrapped instanceof Class<?> clazz) ? clazz : unwrapped.getClass();
+            for (java.lang.reflect.Method m : lookupClass.getMethods()) {
                 if (m.getName().equals(methodName)) {
                     Object[] matched = matchArguments(m.getParameterTypes(), m.isVarArgs(), unboxed);
                     if (matched != null) {
                         Object[] coerced = coerceArguments(m.getParameterTypes(), matched);
                         try {
-                                return lift(m.invoke(receiver, coerced));
+                            Object result = m.invoke(java.lang.reflect.Modifier.isStatic(m.getModifiers()) ? null : receiver, coerced);
+                            if (m.getReturnType() == void.class) {
+                                // Receiver Retention: return receiver for void methods
+                                return receiver;
+                            }
+                            return lift(result);
                         } catch (Exception e) {
                             // continue to next candidate
                         }
@@ -1255,14 +1271,49 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     }
 
     private static Object convertClosureToFunctionalInterface(JolkClosure closure, Class<?> targetInterface) {
+        var context = tolk.language.JolkLanguage.getContext();
+        var truffleContext = context.env.getContext();
+
+        // Callable<V> -> V call()
+        if (targetInterface == java.util.concurrent.Callable.class) {
+            return (java.util.concurrent.Callable<Object>) () -> {
+                Object prev = truffleContext.enter(null);
+                try {
+                    return closure.execute(new Object[0]);
+                } catch (Throwable t) {
+                    if (t instanceof RuntimeException re) throw re;
+                    if (t instanceof Error e) throw e;
+                    throw new RuntimeException(t);
+                } finally {
+                    truffleContext.leave(null, prev);
+                }
+            };
+        }
+
+        // Runnable -> void run()
+        if (targetInterface == java.lang.Runnable.class) {
+            return (java.lang.Runnable) () -> {
+                Object prev = truffleContext.enter(null);
+                try {
+                    closure.execute(new Object[0]);
+                } catch (Throwable ignored) {
+                } finally {
+                    truffleContext.leave(null, prev);
+                }
+            };
+        }
+
         // Predicate<T> -> boolean test(T t)
         if (targetInterface == java.util.function.Predicate.class) {
             return (java.util.function.Predicate<Object>) (t) -> {
+                Object prev = truffleContext.enter(null);
                 try {
                     Object result = closure.execute(new Object[]{t});
                     return result instanceof Boolean ? (Boolean) result : false;
                 } catch (Exception e) {
                     return false;
+                } finally {
+                    truffleContext.leave(null, prev);
                 }
             };
         }
@@ -1270,21 +1321,27 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         // Function<T,R> -> R apply(T t)
         if (targetInterface == java.util.function.Function.class) {
             return (java.util.function.Function<Object, Object>) (t) -> {
+                Object prev = truffleContext.enter(null);
                 try {
                     return closure.execute(new Object[]{t});
                 } catch (Exception e) {
                     return null;
+                } finally {
+                    truffleContext.leave(null, prev);
                 }
             };
         }
         
         // Consumer<T> -> void accept(T t)
-        if (targetInterface == java.util.function.Consumer.class) {
+                if (targetInterface == java.util.function.Consumer.class) {
             return (java.util.function.Consumer<Object>) (t) -> {
+                Object prev = truffleContext.enter(null);
                 try {
                     closure.execute(new Object[]{t});
                 } catch (Exception e) {
                     // Ignore
+                } finally {
+                    truffleContext.leave(null, prev);
                 }
             };
         }
@@ -1292,10 +1349,13 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         // Supplier<T> -> T get()
         if (targetInterface == java.util.function.Supplier.class) {
             return (java.util.function.Supplier<Object>) () -> {
+                Object prev = truffleContext.enter(null);
                 try {
                     return closure.execute(new Object[0]);
                 } catch (Exception e) {
                     return null;
+                } finally {
+                    truffleContext.leave(null, prev);
                 }
             };
         }
@@ -1303,10 +1363,13 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         // BiFunction<T,U,R> -> R apply(T t, U u)
         if (targetInterface == java.util.function.BiFunction.class) {
             return (java.util.function.BiFunction<Object, Object, Object>) (t, u) -> {
+                Object prev = truffleContext.enter(null);
                 try {
                     return closure.execute(new Object[]{t, u});
                 } catch (Exception e) {
                     return null;
+                } finally {
+                    truffleContext.leave(null, prev);
                 }
             };
         }
@@ -1314,10 +1377,13 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         // BiConsumer<T,U> -> void accept(T t, U u)
         if (targetInterface == java.util.function.BiConsumer.class) {
             return (java.util.function.BiConsumer<Object, Object>) (t, u) -> {
+                Object prev = truffleContext.enter(null);
                 try {
                     closure.execute(new Object[]{t, u});
                 } catch (Exception e) {
                     // Ignore
+                } finally {
+                    truffleContext.leave(null, prev);
                 }
             };
         }
@@ -1325,11 +1391,14 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         // BiPredicate<T,U> -> boolean test(T t, U u)
         if (targetInterface == java.util.function.BiPredicate.class) {
             return (java.util.function.BiPredicate<Object, Object>) (t, u) -> {
+                Object prev = truffleContext.enter(null);
                 try {
                     Object result = closure.execute(new Object[]{t, u});
                     return result instanceof Boolean ? (Boolean) result : false;
                 } catch (Exception e) {
                     return false;
+                } finally {
+                    truffleContext.leave(null, prev);
                 }
             };
         }
@@ -1342,8 +1411,10 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     @TruffleBoundary
     private static Object[] convertArgumentsForMethod(Object receiver, String methodName, Object[] arguments) {
         try {
-            // Use reflection to find the method and get parameter types
-            for (java.lang.reflect.Method m : receiver.getClass().getMethods()) {
+            Object unwrapped = unwrap(receiver);
+            if (unwrapped == null) return null;
+            Class<?> lookupClass = (unwrapped instanceof Class<?> clazz) ? clazz : unwrapped.getClass();
+            for (java.lang.reflect.Method m : lookupClass.getMethods()) {
                 if (m.getName().equals(methodName) && m.getParameterCount() == arguments.length) {
                     Class<?>[] paramTypes = m.getParameterTypes();
                     return coerceArguments(paramTypes, arguments);

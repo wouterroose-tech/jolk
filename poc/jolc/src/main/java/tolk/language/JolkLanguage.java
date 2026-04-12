@@ -73,6 +73,11 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
     }
 
     @Override
+    protected boolean isThreadAccessAllowed(Thread thread, boolean singleThreaded) {
+        return true;
+    }
+
+    @Override
     protected JolkContext createContext(Env env) {
         JolkContext context = new JolkContext(this, env);
         env.exportSymbol("jolkContext", env.asGuestValue(context));

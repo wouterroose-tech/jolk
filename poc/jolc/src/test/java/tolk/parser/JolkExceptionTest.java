@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
@@ -85,7 +84,7 @@ public class JolkExceptionTest extends JolcTestBase {
     void testTry() {
         String myClass = """
             + java.lang.RuntimeException;
-            +  java.util.concurrent.StructuredTaskScope;
+            + java.util.concurrent.StructuredTaskScope;
             class MyClass {
                 Long run() {
                     [ StructuredTaskScope #open ]
@@ -134,7 +133,6 @@ public class JolkExceptionTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled(("activvate when interop is supported in try/catch/finally"))
     void testTryWithResource() {
         String myClass = """
             + java.lang.Thread;
@@ -143,15 +141,13 @@ public class JolkExceptionTest extends JolcTestBase {
                 Long run() {
                     [ StructuredTaskScope #open ]
                         #try [ scope ->
-                            10 #times [ scope #fork [  Thread #sleep(1000) ] ];
+                            10 #times [ scope #fork [  Thread #sleep(100) ] ];
                             scope #join
                             ]; 
                     ^ 42
                 }
             } """;
         Value instance = eval(myClass).invokeMember("new");
-        System.out.println("testTryWithFork start at: " + System.currentTimeMillis());
         assertEquals(42, instance.invokeMember("run").asLong());
-        System.out.println("testTryWithFork stop at: " + System.currentTimeMillis());
     }
 }

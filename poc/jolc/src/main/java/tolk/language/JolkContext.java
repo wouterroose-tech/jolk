@@ -11,7 +11,7 @@ import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkArrayExtension;
 import tolk.runtime.JolkExceptionExtension;
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 
 /// # JolkContext
@@ -23,7 +23,7 @@ import java.util.Map;
 public class JolkContext {
     private final JolkLanguage language;
     public final Env env;
-    private final Map<String, Object> registeredClasses = new HashMap<>();
+    private final Map<String, Object> registeredClasses = new ConcurrentHashMap<>();
 
     public JolkContext(JolkLanguage language, Env env) {
         this.language = language;

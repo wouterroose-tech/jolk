@@ -12,6 +12,46 @@
 @Intrinsic
 class MetaClass<T extends Object> {
 
+    /// ## class
+    /// Transforms a path into a Meta-Class identity.
+    ///
+    /// - **path**: The path of the type.
+    /// - **Returns**: The reified MetaClass identity.
+    meta MetaClass class(String path) { }
+
+    /// ## message
+    /// Reifies a name into a communicative identity.
+    ///
+    /// - **name**: The name of the selector.
+    /// - **Returns**: The reified Selector identity.
+    meta Selector #message(String name) { }
+
+    /// ## instanceProtocol
+    /// Identifies the available handshake surface for instances.
+    ///
+    /// - **Returns**: A list of selectors representing the instance-level protocol.
+    List<Selector> instanceProtocol() {}
+
+    /// ## metaProtocol
+    /// Identifies factory and configuration messages for the Class.
+    ///
+    /// - **Returns**: A list of selectors representing the meta-level protocol.
+    List<Selector> metaProtocol() { }
+
+    /// ## project
+    /// Handshake for Materialisation and Orchestration.
+    ///
+    /// - **s**: The selector to project.
+    /// - **args**: The arguments for the projection.
+    /// - **Returns**: The projected instance or result.
+    T project(Selector s, Object... args) { }
+
+    /// ## stateProjection
+    /// Retrieves the factual state for serialisation/mapping.
+    ///
+    /// - **Returns**: A map containing the projected state.
+    Map stateProjection() { }
+
     /// ## new
     /// Creates a new instance of the type `T`.
     ///

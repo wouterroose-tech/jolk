@@ -32,7 +32,7 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 *   [Part Two: Structural Minimalism](#part-two)
     *   [Types](#types)
     *   [Messaging](#messaging)
-    *   [Reflection & Meta-programming](#reflection-meta-programming)
+    *   [Identity Projection and the Meta-Level Protocol](#identity-projection-and-the-meta-level-protocol)
     *   [Core Type System](#core-type-system)
     *   [Language Highlights](#language-highlights)
     *   [Heritage & Foundation](#heritage-foundation)
@@ -332,7 +332,7 @@ In Jolk, Self (PascalCase) serves as a dynamic reference to the current type def
 
 Jolk enforces a rigorous semantic model designed to protect the Metaboundary—the absolute line between an object’s internal state and the external message-passing environment. This shift ensures that system stability and security are inherent properties of the language rather than secondary considerations.
 
-Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "backdoor" access to private fields or runtime method overrides, Jolk prioritises system-wide security. By making reflection a semantic impossibility, the language guarantees that no external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Rather than focusing on the mutation of static structures, Jolk concentrates on the "Ma"—the interstitial space where communication occurs. In this model, computation is viewed as a deterministic emergent protocol rather than a set of mutable definitions. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
+Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "backdoor" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Rather than focusing on the mutation of static structures, Jolk concentrates on the "Ma"—the interstitial space where communication occurs. In this model, computation is viewed as a deterministic emergent protocol rather than a set of mutable definitions. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
 
 ### Meta-Directives
 
@@ -342,7 +342,7 @@ Meta-Directives establish the context that governs the relationship between the 
 
 The Jolk specification defines an industrial-grade, pure object-oriented evolution for the JVM that fuses the "message-passing soul" of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send, the language fundamentally eliminates the "Complexity Gap" inherent in traditional industrial languages. This model is supported by a "DRY" design that decouples lexical primitives from functional layout rules, achieving a Syntax Minimum through a lean keyword palette and a strict Semantic Casing rule.
 
-Encapsulation is enforced via a strict Metaboundary that separates an object’s internal state from the external environment, rendering intrusive reflection a semantic impossibility. To ensure total structural clarity, the language utilizes "lexical fences"—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve Zero Token Ambiguity. This enables $O(1)$ parsing efficiency and prevents structural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
+Encapsulation is enforced via a strict Metaboundary that separates an object’s internal state from the external environment. To ensure total structural clarity, the language utilizes "lexical fences"—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve Zero Token Ambiguity. This enables $O(1)$ parsing efficiency and prevents structural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
 
 Computation in Jolk transcends rigid procedural calls to become a Protocol-Driven Flow where logic is an emergent property of object interaction. Control flow is implemented as a library feature rather than a compiler construct; branching and looping are reified through messages sent to Booleans, Integers, or Closures. Furthermore, Jolk replaces procedural interface lists with Protocol Conjunctions (`&`), representing a mathematically precise intersection of behavioural contracts. This ensures that while the developer experiences the fluid "Moving Target" philosophy of late-bound messaging, the Tolk Engine performs "Semantic Flattening" to deliver zero-overhead, high-performance execution.
 
@@ -817,15 +817,37 @@ For code that must execute regardless of whether an error occurred, Jolk uses th
         #catch [ IOException e -> ... ]  
         #finally [ file #close ]
 
-## Reflection & Meta-programming
+## Identity Projection and the Meta-Level Protocol
 
-In the Jolk substrate, reflection is not an auxiliary library but the foundational primitive of the object model. By treating archetypes as first-class Meta-Object Identities, Jolk replaces static keywords with a message-passing protocol that facilitates introspection without the conventional performance overhead. Within this architecture, `#new` is a standard message transmitted to a class identity. As the class operates as a JoMoo (an instance of a Meta-Archetype), it possesses the Meta-Awareness required to execute its own allocation logic.
+Identity Projection and the Meta-Level Protocol establish the absolute rules for communication within the unified communicative field, providing the structural density required for Industrial-Strength Message-Passing Systems. By treating archetypes as first-class Meta-Object Identities, Jolk replaces static keywords and legacy reflection with a unified, recursive protocol. In this architecture, the MetaClass is not merely a static descriptor but a sovereign identity; as a first-class object adhering to the foundational messaging Protocol, the blueprint itself can receive any message defined in the root substrate, including those within the Dynamic Message Send API.
 
-To ensure industrial-tier efficiency, the Tolk Engine employs the @Intrinsic attribute to eliminate reflective syntax during the synthesis phase. This process flattens dynamic message-passing into direct machine instructions, "boiling away" the abstraction layer. Furthermore, Jolk maintains the integrity of the Lexical Fence by omitting the capability to intrusively bypass access modifiers. This preservation of absolute encapsulation is not a limitation but a design mandate; the language necessitates the extension of protocols rather than the violation of private state.
+Within this substrate, messages such as `#new` are standard signals transmitted to a class identity. Because the class operates as an instance of a Meta-Archetype, it possesses the meta-awareness required to execute its own allocation logic. This transition from introspective observation to constructive projection ensures Dispatch Invariability. Whether synthesised as a mock or a serialiser, every Object exists as a native fact with a fixed coordinate, rendering runtime bytecode manipulation and reflective proxies obsolete.
 
-The industrial weight of the Jolk substrate is predicated on the replacement of runtime reflection with the Generalised Intrinsic Synthesis Protocol. In legacy environments, frameworks rely on the "Inference Fog" of dynamic discovery, where method invocation and dependency resolution incur continuous costs in CPU cycles and memory density. Jolk eliminates this qualitative overhead by treating architectural patterns as Static Archetype Projections. Through the `@Intrinsic` synthesis engine, the compiler performs Metastructural Mapping of protocol constants during the build phase, unrolling logic into a linear sequence of machine instructions.
+To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *Intrinsic Synthesis Protocol*. Through the `@Intrinsic` directive, the compiler performs Metastructural Mapping of protocol constants during the build phase, flattening dynamic message-passing into direct machine instructions. This process "boils away" the abstraction layer, allowing the Graal JIT11] to apply speculative Pruning and polymorphic inline caching. Consequently, dynamic projections achieve the same performance density as static execution.
 
-This transition from observation to construction ensures Dispatch Invariability; every JoMoo, whether synthesised as a Mock or a Serializer, is a native binary fact with a fixed VTable coordinate. By anchoring metaprogramming within the authority of the compiler, the system achieves a "Correct by Construction" state that is natively aligned with high-performance AOT environments like GraalVM[11], effectively rendering the complexity of runtime bytecode manipulation and reflective proxies obsolete.
+	/// The Dynamic Message Send API
+	@Intrinsic
+	class MetaClass<T extends Object> { 
+
+		/// Transforms a nominal path into a Meta-Class identity.
+		meta MetaClass class(String path) {}
+		/// Reifies a name into a communicative identity.
+		meta Selector #message(String name);
+
+		/// Identifies the available handshake surface for instances.
+		List<Selector> instanceProtocol() {}
+		/// Identifies factory and configuration messages for the Class.
+		List<Selector> metaProtocol() {}
+		
+		/// Handshake for Materialisation and Orchestration
+		T project(Selector s, Object... args) {}
+		/// Retrieves the factual state for serialisation/mapping.
+		Map stateProjection() {}
+	}
+
+Identity Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in a manuscript) and the Atomic Identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Identity Projection operates as a deterministic proposal strictly bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols rather than the violation of the Lexical Fence.
+
+If a receiver’s blueprint does not account for an identity, the projection is elevated to a deterministic failure. While the substrate produces `Nothing`, the system provides the #demand protocol to transform an unhandled handshake into a factual Interrupt or an `UnhandledIdentityException`. By unifying static and dynamic dispatch paths, Jolk ensures the Unified Communicative Field remains a space of absolute accountability—a "Correct by Construction" environment where every signal is a verified, high-performance contract between identities.
 
 ## Core Type System
 
@@ -920,7 +942,7 @@ The MetaClass establishes every Type as a first-class citizen by centralising th
 
 This architecture allows the MetaClass intrinsic to govern Identity-level logic through a formal hierarchy. When a subclass invokes `super #new()`, the system routes the message to the Parent Identity’s meta-stratum rather than a static pointer. Consequently, class-level behaviours like Mechanical Birth participate in a rigorous inheritance model, ensuring instantiation is a flexible, message-driven process rather than a rigid JVM constraint.
 
-	@Intrinsic("java.lang.Class")  
+	@Intrinsic
 	class MetaClass<T extends Object> {
 	
 	    /// The default creation method  

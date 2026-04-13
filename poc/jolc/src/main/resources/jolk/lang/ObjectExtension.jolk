@@ -105,14 +105,4 @@ extension ObjectExtension on java.lang.Object {
     <T> Match<T> instanceOf(Type<T> type) {
         ^ type #isInstance(self) ? Match #with(self) : Match #empty
     }
-
-    /// ## project
-    /// Projects a map of dynamic values onto the receiver's state.
-    /// This facilitates bulk-assignment and dynamic population from data structures.
-    ///
-    /// - **fields**: A Map of property names and values to apply.
-    /// - **Returns**: `self` to allow for fluent message chaining.
-    Self project(Map<String, Object> fields) {
-        fields #forEach [ String key, Object value -> self #put(key, value) ]
-    }
 }

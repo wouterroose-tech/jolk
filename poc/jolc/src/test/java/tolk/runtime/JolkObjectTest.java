@@ -334,12 +334,11 @@ public class JolkObjectTest extends JolcTestBase {
                 Long val2() { null #ifPresent [ x -> ^ x ]; ^ 0 }
                 Long val3() { 42 #ifEmpty [ ^ 42 ]; ^ 0 }
                 Long val4() { null #ifEmpty [ ^ 42 ]; ^ 0 }
-                Long val5() { ^ 42 #isPresent ? 42 : ^ 0 }
-                Long val6() { ^ null #isPresent ? 42 : ^ 0 }
-                Long val7() { ^ 42 #isEmpty ? 42 : ^ 0 }
-                Long val8() { ^ null #isEmpty ? 42 : ^ 0 }
-            }
-        """;
+                Long val5() { ^ 42 #isPresent ? 42 : 0 }
+                Long val6() { ^ null #isPresent ? 42 : 0 }
+                Long val7() { ^ 42 #isEmpty ? 42 : 0 }
+                Long val8() { ^ null #isEmpty ? 42 : 0 }
+            }""";
         Value meta = eval(source);
         // Logic tests moved to JolkObjectTest or similar once parser supports statements
         Value x = meta.invokeMember("new");

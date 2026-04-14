@@ -19,11 +19,10 @@ type            = self_type | [ namespace ] meta_id [ type_args ]
 type_args       = "<" type_bound { "," type_bound } ">"
 type_contracts  = "extends" type [ "implements" type { "&" type } ] | "implements" type { "&" type }
 type_mbr        = { annotation } ( member | enum )
-member          = [ visibility ] ( [ "meta" ] state | [ finality ] [ "meta" ] method )
-state           = ( constant | field ) ";"
-constant        = "constant" type binding
+member          = [ visibility ] ( [ "meta" ] state ";" | [ finality ] [ "meta" ] method )
+state           = constant | field
+constant        = "constant" type identifier assignment
 field           = [ "stable" ] type identifier [ assignment ]
-binding         = identifier assignment
 assignment      = "=" expression
 enum            = meta_id [ arguments ] ";"
 method          = [ "lazy" ] [ type_args ] [ type ] selector_id "(" [ typed_params ] ")" ( block | ";" )
@@ -39,7 +38,8 @@ annotation_val  = literal | annotation | "{" [ annotation_val { "," annotation_v
 
 block           = "{" [ statements ] "}"
 statements      = statement { ";" statement } [ ";" ]
-statement       = constant | field | binding | [ "^" ] expression
+statement       = state | binding | [ "^" ] expression
+binding         = identifier assignment
 expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ]
 logic_or        = logic_and { "||" logic_and }
 logic_and       = inclusive_or { "&&" inclusive_or }

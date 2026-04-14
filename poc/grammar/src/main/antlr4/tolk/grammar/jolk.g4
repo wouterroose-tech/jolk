@@ -29,11 +29,11 @@ type_contracts  : EXTENDS type (IMPLEMENTS type (AMP type)*)?
                 | IMPLEMENTS type (AMP type)* ;
 
 type_mbr        : annotation* (member | enum_constant) ;
-member          : vis_mod? ( META? state | finality? META? method ) ;
-state           : ( constant | field ) SEMI ;
-constant        : CONSTANT type binding ;
+member          : vis_mod? ( META? state SEMI | finality? META? method ) ;
+state           : constant | field ;
+constant        : CONSTANT type identifier assignment ;
 field           : STABLE? type identifier assignment? ;
-binding         : identifier ASSIGN expression ;
+binding         : identifier assignment ;
 assignment      : ASSIGN expression ;
 enum_constant   : MetaId arguments? ';' ;
 
@@ -53,7 +53,7 @@ annotation_val  : literal | annotation | LBRACE (annotation_val (COMMA annotatio
 
 block           : LBRACE statements? RBRACE ;
 statements      : statement (';' statement)* ';'?;
-statement       : constant | field | binding | returnOp? expression ;
+statement       : state | binding | returnOp? expression ;
 expression      : logic_or (condOp expression (COLON expression)?)? ;
 logic_or        : logic_and (OR logic_and)* ;
 logic_and       : inclusive_or (AND inclusive_or)* ;

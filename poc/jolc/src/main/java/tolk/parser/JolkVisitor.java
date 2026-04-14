@@ -317,19 +317,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.method() != null) {
             return visit(ctx.method());
         } else if (ctx.state() != null) {
-            if (ctx.state().field() != null) {
-                return visit(ctx.state().field());
-            } else if (ctx.state().constant() != null) {
-                return visit(ctx.state().constant());
-            }
+            return visit(ctx.state());
         }
         return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitState(jolkParser.StateContext ctx) {
-        // TODO: Handle state (field or constant)
-        return super.visitState(ctx);
+        if (ctx.constant() != null) return visit(ctx.constant());
+        if (ctx.field() != null) return visit(ctx.field());
+        return new JolkEmptyNode();
     }
 
     @Override
@@ -358,9 +355,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
         // Constants are implicitly stable (immutable) identities.
-        String name = ctx.binding().identifier().getText().intern();
+        String name = ctx.identifier().getText().intern();
         String typeName = ctx.type().getText().intern();
-        JolkNode initializer = visit(ctx.binding().expression());
+        JolkNode initializer = visit(ctx.assignment());
 
         if (!scopes.isEmpty()) {
             List<String> currentScope = scopes.peek();
@@ -377,7 +374,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitBinding(jolkParser.BindingContext ctx) {
         String name = ctx.identifier().getText().intern();
-        JolkNode expression = visit(ctx.expression());
+        JolkNode expression = visit(ctx.assignment());
 
         // Resolve lexical scope
         LocalInfo info = resolveLocal(name);
@@ -908,8 +905,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitStatement(jolkParser.StatementContext ctx) {
         // Handle all statement alternatives defined in the grammar.
-        if (ctx.constant() != null) return visit(ctx.constant());
-        if (ctx.field() != null) return visit(ctx.field());
+        if (ctx.state() != null) return visit(ctx.state());
         if (ctx.binding() != null) return visit(ctx.binding());
 
         if (ctx.expression() != null) {

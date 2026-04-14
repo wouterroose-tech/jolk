@@ -314,11 +314,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMember(jolkParser.MemberContext ctx) {
-        if (ctx.method() != null) {
-            return visit(ctx.method());
-        } else if (ctx.state() != null) {
-            return visit(ctx.state());
-        }
+        if (ctx.method() != null) return visit(ctx.method());
+        if (ctx.state() != null) return visit(ctx.state());
         return new JolkEmptyNode();
     }
 
@@ -596,9 +593,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitUnary(jolkParser.UnaryContext ctx) {
-        if (ctx.power() != null) {
-            return visit(ctx.power());
-        }
+        if (ctx.power() != null)  return visit(ctx.power());
         String op = ctx.getChild(0).getText();
         JolkNode operand = visit(ctx.unary());
         return JolkUnaryNodeGen.create(op, operand);

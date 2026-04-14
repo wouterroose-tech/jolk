@@ -825,9 +825,10 @@ Within this substrate, messages such as `#new` are standard signals transmitted 
 
 To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *Intrinsic Synthesis Protocol*. Through the `@Intrinsic` directive, the compiler performs mapping of protocol constants during the build phase, flattening dynamic message-passing. This process elides the abstraction layer, allowing the Graal JIT[11] to apply speculative pruning and polymorphic inline caching. Consequently, dynamic projections achieve the same performance density as static execution.
 
-	/// The Dynamic Message Send API
 	@Intrinsic
 	class MetaClass<T extends Object> { 
+
+		/// The Dynamic Message Send API
 
 		/// Transforms a nominal path into a Meta-Class identity.
 		meta MetaClass class(String path) {}
@@ -944,6 +945,9 @@ This architecture allows the MetaClass intrinsic to govern Identity-level logic 
 
 	@Intrinsic
 	class MetaClass<T extends Object> {
+
+		/// The Dynamic Message Send API
+		...
 	
 	    /// The default creation method  
 	    T new() {  

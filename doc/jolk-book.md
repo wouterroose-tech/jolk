@@ -1,18 +1,15 @@
-![Jolkcover ](images/jolk_cover.jpg "Jolk The Cobalt Book")
-
 # JOLK
 
 **Messages in Motion**
 
-**The Language and its Transpilation**
+**The Language and its Engine**
 
-**Building Industrial-Strength Message-Passing Systems on the JVM**
+**Building Industrial-Strength Message-Passing Systems**
 
-Cobalt is a deep blue. It pays homage to the original "Blue Book"[1] while signalling a modern evolution of language principles. In engineering, cobalt is associated with high-strength alloys; similarly, this volume proposes the conceptual foundation for building industrial-strength systems.
+This book pays homage to the original "Blue Book"[1] while signalling an evolution of language principles and establishing the conceptual foundation for the construction of message-passing systems. It synthesises the core philosophy of Smalltalk—the synergy between the primary concepts of “Object” and “Message”—with the architectural mechanics of the Tolk Engine. While industrial focus treated the "Object" as a data container, and traditional Java execution remains functionally procedural, Jolk enforces a paradigm where messages drive the system.
 
-Messages in Motion defines the fundamental experience of the language-dynamic; receiver-centric and fluid. This alludes to the Object-Oriented research of Alan Kay at Xerox PARC, he viewed objects as "biological cells" or "physical entities" that communicate through messages and where computation is not viewed as a sequence of procedural calls, but as a dynamic flow of messages between autonomous objects. Jolk takes Kay’s original vision[2] [3]  to its logical conclusion: everything is executed through messages.
+Messages in Motion defines the fundamental experience of the language-dynamic; receiver-centric and fluid. This alludes to the research of Alan Kay at Xerox PARC, he viewed objects as "biological cells" or "physical entities" that communicate through messages and where computation is not viewed as a sequence of procedural calls, but as a dynamic flow of messages between autonomous objects. Jolk takes Kay’s original vision[2] [3] to its logical conclusion: everything is executed through messages.
 
-Messages in Motion is a tribute to the core philosophy of Smalltalk, a thematic play on two significant concepts in computer science history, “Object” and “Message”, blended with the specific mechanics of the Jolk runtime. The industry often focused on the "Object" as a container and in traditional Java, method call execution feels very procedural. In Jolk, messages are "in motion", and drive the systems.
 
 **Acknowledgments**
 
@@ -24,7 +21,7 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 
 *   [Introduction](#introduction)
     *   [Design Philosophy](#design-philosophy)
-    *   [*Me, Myself and I*](#me-myself-and-i)
+    *   [The Unified Communicative Engine](#the-unified-communicative-engine)
 *   [Part One: The Semantics of Motion](#part-one)
     *   [Grammar](#grammar)
     *   [Semantics](#semantics)
@@ -49,7 +46,6 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
     *   [Tolk Engine](#tolk-engine)
     *   [Engineered Integrity: A Future-Proof JVM Synthesis](#engineered-integrity-a-future-proof-jvm-synthesis)
 *   [Roadmap](#roadmap)
-    *   [The Bootstrap](#the-bootstrap)
     *   [Tolk - jolct the transpiler](#tolk---jolct-the-transpiler)
     *   [Tolk - jolc the engine](#tolk---jolc-the-engine)
     *   [Industrialisation](#industrialisation)
@@ -65,23 +61,19 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 
 ---
 
-In the early eighties, a blue-covered volume changed the trajectory of software engineering by defining a world where "everything is an object." That world was built on the elegance of the message. However industrial computing moved toward the robust but often rigid structures of the Java Virtual Machine (JVM). The fluid "talk" of the pioneers was replaced by the heavy "syntax" of the enterprise. This book outlines the architectural framework of the **Jolk** language, an experimental project designed to unify the industrial reliability of **Java** with the dynamic ergonomics of **Smalltalk-80**.
+In the early eighties, a blue-covered volume defined a world where "everything is an object." That world was built on the elegance of the message. However industrial computing moved toward the robust but often rigid structures of the Java Virtual Machine (JVM). The fluid "talk" of the pioneers was replaced by the syntax of the enterprise. This book outlines the architectural framework of the **Jolk** language, an experimental project designed to unify the industrial reliability of **Java** with the dynamic ergonomics of **Smalltalk-80**.
 
-Jolk /dʒɔːk/ (The name is a blend of “JVM” and the Dutch word “tolk”, meaning "translator" or "interpreter", alluding to the "talk" in Smalltalk) is a technical specification designed to execute Smalltalk-inspired message-passing on the Java Virtual Machine. The Tolk Engine translates receiver-centric logic into high-performance bytecode, aiming for zero performance overhead. In doing so, Jolk serves as a modern implementation of the objectives established in our earlier work on ProtoTyping[4], which sought to reconcile the high-level abstraction of object-oriented systems with a neat and consistent typing structure to provide a powerful and efficient programming instrument. Furthermore, Jolk incorporates a rigorous static type system inspired by Strongtalk[5] and implemented for the Java type system, enabling compile-time verification of message sends to ensure the reliability and structural safety necessary for large-scale production environments. The Tolk is more than just a compiler; it is a semantic envoy. It takes the "Messages in Motion"—the dynamic, minimalist intent of the programmer—and maps them onto the JVM with zero-overhead precision.
+Jolk /dʒɔːk/ (The name is a blend of “Java” and the Dutch word “tolk”, denoting "translator" or "interpreter" and referencing to the "talk" in Smalltalk) is a technical specification designed to execute Smalltalk-inspired message-passing on the Java Virtual Machine. The Tolk Engine translates receiver-centric logic into high-performance bytecode, aiming for zero performance overhead. In doing so, Jolk serves as a modern implementation of the objectives established in our earlier work on ProtoTyping[4], which sought to reconcile the high-level abstraction of object-oriented systems with a neat and consistent typing structure to provide a powerful and efficient programming instrument. Furthermore, Jolk incorporates a rigorous static type system inspired by Strongtalk[5] and implemented for the Java type system, enabling compile-time verification of message sends to ensure the reliability and structural safety necessary for large-scale production environments. The Tolk Engine acts as the semantic interface, mapping the dynamic intent of the grammar onto the JVM.
 
-This book is divided into two halves, mirroring the two halves of the Jolk philosophy. First, we explore The Language: a pursuit of "Unified Minimalism" where control keywords vanish, and the distinction between state and behaviour dissolves into a single, consistent message-passing protocol. Second, we dive into the Java interoperability through the Tolk Engine: a technical look at how we leverage dynamic specialisation, self-optimising dispatch, and the reification of the meta-class to ensure that Jolk performs at the speed of native Java.
-
-We invite you to stop "calling methods" and start "sending messages." Welcome to Jolk.
+This book is divided into two halves, mirroring the two halves of the Jolk philosophy. First, we explore The Language: a pursuit of minimalism where control keywords vanish, and the distinction between state and behaviour dissolves into a single, consistent message-passing protocol. Second, we dive into the Java interoperability through the Tolk Engine: a technical look at how we leverage dynamic specialisation, self-optimising dispatch, and meta-class reification, designed for performance parity with native Java execution.
 
 ## Design Philosophy
 
-Jolk is architected as a high-density synthesis of Java’s structural discipline and Smalltalk’s dynamic philosophy, re-engineered for the modern GraalVM ecosystem.
-
-
+Jolk is architected as a high-density synthesis of Java’s structural discipline and Smalltalk’s dynamic philosophy, re-engineered for the GraalVM ecosystem.
 
 ### Principles
 
-**Object-Oriented Purity**: Everything—including closures, booleans, and the null identity—behaves as an object, receptive to messages.
+**Object-Oriented**: Everything—including closures, booleans, and the null identity—behaves as an object, receptive to messages.
 
 **Unified Messaging:** Instantiation, expression evaluation, control flow, dependency injection, concurrency and error handling, every interaction is a message send.
 
@@ -95,27 +87,27 @@ Jolk is architected as a high-density synthesis of Java’s structural disciplin
 
 ### Architectural Outcomes
 
-Jolk addresses the "Complexity Gap" in modern software engineering by offering:
+Jolk addresses structural complexity in software engineering through the following principles:
 
-**Developer friendly:** Designed to assist the developer with a simple, elegant but powerful language model.
+**Syntactic Minimisation**: The language model is structured for high readability and conceptual consistency, reducing cognitive load during development.
 
-**Reduced Technical complexity:** Unified messaging for control flow and error handling removes the maintenance burden of traditional branching structures.
+**Reduced Structural Complexity**: The unification of control flow and error handling within the message-passing paradigm eliminates the maintenance requirements associated with traditional branching structures.
 
-**Performance without Verbosity:** Jolk matches Java's execution speed through aggressive inlining (Tolk) while maintaining a minimal complexity footprint.
+**Instructional Density**: Through the Tolk Engine and aggressive inlining, Jolk targets execution parity with the host JVM while maintaining a minimal syntactic footprint.
 
-**Zero-Cost Interoperability:** By targeting native bytecodes and adhering to the Java ecosystem, Jolk achieves seamless integration. Free of translation layers, Jolk is architected from the outset for interoperability, ensuring it operates as a "polite citizen" within the JVM.
+**Interoperability**: By targeting the Graal ecosystem, Jolk achieves direct integration without translation layers. The architecture ensures stable interaction within the existing JVM environment.
 
-**Future Proofness**: Build for the JVM Jolk will benefit from the Java evolution brought by projects Valhalla & Amber.
+**Ecosystem Alignment**: Built for the JVM, Jolk is structured to integrate future platform advancements, including the outcomes of projects Valhalla and Amber.
 
-By eliminating syntactic noise and formalising message-passing, Jolk bridges the elegance of Smalltalk with optimised JVM execution.
+Through syntactic refinement and formalising message-passing, Jolk bridges the elegance of Smalltalk with optimised JVM execution.
 
-## *Me, Myself and I*
+## The Unified Communicative Engine
 
 *The Jolk philosophy defines the object not as a container, but as an identity manifested through message-driven interactions.*
 
-*The Receiver (Me) constitutes the terminus for invocations, while the Meta-Awareness (Myself) instantiates the @Intrinsic reflective substrate required to map high-level abstractions to the JVM. The Identity (I) asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a Metaboundary that enforces strict local retention, thereby effecting the "disappearance of data."* 
+*The Receiver constitutes the terminus for invocations, while the Meta-Awareness instantiates the @Intrinsic reflective substrate required to map high-level abstractions to the VM. The Identity asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a Metaboundary that enforces strict local retention, thereby effecting the "disappearance of data."* 
 
-*This paradigm subsumes keyword-driven control flow with a deterministic exchange of messages, formalising branching as a first-class participant within a unified communicative field.*
+*This messaging paradigm subsumes keyword-driven control flow with a deterministic exchange of messages, formalising branching as a first-class participant within a unified communicative field.*
 
 ---
 
@@ -1766,7 +1758,7 @@ Jolk reflects a convergence of functional and declarative patterns. By removing 
 
 ## Tolk - jolct the transpiler
 
-The primary focus of the PoC is the development of jolct, a source-to-source Transpilation that transforms Jolk code into .java source files. This phase maps the language's minimal grammar and its Core intrinsics—such as conditional logic, iteration, and fluid error handling—onto a strongly-typed Java API. By generating Java source, jolct provides a transparent view of how Jolk's message-passing semantics translate to imperative structures. This allows for verification of type safety and semantic correctness before the code is handed off to the standard Java compiler.
+The bootstrap of the PoC is the development of jolct, a source-to-source Transpilation that transforms Jolk code into .java source files. This phase maps the language's minimal grammar and its Core intrinsics—such as conditional logic, iteration, and fluid error handling—onto a strongly-typed Java API. By generating Java source, jolct provides a transparent view of how Jolk's message-passing semantics translate to imperative structures. This allows for verification of type safety and semantic correctness before the code is handed off to the standard Java compiler.
 
 The choice of source-to-source projection over direct-to-bytecode compilation is a deliberate decision focused on *Architectural Clarity*. By generating human-readable Java, Jolk ensures high debuggability and a stable audit trail for industrial applications. This approach allows the language to inherit the mature optimizations of `javac` and the JIT compiler while maintaining perfect integration with the existing Java ecosystem. Ultimately, the transpiler negotiates the complexities of the substrate—using flattening for efficiency, inlining for control, and promotion for flexibility—to ensure that the final Java source preserves the pristine choreography of the original Jolk manuscript.
 
@@ -1790,7 +1782,7 @@ In the absence of an automated *Semantic Guard*, developers are tasked with main
 
 To facilitate a seamless transition to *Phase 2*, all custom library templates intended for structural extension must be decorated with the `@Inline` metadata. Even while the current PoC transpiler employs a simplified projection, these decorators serve as essential *Logic Anchors*. They identify architectural candidates for future *Lexical Flattening*, ensuring that the manuscript remains prepared for the time when the compiler will automatically erase closure boundaries and project the choreography directly into native substrate instructions.
 
-## jolc
+## Tolk - jolc the truffle engine
 
 The implementation of the *Jolk Messagning Protocol* is operationalised through the *Truffle DSL*, where the *Sparse Type System* is realised as a specialised *Abstract Syntax Tree (AST)*. Within this architecture, every identity exists as a node in a dynamic, self-optimising graph. The *Universal Root Identity* is reified as the base `JolkNode`, providing the foundational infrastructure for the *Intrinsic Object protocol*. This base node enforces a unified dispatch interface across the entire graph, utilizing `@Specialization` annotations to map Jolk message selectors to executable logic. By rooting all entities in this single base class, the execution engine maintains *Identity Congruence*, treating native structures and coalesced external objects as uniform participants within the messaging exchange.
 
@@ -1886,8 +1878,9 @@ The terminology and recontextualized concepts of the Jolk language:
 **JIT-DI (Just-In-Time Dependency Injection)**: A grammar-integrated pattern where dependencies are resolved as machine-code constants during the JIT phase, rendering reflection-heavy runtime containers redundant.  
 **JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a  message coordinate in an interstitial communicative field rather than a passive data container.  
 **Lexical Fence**: An absolute structural boundary (conducted via terminals like `^ field`) that prohibits direct field access and enforces message-only interaction.  
-**Ma**: Inspired by the Japanese concept referring to the "interstitial space" or the communication protocols between objects rather than their internal properties.  
-**Manuscript**: The Jolk source code, viewed as a formal record of intent that exists independently of its physical execution state.  
+**Ma**: Inspired by the Japanese concept referring to the "interstitial space" or the communication protocols between objects rather than their internal properties.
+**Manuscript**: The Jolk source code, viewed as a formal record of intent that exists independently of its physical execution state.
+** Metaboundary **:
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.   
 **Nominalised Precision**: The requirement to use nouns and architectural outcomes over procedural verbs to ensure the "Security of Meaning" across the codebase.  
 **Nothing**: A reified, first-class identity and Atomic Receiver representing the fact of absence and referred to by the reserved object identifier `null`.  
@@ -1895,7 +1888,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **Semantic Casing**: A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  
 **Semantic Flattening**: The process where the Tolk engine identifies "Logic Idioms" and collapses high-level message chains into raw hardware instructions or JVM opcodes.  
 **Silent Absorption**: The protocol where the `Nothing` identity consumes an incoming message and returns itself, allowing message chains to collapse gracefully without error.  
-**Substrate**: The physical execution layer (typically the JVM or GraalVM) where high-level symbolic identities are projected onto machine-level realities.  
+**Substrate**: Substrate VM is an Oracle internal project name for the technology behind GraalVM Native Image.  
 
 ---
 

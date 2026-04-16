@@ -4,12 +4,11 @@
 
 **The Language and its Engine**
 
-**Building Industrial-Strength Message-Passing Systems**
+**Building Message-Passing Systems**
 
 This book pays homage to the original "Blue Book"[1] while signalling an evolution of language principles and establishing the conceptual foundation for the construction of message-passing systems. It synthesises the core philosophy of Smalltalk—the synergy between the primary concepts of “Object” and “Message”—with the architectural mechanics of the Tolk Engine. While industrial focus treated the "Object" as a data container, and traditional Java execution remains functionally procedural, Jolk enforces a paradigm where messages drive the system.
 
 Messages in Motion defines the fundamental experience of the language-dynamic; receiver-centric and fluid. This alludes to the research of Alan Kay at Xerox PARC, he viewed objects as "biological cells" or "physical entities" that communicate through messages and where computation is not viewed as a sequence of procedural calls, but as a dynamic flow of messages between autonomous objects. Jolk takes Kay’s original vision[2] [3] to its logical conclusion: everything is executed through messages.
-
 
 **Acknowledgments**
 
@@ -105,7 +104,7 @@ Through syntactic refinement and formalising message-passing, Jolk bridges the e
 
 *The Jolk philosophy defines the object not as a container, but as an identity manifested through message-driven interactions.*
 
-*The Receiver constitutes the terminus for invocations, while the Meta-Awareness instantiates the @Intrinsic reflective substrate required to map high-level abstractions to the VM. The Identity asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a Metaboundary that enforces strict local retention, thereby effecting the "disappearance of data."* 
+*The Receiver constitutes the terminus for invocations, the Meta-Layer provides the intrinsic reflection necessary to map high-level abstractions to the JVM. The Identity asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a Metaboundary that enforces strict local retention, thereby effecting the "disappearance of data."* 
 
 *This messaging paradigm subsumes keyword-driven control flow with a deterministic exchange of messages, formalising branching as a first-class participant within a unified communicative field.*
 
@@ -204,7 +203,7 @@ Jolk blends the structural discipline and familiar Java syntax of Java with Smal
 	visibility_ops  = "<" | "~" | ":" | ">"
 	finality_ops    = "?" | "!"
 
-The Jolk grammar follows a "DRY" (Don't Repeat Yourself) architecture by decoupling lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like selector (prefixed with `#` for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both parser performance and human readability.
+The Jolk grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like selector (prefixed with `#` for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both parser performance and human readability.
 
 The syntax for structural anchors like package, public and class is designed to be similar to Java. While symbolic anchors (`#~`, `#<`) represent the idiomatic, high-density Jolk style, the grammar provides keyword aliases (`package`, `public`) to reduce cognitive load.
 

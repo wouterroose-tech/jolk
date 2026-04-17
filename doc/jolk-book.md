@@ -1514,7 +1514,16 @@ Within the Jolk context, Semantic Flattening is expressed through two primary me
 
 **Monadic Flow Flattening:** One of the more sophisticated expressions of this architecture is found in the management of *null-reference instability*. In Jolk, the absence of a value is not handled through procedural null-checks, but through the `Match<T>` container. Under standard execution, such a container would require heap allocation; however, the Tolk Engine performs *Monadic Flow Flattening*. By providing specialization "hints" to the Graal JIT, the engine utilizes *Partial Escape Analysis (PEA)* to recognize the logical pattern of the match and physically remove the object from the final machine-code representation. The result is a zero-cost abstraction where the logic of the match remains high-level, but the execution is reduced to raw hardware branch instructions.
 
-Ultimately, Semantic Flattening is a strategic Synthesis* of industrial-grade engineering and academic dynamic-language research. It allows Jolk to maintain its message-passing purity—treating keywords and operators as first-class signals—while achieving the execution density required for enterprise environments.
+**Kinetic Flow Projection:** 
+In Jolk, functional pipelines such as `list #map [...] #filter [...]` are projected as unified kinetic flows. The Tolk Engine utilizes the Truffle DSL to enable *Loop Fusion*, where the closures and intermediate iterators are inlined and elided during partial evaluation. This flattens high-level stream abstractions into a single-pass machine loop, achieving parity with hand-optimized procedural code. The implementation of `doMap`, `doFilter`, and `doTimes` in `JolkDispatchNode` is specifically laid out to support this flattening; by utilizing `@Shared("callNode") @Cached IndirectCallNode callNode`, the engine provides the exact "hooks" Graal needs to inline the closures and begin the Partial Escape Analysis (PEA) that results in Kinetic Flow Projection.
+
+**Identity Erasure:** 
+While the developer interacts with `Long` and `Boolean` as first-class message recipients, the engine applies *Identity Erasure* to prevent boxing overhead. During the specialization of nodes like `JolkLongExtension`, the engine strips away the object identity, emitting raw 64-bit hardware instructions for arithmetic and logic while preserving the semantic "object-ness" of the source code.
+
+**Structural Gate Flattening:** 
+Complex logic gates, such as chained `#case` messages, are identified as "Logic Idioms." The engine collapses these sequential message sends into optimized JVM switch opcodes (e.g., `tableswitch`), transforming a series of dynamic dispatches into a deterministic hardware jump.
+
+Semantic Flattening is a synthesis of industrial-grade engineering and academic dynamic-language research. It allows Jolk to maintain its message-passing purity—treating keywords and operators as first-class signals—while achieving the execution density required for enterprise environments.
 
 ### Creation Methods
 

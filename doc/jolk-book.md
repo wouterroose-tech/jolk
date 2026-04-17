@@ -88,9 +88,9 @@ Jolk addresses structural complexity in software engineering through the followi
 
 **Syntactic Minimisation**: The language model is structured for high readability and conceptual consistency, reducing cognitive load during development.
 
-**Reduced Structural Complexity**: The unification of control flow and error handling within the message-passing paradigm eliminates the maintenance requirements associated with traditional branching structures.
+**Reduced Structural Complexity**: The unification of control flow and error handling within the message-passing paradigm replaces traditional branching and other control structures to enhance legibility.
 
-**Instructional Density**: Through the Tolk Engine and aggressive inlining, Jolk targets execution parity with the host JVM while maintaining a minimal syntactic footprint.
+**Instructional Density**: Through the Tolk Engine—a Truffle implementation for Graal JIT—Jolk targets execution parity with the host JVM while maintaining a minimal syntactic footprint and high structural density.
 
 **Interoperability**: By targeting the Graal ecosystem, Jolk achieves direct integration without translation layers. The architecture ensures stable interaction within the existing JVM environment.
 
@@ -253,7 +253,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **Generic Type Brackets** The syntax adopts `< >` for generics.
 
-**Structural Buoyancy**: Jolk maintains a *bracket-light* profile by eliminating *Symbolic Overloading*, ensuring the semantic intent of every symbol remains absolute and singular. Each structural fact is assigned a unique geometry:`< >` for *Generics*, `{ }` for *Scope*, `[ ]` for *Deferred Identity*, and `( )` for *Realised Identity*.
+**Structural Buoyancy**: Jolk maintains a bracket-light profile through notational exclusivity, ensuring the semantic intent of every symbol remains absolute and singular. Each structural fact is assigned a unique geometry:`< >` for generics, `{ }` for structural bounds, `[ ]` for closures, and `( )` for parameters.
 
 	List<Result> process(List<Signal> signals) {
 		^ signals #map [ s -> Result #new(s #id) ]
@@ -275,9 +275,9 @@ Jolk is built on Unified Message-Passing, where every interaction follows the *R
 
 By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts control flow from a structural language constraint to an emergent property of object interaction. Logic is implemented as a library feature rather than a compiler construct, ensuring that even fundamental branching obeys the same rules of encapsulation as user-defined code.
 
-*Branching*: Traditional if-else blocks are replaced by the ternary pattern `condition ? expression : expression`; with `?` and `:` as grammatical delimiters that are semantically resolved as messages sent to Boolean identities.  
-*Looping*: Native while and for statements are superseded by messages sent to Closures or Integers, such as `[cond] #while [body]` or `10 #times [n -> ...]`.   
-*Error Handling*: Exception logic is unified with the messaging model, with `#catch` and `#finally` messages sent to closures.
+**Branching**: Traditional if-else blocks are replaced by the ternary pattern `condition ? expression : expression`; with `?` and `:` as grammatical delimiters that are semantically resolved as messages sent to Boolean identities.  
+**Looping**: Native while and for statements are superseded by messages sent to Closures or Integers, such as `[cond] #while [body]` or `10 #times [n -> ...]`.   
+**Error Handling**: Exception logic is unified with the messaging model, with `#catch` and `#finally` messages sent to closures.
 
 ### Type System
 
@@ -285,9 +285,9 @@ The Jolk type system defines a messaging protocol layer expressed through Java g
 
 Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[6], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the Identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
 
-*Intrinsic Primitives* like `Boolean`, `Long` and `String`- are first-class identities that participate in the messaging protocol.
+**Intrinsic Primitives** like `Boolean`, `Long` and `String`- are first-class identities that participate in the messaging protocol.
 
-*The Reification of Absence*: The traditional `null` pointer is replaced by a formal identity. In Jolk, the absence of a value—represented by the reserved literal `null`—is a singleton instance of the `Nothing` class. By reifying nothingness as a first-class object, Jolk ensures that every identity remains a valid receiver, shifting failures from opaque runtime crashes to predictable semantic responses.
+**The Reification of Absence**: The traditional `null` pointer is replaced by a formal identity. In Jolk, the absence of a value—represented by the reserved literal `null`—is a singleton instance of the `Nothing` class. By reifying nothingness as a first-class object, Jolk ensures that every identity remains a valid receiver, shifting failures from opaque runtime crashes to predictable semantic responses.
 
 The modifier protocol defines a specification for member management:
 `meta`: Designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta layer.   
@@ -1074,7 +1074,7 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 *Non-Local Returns*: The ability of a closure to command its defining method to finish immediately, even across different stack frames.
 
-*Null Object Pattern*: The reification of "nothingness" as an Atomic Receiver (Nothing), ensuring uninitialized states can safely respond to messages.
+*Null Object Pattern*: The reification of "nothingness" as an Atomic Identity (Nothing), ensuring uninitialized states can safely respond to messages.
 
 *Primary Initialiser Expansion*: A compiler convenience that automatically injects assignment instructions at the start of object creation.
 
@@ -1691,7 +1691,7 @@ Jolk manages closure returns through a tiered duality of *Inlining* and *Non-Loc
 
 ### Interoperability and the Reification of Nothing
 
-Jolk’s treatment of *Nothing* preserves the "Everything is an Object" principle while maintaining seamless Java interoperability. Internally, `null` is reified as a first-class *Atomic Receiver*—the singleton instance of `jolk.lang.Nothing` equipped with its own V-Table. This ensures that sending a message via the `#` selector results in a valid polymorphic dispatch rather than a `NullPointerException`. By treating `Nothing` as an entity, it can respond to messages like `#isNil` autonomously, ensuring that the *Variable Mutation Pitfall* and the friction of the substrate are solved by a consistent logic identity across all execution boundaries.
+Jolk’s treatment of *Nothing* preserves the "Everything is an Object" principle while maintaining seamless Java interoperability. Internally, `null` is reified as a first-class *Atomic Identity*—the singleton instance of `jolk.lang.Nothing` equipped with its own V-Table. This ensures that sending a message via the `#` selector results in a valid polymorphic dispatch rather than a `NullPointerException`. By treating `Nothing` as an entity, it can respond to messages like `#isNil` autonomously, ensuring that the *Variable Mutation Pitfall* and the friction of the substrate are solved by a consistent logic identity across all execution boundaries.
 
 ### Exception Handling
 
@@ -1861,10 +1861,9 @@ Kotlin k2 compiler performance-improvements. ([https://kotlinlang.org/docs/k2-co
 # Glossary of terms
 The terminology and recontextualized concepts of the Jolk language:
 
-**Archetype**: A structural template (`class`, `record`, `enum`, or `value`) that defines the nature of an identity, harmonized under a single, consistent messaging protocol.  
-**Atomic Receiver**: A terminal, first-class identity (such as `true`, `false`, `Nothing`or Value Objects) that participates in the messaging protocol as a recipient rather than a primitive literal.  
+**Archetype**: A structural template (`class`, `record`, `enum`, `value` or `protocol`) that defines the nature of an identity, harmonized under a single, consistent messaging protocol.  
+**Atomic Identity**: A terminal, first-class identity (such as `true`, `false`, `Nothing`or Value Objects) that participates in the messaging protocol as a recipient rather than a primitive literal.  
 **Contextual Encapsulation**: The principle that an identity’s visibility is an inherent property of its functional role; methods default to public (external), while state fields default to private (internal).  
-**Deferred Identity**: A block of logic (Closure) that maintains a link to its environment and is only realized when it receives a message.  
 **Deterministic Omission**: The mechanism where the absence of a factual result is treated as a predictable signal, allowing the engine to prune execution branches without triggering structural failure.  
 **Fluid Messaging**: A keyword-less computational model where logic and arithmetic are implemented as formal message sends rather than hardcoded procedural keywords.  
 **Guided Coercion**: The active, type-aware alignment of differing numerical identities to a common protocol, requiring explicit guidance (e.g., `#asInt`) for any lossy transition.  
@@ -1880,7 +1879,7 @@ The terminology and recontextualized concepts of the Jolk language:
 ** Metaboundary **:
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.   
 **Nominalised Precision**: The requirement to use nouns and architectural outcomes over procedural verbs to ensure the "Security of Meaning" across the codebase.  
-**Nothing**: A reified, first-class identity and Atomic Receiver representing the fact of absence and referred to by the reserved object identifier `null`.  
+**Nothing**: A reified, first-class Atomic Identity representing the fact of absence and referred to by the reserved object identifier `null`.  
 **Receiver Retention**: A metaboundary protocol using JVM `DUP` instructions to ensure the receiver (`self`) is returned for chaining after interacting with Java `void` methods.  
 **Semantic Casing**: A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  
 **Semantic Flattening**: The process where the Tolk engine identifies "Logic Idioms" and collapses high-level message chains into raw hardware instructions or JVM opcodes.  

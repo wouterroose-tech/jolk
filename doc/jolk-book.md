@@ -62,7 +62,7 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 
 In the early eighties, a blue-covered volume defined a world where "everything is an object." That world was built on the elegance of the message. However industrial computing moved toward the robust but often rigid structures of the Java Virtual Machine (JVM). The fluid "talk" of the pioneers was replaced by the syntax of the enterprise. This book outlines the architectural framework of the **Jolk** language, an experimental project designed to unify the industrial reliability of **Java** with the dynamic ergonomics of **Smalltalk-80**.
 
-Jolk /dʒɔːk/ (The name is a blend of “Java” and the Dutch word “tolk”, denoting "translator" or "interpreter" and referencing to the "talk" in Smalltalk) is a technical specification designed to execute Smalltalk-inspired message-passing on the Java Virtual Machine. The Tolk Engine translates receiver-centric logic into high-performance bytecode, aiming for zero performance overhead. In doing so, Jolk serves as a modern implementation of the objectives established in our earlier work on ProtoTyping[4], which sought to reconcile the high-level abstraction of object-oriented systems with a neat and consistent typing structure to provide a powerful and efficient programming instrument. Furthermore, Jolk incorporates a rigorous static type system inspired by Strongtalk[5] and implemented for the Java type system, enabling compile-time verification of message sends to ensure the reliability and structural safety necessary for large-scale production environments. The Tolk Engine acts as the semantic interface, mapping the dynamic intent of the grammar onto the JVM.
+Jolk /dʒɔːk/ (The name is a blend of “Java” and the Dutch word “tolk”, denoting "translator" or "interpreter" and referencing to the "talk" in Smalltalk) is a technical specification designed to execute Smalltalk-inspired message-passing on the Java Virtual Machine. The Tolk Engine translates receiver-centric logic into high-performance bytecode, aiming for zero performance overhead. In doing so, Jolk serves as a modern implementation of the objectives established in our earlier work on ProtoTyping[4], which sought to reconcile the high-level abstraction of object-oriented systems with a neat and consistent typing structure to provide a powerful and efficient programming instrument. Furthermore, Jolk implements a static type system aligned with Strongtalk[5] principles and mapped to the Java type system; this facilitates compile-time validation of message signatures to ensure the structural integrity of the execution model. The Tolk Engine acts as the semantic interface, mapping the dynamic intent of the grammar onto the JVM.
 
 This book is divided into two halves, mirroring the two halves of the Jolk philosophy. First, we explore The Language: a pursuit of minimalism where control keywords vanish, and the distinction between state and behaviour dissolves into a single, consistent message-passing protocol. Second, we dive into the Java interoperability through the Tolk Engine: a technical look at how we leverage dynamic specialisation, self-optimising dispatch, and meta-class reification, designed for performance parity with native Java execution.
 
@@ -76,13 +76,11 @@ Jolk is architected as a high-density synthesis of Java’s structural disciplin
 
 **Unified Messaging:** Instantiation, expression evaluation, control flow, dependency injection, concurrency and error handling, every interaction is a message send.
 
-**Data Confinement**: The strict isolation of state that restricts an object’s methods to accessing only its own instance fields or meta-variables for use in assignments, expressions, and method chains, while limiting all mutation to the local internal context.
+**Data Confinement**: State isolation through exclusive field binding during construction and message-mediated mutation.
 
-**Strong Typing:** Jolk's type system is inspired by Strongtalk, bringing rigorous static typing to a message-based model.
+**Strong Typing:** Jolk implements a static type system via the adoption of Java generic syntax, ensuring type safety prior to execution.
 
-**Minimalist Syntax:** A reduced keyword set.
-
-**Syntactic Alignment**: The C-derived syntax and familiar notation reduce cognitive load for Java developers.
+**Syntactic Alignment**: The adoption of a C-derived syntax with a constrained keyword set and conventional lexical tokens minimises cognitive load.
 
 ### Architectural Outcomes
 
@@ -283,7 +281,7 @@ By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts co
 
 ### Type System
 
-The Jolk type system is a *Sparse Protocol Layer* that aligns with Java generics syntax. The grammar distinguishes between five archetypes (`class`, `enum`, `record`, and `value`) which serve as structural anchors in the EBNF.
+The Jolk type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the archetypes—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the EBNF grammar.
 
 Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[6], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the Identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
 

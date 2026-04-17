@@ -92,7 +92,7 @@ Jolk addresses structural complexity in software engineering through the followi
 
 **Instructional Density**: Through the Tolk Engine—a Truffle implementation for Graal JIT—Jolk targets execution parity with the host JVM while maintaining a minimal syntactic footprint and high structural density.
 
-**Interoperability**: By targeting the Graal ecosystem, Jolk achieves direct integration without translation layers. The architecture ensures stable interaction within the existing JVM environment.
+**Interoperability**: By targeting the Graal ecosystem, Jolk achieves direct integration without translation layers. The architecture ensures stable interaction within the JVM.
 
 **Ecosystem Alignment**: Built for the JVM, Jolk is structured to integrate future platform advancements, including the outcomes of projects Valhalla and Amber.
 

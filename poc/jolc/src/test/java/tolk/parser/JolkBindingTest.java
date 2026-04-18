@@ -6,6 +6,7 @@ import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
+import tolk.runtime.JolkNothing;
 
 public class JolkBindingTest extends JolcTestBase {
     
@@ -48,13 +49,37 @@ public class JolkBindingTest extends JolcTestBase {
 
     @Test
     void testFieldAccess() {
-        String source = "class MyClass { Long x = 42; Long val() { ^ self #x } }";
+        String source = """
+            class MyClass {
+                Long x = 42; 
+                Long val() { ^ self #x }
+            }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         
         // field access in method
         assertEquals(42L, instance.invokeMember("x").asLong());
         assertEquals(42L, instance.invokeMember("val").asLong());
+    }
+
+    @Test
+    void testVariableBinding() {
+        String source = """
+            class MyClass {
+                Long run(Object obj) {
+                    Long x = 0; 
+                    obj #ifEmpty [ x = 42 ];
+                    ^x
+                }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        
+        // field access in method
+        Object nothing = JolkNothing.INSTANCE;
+        assertEquals(42L, instance.invokeMember("run", nothing).asLong());
+        assertEquals(42L, instance.invokeMember("run", (Object) null).asLong());
+
     }
 
     @Test

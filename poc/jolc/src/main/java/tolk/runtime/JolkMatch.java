@@ -16,9 +16,10 @@ import com.oracle.truffle.api.library.ExportMessage;
 /// In the AST interpreter, this class serves as a necessary, concrete data carrier to
 /// pass the result of an `#instanceOf` check between execution nodes.
 ///
-/// In a compiled context (either via the Graal JIT or a future AOT compiler), this
-/// object is a zero-cost abstraction. The compiler performs "Monadic Flow Flattening,"
-/// recognizing the pattern and optimizing away the object allocation entirely.
+/// While acting as a data carrier in the interpreter, this object constitutes a 
+/// **zero-cost abstraction** in a compiled context. Through **Monadic Flow Flattening**, 
+/// the Tolk Engine utilizes Partial Escape Analysis to elide the container entirely, 
+/// reducing the logic to raw hardware registers and branch instructions.
 /// 
 @ExportLibrary(InteropLibrary.class)
 public final class JolkMatch implements TruffleObject {

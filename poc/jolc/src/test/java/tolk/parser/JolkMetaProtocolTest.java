@@ -23,16 +23,16 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         String source = """
             class MetaTest {
                 meta Long FORTY_TWO() { ^ 42 }
-                Long classVal() { ^ self #class #FORTY_TWO }
                 Long SelfVal() { ^ Self #FORTY_TWO }
                 Long metaVal() { ^ MetaTest #FORTY_TWO }
+                Long classVal() { ^ self #class #FORTY_TWO }
             }""";
         Value meta = eval(source);
         assertEquals(42, meta.invokeMember("FORTY_TWO").asLong());
         Value instance = meta.invokeMember("new");
-        assertEquals(42, instance.invokeMember("classVal").asLong());
         assertEquals(42, instance.invokeMember("SelfVal").asLong());
         assertEquals(42, instance.invokeMember("metaVal").asLong());
+        assertEquals(42, instance.invokeMember("classVal").asLong());
     }
 
     @Test

@@ -11,6 +11,8 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import tolk.grammar.jolkBaseVisitor;
 import tolk.language.JolkLanguage;
+import tolk.language.JolkSemanticException;
+
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkArithmeticNodeGen;
@@ -43,11 +45,22 @@ import tolk.runtime.JolkVisibility;
 import tolk.runtime.JolkArchetype;
 import tolk.runtime.JolkNothing;
 
+/// # JolkVisitor
+///
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
+/// This class implements the **Dual-Stratum Symbol Table** strategy.
+///
+/// During the visit pass, it simultaneously tracks:
+/// 1. **The Lexical Stratum**: Managed via `scopes`, resolving local variables 
+///    and parameters to frame slots.
+/// 2. **The Host Stratum**: Resolving Meta-Objects and Java host identities 
+///    based on **Semantic Casing** and intrinsic mappings.
+///
+/// This dual-layer resolution ensures **Identity Projection** remains 
+/// deterministic and performant.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     private final JolkLanguage language;
-
     private final Stack<List<String>> scopes = new Stack<>();
     private final Stack<Integer> parameterThresholds = new Stack<>();
     private final Stack<Integer> methodDepths = new Stack<>();
@@ -628,7 +641,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 0; i < ctx.getChildCount(); i++) {
             var child = ctx.getChild(i);
             if (child instanceof jolkParser.SelectorContext selectorCtx) {
-                String selector = selectorCtx.identifier().getText();
+                // Structural Keywords (like 'class', 'new') may appear as the second child 
+                // if allowed by the grammar's selector rule.
+                String selector = selectorCtx.getChild(1).getText().intern();
+                
                 JolkNode[] args = new JolkNode[0];
 
                 // Check if the immediately following child is a payload
@@ -916,7 +932,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 // targetDepth calculation:
                 // 1. In a method: distance from current closure scope back to the method scope.
                 // 2. At top-level (script): depth needed to reach the script root activation.
-                int targetDepth = methodDepths.isEmpty() ? scopes.size() : 
+                int targetDepth = methodDepths.isEmpty() ? Math.max(0, scopes.size() - 1) : 
                                   Math.max(0, scopes.size() - methodDepths.peek() - 1);
                 return new JolkReturnNode(exprNode, new JolkReadEnvironmentNode(targetDepth));
             }
@@ -939,7 +955,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 // In alignment with Jolk's 'Engineered Integrity', unreachable code 
                 // is treated as a terminal semantic error rather than being silently ignored.
                 int line = statements.get(i + 1).getStart().getLine();
-                throw new RuntimeException("Jolk Semantic Error [line " + line + "]: Unreachable code detected after return terminal (^).");
+                throw new JolkSemanticException("Unreachable code detected after return terminal (^)", line);
             }
         }
         return new JolkBlockNode(nodes.toArray(new JolkNode[0]));

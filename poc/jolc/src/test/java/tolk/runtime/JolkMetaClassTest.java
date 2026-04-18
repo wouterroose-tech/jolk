@@ -234,10 +234,11 @@ public class JolkMetaClassTest extends JolcTestBase {
         context.enter();
         try {
             Map<String, Object> fields = new java.util.LinkedHashMap<>();
+            JolkMetaClass otherType = new JolkMetaClass("OtherClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
             fields.put("id", null);             // Should default to 0L
-            fields.put("active", "Boolean");    // Hint: Boolean -> false
-            fields.put("name", "String");       // Hint: String -> ""
-            fields.put("other", "OtherClass");  // Unknown -> Nothing
+            fields.put("active", JolkBooleanExtension.BOOLEAN_TYPE);
+            fields.put("name", JolkStringExtension.STRING_TYPE);
+            fields.put("other", otherType);
 
             JolkMetaClass meta = new JolkMetaClass("HintTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
             Object[] defaults = meta.getDefaultFieldValues();
@@ -255,7 +256,7 @@ public class JolkMetaClassTest extends JolcTestBase {
     void testMetaFieldStorage() throws Exception {
         context.enter();
         try {
-            Map<String, Object> metaFields = Collections.singletonMap("count", "Long");
+            Map<String, Object> metaFields = Collections.singletonMap("count", JolkLongExtension.LONG_TYPE);
             // constructor handles registering accessors in metaMembers
             JolkMetaClass meta = new JolkMetaClass("StaticTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
                                                   Collections.emptyMap(), Collections.emptyMap(), new java.util.HashMap<>(), metaFields);

@@ -13,12 +13,61 @@ public class JolkStringTest extends JolcTestBase {
 
     @Test
     void testStringField() {
-        String source = "class Container { String val; }";
+        String source = """
+            class StringTest {
+                String val;
+                String foxJumpslazyDog = "The quick brown fox jumps over the lazy dog";
+                
+                String specialCharacterString() {
+                    String s = "Testing «ταБЬℓσ»: 1<2 & 4+1>3, now 20% off!";
+                    ^ s
+                 }
+                String alphanumericAndSymbolString() {
+                    String s = "!\\\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_abcdefghijklmnopqrstuvwxyz{|}~`";
+                    ^ s
+                 }
+                Boolean testAccessors() {
+                    String s = "  Tolk String  ";
+                    Boolean lengthOk = s #length == 15;
+                    Boolean emptyOk = "" #isEmpty;
+                    ^ lengthOk && emptyOk
+                }
+
+                Boolean testTransformations() {
+                    String s = "  Tolk String  ";
+                    Boolean trimOk = s #trim == "Tolk String";
+                    Boolean upperOk = "jolk" #toUpperCase == "JOLK";
+                    ^ trimOk && upperOk
+                }
+
+                Boolean testRegex() {
+                    ^ "12345" #matches("\\d+")
+                }
+
+                Boolean testProtocols() {
+                    Boolean presentOk = "identity" #isPresent;
+                    String n = null;
+                    Boolean coalesceOk = (n ?? "ok") == "ok";
+                    ^ presentOk && coalesceOk
+                }
+            }
+            """;
         Value meta = eval(source);
 
         Value instance = meta.invokeMember("new");
         assertFalse(instance.invokeMember("val").isNull(), "String fields should default to empty string.");
         assertTrue(instance.invokeMember("val").asString().isEmpty());
+
+        // Validate specific literals and UTF-16 support in TruffleString
+        assertEquals("The quick brown fox jumps over the lazy dog", instance.invokeMember("foxJumpslazyDog").asString());
+        assertEquals("Testing «ταБЬℓσ»: 1<2 & 4+1>3, now 20% off!", instance.invokeMember("specialCharacterString").asString());
+        assertEquals("!\\\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_abcdefghijklmnopqrstuvwxyz{|}~`", instance.invokeMember("alphanumericAndSymbolString").asString());
+        
+        // Verified split functionality
+        assertTrue(instance.invokeMember("testAccessors").asBoolean(), "TruffleString accessors (#length, #isEmpty) failed.");
+        assertTrue(instance.invokeMember("testTransformations").asBoolean(), "TruffleString transformations (#trim, #toUpperCase) failed.");
+        assertTrue(instance.invokeMember("testRegex").asBoolean(), "TruffleString regex (#matches) failed.");
+        assertTrue(instance.invokeMember("testProtocols").asBoolean(), "TruffleString protocol methods (#isPresent, ??) failed.");
 
         instance.invokeMember("val", "hello");
         assertEquals("hello", instance.invokeMember("val").asString());
@@ -26,7 +75,8 @@ public class JolkStringTest extends JolcTestBase {
         assertEquals("world", instance.invokeMember("val").asString());
 
         // Canonical #new
-        instance = meta.invokeMember("new", "test");
+        String foxLiteral = "The quick brown fox jumps over the lazy dog";
+        instance = meta.invokeMember("new", "test", foxLiteral);
         assertEquals("test", instance.invokeMember("val").asString(), "Canonical #new should initialize String fields.");
     }
     

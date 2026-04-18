@@ -35,6 +35,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             Object result = dispatchNode.execute(null, JolkNothing.INSTANCE, "someArbitraryMessage", new Object[0]);
             assertEquals(JolkNothing.INSTANCE, result, "JolkNothing should absorb any message and return itself.");
         } finally {
@@ -108,6 +109,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             Long receiver = 42L;
 
             // Test an intrinsic like "hash"
@@ -135,6 +137,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             Boolean receiver = true;
 
             // Test an intrinsic like "isPresent"
@@ -162,6 +165,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             String receiver = "hello";
 
             // Jolk-native extension: #matches
@@ -189,6 +193,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             Class<?> receiver = java.lang.StringBuilder.class;
 
             // Jolk Unified Messaging: Class #new(...) maps to instantiation
@@ -210,6 +215,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             // Create Longs outside the JVM cache (-128 to 127)
             Long a = Long.valueOf(1000);
             Long b = Long.valueOf(1000);
@@ -234,6 +240,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             
             // ?? (Null-coalesce)
             JolkClosure fallback = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode("fallback"), "test", false).getCallTarget());
@@ -282,6 +289,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         context.enter();
         try {
             JolkDispatchNode dispatchNode = JolkDispatchNodeGen.create();
+            adopt(dispatchNode);
             // Verify raw nulls from members are restituted to Nothing
             Object result = dispatchNode.execute(null, JolkNothing.INSTANCE, "hash", new Object[0]);
             assertEquals(0L, result);

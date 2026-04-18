@@ -3,6 +3,7 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
@@ -18,9 +19,10 @@ public class JolkExceptionTest extends JolcTestBase {
             }""";
         
         Value instance = eval(myClass).invokeMember("new");
-        assertNotNull(instance.invokeMember("interrupt"));
-        Value exception = instance.invokeMember("interrupt");
-        assertEquals("RuntimeException", exception.asHostObject().getClass().getSimpleName());
+        Value result = instance.invokeMember("interrupt");
+        assertNotNull(result);
+        assertTrue(result.isHostObject(), "Result should be a host object, but was: " + result);
+        assertEquals(RuntimeException.class, result.asHostObject().getClass());
     }
 
     @Test
@@ -69,9 +71,10 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.lang.RuntimeException;
             class MyClass {
                 Long run() {
+                    Long reult = 0;
                     [ RuntimeException #new #throw ]
-                        #catch [RuntimeException e ->  //ignore ]
-                        #finally [ ^ 42 ]
+                        #catch [RuntimeException e ->  /* ignore */ ]
+                        #finally [ ^ 42 ];
                     ^ 0
                 }
             } """;
@@ -88,7 +91,7 @@ public class JolkExceptionTest extends JolcTestBase {
             class MyClass {
                 Long run() {
                     [ StructuredTaskScope #open ]
-                        #try [ scope -> //ignore ];
+                        #try [ scope -> /* ignore */ ];
                     ^ 0
                 }
             }""";
@@ -122,9 +125,10 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.util.concurrent.StructuredTaskScope;
             class MyClass {
                 Long run() {
-                    ^ [ StructuredTaskScope #open ]
+                    [ StructuredTaskScope #open ]
                         #try [ scope -> RuntimeException #new #throw ]
-                        #catch [ RuntimeException e -> 42 ];
+                        #catch [ RuntimeException e -> ^ 42 ];
+                    ^ 0
                 }
             }""";
 

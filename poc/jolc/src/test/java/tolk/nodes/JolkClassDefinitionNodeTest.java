@@ -239,8 +239,10 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         
         // Access internal instanceFields map via reflection to verify hints
         Map<String, Object> hints = (Map<String, Object>) getInternalField(metaClass, "instanceFields");
-        assertEquals("Long", hints.get("count"), "Preamble should contain the type name hint for uninitialized fields.");
-        assertEquals("Boolean", hints.get("active"), "Preamble should contain the type name hint for uninitialized fields.");
+        // Jolk Archetypal Rigidity: Hints are now reified MetaClasses rather than raw Strings.
+        // We verify the identity by checking the name property of the meta-object stored in the coordinate map.
+        assertEquals("Long", ((JolkMetaClass) hints.get("count")).name, "Preamble should contain the reified 'Long' identity.");
+        assertEquals("Boolean", ((JolkMetaClass) hints.get("active")).name, "Preamble should contain the reified 'Boolean' identity.");
     }
 
     private boolean isMetaObject(Value v) {

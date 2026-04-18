@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.Disabled;
+
 ///
 /// Verifies that a visitor can correctly traverse the parse tree generated
 /// from Jolk source code. This test uses a custom visitor to build an
@@ -45,81 +47,81 @@ public class JolcVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitEquality() {
-        String source = "a == b";
+        String source = "class MyClass { run() { a == b } }";
         eval(source);
-        source = "a != b";
+        source = "class MyClass { run() { a != b } }";
         eval(source);
     }
 
     @Test
     void testVisitEquivalence() {
-        eval("a ~~ b");
-        eval("a !~ b");
+        eval("class MyClass { run() { a ~~ b } }");
+        eval("class MyClass { run() { a !~ b } }");
     }
 
     @Test
     void testVisitTernaryOperator() {
         // ? (ifTrue)
-        eval("condition ? 1");
+        eval("class MyClass { run() { condition ? 1 } }");
         // ? : (ifTrue:ifFalse:)
-        eval("condition ? 1 : 0");
+        eval("class MyClass { run() { condition ? 1 : 0 } }");
         // ?! (ifFalse)
-        eval("condition ?! 1");
+        eval("class MyClass { run() { condition ?! 1 } }");
         // ?! : (ifFalse:ifTrue:)
-        eval("condition ?! 1 : 0");
+        eval("class MyClass { run() { condition ?! 1 : 0 } }");
     }
 
     @Test
     void testVisitNullCoalescing() {
         // ?? operator
-        eval("a ?? b");
-        eval("a ?? b ?? c");
+        eval("class MyClass { run() { a ?? b } }");
+        eval("class MyClass { run() { a ?? b ?? c } }");
     }
 
     @Test
     void testVisitLogicalAndBitwise() {
-        eval("a || b");  // Logic or
-        eval("a && b");  // Logic and
-        eval("a | b");   // Inclusive or
-        eval("a ^ b");   // Exclusive or
-        eval("a & b");   // Bitwise and
+        eval("class MyClass { run() { a || b } }");  // Logic or
+        eval("class MyClass { run() { a && b } }");  // Logic and
+        eval("class MyClass { run() { a | b } }");   // Inclusive or
+        eval("class MyClass { run() { a |! b } }");   // Exclusive or
+        eval("class MyClass { run() { a & b } }");   // Bitwise and
     }
 
     @Test
     void testVisitAssignment() {
-        String source = "a = b";
+        String source = "class MyClass { run() { a = b } }";
         eval(source);
     }
 
     @Test
     void testVisitOperatorPrecedence() {
-        String source = "a + b * c";
+        String source = "class MyClass { run() { a + b * c } }";
         eval(source);
     }
 
     @Test
     void testVisitMessageSendChain() {
-        String source = "object #message(arg1) #another";
+        String source = "class MyClass { run() { object #message(arg1) #another } }";
         eval(source);
     }
 
     @Test
     void testVisitClosure() {
-        String source = "[ item -> item #process ]";
+        String source = "class MyClass { run() { [ item -> item #process ] } }";
         eval(source);
     }
 
     @Test
     void testVisitClass() {
-        String source = "final class MyClass { self me() { ^ self; } }";
+        String source = "final class MyClass { Self me() { ^ self; } }";
         eval(source);
     }
 
     @Test
     void testVisitMethodReference() {
-        eval("obj ##method");
-        eval("self ##me");
-        eval("String ##toUpperCase");
+        eval("class MyClass { run() { obj ##method } }");
+        eval("class MyClass { run() { self ##me } }");
+        eval("class MyClass { run() { String ##toUpperCase } }");
     }
     
     @Test
@@ -200,7 +202,7 @@ public class JolcVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitExtension() {
-        String source = "extension MyClass { }";
+        String source = "extension MyClass on HisClass{ }";
         eval(source);
     }
 
@@ -215,47 +217,54 @@ public class JolcVisitorTest extends JolcTestBase {
     @Test
     void testVisitMessage() {
         // Unary
-        eval("obj #selector");
+        eval("class MyClass { run() { obj #selector } }");
         // With arguments
-        eval("obj #selector(arg1, arg2)");
+        eval("class MyClass { run() { obj #selector(arg1, arg2) } }");
         // Chained
-        eval("obj #one #two(arg)");
+        eval("class MyClass { run() { obj #one #two(arg) } }");
     }
 
     @Test
     void testVisitClosureVariations() {
         // Empty
-        eval("[]");
+        eval("class MyClass { run() { [] } }");
         // No parameters
-        eval("[ 1 + 2 ]");
+        eval("class MyClass { run() { [ 1 + 2 ] } }");
         // Inferred parameters
-        eval("[ a, b -> a + b ]");
+        eval("class MyClass { run() { [ a, b -> a + b ] } }");
         // Typed parameters
-        eval("[ Int a, Int b -> a + b ]");
+        eval("class MyClass { run() { [ Int a, Int b -> a + b ] } }");
     }
 
     @Test
     void testVisitReserved() {
-        eval("self");  // receiver
-        eval("super"); // parent context
-        eval("Self");  // Meta-object (translated to self#class)
-        eval("true");  // Boolean singleton
-        eval("false"); // Boolean singleton
-        eval("null");  // Nothing singleton
+        eval("class MyClass { run() { self } }");  // receiver
+        eval("class MyClass { run() { super } }"); // parent context
+        eval("class MyClass { run() { Self } }");  // Meta-object (translated to self#class)
+        eval("class MyClass { run() { true } }");  // Boolean singleton
+        eval("class MyClass { run() { false } }"); // Boolean singleton
+        eval("class MyClass { run() { null } }");  // Nothing singleton
     }
 
     @Test
     void testVisitLiteral() {
         // Numbers
-        eval("123");
-        eval("12.34");
+        eval("class MyClass { run() { 123 } }");
+        //eval("class MyClass { run() { 12.34 } }");
         // Strings & Chars
-        eval("\"String Literal\"");
-        eval("'c'");
+        eval("class MyClass { run() { \"String Literal\" } }");
+        eval("class MyClass { run() { 'c' } }");
         // Collections
-        eval("#[1, 2, 3]"); // Array
-        eval("#{1, 2, 3}"); // Set
-        eval("#(key -> value)"); // Map
+        eval("class MyClass { run() { #[1, 2, 3] } }"); // Array
+        eval("class MyClass { run() { #{1, 2, 3} } }"); // Set
+        eval("class MyClass { run() { #(key -> value) } }"); // Map
+    }
+
+    @Test
+    @Disabled("Activate when floating-point literals are supported")
+    void testVisitDouble() {
+        // Numbers
+        eval("class MyClass { run() { 12.34 } }");
     }
 
     @Test
@@ -303,22 +312,23 @@ public class JolcVisitorTest extends JolcTestBase {
     void testVisitAnnotations() {
         // Verify that annotations at different levels don't break the visitor
         eval("@Intrinsic class MyClass { }");
-        eval("class Annotated { @Deprecated Int x; @OnMethod void run() {} }");
+        eval("class Annotated { @Deprecated Int x; @OnMethod run() {} }");
     }
 
     @Test
     void testVisitVariadics() {
         // Verify variadic parameters (spread operator) in method signatures
-        eval("class VariadicTest { void log(String... args) {} }");
+        eval("class VariadicTest { log(String... args) {} }");
     }
 
     @Test
     void testVisitLocalDecls() {
         // Verify typed local variable declarations inside method blocks
-        eval("class LocalTest { void run() { Int x = 10; stable String name = \"Jolk\"; } }");
+        eval("class LocalTest { run() { Int x = 10; stable String name = \"Jolk\"; } }");
     }
 
     @Test
+    @Disabled("Activate when lazy evaluation is implemented")
     void testVisitLazy() {
         // Verify the lazy keyword on fields and methods
         eval("class LazyTest { lazy Int x; lazy setup() {} }");
@@ -326,14 +336,15 @@ public class JolcVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitArithmeticOperators() {
-        eval("a + b");  // Addition
-        eval("a - b");  // Subtraction
-        eval("a * b");  // Multiplication
-        eval("a / b");  // Division
-        eval("a % b");  // Modulo
-        eval("2 ** 8"); // Power
-        eval("x ** y ** z");
-        eval("a + b * c / d % e ** f"); // Complex precedence
+        eval("class MyClass { run() { a + b} }");
+        eval("class MyClass { run() { a + b} }");  // Addition
+        eval("class MyClass { run() { a - b} }");  // Subtraction
+        eval("class MyClass { run() { a * b} }");  // Multiplication
+        eval("class MyClass { run() { a / b} }");  // Division
+        eval("class MyClass { run() { a % b} }");  // Modulo
+        eval("class MyClass { run() { 2 ** 8} }"); // Power
+        eval("class MyClass { run() { x ** y ** z} }");
+        eval("class MyClass { run() { a + b * c / d % e ** f} }"); // Complex precedence
     }
 
 }

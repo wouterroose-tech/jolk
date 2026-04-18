@@ -203,7 +203,7 @@ public class JolkObjectTest extends JolcTestBase {
 
     @Test
     void testConstructorFallbackToDefaults() {
-        Map<String, Object> fields = Collections.singletonMap("val", "Long");
+        Map<String, Object> fields = Collections.singletonMap("val", JolkLongExtension.LONG_TYPE);
         JolkMetaClass meta = new JolkMetaClass("CtorTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
         
         // Provide wrong number of arguments (arity mismatch for canonical #new)

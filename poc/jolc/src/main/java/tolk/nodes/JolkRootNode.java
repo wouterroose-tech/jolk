@@ -3,9 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.interop.InteropLibrary;
 import tolk.language.JolkLanguage;
-import tolk.runtime.JolkNothing;
 
 ///
 /// The root node of a Jolk execution tree.
@@ -60,10 +58,10 @@ public final class JolkRootNode extends RootNode {
                     throw e;
                 }
             }
-            return (result == null || InteropLibrary.getUncached().isNull(result)) ? JolkNothing.INSTANCE : result;
+            return JolkNode.lift(result);
         } else {
             Object result = bodyNode.executeGeneric(frame);
-            return (result == null || InteropLibrary.getUncached().isNull(result)) ? JolkNothing.INSTANCE : result;
+            return JolkNode.lift(result);
         }
     }
 

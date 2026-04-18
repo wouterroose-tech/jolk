@@ -86,7 +86,7 @@ inferred_params : InstanceId (COMMA InstanceId)* ;
 reserved        : TRUE | FALSE | NULL | SUPER | self_type | self_instance ;
 self_type       : SELF_TYPE ;
 self_instance   : SELF_INSTANCE ;
-selector        : HASH identifier ;
+selector        : HASH (identifier | CLASS ) ;
 identifier      : MetaId | InstanceId | VALUE ;
 literal         : NumberLiteral | StringLiteral | CharLiteral ;
 list_literal    : array_literal | set_literal | map_literal ;

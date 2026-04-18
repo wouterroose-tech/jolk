@@ -16,26 +16,20 @@ public class IssueTest extends JolcTestBase {
                 Object subject;
                 String message;
                 Level level;
-                Boolean isError() { ^ self #level == Level #ERROR }
                 Boolean concerns(Object subject) { ^ self #subject == subject }
+                Boolean match(Level level) { ^ self #level == level }
             }""";
         return eval(source);
     }
 
     private Value levelEnum() {
-        String source = """
-            enum Level {
-                ERROR; WARNING; INFO; DEBUG;
-                Boolean isError() { ^ self == ERROR }
-                Boolean isWarning() { ^ self == WARNING }
-                Boolean isInfo() { ^ self == INFO }
-                Boolean isDebug() { ^ self == DEBUG }
-            }""";  
+        String source = "enum Level { ERROR; WARNING; INFO; DEBUG; }";  
         return eval(source);
     }
 
     private Value executionContext() {
         String source = """
+	        & demo.validation.Issue.ERROR;
             class ExecutionContext {
                 constant Array<Issue> issues = Array #new;
                 Self add(Object subject, Issue issue) {
@@ -45,7 +39,7 @@ public class IssueTest extends JolcTestBase {
                     ^ !self #issues #isEmpty
                 }
                 Boolean hasError() {
-                    ^ self #hasMatch(Issue ##isError)
+                    ^ self #hasMatch [i -> i #match(ERROR) ]
                 }
                 Boolean hasIssue(Object subject) {
                     ^ self #hasMatch [i -> i #concerns(subject)]

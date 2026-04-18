@@ -89,10 +89,13 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
 
         JolkMetaClass superMetaClass = null;
         if (superclassName != null) {
-            // Use getOrCreateClass to handle forward references.
-            // It will return an existing JolkMetaClass or a JolkMetaClassPlaceholder.
+            // Attempt to resolve the superclass identity.
             superMetaClass = context.getOrCreateClass(superclassName);
-            if (superMetaClass == null) {
+            
+            // Validation Guard: If getOrCreateClass returns null, it means the name
+            // resolved to a HostObject (Java Class). We allow this to proceed, 
+            // but only throw if the name is truly undefined in both registries.
+            if (superMetaClass == null && context.getDefinedClass(superclassName) == null) {
                 throw new RuntimeException("Superclass not found or cannot be extended: " + superclassName);
             }
         }
@@ -108,23 +111,30 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                     runtimeMetaMembers.put(entry.getKey(), JolkNothing.INSTANCE);
                 } else if (node instanceof JolkFieldNode) {
                     JolkFieldNode field = (JolkFieldNode) node;
-                    // Pass the type name as a hint for correct default value initialization
-                    runtimeMetaFields.put(entry.getKey(), (field.getInitializer() instanceof JolkEmptyNode) ? field.getTypeName() : JolkNothing.INSTANCE);
+                    // Resolve the reified identity as a hint for correct default value initialization
+                    Object hint = (field.getInitializer() instanceof JolkEmptyNode) ? context.getOrCreateClass(field.getTypeName()) : JolkNothing.INSTANCE;
+                    runtimeMetaFields.put(entry.getKey(), hint);
                 }
             }
         }
 
+        // Jolk Initialization Protocol: All field initializers must be evaluated 
+        // and integrated into the map BEFORE the MetaClass takes its structural snapshot.
+        // This ensures the "Ma" (interstitial state) is fully reified for the template.
         for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
             JolkFieldNode fieldNode = entry.getValue();
-            // If the field has no initializer, pass its type name as a hint.
-            // Passing hints to the constructor allows JolkMetaClass to establish correct
-            // default values (like 0L or false) in its internal state template.
-            runtimeInstanceFields.put(entry.getKey(), (fieldNode.getInitializer() instanceof JolkEmptyNode) ? fieldNode.getTypeName() : JolkNothing.INSTANCE);
+            if (fieldNode.getInitializer() instanceof JolkEmptyNode) {
+                // Structural Hint: Resolve the reified identity for the defaulting protocol.
+                runtimeInstanceFields.put(entry.getKey(), context.getOrCreateClass(fieldNode.getTypeName()));
+            } else {
+                // Realized Value: Evaluate initializer once at definition time
+                JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
+                Object initialValue = lift(root.getCallTarget().call());
+                runtimeInstanceFields.put(entry.getKey(), initialValue);
+            }
         }
 
-        // Jolk Lifecycle Protocol: Instantiate and Register the Identity BEFORE 
-        // populating members (Hydration). This allows methods created during hydration to 
-        // resolve the class name via the registry.
+        // Jolk Lifecycle Protocol: Instantiate the Identity now that the field map is stable.
         JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
 
         // Register enum constants for ENUM archetype
@@ -171,18 +181,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // all methods and meta-members are bound. This ensures that any hydration
         // triggered by forward-references (placeholders) sees the actual closures.
         context.registerClass(newMetaClass);
-
-        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
-            JolkFieldNode fieldNode = entry.getValue();
-            if (!(fieldNode.getInitializer() instanceof JolkEmptyNode)) {
-                // Instance field initializers: evaluate at class-definition time.
-                // This is now safe because the class is registered and hydrated if needed.
-                JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
-                runtimeInstanceFields.put(entry.getKey(), lift(root.getCallTarget().call()));
-            } else {
-                runtimeInstanceFields.put(entry.getKey(), fieldNode.getTypeName());
-            }
-        }
+        // redundant evaluation pass removed.
 
         // Synchronize defaults one last time to capture evaluated field initializers.
         newMetaClass.initializeDefaultValues();

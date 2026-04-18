@@ -59,7 +59,15 @@ public class JolkNothingTest extends JolcTestBase {
     void testSilentAbsorptionOfMessages() {
         // Sending an arbitrary message to 'null' should not cause a crash.
         // It should absorb the message and return 'null' itself, enabling fluid chains.
-        Value result = eval("null #someRandomMessage #anotherMessage");
+        String source = """
+            class HostNullTest {
+                Object run(Object host) {
+                    ^ null #someRandomMessage #anotherMessage
+                }
+            }
+            """;
+        Value instance = eval(source).invokeMember("new");
+        Value result = instance.invokeMember("run", (Object) null);
         assertEquals("null", result.toString(), "Chaining messages on null should result in null (Silent Absorption).");
     }
 

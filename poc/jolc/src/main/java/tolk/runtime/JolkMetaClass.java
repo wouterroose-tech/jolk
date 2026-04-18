@@ -19,6 +19,7 @@ import tolk.nodes.JolkReturnException;
 import java.util.HashSet;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -94,7 +95,7 @@ public class JolkMetaClass extends DynamicObject {
         this.visibility = visibility;
         this.archetype = archetype;
         this.instanceMembers = instanceMembers;
-        this.instanceFields = instanceFields;
+        this.instanceFields = new LinkedHashMap<>(instanceFields); // Preserve declaration order
         this.fieldIndices = new HashMap<>();
         this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.metaMembers = metaMembers;
@@ -262,19 +263,24 @@ public class JolkMetaClass extends DynamicObject {
             Integer idx = fieldIndices.get(entry.getKey());
             if (idx != null) {
                 Object val = entry.getValue();
-                // Robust Hint Detection: Resolve the type name from MetaClasses, Strings, or Host Classes.
-                String hint = resolveTypeHint(val);
-
-                if (isLongHint(hint) || ((val == null || val == JolkNothing.INSTANCE) && entry.getKey().equalsIgnoreCase("id"))) {
-                    this.defaultFieldValues[idx] = 0L;
-                } else if (isBooleanHint(hint)) {
-                    this.defaultFieldValues[idx] = false;
-                } else if (isStringHint(hint)) {
-                    this.defaultFieldValues[idx] = "";
-                } else if (val instanceof JolkMetaClass || val == null || val instanceof String) {
-                    // Other classes (including sentinels for non-intrinsics) or explicit nulls default to Nothing.
-                    this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
+                
+                // Jolk Defaulting Protocol: Distinguish between Type Sentinels (Hints) 
+                // and Realized Values. In this model, Meta-Objects are Hints, 
+                // and Strings are literal data.
+                if (val instanceof JolkMetaClass || val instanceof Class<?> || val == JolkNothing.INSTANCE || val == null) {
+                    String hint = resolveTypeHint(val);
+                    if (isLongHint(hint) || (val == null && entry.getKey().equalsIgnoreCase("id"))) {
+                        this.defaultFieldValues[idx] = 0L;
+                    } else if (isBooleanHint(hint)) {
+                        this.defaultFieldValues[idx] = false;
+                    } else if (isStringHint(hint)) {
+                        this.defaultFieldValues[idx] = "";
+                    } else {
+                        // Uninitialized user-defined types default to Nothing.
+                        this.defaultFieldValues[idx] = JolkNothing.INSTANCE;
+                    }
                 } else {
+                    // Realized Value: The initializer result is preserved exactly.
                     this.defaultFieldValues[idx] = val;
                 }
             }
@@ -286,7 +292,7 @@ public class JolkMetaClass extends DynamicObject {
             if (!metaLib.containsKey(this, entry.getKey())) {
                 Object val = entry.getValue();
                 Object resolvedVal;
-                if (val instanceof JolkMetaClass || val instanceof String) {
+                if (val instanceof JolkMetaClass || val instanceof Class<?> || val == JolkNothing.INSTANCE || val == null) {
                     String hint = resolveTypeHint(val);
                     if (isLongHint(hint) || ((val == null || val == JolkNothing.INSTANCE) && entry.getKey().equalsIgnoreCase("id"))) {
                         resolvedVal = 0L;

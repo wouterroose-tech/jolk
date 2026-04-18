@@ -8,6 +8,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import tolk.nodes.JolkNode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,10 +95,10 @@ public final class JolkNothing implements TruffleObject {
         switch (name) {
             case "~~":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return this == arguments[0];
+                return this == JolkNode.unwrap(arguments[0]);
             case "!~":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return this != arguments[0];
+                return this != JolkNode.unwrap(arguments[0]);
             case "hash":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return 0L;
@@ -116,7 +117,9 @@ public final class JolkNothing implements TruffleObject {
                 return this;
             case "ifEmpty":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                return InteropLibrary.getUncached().execute(arguments[0]);
+                // Identity Restitution: The result of the fallback must be lifted 
+                // to ensure no raw Java nulls return to the host.
+                return JolkNode.lift(InteropLibrary.getUncached().execute(arguments[0]));
             case "instanceOf":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);                
                 Object type = arguments[0];
@@ -126,8 +129,10 @@ public final class JolkNothing implements TruffleObject {
                 return JolkMatch.empty();
             case "??": {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                // If Nothing is the receiver, execute the fallback argument.
-                return InteropLibrary.getUncached().execute(arguments[0]);
+                // Support for both direct values and closures.
+                Object arg = arguments[0];
+                Object result = InteropLibrary.getUncached().isExecutable(arg) ? InteropLibrary.getUncached().execute(arg) : arg;
+                return JolkNode.lift(result);
             }
             case "class":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);

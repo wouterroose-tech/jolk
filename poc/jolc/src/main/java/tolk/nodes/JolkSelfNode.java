@@ -14,6 +14,10 @@ import tolk.runtime.JolkNothing;
 public class JolkSelfNode extends JolkExpressionNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
+        // The standard Jolk calling convention layout is:
+        // For Methods: index 0 is Receiver (self)
+        // For Closures: index 0 is Lexical Environment (captured frame)
+        // In a method context, self is at index 0.
         if (frame != null && frame.getArguments().length > 0) {
             return frame.getArguments()[0];
         }

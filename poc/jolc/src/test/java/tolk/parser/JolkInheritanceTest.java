@@ -59,6 +59,7 @@ public class JolkInheritanceTest  extends JolcTestBase {
         eval(classA);
         Value instanceB = eval(classB).invokeMember("new");
         assertTrue(instanceB.invokeMember("class").getMetaSimpleName().contains("ClassB"));
+        assertEquals(42, instanceB.invokeMember("x").asLong());
     }
 
     @Test

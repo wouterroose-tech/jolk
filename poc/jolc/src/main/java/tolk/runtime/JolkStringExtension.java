@@ -1,13 +1,14 @@
 package tolk.runtime;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import java.util.HashMap;
-import java.util.Map;
 
 /// # JolkString
 /// 
@@ -54,12 +55,15 @@ public final class JolkStringExtension {
     @ExportLibrary(InteropLibrary.class)
     public static final class StringAdd implements TruffleObject {
         @ExportMessage public boolean isExecutable() { return true; }
-        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
-            if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            // Jolk Unified Messaging: Convert both sides to string for concatenation
-            String a = String.valueOf(arguments[0]);
-            String b = String.valueOf(arguments[1]);
-            return a + b;
+        @ExportMessage public Object execute(Object[] arguments) {
+            if (arguments.length < 2) return JolkNothing.INSTANCE;
+            InteropLibrary interop = InteropLibrary.getUncached();
+            try {
+                // Identity Congruence: Reconcile operands to Java Strings
+                return interop.asString(arguments[0]) + interop.asString(arguments[1]);
+            } catch (com.oracle.truffle.api.interop.UnsupportedMessageException e) {
+                return String.valueOf(arguments[0]) + String.valueOf(arguments[1]);
+            }
         }
     }
 
@@ -81,7 +85,14 @@ public final class JolkStringExtension {
     public static final class StringEquals implements TruffleObject {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) {
-            return arguments[0].equals(arguments[1]);
+            if (arguments.length < 2) return false;
+            InteropLibrary interop = InteropLibrary.getUncached();
+            try {
+                // Identity Congruence: Normalize Guest/Host string representations
+                return interop.asString(arguments[0]).equals(interop.asString(arguments[1]));
+            } catch (com.oracle.truffle.api.interop.UnsupportedMessageException e) {
+                return arguments[0].equals(arguments[1]);
+            }
         }
     }
 
@@ -89,7 +100,8 @@ public final class JolkStringExtension {
     public static final class StringNotEquals implements TruffleObject {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) {
-            return !arguments[0].equals(arguments[1]);
+            Object eq = new StringEquals().execute(arguments);
+            return (eq instanceof Boolean b) ? !b : true;
         }
     }
 

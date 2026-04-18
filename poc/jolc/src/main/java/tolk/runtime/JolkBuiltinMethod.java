@@ -6,6 +6,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import tolk.nodes.JolkNode;
 
 /**
  * ### JolkBuiltinMethod
@@ -41,13 +42,8 @@ public abstract class JolkBuiltinMethod implements TruffleObject {
      * Performs **Identity Restitution**. Converts raw JVM nulls to `JolkNothing` 
      * and ensures raw host objects are wrapped for Truffle Interop safety.
      */
-    protected static Object lift(Object value) {
-        if (value == null) return JolkNothing.INSTANCE;
-        if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof TruffleObject) {
-            return value;
-        }
-        // Identity Restitution: Wrap raw Java objects as Host Objects for Interop safety.
-        return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
+    public static Object lift(Object value) {
+        return JolkNode.lift(value);
     }
 
     /**
@@ -57,10 +53,6 @@ public abstract class JolkBuiltinMethod implements TruffleObject {
      * Truffle Host Object, it extracts the underlying Java instance.
      */
     protected static Object unwrap(Object value) {
-        var env = tolk.language.JolkLanguage.getContext().env;
-        if (env.isHostObject(value)) {
-            return env.asHostObject(value);
-        }
-        return value;
+        return JolkNode.unwrap(value);
     }
 }

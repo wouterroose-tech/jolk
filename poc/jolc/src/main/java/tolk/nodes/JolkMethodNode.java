@@ -13,13 +13,15 @@ public class JolkMethodNode extends JolkNode {
     private final String[] parameters;
     private final boolean isVariadic;
     private final int frameSlots;
+    private final boolean hasNL;
 
-    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots) {
+    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots, boolean hasNL) {
         this.name = name;
         this.body = body;
         this.parameters = parameters;
         this.isVariadic = isVariadic;
         this.frameSlots = frameSlots;
+        this.hasNL = hasNL;
     }
 
     /**
@@ -27,7 +29,7 @@ public class JolkMethodNode extends JolkNode {
      * defaulting to 0.
      */
     public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
-        this(name, body, parameters, isVariadic, 0);
+        this(name, body, parameters, isVariadic, 0, true);
     }
 
     public String getName() {
@@ -40,6 +42,13 @@ public class JolkMethodNode extends JolkNode {
 
     public int getFrameSlots() {
         return frameSlots;
+    }
+
+    /**
+     * Returns true if this method contains a non-local return terminal (^).
+     */
+    public boolean hasNL() {
+        return hasNL;
     }
 
     @Override

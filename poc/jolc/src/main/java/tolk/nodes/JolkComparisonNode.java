@@ -1,6 +1,8 @@
 package tolk.nodes;
 
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 /**
@@ -9,38 +11,43 @@ import com.oracle.truffle.api.nodes.NodeInfo;
  * Implements optimized numeric comparisons (>, <, >=, <=) via **Semantic Flattening**.
  */
 @NodeInfo(shortName = "comparison")
-public class JolkComparisonNode extends JolkExpressionNode {
+@NodeChild(value = "leftNode", type = JolkNode.class)
+@NodeChild(value = "rightNode", type = JolkNode.class)
+public abstract class JolkComparisonNode extends JolkExpressionNode {
 
-    @Child private JolkNode leftNode;
-    @Child private JolkNode rightNode;
-    @Child private JolkDispatchNode dispatchNode;
-    private final String operator;
+    protected final String operator;
 
-    public JolkComparisonNode(JolkNode leftNode, String operator, JolkNode rightNode) {
-        this.leftNode = leftNode;
+    public JolkComparisonNode(String operator) {
         this.operator = operator;
-        this.rightNode = rightNode;
-        this.dispatchNode = JolkDispatchNode.create();
     }
 
-    @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        Object left = leftNode.executeGeneric(frame);
-        Object right = rightNode.executeGeneric(frame);
+    /**
+     * Specialized fast-path for primitive longs.
+     */
+    @Specialization
+    protected boolean doLongs(long l1, long l2) {
+        return switch (operator) {
+            case ">"  -> l1 > l2;
+            case "<"  -> l1 < l2;
+            case ">=" -> l1 >= l2;
+            case "<=" -> l1 <= l2;
+            default   -> throw new RuntimeException("Unsupported comparison operator: " + operator);
+        };
+    }
 
-        if (left instanceof Number n1 && right instanceof Number n2) {
-            long l1 = n1.longValue();
-            long l2 = n2.longValue();
-            
-            return switch (operator) {
-                case ">" -> l1 > l2;
-                case "<" -> l1 < l2;
-                case ">=" -> l1 >= l2;
-                case "<=" -> l1 <= l2;
-                default -> dispatchNode.execute(frame, left, operator, new Object[]{right});
-            };
-        }
+    /**
+     * Handles boxed Number objects from the host or other nodes.
+     */
+    @Specialization(replaces = "doLongs")
+    protected boolean doNumbers(Number n1, Number n2) {
+        return doLongs(n1.longValue(), n2.longValue());
+    }
 
-        return dispatchNode.execute(frame, left, operator, new Object[]{right});
+    /**
+     * Unified Messaging Fallback.
+     */
+    @Fallback
+    protected Object doFallback(Object left, Object right) {
+        return JolkDispatchNode.create().execute(null, left, operator, new Object[]{right});
     }
 }

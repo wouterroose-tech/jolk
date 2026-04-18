@@ -14,6 +14,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.nodes.JolkDispatchNode;
+import tolk.nodes.JolkNode;
 
 /// # JolkObject (The JoMoo Kernel)
 ///
@@ -46,7 +47,13 @@ public class JolkObject extends DynamicObject {
         this.metaClass = metaClass;
         // Ensure structural layout is finalized before allocating the state substrate
         this.metaClass.initializeDefaultValues();
-
+        
+        // If the metaClass failed to hydrate (e.g. forward ref still unresolved),
+        // we must fallback to an empty or placeholder layout to avoid index out of bounds.
+        if (!this.metaClass.hydrated) {
+            return;
+        }
+        
         DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
         Object[] defaultValues = metaClass.getDefaultFieldValues();
         String[] allFieldNames = metaClass.getFlattenedFieldNames();
@@ -127,7 +134,7 @@ public class JolkObject extends DynamicObject {
             return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
         }
         if (interop.isMemberReadable(metaClass, member)) {
-            return interop.readMember(metaClass, member);
+            return JolkNode.lift(interop.readMember(metaClass, member));
         }
         throw UnknownIdentifierException.create(member);
     }
@@ -147,7 +154,7 @@ public class JolkObject extends DynamicObject {
             argsWithReceiver[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
             Object result = interop.execute(instanceMember, argsWithReceiver);
-            return result == null ? JolkNothing.INSTANCE : result;
+            return JolkNode.lift(result);
         }
 
         // 2. Property Projection: Map message sends to DynamicObject slot access
@@ -172,7 +179,7 @@ public class JolkObject extends DynamicObject {
         // 4. Meta-Stratum Delegation (Dual-Stratum Resolution)
         // If the selector is not an instance member, check the MetaClass identity.
         if (interop.isMemberInvocable(metaClass, name)) {
-            return interop.invokeMember(metaClass, name, arguments);
+            return JolkNode.lift(interop.invokeMember(metaClass, name, arguments));
         }
 
         throw UnknownIdentifierException.create(member);

@@ -1,5 +1,6 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -209,22 +210,30 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             JolkMethodNode method = methods.get(0); 
             FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
             builder.addSlots(method.getFrameSlots(), FrameSlotKind.Object);
-            // Enforce Arity: Even single methods must match the call site arity.
-            JolkNode dispatcherBody = new JolkArityDispatchNode(methods);
-            JolkRootNode root = new JolkRootNode(lang, builder.build(), dispatcherBody, method.getName(), true);
+            
+            // PERFORMANCE: If there is only one method implementation, bypass the 
+            // ArityDispatchNode entirely. This removes a loop and an array 
+            // access from every recursive call.
+            JolkNode dispatcherBody = method.getBody();
+            
+            JolkRootNode root = new JolkRootNode(lang, builder.build(), dispatcherBody, method.getName(), method.hasNL());
             return new JolkClosure(root.getCallTarget());
         }
 
         // Jolk Arity Dispatch: Support overloading by selecting the implementation 
         // that matches the number of arguments provided at runtime.
         int maxSlots = 0;
-        for (JolkMethodNode m : methods) maxSlots = Math.max(maxSlots, m.getFrameSlots());
+        boolean hasAnyNL = false;
+        for (JolkMethodNode m : methods) {
+            maxSlots = Math.max(maxSlots, m.getFrameSlots());
+            if (m.hasNL()) hasAnyNL = true;
+        }
         
         FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
         builder.addSlots(maxSlots, FrameSlotKind.Object);
         
         JolkNode dispatcherBody = new JolkArityDispatchNode(methods);
-        JolkRootNode root = new JolkRootNode(lang, builder.build(), dispatcherBody, methods.get(0).getName(), true);
+        JolkRootNode root = new JolkRootNode(lang, builder.build(), dispatcherBody, methods.get(0).getName(), hasAnyNL);
         return new JolkClosure(root.getCallTarget());
     }
 
@@ -242,11 +251,13 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         }
 
         @Override
+        @ExplodeLoop
         public Object executeGeneric(VirtualFrame frame) {
-            int callArity = frame.getArguments().length - 1; // Exclude 'self'
+            // Aligned Jolk Method Layout: [Self, ...Args]
+            int callArity = frame.getArguments().length - 1; 
             for (int i = 0; i < arities.length; i++) {
                 if (arities[i] == callArity) {
-                    return lift(methodBodies[i].executeGeneric(frame));
+                    return methodBodies[i].executeGeneric(frame);
                 }
             }
             throw new RuntimeException("No method found for arity " + callArity);

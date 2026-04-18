@@ -16,7 +16,7 @@ import tolk.language.JolkSemanticException;
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.grammar.jolkParser;
 import tolk.nodes.JolkArithmeticNodeGen;
-import tolk.nodes.JolkComparisonNode;
+import tolk.nodes.JolkComparisonNodeGen;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkBlockNode;
 import tolk.nodes.JolkReadEnvironmentNode;
@@ -64,6 +64,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     private final Stack<List<String>> scopes = new Stack<>();
     private final Stack<Integer> parameterThresholds = new Stack<>();
     private final Stack<Integer> methodDepths = new Stack<>();
+    private final Stack<Boolean> nonLocalReturnFound = new Stack<>();
     private String currentClassName;
     private boolean isInMetaScope = false;
 
@@ -430,7 +431,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
         // Establish the method scope: 'self' is always at index 0.
         List<String> methodScope = new ArrayList<>();
-        methodScope.add("self");
+        methodScope.add("self");  // Index 0: Receiver (aligned with Host Interop)
         methodScope.addAll(Arrays.asList(params));
         
         // Store the number of parameters (including 'self') for this scope.
@@ -440,6 +441,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         int baseDepth = scopes.size();
         scopes.push(methodScope);
         methodDepths.push(baseDepth);
+        nonLocalReturnFound.push(false);
         JolkNode body = new JolkEmptyNode();
         int frameSlots = 0;
         try {
@@ -452,12 +454,14 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 }
             }
             frameSlots = methodScope.size();
+            boolean hasNL = nonLocalReturnFound.peek();
+            return new JolkMethodNode(name, body, params, isVariadic, frameSlots, hasNL);
         } finally {
             scopes.pop();
             parameterThresholds.pop();
             methodDepths.pop();
+            nonLocalReturnFound.pop();
         }
-        return new JolkMethodNode(name, body, params, isVariadic, frameSlots);
     }
 
     @Override
@@ -577,7 +581,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.term().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.term(i));
-            left = new JolkComparisonNode(left, op, right);
+            left = JolkComparisonNodeGen.create(op, left, right);
         }
         return left;
     }
@@ -934,6 +938,17 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 // 2. At top-level (script): depth needed to reach the script root activation.
                 int targetDepth = methodDepths.isEmpty() ? Math.max(0, scopes.size() - 1) : 
                                   Math.max(0, scopes.size() - methodDepths.peek() - 1);
+                                                  if (targetDepth > 0) {
+                    // Mark the containing method as requiring an exception handler
+                    nonLocalReturnFound.set(nonLocalReturnFound.size() - 1, true);
+                }
+                // Mark the containing method as requiring an exception handler.
+                // We set this flag regardless of targetDepth because Jolk's 
+                // return mechanism (^) always utilizes exceptions to reconcile 
+                // the execution state with the lexical home.
+                if (!nonLocalReturnFound.isEmpty()) {
+                    nonLocalReturnFound.set(nonLocalReturnFound.size() - 1, true);
+                }
                 return new JolkReturnNode(exprNode, new JolkReadEnvironmentNode(targetDepth));
             }
             return exprNode;
@@ -947,7 +962,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         List<JolkNode> nodes = new ArrayList<>();
         List<jolkParser.StatementContext> statements = ctx.statement();
         for (int i = 0; i < statements.size(); i++) {
-            JolkNode node = visit(statements.get(i));
+            var stmtCtx = statements.get(i);
+            JolkNode node = visit(stmtCtx);
             nodes.add(node);
             
             if (node instanceof JolkReturnNode && i < statements.size() - 1) {

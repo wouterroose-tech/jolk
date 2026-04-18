@@ -57,8 +57,10 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
 
         // 3. Perform Member Lookup bypassing the receiver's class overrides
         // We distinguish between instance-level super and meta-level super calls.
-        Object member = (self instanceof JolkMetaClass) 
-            ? (JolkMetaClass.isObjectIntrinsic(selector) ? null : startClass.lookupMetaMember(selector))
+        // We allow #new to be looked up in the superclass hierarchy.
+        boolean isMeta = self instanceof JolkMetaClass;
+        Object member = (isMeta) 
+            ? ("new".equals(selector) ? startClass.lookupMetaMember(selector) : (JolkDispatchNode.isObjectIntrinsic(selector) ? null : startClass.lookupMetaMember(selector)))
             : startClass.lookupInstanceMember(selector);
 
         Object[] args = new Object[argumentNodes.length];
@@ -67,19 +69,22 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
         }
 
         try {
-            if (member != null) {
+            if (member != null && member != JolkNothing.INSTANCE) {
                 Object[] executeArgs = new Object[args.length + 1];
                 executeArgs[0] = self; // Preserve the receiver identity
                 System.arraycopy(args, 0, executeArgs, 1, args.length);
                 return lift(InteropLibrary.getUncached().execute(member, executeArgs));
             }
-            if (self instanceof JolkMetaClass metaSelf) {
-                // Meta-level super dispatch uses the superclass lookup start point but preserves
-                // the original class receiver so inherited intrinsics like #new behave correctly.
-                return lift(JolkMetaClass.invokeSuperMember(metaSelf, startClass, selector, args, InteropLibrary.getUncached()));
+
+            // INTRINSIC FALLBACK: If no override was found in the superclass hierarchy, 
+            // we delegate to the intrinsic protocol. This ensures that 'super #new' 
+            // correctly performs the raw allocation of the current instance.
+            if (JolkDispatchNode.isObjectIntrinsic(selector)) {
+                return lift(JolkDispatchNode.dispatchObjectIntrinsic(self, selector, args, InteropLibrary.getUncached()));
             }
+
             throw new RuntimeException("Message not understood: #" + selector + " in super hierarchy of " + holderClass.name);
-        } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException | UnknownIdentifierException e) {
+        } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException  e) {
             throw new RuntimeException("Super message dispatch failed: #" + selector + " in " + holderClass.name, e);
         }
     }

@@ -35,7 +35,7 @@ public class JolkTryWithResourceNode extends JolkExpressionNode {
             if (catchNode != null) {
                 Object handler = catchNode.executeGeneric(frame);
                 try {
-                    return InteropLibrary.getUncached().execute(handler, new Object[]{JolkNode.lift(throwable)});
+                    return JolkNode.lift(InteropLibrary.getUncached().execute(handler, new Object[]{JolkNode.lift(throwable)}));
                 } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
                     throw new RuntimeException("Failed to execute catch handler", e);
                 }

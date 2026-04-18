@@ -10,6 +10,9 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+
+import tolk.nodes.JolkNode;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /// # JolkClosure (The Reified Identity)
@@ -193,10 +196,6 @@ public class JolkClosure implements TruffleObject {
 
     @TruffleBoundary
     private static Object unwrap(Object value) {
-        var env = tolk.language.JolkLanguage.getContext().env;
-        if (env != null && env.isHostObject(value)) {
-            return env.asHostObject(value);
-        }
-        return value;
+        return JolkNode.unwrap(value);
     }
 }

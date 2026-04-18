@@ -8,6 +8,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import tolk.nodes.JolkNode;
 
 /// # JolkMatch
 ///
@@ -81,7 +82,8 @@ public final class JolkMatch implements TruffleObject {
                 if (isPresent) {
                     Object action = arguments[0];
                     // Pass the UNWRAPPED value to the closure
-                    return InteropLibrary.getUncached().execute(action, value);
+                    // Identity Restitution: lift result to handle nulls returning from closures
+                    return JolkNode.lift(InteropLibrary.getUncached().execute(action, value));
                 }
                 // If empty, absorb the message and return self (acting like Nothing)
                 return this;

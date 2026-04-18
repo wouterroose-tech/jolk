@@ -197,7 +197,10 @@ public final class JolkBooleanExtension {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Boolean a = asBoolean(arguments[0]);
             Boolean b = asBoolean(arguments[1]);
-            if (a != null && b != null) return a.equals(b);
+            if (a != null && b != null) {
+                // Identity Congruence: Booleans match by value
+                return a.booleanValue() == b.booleanValue();
+            }
             return false;
         }
     }
@@ -208,10 +211,8 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Boolean a = asBoolean(arguments[0]);
-            Boolean b = asBoolean(arguments[1]);
-            if (a != null && b != null) return !a.equals(b);
-            return true;
+            Object eq = new BooleanEquals().execute(arguments);
+            return (eq instanceof Boolean b) ? !b : true;
         }
     }
 

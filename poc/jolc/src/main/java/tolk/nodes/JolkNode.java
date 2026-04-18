@@ -6,6 +6,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;
 
@@ -37,11 +38,34 @@ public abstract class JolkNode extends Node {
     /// @param value The value to lift.
     /// @return The lifted value (either the original object or JolkNothing.INSTANCE).
     public final static Object lift(Object value) {
-        if (value == null || InteropLibrary.getUncached().isNull(value)) return JolkNothing.INSTANCE;
-        if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof com.oracle.truffle.api.interop.TruffleObject) {
+        if (value == null) return JolkNothing.INSTANCE;
+        
+        // Industrial Fast Path: Handle standard JVM types and guest identities.
+        if (value instanceof Long || value instanceof Integer || value instanceof Boolean || 
+            value instanceof String || value instanceof com.oracle.truffle.api.strings.TruffleString ||
+            value instanceof Double || value instanceof Character) {
             return value;
         }
-        /// Identity Restitution: Ensure host objects are wrapped for Interop consistency.
+
+        // Verified Jolk Identities (Optimized Path)
+        if (value instanceof tolk.runtime.JolkNothing || 
+            value instanceof com.oracle.truffle.api.object.DynamicObject || 
+            value instanceof tolk.runtime.JolkMatch || 
+            value instanceof tolk.runtime.JolkClosure || 
+            value instanceof tolk.runtime.JolkEnumConstant) {
+            return value;
+        }
+
+        // Interop Nulls and Foreign Objects
+        return liftSlow(value);
+    }
+
+    @TruffleBoundary
+    private static Object liftSlow(Object value) {
+        if (InteropLibrary.getUncached().isNull(value)) {
+            return JolkNothing.INSTANCE;
+        }
+        // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
         return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
     }
 
@@ -50,11 +74,28 @@ public abstract class JolkNode extends Node {
     /// This is used when a Jolk built-in or dispatch needs to operate on the 
     /// raw Java object behind a Truffle host wrapper.
     public final static Object unwrap(Object value) {
-        var env = tolk.language.JolkLanguage.getContext().env;
-        if (env.isHostObject(value)) {
-            return env.asHostObject(value);
+        InteropLibrary interop = InteropLibrary.getUncached();
+        try {
+            // Impedance Resolution: Use the environment to extract the raw Java object.
+            // We catch AssertionError/IllegalStateException to allow this to run 
+            // in context-less unit tests where no polyglot context is entered.
+            var context = tolk.language.JolkLanguage.getContext();
+            if (context != null && context.env.isHostObject(value)) {
+                return context.env.asHostObject(value);
+            }
+        } catch (AssertionError | IllegalStateException e) {
+            // Handled: Context-less execution path
         }
         return value;
+    }
+
+    /**
+     * ### isNothing
+     * 
+     * High-performance guard to identify Jolk's absence identity.
+     */
+    protected static boolean isNothing(Object receiver) {
+        return receiver == null || receiver == JolkNothing.INSTANCE;
     }
 
     /// Navigates the lexical environment chain to find the arguments array at the specified depth.

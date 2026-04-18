@@ -17,13 +17,13 @@ public final class JolkRootNode extends RootNode {
     @Child
     private JolkNode bodyNode;
     private final String name;
-    private final boolean isMethod;
+    private final boolean canReturnNonLocally;
 
-    public JolkRootNode(JolkLanguage language, FrameDescriptor frameDescriptor, JolkNode bodyNode, String name, boolean isMethod) {
+    public JolkRootNode(JolkLanguage language, FrameDescriptor frameDescriptor, JolkNode bodyNode, String name, boolean canReturnNonLocally) {
         super(language, frameDescriptor);
         this.bodyNode = bodyNode;
         this.name = name;
-        this.isMethod = isMethod;
+        this.canReturnNonLocally = canReturnNonLocally;
     }
 
     /**
@@ -44,7 +44,7 @@ public final class JolkRootNode extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        if (isMethod) {
+        if (canReturnNonLocally) {
             Object result;
             try {
                 result = bodyNode.executeGeneric(frame);

@@ -3,6 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.TruffleObject;
 
 /// ### JolkIdentityNode
@@ -25,8 +26,8 @@ public class JolkIdentityNode extends JolkExpressionNode {
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
-        Object left = leftNode.executeGeneric(frame);
-        Object right = rightNode.executeGeneric(frame);
+        Object left = unwrap(leftNode.executeGeneric(frame));
+        Object right = unwrap(rightNode.executeGeneric(frame));
         
         // Optimization: identical references are always the same identity.
         if (left == right) return negate ? false : true;
@@ -41,15 +42,26 @@ public class JolkIdentityNode extends JolkExpressionNode {
             boolean eq = b1.booleanValue() == b2.booleanValue();
             return negate ? !eq : eq;
         }
-        if (left instanceof String s1 && right instanceof String s2) {
-            boolean eq = s1.equals(s2);
-            return negate ? !eq : eq;
-        }
 
-        if (left == null || right == null) return negate ? true : false;
+        // Identity Restitution: raw Java null and Jolk Nothing are semantically identical.
+        if (isNothing(left) && isNothing(right)) return !negate;
+        if (isNothing(left) || isNothing(right)) return negate;
 
         InteropLibrary interop = InteropLibrary.getUncached();
         boolean identical;
+
+        // String Identity Congruence: ensure TruffleString and java.lang.String match by value.
+        if ((left instanceof String || interop.isString(left)) && 
+            (right instanceof String || interop.isString(right))) {
+            try {
+                String s1 = (left instanceof String) ? (String) left : interop.asString(left);
+                String s2 = (right instanceof String) ? (String) right : interop.asString(right);
+                boolean eq = s1.equals(s2);
+                return negate ? !eq : eq;
+            } catch (UnsupportedMessageException e) {
+                // fall through
+            }
+        }
 
         // Only call interop.isIdentical if both operands are interop-compatible.
         // Otherwise, if they are not reference-equal, they are not identical.

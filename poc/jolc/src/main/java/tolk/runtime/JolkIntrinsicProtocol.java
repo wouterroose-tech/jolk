@@ -4,8 +4,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import tolk.language.JolkLanguage;
+import tolk.nodes.JolkNode;
 import tolk.nodes.JolkReturnException;
 
 import java.util.Set;
@@ -32,13 +32,8 @@ public final class JolkIntrinsicProtocol {
 
     @TruffleBoundary
     public static Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
-        var context = JolkLanguage.getContext();
-        Object unwrapped = receiver;
-        // Impedance Resolution: Use the Context Environment to extract native host objects
-        if (context != null && context.env.isHostObject(receiver)) {
-            unwrapped = context.env.asHostObject(receiver);
-        }
         InteropLibrary genericInterop = InteropLibrary.getUncached();
+        Object unwrapped = JolkNode.unwrap(receiver);
         try {
             switch (name) {
                 case "throw" -> {
@@ -55,7 +50,11 @@ public final class JolkIntrinsicProtocol {
                     if (receiver == other) return true;
                     if (receiver instanceof Number n1 && other instanceof Number n2) return n1.longValue() == n2.longValue();
                     if (receiver instanceof Boolean b1 && other instanceof Boolean b2) return b1.booleanValue() == b2.booleanValue();
-                    if (receiver instanceof String s1 && other instanceof String s2) return s1.equals(s2);
+                    if ((receiver instanceof String || genericInterop.isString(receiver)) && 
+                        (other instanceof String || genericInterop.isString(other))) {
+                        return genericInterop.asString(receiver).equals(genericInterop.asString(other));
+                    }
+
                     if (receiver instanceof TruffleObject || other instanceof TruffleObject || isBoxed(receiver) || isBoxed(other)) {
                         return interop.isIdentical(receiver, other, genericInterop);
                     }
@@ -68,7 +67,13 @@ public final class JolkIntrinsicProtocol {
                 case "~~" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     Object other = arguments[0];
-                    if (receiver instanceof Number n1 && other instanceof Number n2) return n1.longValue() == n2.longValue();
+                    if (receiver instanceof Number n1 && other instanceof Number n2) {
+                        return n1.longValue() == n2.longValue();
+                    }
+                    if ((receiver instanceof String || genericInterop.isString(receiver)) && 
+                        (other instanceof String || genericInterop.isString(other))) {
+                        return genericInterop.asString(receiver).equals(genericInterop.asString(other));
+                    }
                     return receiver.equals(other);
                 }
                 case "!~" -> {

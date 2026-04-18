@@ -38,7 +38,7 @@ public class JolkMethodNodeTest {
         JolkNode body = new JolkEmptyNode();
         String[] params = {"a", "b"};
         int expectedFrameSlots = 5; // Example value
-        JolkMethodNode node = new JolkMethodNode("complexMethod", body, params, true, expectedFrameSlots);
+        JolkMethodNode node = new JolkMethodNode("complexMethod", body, params, true, expectedFrameSlots, false);
 
         assertEquals("complexMethod", node.getName());
         assertSame(body, node.getBody());

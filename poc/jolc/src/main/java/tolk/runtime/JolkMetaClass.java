@@ -52,9 +52,9 @@ public class JolkMetaClass extends DynamicObject {
     // Instance members (fields and methods) for instances of this class.
     private final Map<String, Object> instanceMembers;
     // Instance fields (Sovereign Coordinate Map).
-    private final Map<String, Object> instanceFields;
+    protected Map<String, Object> instanceFields;
     // Map field names to their array index for O(1) access
-    private final Map<String, Integer> fieldIndices;
+    protected Map<String, Integer> fieldIndices;
     // The Truffle Shape defining the memory layout for instances
     private Shape instanceShape;
     // Total number of fields including hierarchy
@@ -115,13 +115,17 @@ public class JolkMetaClass extends DynamicObject {
     /// defined, as long as both are defined before the first message is sent.
     protected synchronized void ensureHydrated() {
         if (hydrated) return;
-        // If this is a placeholder, its hydration will be handled by updatePlaceholder.
-        if (this instanceof JolkMetaClassPlaceholder) {
-            return;
-        }
-        // Ensure superclass is fully hydrated before accessing its members or registries.
+
+        // Jolk Hydration Guard: Do not hydrate placeholders directly.
+        if (this instanceof JolkMetaClassPlaceholder) return;
+
+        // Structural Dependency Guard: If the superclass is a placeholder 
+        // that hasn't been reified yet, we cannot flatten this registry.
+        // Returning early without setting 'hydrated = true' allows 
+        // hydration to be retried on the next message send.
         if (superclass != null) {
             superclass.ensureHydrated();
+            if (!superclass.isHydrated()) return;
         }
 
         // 1. Calculate Instance Field Layout
@@ -167,6 +171,23 @@ public class JolkMetaClass extends DynamicObject {
         syncDefaultValues(); // Now safe to call as it's not a placeholder
         refreshInstanceMemberCache();
         refreshMetaMemberCache();
+    }
+
+    /**
+     * Returns true if this class has completed its structural flattening.
+     * Used by subclasses to determine if they can safely inherit layout.
+     */
+    public boolean isHydrated() {
+        if (!hydrated) ensureHydrated();
+        return hydrated;
+    }
+
+    /**
+     * Returns true if this class identity is stable and ready for hydration.
+     * Placeholders are unready until their actual definition is published.
+     */
+    public boolean isReady() {
+        return true;
     }
 
     /// ### registerInstanceMethod
@@ -518,7 +539,7 @@ public class JolkMetaClass extends DynamicObject {
             metaArguments[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
             try {
-                return interop.execute(memberObj, metaArguments);
+                return JolkBuiltinMethod.lift(interop.execute(memberObj, metaArguments));
             } catch (JolkReturnException e) {
                 throw e; // Preserve signal for non-local returns
             }
@@ -535,7 +556,7 @@ public class JolkMetaClass extends DynamicObject {
             metaArguments[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
             try {
-                return interop.execute(memberObj, metaArguments);
+                return JolkBuiltinMethod.lift(interop.execute(memberObj, metaArguments));
             } catch (JolkReturnException e) {
                 throw e;
             }
@@ -563,10 +584,10 @@ public class JolkMetaClass extends DynamicObject {
                 }
                 // Canonical #new logic: Only applies if no explicit meta-method named 'new' exists.
                 // This allows the variadic 'meta Map new(Object...)' to take precedence.
-                if (arguments.length == 0) return new JolkObject(this);
+                if (arguments.length == 0) return JolkBuiltinMethod.lift(new JolkObject(this));
                 
                 if (arguments.length == totalFieldCount) {
-                    return new JolkObject(this, arguments);
+                    return JolkBuiltinMethod.lift(new JolkObject(this, arguments));
                 }
                 throw ArityException.create(totalFieldCount, totalFieldCount, arguments.length);
             case "name":
@@ -848,6 +869,76 @@ public class JolkMetaClass extends DynamicObject {
             this.cachedMetaMemberNames = actualClass.cachedMetaMemberNames;
             
             this.hydrated = true;
+        }
+
+        @Override
+        public boolean isHydrated() {
+            return actualClass != null && actualClass.isHydrated();
+        }
+
+        @Override
+        public boolean isReady() {
+            return actualClass != null;
+        }
+
+        @Override
+        public int getFieldIndex(String name) {
+            return actualClass != null ? actualClass.getFieldIndex(name) : super.getFieldIndex(name);
+        }
+
+        @Override
+        public int getFieldCount() {
+            return actualClass != null ? actualClass.getFieldCount() : super.getFieldCount();
+        }
+
+        @Override
+        public String[] getFlattenedFieldNames() {
+            return actualClass != null ? actualClass.getFlattenedFieldNames() : super.getFlattenedFieldNames();
+        }
+
+        @Override
+        public String[] getInstanceFieldNames() {
+            return actualClass != null ? actualClass.getInstanceFieldNames() : super.getInstanceFieldNames();
+        }
+
+        @Override
+        public Object[] getDefaultFieldValues() {
+            return actualClass != null ? actualClass.getDefaultFieldValues() : super.getDefaultFieldValues();
+        }
+
+        @Override
+        public boolean hasInstanceMember(String name) {
+            return actualClass != null ? actualClass.hasInstanceMember(name) : super.hasInstanceMember(name);
+        }
+
+        @Override
+        public Object lookupInstanceMember(String name) {
+            return actualClass != null ? actualClass.lookupInstanceMember(name) : super.lookupInstanceMember(name);
+        }
+
+        @Override
+        public Object lookupMetaMember(String name) {
+            return actualClass != null ? actualClass.lookupMetaMember(name) : super.lookupMetaMember(name);
+        }
+
+        @Override
+        public JolkMemberNames getInstanceMemberNames() {
+            return actualClass != null ? actualClass.getInstanceMemberNames() : super.getInstanceMemberNames();
+        }
+
+        @Override
+        public Set<String> getMetaPropertyKeys() {
+            return actualClass != null ? actualClass.getMetaPropertyKeys() : super.getMetaPropertyKeys();
+        }
+
+        @Override
+        public JolkMetaClass getSuperclass() {
+            return actualClass != null ? actualClass.getSuperclass() : super.getSuperclass();
+        }
+
+        @Override
+        public Shape getInstanceShape() {
+            return actualClass != null ? actualClass.getInstanceShape() : super.getInstanceShape();
         }
 
         @Override

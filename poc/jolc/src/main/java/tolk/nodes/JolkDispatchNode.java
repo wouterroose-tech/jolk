@@ -172,6 +172,14 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         return obj instanceof JolkClosure ? (JolkClosure) obj : null;
     }
 
+    protected static boolean isReifiedMethod(Object member) {
+        return member instanceof JolkClosure closure && closure.getEnvironment() == null;
+    }
+
+    protected static CallTarget getClosureTarget(Object member) {
+        return member instanceof JolkClosure closure ? closure.getCallTarget() : null;
+    }
+
     // --- End of Helper methods ---
 
     @Specialization(guards = {"isNothing(receiver)", "!isControlFlow(selector)", "!isClosureCatch(selector)"})
@@ -657,11 +665,39 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
         // IDENTITY GUARD: We must verify the member is not Jolk's Nothing identity.
         // The registry uses Nothing as a placeholder for unhydrated or missing members.
         // Attempting to execute Nothing as a method triggers the UnsupportedTypeException.
+        return doClosureInvoke(frame, receiver, selector, arguments, cachedMember, interop);
+    }
+
+    @Specialization(guards = {
+        "selector == cachedSelector",
+        "isReifiedMethod(cachedMember)"
+    }, limit = "3")
+    protected Object doLongClosureDirect(Number receiver, String selector, Object[] arguments,
+                                         @Cached("selector") String cachedSelector,
+                                         @Cached("lookupLongMember(cachedSelector)") Object cachedMember,
+                                         @Cached("getClosureTarget(cachedMember)") CallTarget target,
+                                         @Cached("create(target)") DirectCallNode callNode) {
+        if (arguments.length == 0) return lift(callNode.call(receiver));
+        if (arguments.length == 1) return lift(callNode.call(receiver, arguments[0]));
+        Object[] args = new Object[arguments.length + 1];
+        args[0] = receiver;
+        System.arraycopy(arguments, 0, args, 1, arguments.length);
+        return lift(callNode.call((Object)args));
+    }
+
+    private Object doClosureInvoke(VirtualFrame frame, Number receiver, String selector, Object[] arguments, Object cachedMember, InteropLibrary interop) {
+        if (cachedMember instanceof JolkClosure closure && closure.getEnvironment() == null) {
+            // REIFIED METHOD FAST-PATH: Use DirectCallNode to enable inlining.
+            // We use the uncached IndirectCallNode as a safe fallback here, but the 
+            // specialized doLongClosureDirect (below) would be the actual hot path.
+            Object[] args = new Object[arguments.length + 1];
+            args[0] = receiver;
+            System.arraycopy(arguments, 0, args, 1, arguments.length);
+            return lift(IndirectCallNode.getUncached().call(closure.getCallTarget(), args));
+        }
+
         if (cachedMember != null && !isNothing(cachedMember) && interop.isExecutable(cachedMember)) {
             try {
-                // Reconcile calling convention: 
-                // Built-ins expect [Self, ...Args]
-                // Closures expect [Env, Self, ...Args]
                 Object[] args = prepareArguments(cachedMember, receiver, arguments);
                 return lift(interop.execute(cachedMember, args));
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {

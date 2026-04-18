@@ -25,7 +25,7 @@ public class JolkClosureNode extends JolkNode {
     // This node's role is to create the JolkClosure instance with the correct CallTarget and environment.
     @Override
     public Object executeGeneric(com.oracle.truffle.api.frame.VirtualFrame frame) {
-        MaterializedFrame materializedFrame = (frame != null) ? frame.materialize() : null;
-        return new JolkClosure(callTarget, materializedFrame);
+        MaterializedFrame environment = (frame != null) ? frame.materialize() : null;
+        return new JolkClosure(callTarget, environment);
     }
 }

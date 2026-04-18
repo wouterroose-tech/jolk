@@ -1484,7 +1484,7 @@ Jolk offers a "Syntax Minimum" of keywords, drastically reducing the cognitive l
 *Under Construction*
 *The initial approach envisioned a direct bytecode compiler targeting .class files; however, preliminary experimentation indicated prohibitive engineering complexity and significant feasibility constraints. Consequently, the strategy shifted to the current Truffle framework implementation, which provides a more effective alignment with the Jolk language design.*
 
-The Tolk Project is the engineering framework for implementing Jolk on the JVM. It is composed of three primary pillars: the Jolk specification, which defines the formal grammar for fluid method chaining and strict type-safety; `jolk.lang`, the kernel library containing the core identities and intrinsic primitives necessary for branching, iteration, error recovery, and structural concurrency, while serving as the bridge to the Java ecosystem; and the Tolk Engine. The selection of the Truffle framework is a strategic architectural decision to reconcile Jolk’s dynamic message-passing semantics with industrial-grade performance. This enables the engine to perform *Semantic Flattening*, collapsing high-level abstractions into optimized machine code through dynamic node specialization. While Jolk provides the high-level message-oriented syntax, Tolk ensures that complex logic, concurrent execution, and **shim-less** Java interoperability are specialised for peak performance within the GraalVM runtime.
+The Tolk Project is the engineering framework for implementing Jolk on the JVM. It is composed of three primary pillars: the Jolk specification, which defines the formal grammar for fluid method chaining and strict type-safety; `jolk.lang`, the kernel library containing the core identities and intrinsic primitives necessary for branching, iteration, error recovery, and structural concurrency, while serving as the bridge to the Java ecosystem; and the Tolk Engine. The selection of the Truffle framework[20] is a strategic architectural decision to reconcile Jolk’s dynamic message-passing semantics with industrial-grade performance. This enables the engine to perform *Semantic Flattening*, collapsing high-level abstractions into optimized machine code through dynamic node specialization. While Jolk provides the high-level message-oriented syntax, Tolk ensures that complex logic, concurrent execution, and **shim-less** Java interoperability are specialised for peak performance within the GraalVM runtime.
 
 ## Implementation
 
@@ -1502,33 +1502,34 @@ The Tolk Parser facilitates the transition from raw source code to a structured 
 
 ### Kernel Types
 
+**Identity Erasure:** The engine applies Identity Erasure to prevent boxing overhead for primitives. Primitive Identities are integrated into the AST through *Type Specialisation*, a process that enables the framework to bypass traditional object boxing and execute logic at hardware speeds. The *Numeric Identity* is implemented via specialised nodes (e.g., `JolkLongExtension`) that operate directly on Java primitives such as `long`. Through *Node Rewriting* (specifically realized in `tolk.nodes.JolkDispatchNode.doLong` and `doBoolean`), the engine replaces generic dispatch nodes with these specialised variants when type stability is detected, effectively collapsing the messaging exchange into substrate-native scalar operations. During this process, the engine strips away the object headers and identity metadata to emit raw 64-bit hardware instructions.
+
+Similarly, the *String Identity* is projected as an irreducible leaf node within the AST. By leveraging `TruffleString`, the implementation ensures the immutable state of literal data and facilitates memory-efficient deduplication across the *unified communicative field*. This allows the engine to treat text not as a heavy-weight heap object, but as a specialized primitive identity that maintains full compatibility with the host JVM's `java.lang.String` through automated lifting and lowering at the metaboundary.
+
 ### Semantic Flattening
-
-Semantic Flattening represents the architectural bridge where the messaging protocol meets the constraints of the JVM. While Jolk mandates a pure, late-bound message-passing model, the Tolk Engine ensures that this abstraction does not incur the historical "performance tax" of dynamic languages. This is achieved through a synthesis of several established research paradigms, recontextualised as a core engine capability.
-
-The foundations of this process trace back to the *Self Language (1989)*[13], which pioneered "Maps" (the conceptual predecessor to Truffle Shapes) to flatten object dispatch. Tolk evolves this by utilizing the *Truffle framework's* implementation of *Partial Evaluation*—the mathematical realization of the Futamura Projections. By taking the generic Jolk interpreter and the specific execution path of a Jolk source file, the engine "collapses" the high-level AST into specialized, optimized machine code.
-
-Within the Jolk context, Semantic Flattening is expressed through these mechanisms:
+This is the mechanical process of collapsing high-level messaging protocols into optimized machine code. The foundations of this process trace back to the *Self Language (1989)*[13], which pioneered "Maps" (the conceptual predecessor to Truffle Shapes) to flatten object dispatch. Tolk evolves this by utilizing the *Truffle framework's* implementation of *Partial Evaluation*—the mathematical realization of the Futamura Projections. By taking the generic Jolk interpreter and the specific execution path of a Jolk source file, the engine "collapses" the high-level AST into specialized instructions through the following mechanisms:
 
 **Late Flattening and Registry Hydration:** In the `JolkMetaClass` implementation, the engine avoids the overhead of recursive hierarchy walks during message dispatch. Through the `ensureHydrated()` protocol, complex inheritance trees are collapsed into a consolidated, flattened registry. This transforms what would traditionally be a costly search into an $O(1)$ lookup. By deferring this hydration until the first message is sent, the engine resolves forward references and dynamic extensions without sacrificing runtime density.
 
-**Identity Erasure:** While the developer interacts with `Long` and `Boolean` as first-class message recipients, the engine applies *Identity Erasure* to prevent boxing overhead. During the specialization of nodes like `JolkLongExtension`, the engine strips away the object identity, emitting raw 64-bit hardware instructions for arithmetic and logic while preserving the semantic "object-ness" of the source code.
+**Instructional Projection (Field Access):** Because Jolk enforces a strict "Lexical Fence" where fields are never accessed directly, the `doShapeRead` specialization in `JolkDispatchNode` caches the Truffle `Shape` and the specific `Property` offset for a given selector. During partial evaluation, this dynamic lookup is "boiled away," collapsing a message (e.g., `user #name`) into a raw machine-code memory offset load or store.
 
-**Logical Gate Flattening:** The engine identifies sequential message-passing patterns—such as Boolean ternary chains (`? :`) and `#case` sequences—as "Logic Idioms." This optimization is primarily orchestrated within the `JolkDispatchNode`, specifically the `doControlFlow` specialization. Instead of executing branches as distinct, late-bound message sends, the engine utilizes a shared call node to provide the Graal JIT with the necessary context to inline all possible execution paths. Within the implementation of `JolkDispatchNode.doControlFlow`, the logic handles the ternary `? :` by picking a closure and calling it; because it uses the `@Shared("callNode")`, Graal is already encouraged to inline both branches. This collapses the entire chain into optimized hardware branch instructions or JVM switch opcodes (e.g., `tableswitch`), transforming the "Gate" from a dynamic dispatch into a deterministic jump and ensuring that Jolk's fluid branching achieves parity with procedural logic.
+**Logical Gate Flattening:** This optimization is orchestrated within the `doControlFlow` specialization of `JolkDispatchNode`. By utilizing a `@Shared("callNode")`, the engine provides the Graal JIT with the context to inline multiple execution branches (such as `? :` ternary chains). This collapses the dynamic message sends into optimized hardware branch instructions or JVM `tableswitch` opcodes.
 
-**Functional Flow Flattening:** represents the architectural unification of all iterative and transformational patterns—ranging from basic loops (`#times`, `#while`) to stream pipelines (`#map`, `#filter`). By treating these interactions as a continuous flow, the engine utilizes **Loop Fusion** to collapse high-level functional abstractions into a single-pass machine loop. The current implementation of `doMap`, `doFilter`, and `doTimes` in `JolkDispatchNode` is specifically laid out to support this optimization; by utilizing `@Shared("callNode") @Cached IndirectCallNode callNode`, the engine provides the exact "hooks" Graal needs to inline the closures and begin the Partial Escape Analysis (PEA) that results in zero-overhead execution.
+**Functional Flow Flattening:** The engine utilizes **Loop Fusion** to collapse iterative patterns (e.g., `#times`, `#map`, `#filter`) into single-pass machine loops. The implementation of these nodes in `JolkDispatchNode` uses `@Cached IndirectCallNode` to allow Graal to inline closure bodies directly into the loop, enabling **Partial Escape Analysis (PEA)** to elide intermediate collection allocations.
 
-**Monadic Flow Flattening:** One of the more sophisticated expressions of this architecture is found in the management of *null-reference instability*. In Jolk, the absence of a value is not handled through procedural null-checks, but through the `Match<T>` container. Under standard execution, such a container would require heap allocation; however, the Tolk Engine performs *Monadic Flow Flattening*. This optimization is primarily orchestrated within the `JolkDispatchNode`, where specialization "hints" allow the Graal JIT to utilize *Partial Escape Analysis (PEA)* to recognize the logical pattern of the match and physically remove the object from the final machine-code representation. The result is a zero-cost abstraction where the logic of the match remains high-level, but the execution is reduced to raw hardware branch instructions.
+**Monadic Flow Flattening:** Management of null-reference instability via the `Match<T>` container is optimized through **Partial Escape Analysis (PEA)**. The JIT identifies the logical pattern of the match and physically removes the container object from the machine-code representation, reducing the abstraction to zero-cost hardware branches.
 
-Semantic Flattening is a synthesis of industrial-grade engineering and academic dynamic-language research. It allows Jolk to maintain its message-passing purity—treating keywords and operators as first-class signals—while achieving the execution density required for enterprise environments.
+Through these specializations, the Tolk Engine resolves dynamic protocols into static hardware instructions, ensuring performance parity with procedural JVM languages while maintaining a pure message-passing model.
 
 ### Creation Methods
 
 ### The Self-Return Contract
+*   **Self-Return Contract**: Property setters inherently return the receiver to enable fluid message chaining at the machine level.
 
 ### The Reified Block and the Architecture of Closure Projection
 
 ### Interoperability and the Reification of Nothing
+*   **Identity Restitution**: `doShapeRead` ensures that if a substrate value is `null`, it is automatically "lifted" into the `Nothing` identity before returning to the guest language.
 
 ### Exception Handling
 
@@ -1543,6 +1544,8 @@ Semantic Flattening is a synthesis of industrial-grade engineering and academic 
 ### Extension
 
 ### Lifecycle and Integrity
+
+## Experimental Evaluation
 
 ## Engineered Integrity: A Future-Proof JVM Synthesis
 
@@ -1588,6 +1591,8 @@ Semantic Flattening is a synthesis of industrial-grade engineering and academic 
 
 [19]: Chiusano, P.; Bjarnason, R. (2014). Functional Programming in Scala. Manning Publications. ISBN: 978-1-617-29065-7. (The "Red Book": Defining the monadic data-flow patterns evolved by the Jolk Match protocol).
 
+[20]: Oracle. Truffle Language Implementation Framework. GraalVM Documentation. ([https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework](https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework))
+
 ---
 
 # Glossary of terms
@@ -1616,7 +1621,8 @@ The terminology and recontextualized concepts of the Jolk language:
 **Semantic Casing**: A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  
 **Semantic Flattening**: The process where the Tolk Engine utilizes dynamic node specialization to collapse high-level message-passing abstractions and "Logic Idioms" into optimized machine code, effectively eliminating dispatch overhead during GraalVM partial evaluation.  
 **Silent Absorption**: The protocol where the `Nothing` identity consumes an incoming message and returns itself, allowing message chains to collapse gracefully without error.  
-**Substrate**: Substrate VM is an Oracle internal project name for the technology behind GraalVM Native Image.  
+**Substrate**: Substrate VM is an Oracle internal project name for the technology behind GraalVM Native Image. 
+**Type Specialisation**: The mechanical process where the Truffle DSL replaces generic execution nodes with variants optimized for specific substrate types (e.g., Java `long` or `boolean`). It serves as the functional basis for **Identity Erasure**, enabling the engine to bypass boxing and execute at hardware speeds.  
 
 ---
 

@@ -1,11 +1,12 @@
 package demo.validation.domain;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class PersonTest {
 
     @Test
+    @Disabled
     public void testPersonCreation() {
         // You are testing the Java class generated from Person.jolk
         /*
@@ -18,6 +19,7 @@ public class PersonTest {
     }
 
     @Test
+    @Disabled
     public void testPersonCanonicalCreation() {
         // You are testing the Java class generated from Person.jolk
         /*

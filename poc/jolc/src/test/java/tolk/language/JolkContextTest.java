@@ -7,8 +7,6 @@ import tolk.runtime.JolkMetaClass;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import org.junit.jupiter.api.Disabled;
-
 ///
 /// Verifies the behavior of the Jolk execution context. These tests ensure that
 /// state is correctly maintained across multiple evaluations within the same

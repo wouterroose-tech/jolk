@@ -1,11 +1,12 @@
 package demo.validation.domain;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class ContactFormTest {
 
     @Test
+    @Disabled
     public void testContactFormCreation() {
         /*
         Person p = new Person(1, "FirstName", "LastName");

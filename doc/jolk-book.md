@@ -321,7 +321,7 @@ In Jolk, Self (PascalCase) serves as a dynamic reference to the current type def
 
 Jolk enforces a rigorous semantic model designed to protect the Metaboundary—the absolute line between an object’s internal state and the external message-passing environment. This shift ensures that system stability and security are inherent properties of the language rather than secondary considerations.
 
-Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "backdoor" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Rather than focusing on the mutation of static structures, Jolk concentrates on the "Ma"—the interstitial space where communication occurs. In this model, computation is viewed as a deterministic emergent protocol rather than a set of mutable definitions. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
+Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "backdoor" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Jolk prioritises message-oriented interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential Metaboundary where the "Ma" or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic emergent protocol rather than a set of mutable definitions. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
 
 ### Meta-Directives
 
@@ -345,7 +345,7 @@ Computation in Jolk transcends rigid procedural calls to become a Protocol-Drive
 
 The JoMoo (/ˈdʒoʊˌmoʊ/ Jolk Message-Oriented Object) serves as the primary manifestation of the language's core axioms, defined as a coordinate in the message substrate that prioritises communication over internal properties. This paradigm achieves Archetypal Rigidity by harmonising diverse structures under a single, consistent messaging protocol. Within this model, every entity is an Archetype adhering to uniform lifecycle and messaging rules. 
 
-JoMoos enforce a rigorous Metaboundary that ensures absolute field privacy, meaning an object's internal state is never directly accessible from the outside. All state interaction is restricted to synthesised selectors, preserving encapsulation and rendering intrusive reflection a semantic impossibility to prevent external agents from bypassing the defined protocol.
+Jolk enforce a rigorous Metaboundary that ensures absolute field privacy, meaning an object's internal state is never directly accessible from the outside. All state interaction is restricted to synthesised selectors, preserving encapsulation and rendering intrusive reflection a semantic impossibility to prevent external agents from bypassing the defined protocol.
 
 Every interaction, from arithmetic to object instantiation, follows a formal *Receiver \#Message* pattern. Rather than traditional construction, a JoMoo is synthesised as a complete fact via the canonical `#new` message.
 
@@ -1070,7 +1070,7 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 *Local Retention*: A strict encapsulation principle that restricts the assignment operator to local identifiers within an object's internal context.
 
-*The "Ma" Principle (Interstitial Communication)*: A philosophy prioritizing the communication protocols between objects over their internal properties.
+*Metaboundary*: Prioritizing the communication protocols between objects over their internal properties.
 
 *Non-Local Returns*: The ability of a closure to command its defining method to finish immediately, even across different stack frames.
 
@@ -1611,8 +1611,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **JIT-DI (Just-In-Time Dependency Injection)**: A grammar-integrated pattern where dependencies are resolved as machine-code constants during the JIT phase, rendering reflection-heavy runtime containers redundant.  
 **JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a  message coordinate in an interstitial communicative field rather than a passive data container.  
 **Lexical Fence**: An absolute structural boundary (conducted via terminals like `^ field`) that prohibits direct field access and enforces message-only interaction.  
-**Ma**: Inspired by the Japanese concept referring to the "interstitial space" or the communication protocols between objects rather than their internal properties.
-** Metaboundary **:
+** Metaboundary **: The absolute line separating an object's internal state from the external message-passing environment, enforcing strict local retention and rendering intrusive reflection a semantic impossibility.
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.
 **Monadic Flow Flattening**: An architectural optimization where the Tolk Engine recognizes monadic patterns (such as the `Match<T>` container) and elides the physical object allocation during partial evaluation, reducing the logic to zero-cost machine instructions.
 **Nominalised Precision**: The requirement to use nouns and architectural outcomes over procedural verbs to ensure the "Security of Meaning" across the codebase.  

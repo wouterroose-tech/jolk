@@ -28,10 +28,17 @@ import java.util.Set;
 /// Represents a Jolk Type (a meta-object) at runtime. It acts as the first-class identity 
 /// for Classes, Records, and Enums.
 /// 
-/// As the primary engine for **Dual-Stratum Resolution**, it manages the **Consolidated 
-/// Flattened Registry**. It facilitates **Virtual Static Dispatch**, enabling class-level 
-/// behaviors to participate in a rigorous inheritance model, effectively treating every 
-/// Type as a live Identity within the **JoMoo** continuum.
+/// As the primary engine for **Dual-Stratum Resolution**, it manages the **Consolidated
+/// Flattened Registry**. It facilitates **Virtual Static Dispatch**, enabling class-level
+/// behaviors to participate in a rigorous inheritance model.
+///
+/// By enforcing the **Metaboundary** during the **Late Flattening** process, this class
+/// ensures that internal state is shielded by a **Lexical Fence**. This architecture
+/// renders **intrusive reflection a semantic impossibility**; there are no guest-level
+/// primitives capable of bypassing the defined protocol to interrogate the object's 
+/// structural "Black Box."
+///
+/// Every Type is treated as a live Identity within the **JoMoo** continuum.
 /// 
 /// @author Wouter Roose
 @ExportLibrary(InteropLibrary.class)

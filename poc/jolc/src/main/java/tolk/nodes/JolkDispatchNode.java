@@ -39,9 +39,14 @@ import tolk.runtime.JolkIntrinsicProtocol;
 
 /// # JolkDispatchNode (The Message Gateway)
 ///
-/// Responsible for executing the **JoMoo Dispatch** logic. It acts as the 
-/// primary gateway between the Jolk AST and object behavior, ensuring every 
+/// Responsible for executing the **JoMoo Dispatch** logic. It acts as the
+/// primary gateway between the Jolk AST and object behavior, ensuring every
 /// interaction remains a formal message send.
+///
+/// This node acts as the terminal enforcer of the **Metaboundary**. Because it
+/// only resolves messages defined in the **Flattened Registry**, it provides
+/// the mechanical foundation for making **intrusive reflection a semantic 
+/// impossibility** within the guest language environment.
 ///
 /// This node implements the engine's **Instructional Projection** by mapping 
 /// intrinsic selectors directly to optimized machine-code paths during 

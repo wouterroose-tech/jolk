@@ -148,9 +148,14 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     protected Object doNothing(VirtualFrame frame, Object receiver, String selector, Object[] arguments, 
                                 @CachedLibrary("getNothing()") InteropLibrary interop) {
         try {
-            // Identity Restitution Protocol: For messages not handled by intrinsics, 
-            // Nothing absorbs the message by returning itself. We delegate to the 
-            // instance via Interop to allow for guest-level extensibility.
+            // ### Safe Navigation (Silent Absorption)
+            //
+            // Implements the **Safe Navigation** protocol. In Jolk, safe navigation 
+            // is an inherent property of the Nothing identity rather than a 
+            // syntactic operator. For messages not handled by intrinsics, 
+            // Nothing absorbs the message by returning 
+            // itself, allowing the communicative flow to continue without 
+            // executing logic on an absent state.
             return lift(interop.invokeMember(JolkNothing.INSTANCE, selector, arguments));
         } catch (JolkReturnException e) {
             throw e;
@@ -162,7 +167,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                 // Fallback to host member heuristic for Nothing
                 return lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
             } catch (UnknownIdentifierException ex) {
-                // SILENT ABSORPTION: As per the Jolk philosophy, Nothing consumes unknown 
+                // SAFE NAVIGATION: As per the Jolk philosophy, Nothing consumes unknown 
                 // messages and returns itself to allow message chains to collapse gracefully.
                 return JolkNothing.INSTANCE;
             }
@@ -849,7 +854,7 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
                         // Identity Restitution: Fallback to host member heuristic for Nothing
                         return lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
                     } catch (UnknownIdentifierException ex) {
-                        // SILENT ABSORPTION: Gracefully collapse the message chain.
+                        // SAFE NAVIGATION: Gracefully collapse the message chain.
                         return JolkNothing.INSTANCE;
                     }
                 }

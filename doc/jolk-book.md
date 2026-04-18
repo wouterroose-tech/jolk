@@ -285,6 +285,8 @@ The Jolk type system defines a messaging protocol layer expressed through Java g
 
 Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[6], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the Identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
 
+**Identity Congruence** Identity Congruence is the foundational architectural mandate of the Jolk framework that ensures a singular logical representation for all entities—including complex objects, primitives, and the absence of value—regardless of their physical storage format. It establishes a mathematical alignment between the abstract identity defined by the programmer in the "Manuscript" and the physical representation chosen by the machine in the "Substrate".
+
 **Intrinsic Primitives** like `Boolean`, `Long` and `String`- are first-class identities that participate in the messaging protocol.
 
 **The Reification of Absence**: The traditional `null` pointer is replaced by a formal identity. In Jolk, the absence of a value—represented by the reserved literal `null`—is a singleton instance of the `Nothing` class. By reifying nothingness as a first-class object, Jolk ensures that every identity remains a valid receiver, shifting failures from opaque runtime crashes to predictable semantic responses.
@@ -865,7 +867,9 @@ Jolk transitions Booleans from binary primitives into Identities of Choice, reif
 
 The *Nullity Identity* reifies the null pointer into `Nothing`—a first-class identity represented by the reserved literal `null`. It constitutes the terminal state of the messaging exchange, implementing a structural Null Object Pattern[12]. As the meta-aware singleton, it serves as the default state for all uninitialised references. By transforming a hardware-level void into an identity, Jolk ensures every reference can receive messages, shifting failures from opaque runtime crashes to semantic, manageable MessageNotUnderstood errors.
 
-The Nothing identity enables Fluid Message Chaining via integrated safe navigation. This "Neutral Response" model allows logic to flow seamlessly through missing values, preserving Jolk's expressive messaging architecture without the overhead of wrappers or the lexical clutter of defensive null-checks. Jolk facilitates Silent Absorption—a protocol within the message-dispatch cycle that neutralises subsequent operations without execution or structural failure. This mechanism of *Deterministic Omission* designates the absence of a factual result as a predictable signal, forcing the acknowledgement of undefined state. This identity-fencing preserves the object-oriented contract where the transition to a terminal state remains a stable outcome.
+The Nothing identity enables fluid message chaining via integrated *Safe Navigation*. By consuming an incoming message and returning itself, `Nothing` allows chains to collapse gracefully without defensive branching. This neutral response model preserves the messaging architecture without the overhead of wrappers or the lexical clutter of null-checks. Jolk facilitates this through a protocol within the dispatch cycle that neutralises subsequent operations, designating the absence of a result as a predictable signal that forces the acknowledgement of an undefined state.
+
+This identity-fencing preserves the object-oriented contract where the transition to a terminal state remains a stable outcome.
 
 **Primitive Identities**
 
@@ -1070,7 +1074,7 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 *Local Retention*: A strict encapsulation principle that restricts the assignment operator to local identifiers within an object's internal context.
 
-*Metaboundary*: Prioritizing the communication protocols between objects over their internal properties.
+*Metaboundary*: The enforcement of receiver-centric interaction, prioritizing communication protocols over internal properties to ensure state isolation.
 
 *Non-Local Returns*: The ability of a closure to command its defining method to finish immediately, even across different stack frames.
 
@@ -1396,7 +1400,7 @@ The defining characteristic of the JoMoo Pivot is *Automatic Identity Reversion*
 		#subject [ f -> f #email ] #add(Email #new) // Pivot -> Fulfilment -> Reversion
 		#add(NextConstraint #new)                   // Automatic Sovereign Recovery
 
-The Pivot Pattern adheres to *Nominalised Precision* by ensuring every message has a singular, absolute responsibility:
+The Pivot Pattern ensures that every message has a singular, absolute responsibility:
 * *Identity Transformation*: The `#subject` selector creates the "Lens."
 * *Identity Binding*: The `#add` message on the Requirement fulfills the intent.
 
@@ -1486,6 +1490,10 @@ Jolk offers a "Syntax Minimum" of keywords, drastically reducing the cognitive l
 
 The Tolk Project is the engineering framework for implementing Jolk on the JVM. It is composed of three primary pillars: the Jolk specification, which defines the formal grammar for fluid method chaining and strict type-safety; `jolk.lang`, the kernel library containing the core identities and intrinsic primitives necessary for branching, iteration, error recovery, and structural concurrency, while serving as the bridge to the Java ecosystem; and the Tolk Engine. The selection of the Truffle framework[20] is a strategic architectural decision to reconcile Jolk’s dynamic message-passing semantics with industrial-grade performance. This enables the engine to perform *Semantic Flattening*, collapsing high-level abstractions into optimized machine code through dynamic node specialization. While Jolk provides the high-level message-oriented syntax, Tolk ensures that complex logic, concurrent execution, and **shim-less** Java interoperability are specialised for peak performance within the GraalVM runtime.
 
+The implementation of the *Jolk Messaging Protocol* is operationalised through the *Truffle DSL*, where the *Sparse Type System* is realised as a specialised *Abstract Syntax Tree (AST)*. Within this architecture, every identity exists as a node in a dynamic, self-optimising graph. The *Universal Root Identity* is reified as the base `JolkNode`, providing the foundational infrastructure for the *Intrinsic Object protocol*. This base node enforces a unified dispatch interface across the entire graph, utilizing `@Specialization` annotations to map Jolk message selectors to executable logic. By rooting all entities in this single base class, the execution engine maintains *Identity Congruence*, treating native structures and coalesced external objects as uniform participants within the messaging exchange.
+
+The *Semantic Overlay* is manifested through the use of CallTarget objects, which represent the projection of Jolk protocols onto the substrate. When a message is dispatched, the AST performs a lookup to resolve the appropriate logic, facilitating the structural absorption of external code via method handles. As the execution graph stabilises, the Graal Compiler inlines these call targets to erase the overhead of the object boundary. This transition turns the messaging continuum into a high-density execution trace, ensuring that the *Sparse Type System* remains a high-performance machine state rather than a mere logical abstraction.
+
 ## Implementation
 
 ## Tolk Parser
@@ -1502,9 +1510,13 @@ The Tolk Parser facilitates the transition from raw source code to a structured 
 
 ### Kernel Types
 
-**Identity Erasure:** The engine applies Identity Erasure to prevent boxing overhead for primitives. Primitive Identities are integrated into the AST through *Type Specialisation*, a process that enables the framework to bypass traditional object boxing and execute logic at hardware speeds. The *Numeric Identity* is implemented via specialised nodes (e.g., `JolkLongExtension`) that operate directly on Java primitives such as `long`. Through *Node Rewriting* (specifically realized in `tolk.nodes.JolkDispatchNode.doLong` and `doBoolean`), the engine replaces generic dispatch nodes with these specialised variants when type stability is detected, effectively collapsing the messaging exchange into substrate-native scalar operations. During this process, the engine strips away the object headers and identity metadata to emit raw 64-bit hardware instructions.
+**Primitive Identities:** The engine applies *Identity Erasure* to prevent boxing overhead for primitives. Primitive Identities are integrated into the AST through *Type Specialisation*, a process that enables the framework to bypass traditional object boxing and execute logic at hardware speeds. The *Numeric Identity* is implemented via specialised nodes (e.g., `JolkLongExtension`) that operate directly on Java primitives such as `long`. Through *Node Rewriting* (specifically realized in `tolk.nodes.JolkDispatchNode.doLong` and `doBoolean`), the engine replaces generic dispatch nodes with these specialised variants when type stability is detected, effectively collapsing the messaging exchange into substrate-native scalar operations. During this process, the engine strips away the object headers and identity metadata to emit raw 64-bit hardware instructions.
 
-Similarly, the *String Identity* is projected as an irreducible leaf node within the AST. By leveraging `TruffleString`, the implementation ensures the immutable state of literal data and facilitates memory-efficient deduplication across the *unified communicative field*. This allows the engine to treat text not as a heavy-weight heap object, but as a specialized primitive identity that maintains full compatibility with the host JVM's `java.lang.String` through automated lifting and lowering at the metaboundary.
+**String Identity:** The String Identity is reified through Truffle type specialisation as an irreducible leaf node within the AST. By leveraging `TruffleString`, the implementation ensures the immutable state of literal data and facilitates memory-efficient deduplication across the *unified communicative field*. This transformation is mechanically operationalised within the `tolk.nodes.JolkDispatchNode` through two distinct specialisations:
+*   `doTruffleString`: Serves as the high-performance fast path for guest operations, performing instructional projection for messages such as `#length` and `#isEmpty` to bypass substrate overhead while prioritizing Jolk-native extensions.
+*   `doJavaString`: Manages the metaboundary by intercepting raw `java.lang.String` instances and applying Identity Restitution to lift them into the optimized `TruffleString` identity.
+
+This architecture allows the engine to treat text as a specialized primitive rather than a heavy-weight heap object, maintaining full compatibility with the host JVM through automated lifting and lowering.
 
 ### Semantic Flattening
 This is the mechanical process of collapsing high-level messaging protocols into optimized machine code. The foundations of this process trace back to the *Self Language (1989)*[13], which pioneered "Maps" (the conceptual predecessor to Truffle Shapes) to flatten object dispatch. Tolk evolves this by utilizing the *Truffle framework's* implementation of *Partial Evaluation*—the mathematical realization of the Futamura Projections. By taking the generic Jolk interpreter and the specific execution path of a Jolk source file, the engine "collapses" the high-level AST into specialized instructions through the following mechanisms:
@@ -1524,7 +1536,7 @@ Through these specializations, the Tolk Engine resolves dynamic protocols into s
 ### Creation Methods
 
 ### The Self-Return Contract
-*   **Self-Return Contract**: Property setters inherently return the receiver to enable fluid message chaining at the machine level.
+*   Property setters inherently return the receiver to enable fluid message chaining at the machine level.
 
 ### The Reified Block and the Architecture of Closure Projection
 
@@ -1601,7 +1613,6 @@ The terminology and recontextualized concepts of the Jolk language:
 **Archetype**: A structural template (`class`, `record`, `enum`, `value` or `protocol`) that defines the nature of an identity, harmonized under a single, consistent messaging protocol.  
 **Atomic Identity**: A terminal, first-class identity (such as `true`, `false`, `Nothing`or Value Objects) that participates in the messaging protocol as a recipient rather than a primitive literal.  
 **Contextual Encapsulation**: The principle that an identity’s visibility is an inherent property of its functional role; methods default to public (external), while state fields default to private (internal).  
-**Deterministic Omission**: The mechanism where the absence of a factual result is treated as a predictable signal, allowing the engine to prune execution branches without triggering structural failure.  
 **Fluid Messaging**: A keyword-less computational model where logic and arithmetic are implemented as formal message sends rather than hardcoded procedural keywords.  
 **Guided Coercion**: The active, type-aware alignment of differing numerical identities to a common protocol, requiring explicit guidance (e.g., `#asInt`) for any lossy transition.  
 **Identity Congruence**: The singular logical representation for all entities—including complex objects, primitives, and absence—by aligning the abstract identity defined in the source code with the physical representation of the substrate.
@@ -1611,17 +1622,15 @@ The terminology and recontextualized concepts of the Jolk language:
 **JIT-DI (Just-In-Time Dependency Injection)**: A grammar-integrated pattern where dependencies are resolved as machine-code constants during the JIT phase, rendering reflection-heavy runtime containers redundant.  
 **JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a  message coordinate in an interstitial communicative field rather than a passive data container.  
 **Lexical Fence**: An absolute structural boundary (conducted via terminals like `^ field`) that prohibits direct field access and enforces message-only interaction.  
-** Metaboundary **: The absolute line separating an object's internal state from the external message-passing environment, enforcing strict local retention and rendering intrusive reflection a semantic impossibility.
+**Metaboundary**: The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*, rendering intrusive reflection a semantic impossibility by ensuring the guest language has no primitives capable of bypassing the defined protocol.
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.
-**Monadic Flow Flattening**: An architectural optimization where the Tolk Engine recognizes monadic patterns (such as the `Match<T>` container) and elides the physical object allocation during partial evaluation, reducing the logic to zero-cost machine instructions.
-**Nominalised Precision**: The requirement to use nouns and architectural outcomes over procedural verbs to ensure the "Security of Meaning" across the codebase.  
+**Monadic Flow Flattening**: An architectural optimization where the Tolk Engine recognizes monadic patterns (such as the `Match<T>` container) and elides the physical object allocation during partial evaluation, reducing the logic to zero-cost machine instructions. 
 **Nothing**: A reified, first-class Atomic Identity representing the fact of absence and referred to by the reserved object identifier `null`.  
 **Receiver Retention**: A metaboundary protocol using JVM `DUP` instructions to ensure the receiver (`self`) is returned for chaining after interacting with Java `void` methods.  
 **Semantic Casing**: A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  
 **Semantic Flattening**: The process where the Tolk Engine utilizes dynamic node specialization to collapse high-level message-passing abstractions and "Logic Idioms" into optimized machine code, effectively eliminating dispatch overhead during GraalVM partial evaluation.  
-**Silent Absorption**: The protocol where the `Nothing` identity consumes an incoming message and returns itself, allowing message chains to collapse gracefully without error.  
 **Substrate**: Substrate VM is an Oracle internal project name for the technology behind GraalVM Native Image. 
-**Type Specialisation**: The mechanical process where the Truffle DSL replaces generic execution nodes with variants optimized for specific substrate types (e.g., Java `long` or `boolean`). It serves as the functional basis for **Identity Erasure**, enabling the engine to bypass boxing and execute at hardware speeds.  
+**Type Specialisation**: The mechanical process where the Truffle DSL replaces generic execution nodes with variants optimized for specific substrate types (e.g., Java `long` or `boolean`). It serves as the functional basis for *Identity Erasure*, enabling the engine to bypass boxing and execute at hardware speeds.  
 
 ---
 

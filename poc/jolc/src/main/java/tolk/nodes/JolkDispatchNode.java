@@ -573,7 +573,9 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
     /// ### Fast Path for Longs
     ///
     /// Implements **Identity Erasure** through **Type Specialisation**. By 
-    /// operating directly on raw Java primitives, the engine bypasses 
+    /// leveraging the Truffle {@code @TypeSystem} structural foundation, the 
+    /// engine performs type-guarded dispatch on raw Java primitives. By 
+    /// Java primitives within this specialized branch, the engine bypasses 
     /// traditional object boxing. Through **Node Rewriting**, the generic 
     /// dispatch is replaced by this specialized variant when type stability 
     /// is detected, collapsing the messaging exchange into substrate-native 

@@ -423,6 +423,7 @@ public class JolkDispatchNodeTest extends JolcTestBase {
         };
     }
     
+    @SuppressWarnings("unused")
     private JolkClosure createSupplierClosure(java.util.function.Supplier<Object> supplier) {
         return new JolkClosure(null) {
             @Override

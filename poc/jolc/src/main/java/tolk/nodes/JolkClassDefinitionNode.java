@@ -55,16 +55,23 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * @param metaMembers Map of meta-members (static methods/fields).
      * @param enumConstants List of enum constant names (for ENUM archetype).
      */
-    @SuppressWarnings("unchecked")
-    public JolkClassDefinitionNode(String className, String superclassName, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, ?> instanceMethods, Map<String, ?> instanceFields, Map<String, ?> metaMembers, List<String> enumConstants) {
+    public JolkClassDefinitionNode(String className, 
+                                   String superclassName, 
+                                   JolkFinality finality, 
+                                   JolkVisibility visibility, 
+                                   JolkArchetype archetype, 
+                                   Map<String, List<JolkMethodNode>> instanceMethods, 
+                                   Map<String, JolkFieldNode> instanceFields, 
+                                   Map<String, List<JolkNode>> metaMembers, 
+                                   List<String> enumConstants) {
         this.className = className;
         this.superclassName = superclassName;
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
-        this.instanceMethods = (Map<String, List<JolkMethodNode>>) (Object) instanceMethods;
-        this.instanceFields = (Map<String, JolkFieldNode>) (Object) instanceFields;
-        this.metaMembers = (Map<String, List<JolkNode>>) (Object) metaMembers;
+        this.instanceMethods = instanceMethods;
+        this.instanceFields = instanceFields;
+        this.metaMembers = metaMembers;
         this.enumConstants = enumConstants != null ? enumConstants : new ArrayList<>();
     }
 

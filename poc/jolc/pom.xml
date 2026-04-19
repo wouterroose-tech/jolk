@@ -112,8 +112,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <!-- Suppress warnings from Truffle using internal APIs on modern JDKs -->
-                    <argLine>--add-opens=java.base/sun.misc=ALL-UNNAMED</argLine>
+                    <argLine>
+                        -XX:+UnlockExperimentalVMOptions
+                        -XX:+EnableJVMCI
+                        -Dpolyglot.engine.WarnInterpreterOnly=false
+                        --add-opens=java.base/sun.misc=ALL-UNNAMED
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>

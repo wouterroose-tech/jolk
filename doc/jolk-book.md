@@ -323,7 +323,7 @@ In Jolk, Self (PascalCase) serves as a dynamic reference to the current type def
 
 Jolk enforces a rigorous semantic model designed to protect the Metaboundary—the absolute line between an object’s internal state and the external message-passing environment. This shift ensures that system stability and security are inherent properties of the language rather than secondary considerations.
 
-Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "backdoor" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Jolk prioritises message-oriented interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential Metaboundary where the "Ma" or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic emergent protocol rather than a set of mutable definitions. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
+Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "backdoor" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Jolk prioritises message-oriented interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential *Metaboundary* where the "Ma" or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic emergent protocol rather than a set of mutable definitions. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
 
 ### Meta-Directives
 
@@ -611,7 +611,7 @@ Jolk achieves syntactic uniformity through a pure object-oriented model where op
 
 This architectural choice establishes a "Syntax Minimum" by replacing traditional keywords with polymorphic dispatch. The absence of `if`, `else`, and `while` is compensated by sending selectors like `?`, `:`, and `#while` directly to Boolean singletons or Closures. Similarly, error handling dispenses with try/catch in favour of `#catch` and `#finally` messages sent to closure objects.
 
-The Unified Messaging Model "opens up" the language by transforming fundamental operations into extensible library features. By adhering to the vision that computation is a dynamic flow of polymorphic dispatch messages between autonomous objects, Jolk shifts the focus to the interstitial communication between modules.
+The Unified Messaging Model "opens up" the language by transforming fundamental operations into extensible library features. By adhering to the vision that computation is a dynamic flow of polymorphic dispatch messages between autonomous objects, Jolk shifts the focus to the communication.
 
 This architecture allows the language to remain a minimalist, "growable" system. Because even basic logic and arithmetic are resolved as messages, the language can evolve without requiring compiler modifications, ensuring that new protocols integrate seamlessly into the existing message flow.
 
@@ -1371,12 +1371,12 @@ In the JoMoo model, placing a closure within a parenthetical argument list—suc
 
 In the JoMoo (Jolk Message-Oriented Object) architecture, the *Pivot Pattern* is the primary mechanism for managing hierarchical transitions without compromising the Unified Messaging Syntax. It resolves the "Saturated Message" anti-pattern—where a single selector is forced to accept multiple, disparate arguments (e.g., `#add(Email #new, [ f -> f #email ] )`))—by reifying a context shift into a transitional identity.
 
-The Pivot Pattern allows an identity to temporarily delegate its messaging protocol to a *Subject-Oriented Proxy*. This ensures that the source code remains linear and declarative, avoiding the syntactic noise of nested closures or multi-argument procedural calls. It transforms a command into a choreography. The pattern is composed of four distinct participants that maintain Industrial Sovereignty through role separation:
+The Pivot Pattern allows an identity to temporarily delegate its messaging protocol to a *Subject-Oriented Proxy*. This ensures that the source code remains linear and declarative, avoiding the syntactic noise of nested closures or multi-argument procedural calls. It transforms a command into a choreography. The pattern is composed of four distinct participants:
 
-* *The Sovereign*: The root aggregator maintaining the primary protocol (e.g., `ValidationSuite`).
+* *The Root*: The aggregator maintaining the primary protocol (e.g., `ValidationSuite`).
 * *The Pivot Selector*:  message that initiates the context shift (e.g., `#subject`).
 * *The Requirement*: A transitional interface representing the pending operation (e.g., `ChildRequirement`).
-* *The Bridge*: A package-private implementation that captures context and reverts to the Sovereign.
+* *The Bridge*: A package-private implementation that captures context and reverts to the Root.
 
 The defining characteristic of the JoMoo Pivot is *Automatic Identity Reversion*. Unlike standard fluent APIs that "trap" the user in a sub-context, a Pivot-compliant selector ensures that the terminal message of the chain reverts the focus back to the Sovereign.
 
@@ -1602,9 +1602,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **Identity Congruence**: The singular logical representation for all entities—including complex objects, primitives, and absence—by aligning the abstract identity defined in the source code with the physical representation of the substrate.  
 **Identity Erasure**: A performance strategy where the engine physically strips away object structures and headers at the machine level, replacing them with raw CPU registers or bit-patterns.  
 **Identity Restitution**: A metaboundary protocol that "lifts" raw JVM `null` pointers into the `Nothing` singleton to ensure they can safely receive messages.  
-**Industrial Sovereignty**: The state where a language maintains absolute authority over its execution path and memory layout, ensuring intent is never compromised by the "inference fog" of external frameworks.  
-**JIT-DI (Just-In-Time Dependency Injection)**: A grammar-integrated pattern where dependencies are resolved as machine-code constants during the JIT phase, rendering reflection-heavy runtime containers redundant.  
-**JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a  message coordinate in an interstitial communicative field rather than a passive data container.  
+**JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a message coordinate in a communicative field rather than a passive data container.  
 **Lexical Fence**: An absolute structural boundary (conducted via terminals like `^ field`) that prohibits direct field access and enforces message-only interaction.  
 **Metaboundary**: The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*, rendering intrusive reflection a semantic impossibility by ensuring the guest language has no primitives capable of bypassing the defined protocol.  
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.  

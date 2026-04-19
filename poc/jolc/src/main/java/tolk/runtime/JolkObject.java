@@ -171,7 +171,7 @@ public class JolkObject extends DynamicObject {
         }
 
         // 3. Handle standard intrinsic protocol via the central dispatcher (ObjectExtension).
-        Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
+        Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(null, this, name, arguments, interop);
         if (intrinsicResult != null) {
             return intrinsicResult;
         }

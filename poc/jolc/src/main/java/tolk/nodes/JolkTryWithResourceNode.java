@@ -1,46 +1,53 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Bind;
+import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.library.CachedLibrary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-@NodeInfo(shortName = "tryWithResource")
-public class JolkTryWithResourceNode extends JolkExpressionNode {
+/**
+ * ### JolkTryWithResourceNode
+ * 
+ * Implements the atomic `try-catch` protocol. It manages the lifecycle of a resource 
+ * provider and ensures that the cleanup logic is executed even in the event of 
+ * guest-language exceptions.
+ * 
+ * By utilizing the Truffle DSL, this node supports **Instructional Projection** 
+ * for the internal message dispatch.
+ */
+@NodeInfo(shortName = "try")
+@NodeChild(value = "resourceProviderNode", type = JolkNode.class)
+@NodeChild(value = "logicNode", type = JolkNode.class)
+@NodeChild(value = "catchNode", type = JolkNode.class)
+public abstract class JolkTryWithResourceNode extends JolkExpressionNode {
 
-    @Child private JolkNode resourceProviderNode;
-    @Child private JolkNode logicNode;
-    @Child private JolkNode catchNode;
-    @Child private JolkDispatchNode dispatchNode;
-
-    public JolkTryWithResourceNode(JolkNode resourceProviderNode, JolkNode logicNode, JolkNode catchNode) {
-        this.resourceProviderNode = resourceProviderNode;
-        this.logicNode = logicNode;
-        this.catchNode = catchNode;
-        this.dispatchNode = JolkDispatchNode.create();
-    }
-
-    @Override
-    public Object executeGeneric(VirtualFrame frame) {
-        Object resourceProvider = resourceProviderNode.executeGeneric(frame);
-        Object logic = logicNode.executeGeneric(frame);
-
+    @Specialization
+    protected Object doTry(VirtualFrame frame, Object resourceProviderNode, Object logicNode, Object catchNode,
+                           @Bind("this") Node node,
+                           @Cached(inline = true) JolkDispatchNode dispatchNode,
+                           @CachedLibrary(limit = "3") InteropLibrary interop) {
         try {
-            return dispatchNode.execute(frame, resourceProvider, "try", new Object[]{logic});
+            return dispatchNode.execute(frame, node, resourceProviderNode, "try", new Object[]{logicNode});
         } catch (JolkReturnException e) {
             throw e;
         } catch (Throwable throwable) {
-            if (catchNode != null) {
-                Object handler = catchNode.executeGeneric(frame);
-                try {
-                    return JolkNode.lift(InteropLibrary.getUncached().execute(handler, new Object[]{JolkNode.lift(throwable)}));
-                } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
-                    throw new RuntimeException("Failed to execute catch handler", e);
-                }
+            if (isNothing(catchNode)) {
+                throw throwable;
             }
-            throw throwable;
+            try {
+                // Execute the catch closure handler
+                return JolkNode.lift(interop.execute(catchNode, new Object[]{JolkNode.lift(throwable)}));
+            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                throw new RuntimeException("Failed to execute catch handler", e);
+            }
         }
     }
 }

@@ -74,7 +74,6 @@ public abstract class JolkNode extends Node {
     /// This is used when a Jolk built-in or dispatch needs to operate on the 
     /// raw Java object behind a Truffle host wrapper.
     public final static Object unwrap(Object value) {
-        InteropLibrary interop = InteropLibrary.getUncached();
         try {
             // Impedance Resolution: Use the environment to extract the raw Java object.
             // We catch AssertionError/IllegalStateException to allow this to run 

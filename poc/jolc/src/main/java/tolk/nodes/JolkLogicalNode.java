@@ -1,8 +1,11 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;
@@ -19,13 +22,11 @@ import tolk.runtime.JolkNothing;
 public abstract class JolkLogicalNode extends JolkExpressionNode {
 
     @Child protected JolkNode rightNode;
-    @Child protected JolkDispatchNode dispatchNode;
     protected final String operator;
 
     public JolkLogicalNode(String operator, JolkNode rightNode) {
         this.operator = operator;
         this.rightNode = rightNode;
-        this.dispatchNode = JolkDispatchNode.create();
     }
 
     /**
@@ -33,11 +34,13 @@ public abstract class JolkLogicalNode extends JolkExpressionNode {
      * Only the left operand is a NodeChild; the right is evaluated lazily.
      */
     @Specialization
-    protected Object doLogical(VirtualFrame frame, boolean left) {
+    protected Object doLogical(VirtualFrame frame, boolean leftNode,
+                               @Bind("this") Node node,
+                               @Cached(inline = true) JolkDispatchNode dispatchNode) {
         if ("&&".equals(operator)) {
-            if (!left) return false;
+            if (!leftNode) return false;
         } else if ("||".equals(operator)) {
-            if (left) return true;
+            if (leftNode) return true;
         }
 
         Object right = rightNode.executeGeneric(frame);
@@ -46,19 +49,21 @@ public abstract class JolkLogicalNode extends JolkExpressionNode {
         }
         
         // Fallback for right-hand side if it's not a boolean (Custom Messaging)
-        return dispatchNode.execute(frame, left, operator, new Object[]{right});
+        return dispatchNode.execute(frame, node, leftNode, operator, new Object[]{right});
     }
 
     /**
      * Unified Messaging Fallback: Handles Nothing identities and custom operator overloading.
      */
     @Fallback
-    protected Object doFallback(VirtualFrame frame, Object left) {
+    protected Object doFallback(VirtualFrame frame, Object leftNode,
+                                @Bind("this") Node node,
+                                @Cached(inline = true) JolkDispatchNode dispatchNode) {
         // Jolk Messaging Fallback: If left is Nothing, logic fails to Nothing
-        if (left == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
+        if (leftNode == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
 
         // Dispatch for custom operator overloading
         Object right = rightNode.executeGeneric(frame);
-        return dispatchNode.execute(frame, left, operator, new Object[]{right});
+        return dispatchNode.execute(frame, node, leftNode, operator, new Object[]{right});
     }
 }

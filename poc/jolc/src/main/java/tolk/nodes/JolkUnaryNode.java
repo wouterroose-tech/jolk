@@ -1,10 +1,13 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 /**
@@ -17,11 +20,9 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 public abstract class JolkUnaryNode extends JolkExpressionNode {
 
     protected final String operator;
-    @Child protected JolkDispatchNode dispatchNode;
 
     public JolkUnaryNode(String operator) {
         this.operator = operator;
-        this.dispatchNode = JolkDispatchNode.create();
     }
 
     @Specialization(guards = "isNot()")
@@ -41,8 +42,10 @@ public abstract class JolkUnaryNode extends JolkExpressionNode {
     }
 
     @Fallback
-    protected Object doFallback(VirtualFrame frame, Object value) {
-        return dispatchNode.execute(frame, value, operator, new Object[0]);
+    protected Object doFallback(VirtualFrame frame, Object valueNode,
+                                @Bind("this") Node node,
+                                @Cached(inline = true) JolkDispatchNode dispatchNode) {
+        return dispatchNode.execute(frame, node, valueNode, operator, new Object[0]);
     }
 
     @Idempotent

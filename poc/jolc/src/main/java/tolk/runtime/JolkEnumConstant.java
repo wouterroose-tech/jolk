@@ -118,7 +118,7 @@ public class JolkEnumConstant implements TruffleObject {
     public Object getMembers(boolean includeInternal) {
         // Merge enum class members with constant-specific metadata selectors
         Object membersObj = enumClass.getInstanceMemberNames();
-        if (membersObj instanceof JolkMemberNames jmn) {
+        if (membersObj instanceof JolkMemberNames) {
             // In a full implementation, we would return a union of arrays.
             // For the PoC, delegating to the class is acceptable but omits name/ordinal from the list.
         }

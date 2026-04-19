@@ -88,15 +88,15 @@ public class JolkIdentityNodeTest extends JolcTestBase {
             String s3 = new String("world");
 
             // Same content, different instances
-            JolkNode left = new JolkMessageSendNode(createLiteralNode(s1), "~~", new JolkNode[]{createLiteralNode(s2)});
+            JolkNode left = JolkMessageSendNodeGen.create("~~", new JolkNode[]{createLiteralNode(s2)}, createLiteralNode(s1));
             assertTrue((Boolean) execute(left), "Objects with same content should be equivalent (~~).");
 
             // Different content
-            JolkNode right = new JolkMessageSendNode(createLiteralNode(s1), "~~", new JolkNode[]{createLiteralNode(s3)});
+            JolkNode right = JolkMessageSendNodeGen.create("~~", new JolkNode[]{createLiteralNode(s3)}, createLiteralNode(s1));
             assertFalse((Boolean) execute(right), "Objects with different content should not be equivalent (~~).");
 
             // Primitives with same value
-            JolkNode longEq = new JolkMessageSendNode(createLiteralNode(10L), "~~", new JolkNode[]{createLiteralNode(10L)});
+            JolkNode longEq = JolkMessageSendNodeGen.create("~~", new JolkNode[]{createLiteralNode(10L)}, createLiteralNode(10L));
             assertTrue((Boolean) execute(longEq), "Longs with same value should be equivalent (~~).");
         } finally {
             context.leave();
@@ -115,10 +115,10 @@ public class JolkIdentityNodeTest extends JolcTestBase {
             String s2 = new String("hello");
             String s3 = new String("world");
 
-            JolkNode left = new JolkMessageSendNode(createLiteralNode(s1), "!~", new JolkNode[]{createLiteralNode(s2)});
+            JolkNode left = JolkMessageSendNodeGen.create("!~", new JolkNode[]{createLiteralNode(s2)}, createLiteralNode(s1));
             assertFalse((Boolean) execute(left), "Objects with same content should not be non-equivalent (!~).");
 
-            JolkNode right = new JolkMessageSendNode(createLiteralNode(s1), "!~", new JolkNode[]{createLiteralNode(s3)});
+            JolkNode right = JolkMessageSendNodeGen.create("!~", new JolkNode[]{createLiteralNode(s3)}, createLiteralNode(s1));
             assertTrue((Boolean) execute(right), "Objects with different content should be non-equivalent (!~).");
         } finally {
             context.leave();
@@ -137,7 +137,7 @@ public class JolkIdentityNodeTest extends JolcTestBase {
             JolkIdentityNode identity = new JolkIdentityNode(left, right, true);
             assertFalse((Boolean) execute(identity), "Different numeric types are equal when their values are equal.");
 
-            JolkMessageSendNode equiv = new JolkMessageSendNode(left, "~~", new JolkNode[]{right});
+            JolkNode equiv = JolkMessageSendNodeGen.create("~~", new JolkNode[]{right}, left);
             assertTrue((Boolean) execute(equiv), "Same numeric values are equivalent.");
         } finally {
             context.leave();

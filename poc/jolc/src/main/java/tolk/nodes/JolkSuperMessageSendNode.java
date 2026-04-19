@@ -3,7 +3,6 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -80,7 +79,7 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
             // we delegate to the intrinsic protocol. This ensures that 'super #new' 
             // correctly performs the raw allocation of the current instance.
             if (JolkDispatchNode.isObjectIntrinsic(selector)) {
-                return lift(JolkDispatchNode.dispatchObjectIntrinsic(self, selector, args, InteropLibrary.getUncached()));
+                return lift(JolkDispatchNode.dispatchObjectIntrinsic(this, self, selector, args, InteropLibrary.getUncached()));
             }
 
             throw new RuntimeException("Message not understood: #" + selector + " in super hierarchy of " + holderClass.name);

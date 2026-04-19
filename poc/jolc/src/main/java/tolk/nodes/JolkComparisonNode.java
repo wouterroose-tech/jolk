@@ -1,8 +1,12 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 /**
@@ -47,7 +51,9 @@ public abstract class JolkComparisonNode extends JolkExpressionNode {
      * Unified Messaging Fallback.
      */
     @Fallback
-    protected Object doFallback(Object left, Object right) {
-        return JolkDispatchNode.create().execute(null, left, operator, new Object[]{right});
+    protected Object doFallback(VirtualFrame frame, Object leftNode, Object rightNode,
+                                @Bind("this") Node node,
+                                @Cached(inline = true) JolkDispatchNode dispatchNode) {
+        return dispatchNode.execute(frame, node, leftNode, operator, new Object[]{rightNode});
     }
 }

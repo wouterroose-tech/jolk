@@ -21,6 +21,8 @@ import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkBlockNode;
 import tolk.nodes.JolkReadEnvironmentNode;
 import tolk.nodes.JolkLogicalNodeGen;
+import tolk.nodes.JolkMessageSendNode;
+import tolk.nodes.JolkMessageSendNodeGen;
 import tolk.nodes.JolkUnaryNodeGen;
 import tolk.nodes.JolkReadTypeNode;
 import tolk.nodes.JolkReturnNode;
@@ -30,11 +32,10 @@ import tolk.nodes.JolkFieldNode;
 import tolk.nodes.JolkIdentityNode;
 import tolk.nodes.JolkLiteralNode;
 import tolk.nodes.JolkMethodNode;
-import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkSuperNode;
 import tolk.nodes.JolkSuperMessageSendNode;
-import tolk.nodes.JolkTryWithResourceNode;
+import tolk.nodes.JolkTryWithResourceNodeGen;
 import tolk.nodes.JolkNode;
 import tolk.nodes.JolkRootNode;
 import tolk.nodes.JolkReadArgumentNode;
@@ -398,7 +399,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         }
 
         // Fallback: Jolk treats assignments as message sends to 'self' (synthesized setters)
-        return new JolkMessageSendNode(visitReservedSelf(), name, new JolkNode[]{expression});
+        return JolkMessageSendNodeGen.create(name, new JolkNode[]{expression}, visitReservedSelf());
     }
 
     @Override
@@ -436,7 +437,6 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         
         // Store the number of parameters (including 'self') for this scope.
         // This threshold is used to distinguish parameters from local variables.
-        int currentParameterThreshold = methodScope.size();
         parameterThresholds.push(methodScope.size());
         int baseDepth = scopes.size();
         scopes.push(methodScope);
@@ -492,10 +492,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 // to ensure the branch result is returned instead of the Boolean receiver.
                 String selector = op + " :"; // results in "? :" or "?! :"
                 JolkNode elseBranch = ensureClosure(ctx.expression(1));
-                result = new JolkMessageSendNode(result, selector, new JolkNode[]{thenBranch, elseBranch});
+                result = JolkMessageSendNodeGen.create(selector, new JolkNode[]{thenBranch, elseBranch}, result);
             } else {
                 // Binary branching: behaves as a control-flow message returning the receiver.
-                result = new JolkMessageSendNode(result, op, new JolkNode[]{thenBranch});
+                result = JolkMessageSendNodeGen.create(op, new JolkNode[]{thenBranch}, result);
             }
         }
         return result;
@@ -529,7 +529,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.exclusive_or().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.exclusive_or(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkMessageSendNodeGen.create(op, new JolkNode[]{right}, left);
         }
         return left;
     }
@@ -540,7 +540,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.bitwise_and().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.bitwise_and(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkMessageSendNodeGen.create(op, new JolkNode[]{right}, left);
         }
         return left;
     }
@@ -551,7 +551,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.equality().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.equality(i));
-            left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+            left = JolkMessageSendNodeGen.create(op, new JolkNode[]{right}, left);
         }
         return left;
     }
@@ -569,7 +569,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             switch (op) {
                 case "==" -> left = new JolkIdentityNode(left, right, false);
                 case "!=" -> left = new JolkIdentityNode(left, right, true);
-                default   -> left = new JolkMessageSendNode(left, op, new JolkNode[]{right});
+                default   -> left = JolkMessageSendNodeGen.create(op, new JolkNode[]{right}, left);
             }
         }
         return left;
@@ -627,7 +627,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.NULL_COALESCE() != null) {
             // Lazy Evaluation: The fallback expression must be wrapped in a closure.
             JolkNode rightClosure = ensureClosure(ctx.power());
-            left = new JolkMessageSendNode(left, "??", new JolkNode[]{rightClosure});
+            left = JolkMessageSendNodeGen.create("??", new JolkNode[]{rightClosure}, left);
         }
         return left;
     }
@@ -664,11 +664,11 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 }
 
                 if ("catch".equals(selector) && receiver instanceof JolkMessageSendNode previousTry && "try".equals(previousTry.getSelector()) && previousTry.getArgumentNodes().length == 1) {
-                    receiver = new JolkTryWithResourceNode(previousTry.getReceiverNode(), previousTry.getArgumentNodes()[0], args.length == 1 ? args[0] : new JolkEmptyNode());
+                    receiver = JolkTryWithResourceNodeGen.create(previousTry.getReceiverNode(), previousTry.getArgumentNodes()[0], args.length == 1 ? args[0] : new JolkEmptyNode());
                 } else {
                     receiver = (receiver instanceof JolkSuperNode)
                         ? new JolkSuperMessageSendNode(selector, args)
-                        : new JolkMessageSendNode(receiver, selector, args);
+                        : JolkMessageSendNodeGen.create(selector, args, receiver);
                 }
             }
         }
@@ -831,12 +831,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             
             // Priority 3: User-Defined Meta-Objects (Resolved via dynamic lookup with Meta-fallback)
             // This handles both external class references (ClassA) and internal constants (FORTY_TWO).
-            JolkNode metaSelf = isInMetaScope ? visitReservedSelf() : new JolkMessageSendNode(visitReservedSelf(), "class", new JolkNode[0]);
+            JolkNode metaSelf = isInMetaScope ? visitReservedSelf() : JolkMessageSendNodeGen.create("class", new JolkNode[0], visitReservedSelf());
             return new JolkReadTypeNode(language, name, metaSelf);
         }
 
         // 3. Default: Treat as a message send to 'self' (e.g. field access)
-        return new JolkMessageSendNode(visitReservedSelf(), name, new JolkNode[0]);
+        return JolkMessageSendNodeGen.create(name, new JolkNode[0], visitReservedSelf());
     }
 
     @Override
@@ -876,7 +876,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // send to the Array meta-object, supporting Unified Messaging.
         JolkNode receiver = new JolkLiteralNode(tolk.runtime.JolkArrayExtension.ARRAY_TYPE);
         JolkNode[] args = extractLiteralList(ctx.literal_list());
-        return new JolkMessageSendNode(receiver, "new", args);
+        return JolkMessageSendNodeGen.create("new", args, receiver);
     }
 
     @Override

@@ -1,8 +1,11 @@
 package tolk.nodes;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
@@ -20,11 +23,9 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 public abstract class JolkArithmeticNode extends JolkExpressionNode {
 
     protected final String operator;
-    @Child protected JolkDispatchNode dispatchNode;
 
     public JolkArithmeticNode(String operator) {
         this.operator = operator;
-        this.dispatchNode = JolkDispatchNode.create();
     }
 
     /**
@@ -59,7 +60,9 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      * (e.g. String concatenation or custom operator overloading).
      */
     @Fallback
-    protected Object doFallback(VirtualFrame frame, Object left, Object right) {
-        return dispatchNode.execute(frame, left, operator, new Object[]{right});
+    protected Object doFallback(VirtualFrame frame, Object leftNode, Object rightNode,
+                                @Bind("this") Node node,
+                                @Cached(inline = true) JolkDispatchNode dispatchNode) {
+        return dispatchNode.execute(frame, node, leftNode, operator, new Object[]{rightNode});
     }
 }

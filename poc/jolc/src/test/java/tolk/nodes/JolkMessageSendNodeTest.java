@@ -30,7 +30,7 @@ class JolkMessageSendNodeTest extends JolcTestBase {
             // Setup: Receiver is JolkNothing.INSTANCE, Selector is "isEmpty"
             JolkNode receiver = new ValueNode(JolkNothing.INSTANCE);
             JolkNode[] args = new JolkNode[]{};
-            JolkMessageSendNode node = new JolkMessageSendNode(receiver, "isEmpty", args);
+        JolkNode node = JolkMessageSendNodeGen.create("isEmpty", args, receiver);
 
             Object result = execute(node);
             assertEquals(true, result, "Nothing #isEmpty should be true");
@@ -50,7 +50,7 @@ class JolkMessageSendNodeTest extends JolcTestBase {
 
             JolkNode receiver = new ValueNode(obj);
             JolkNode[] args = new JolkNode[]{};
-            JolkMessageSendNode node = new JolkMessageSendNode(receiver, "toString", args);
+        JolkNode node = JolkMessageSendNodeGen.create("toString", args, receiver);
 
             Object result = execute(node);
             assertEquals("instance of Test", result);
@@ -69,7 +69,7 @@ class JolkMessageSendNodeTest extends JolcTestBase {
         try {
             JolkNode receiver = new ValueNode(obj);
             JolkNode arg1 = new ValueNode(obj); // compare to self
-            JolkMessageSendNode node = new JolkMessageSendNode(receiver, "==", new JolkNode[]{arg1});
+            JolkNode node = JolkMessageSendNodeGen.create("==", new JolkNode[]{arg1}, receiver);
 
             Object result = execute(node);
             assertEquals(true, result);

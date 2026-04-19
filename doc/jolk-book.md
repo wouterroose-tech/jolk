@@ -1603,7 +1603,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **Identity Erasure**: A performance strategy where the engine physically strips away object structures and headers at the machine level, replacing them with raw CPU registers or bit-patterns.  
 **Identity Restitution**: A metaboundary protocol that "lifts" raw JVM `null` pointers into the `Nothing` singleton to ensure they can safely receive messages.  
 **JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a message coordinate in a communicative field rather than a passive data container.  
-**Lexical Fence**: An absolute structural boundary (conducted via terminals like `^ field`) that prohibits direct field access and enforces message-only interaction.  
+**Lexical Fence**: A structural boundary that enforces message-only interaction.  
 **Metaboundary**: The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*, rendering intrusive reflection a semantic impossibility by ensuring the guest language has no primitives capable of bypassing the defined protocol.  
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.  
 **Monadic Flow Flattening**: An architectural optimization where the Tolk Engine recognizes monadic patterns (such as the `Match<T>` container) and elides the physical object allocation during partial evaluation, reducing the logic to zero-cost machine instructions.  

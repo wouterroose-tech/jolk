@@ -12,13 +12,9 @@ import tolk.runtime.JolkClosure;
 public class JolkClosureNode extends JolkNode {
 
     private final CallTarget callTarget;
-    private final String[] parameters;
-    private final boolean isVariadic;
 
-    public JolkClosureNode(CallTarget callTarget, String[] parameters, boolean isVariadic) {
+    public JolkClosureNode(CallTarget callTarget) {
         this.callTarget = callTarget;
-        this.parameters = parameters;
-        this.isVariadic = isVariadic;
     }
 
     // The executeGeneric method is now in JolkClosure, which is instantiated by this node.

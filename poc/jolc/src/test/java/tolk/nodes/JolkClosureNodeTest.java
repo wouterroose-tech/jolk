@@ -31,7 +31,7 @@ public class JolkClosureNodeTest {
     void testExecuteGenericReturnsClosure() {
         JolkNode body = new JolkLiteralNode("test");
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
+        JolkClosureNode closureNode = new JolkClosureNode(target);
 
         Object result = execute(closureNode);
 
@@ -48,7 +48,7 @@ public class JolkClosureNodeTest {
     void testClosureExecution() throws UnsupportedMessageException, ArityException, UnsupportedTypeException {
         JolkNode body = new JolkLiteralNode(123);
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
+        JolkClosureNode closureNode = new JolkClosureNode(target);
 
         Object closureObject = execute(closureNode);
         assertTrue(closureObject instanceof JolkClosure);
@@ -68,9 +68,8 @@ public class JolkClosureNodeTest {
     @Test
     void testClosureWithComplexMetadata() {
         JolkNode body = new JolkLiteralNode(true);
-        String[] params = {"first", "second"};
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode node = new JolkClosureNode(target, params, true);
+        JolkClosureNode node = new JolkClosureNode(target);
 
         Object result = execute(node);
         assertNotNull(result, "Should result in a non-null closure object even when parameters are defined.");
@@ -109,8 +108,8 @@ public class JolkClosureNodeTest {
         // Note: Exception.class is not a valid interop argument type. 
         // This test needs to be updated when the catch protocol is properly implemented.
         // For now, skip the catch test or use a valid argument type.
-        // Object noCatchResult = interop.invokeMember(closure, "catch", "Exception", catchHandler);
-        // assertEquals(42, noCatchResult, "Should return original result if no exception occurs.");
+        Object noCatchResult = interop.invokeMember(closure, "catch", "Exception", catchHandler);
+        assertEquals(42, noCatchResult, "Should return original result if no exception occurs.");
     }
 
     ///
@@ -121,7 +120,7 @@ public class JolkClosureNodeTest {
     void testEnvironmentCapture() {
         JolkNode body = new JolkLiteralNode("env");
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
+        JolkClosureNode closureNode = new JolkClosureNode(target);
 
         // Define lexical arguments to be captured by the node
         Object[] expectedEnv = {"outerValue", 99L};
@@ -138,7 +137,7 @@ public class JolkClosureNodeTest {
     void testExecuteWithNullFrame() {
         JolkNode body = new JolkLiteralNode(1);
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target, new String[0], false);
+        JolkClosureNode closureNode = new JolkClosureNode(target);
 
         JolkClosure result = (JolkClosure) closureNode.executeGeneric(null);
         assertNull(getEnvironmentViaReflection(result), "Closure environment should be null if executed without a frame context.");

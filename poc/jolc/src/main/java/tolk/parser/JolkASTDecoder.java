@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import tolk.nodes.JolkNode;
 import tolk.nodes.JolkLiteralNode;
-import tolk.language.JolkLanguage;
 
 /**
  * # JolkASTDecoder
@@ -16,10 +15,12 @@ import tolk.language.JolkLanguage;
  */
 public final class JolkASTDecoder {
 
-    private final JolkLanguage language;
-
-    public JolkASTDecoder(JolkLanguage language) {
-        this.language = language;
+    /**
+     * ### JolkASTDecoder
+     *
+     * Initializes a new instance of the binary AST decoder.
+     */
+    public JolkASTDecoder() {
     }
 
     /**

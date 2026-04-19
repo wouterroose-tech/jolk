@@ -53,7 +53,7 @@ public class JolkReturnNodeTest {
                 // Closure body: returns 99 to the method (targetDepth 1 relative to closure activation)
                 JolkNode closureInnerBody = new JolkReturnNode(new JolkLiteralNode(99), new JolkReadEnvironmentNode(1));
                 CallTarget closureTarget = new JolkRootNode(null, closureInnerBody, "innerClosure", false).getCallTarget();
-                closureNode = new JolkClosureNode(closureTarget, new String[0], false);
+                closureNode = new JolkClosureNode(closureTarget);
 
                 Object closure = closureNode.executeGeneric(frame);
                 return execute(closure);
@@ -77,7 +77,7 @@ public class JolkReturnNodeTest {
         // Innermost closure body: returns 123, targeting the method (depth 2 from here)
         JolkNode innermostClosureBody = new JolkReturnNode(new JolkLiteralNode(123), new JolkReadEnvironmentNode(2));
         CallTarget innermostClosureTarget = new JolkRootNode(null, innermostClosureBody, "innermostClosure", false).getCallTarget();
-        JolkClosureNode innermostClosureNode = new JolkClosureNode(innermostClosureTarget, new String[0], false);
+        JolkClosureNode innermostClosureNode = new JolkClosureNode(innermostClosureTarget);
 
         // Outer closure body: defines and executes the innermost closure
         JolkNode outerClosureBody = new JolkNode() {
@@ -89,7 +89,7 @@ public class JolkReturnNodeTest {
             }
         };
         CallTarget outerClosureTarget = new JolkRootNode(null, outerClosureBody, "outerClosure", false).getCallTarget();
-        JolkClosureNode outerClosureNode = new JolkClosureNode(outerClosureTarget, new String[0], false);
+        JolkClosureNode outerClosureNode = new JolkClosureNode(outerClosureTarget);
 
         // Method body: defines and executes the outer closure
         JolkNode methodBody = new JolkNode() {

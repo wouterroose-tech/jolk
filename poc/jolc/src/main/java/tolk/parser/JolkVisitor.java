@@ -678,12 +678,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitClosure(jolkParser.ClosureContext ctx) {
         String[] params = new String[0];
-        boolean isVariadic = false;
         if (ctx.stat_params() != null) {
             if (ctx.stat_params().typed_params() != null) {
                 ParameterSpec spec = parseTypedParams(ctx.stat_params().typed_params());
                 params = spec.names;
-                isVariadic = spec.isVariadic;
             } else if (ctx.stat_params().inferred_params() != null) {
                 params = parseInferredParams(ctx.stat_params().inferred_params());
             }
@@ -714,7 +712,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Closures are not method boundaries; isMethod must be false to
         // allow Non-Local Returns (^) to propagate to the defining method.
         JolkRootNode jolkRootNode = new JolkRootNode(language, builder.build(), body, "closure", false);
-        return new JolkClosureNode(jolkRootNode.getCallTarget(), params, isVariadic);
+        return new JolkClosureNode(jolkRootNode.getCallTarget());
     }
 
     @Override
@@ -1027,7 +1025,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
             builder.addSlots(1, FrameSlotKind.Object);
             RootNode root = new JolkRootNode(language, builder.build(), body, "closure", false);
-            return new JolkClosureNode(root.getCallTarget(), new String[0], false);
+            return new JolkClosureNode(root.getCallTarget());
         } finally {
             scopes.pop();
             parameterThresholds.pop();

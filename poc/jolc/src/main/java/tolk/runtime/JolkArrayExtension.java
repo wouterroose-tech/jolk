@@ -54,6 +54,7 @@ public class JolkArrayExtension {
         // #put(index, value) -> Returns receiver (Fluent Initialisation).
         ARRAY_TYPE.registerInstanceMethod("put", new JolkBuiltinMethod() {
             @Override
+            @SuppressWarnings("unchecked")
             public Object execute(Object[] args) throws ArityException {
                 if (args.length != 3) throw ArityException.create(2, 2, args.length - 1);
                 List<Object> list = (List<Object>) unwrap(args[0]);

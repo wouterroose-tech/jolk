@@ -49,6 +49,12 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
         }
     };
 
+    /**
+     * ### JolkLanguage
+     * 
+     * The default no-argument constructor required by the Truffle framework 
+     * for language registration and instantiation via the polyglot engine.
+     */
     public JolkLanguage() {
     }
 

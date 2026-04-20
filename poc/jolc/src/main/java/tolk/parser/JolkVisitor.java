@@ -922,12 +922,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.binding() != null) return visit(ctx.binding());
 
         if (ctx.expression() != null) {
-            // Check for the explicit return symbol (CARET) and calculate target method depth
-            // We check the first token of the statement specifically to avoid false positives in sub-expressions.
+            /**
+             * ### Non-Local Return Resolution
+             * 
+             * Following the Smalltalk-80 "Block Return" semantics, the caret (^) 
+             * triggers a return from the Lexical Home (the defining method) 
+             * rather than the immediate execution context.
+             */
             boolean hasCaret = ctx.getToken(jolkParser.CARET, 0) != null || 
                               (ctx.getChildCount() > 0 && ctx.getChild(0).getText().equals("^"));
             
-            // We visit the expression after checking for the caret to maintain structural context
             JolkNode exprNode = visit(ctx.expression());
             
             if (hasCaret) {

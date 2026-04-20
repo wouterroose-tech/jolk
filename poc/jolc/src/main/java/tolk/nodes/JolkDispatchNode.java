@@ -1654,6 +1654,14 @@ public abstract class JolkDispatchNode extends JolkNode { // Keep extending Jolk
      * Implements **Guided Coercion** for the reflection boundary. It ensures that 
      * Jolk's 64-bit Longs are narrowed to match the target Java parameter types 
      * (int, short, byte) where necessary.
+     * 
+     * ### The Opaque Boundary
+     * 
+     * When a JolkClosure is coerced into a Java Functional Interface, it enters 
+     * an "Opaque" state. The implementation wrappers below must execute the 
+     * closure normally. Because these callbacks originate from the Java host, 
+     * any {@link JolkReturnException} thrown will result in a runtime error 
+     * as there is no Lexical Home on the Java side of the stack.
      */
     private static Object[] coerceArguments(Class<?>[] types, Object[] args) {
         InteropLibrary interop = InteropLibrary.getUncached();

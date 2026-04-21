@@ -29,9 +29,10 @@ public abstract class JolcTestBase {
         engine = Engine.newBuilder()
                 .out(out)
                 .err(err)
+                //.allowExperimentalOptions(true)
                 .build();
         context = Context.newBuilder(JolkLanguage.ID)
-                .engine(engine)
+                .engine(engine)                
                 .allowAllAccess(true)
                 .allowHostAccess(HostAccess.ALL) // Allow Jolk to access all public host (Java) members
                 .allowHostClassLookup(className -> true) // Allow Jolk to look up any Java class

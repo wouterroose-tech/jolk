@@ -61,8 +61,9 @@ public abstract class JolkMessageSendNode extends JolkExpressionNode {
     @ExplodeLoop
     public Object doSend(VirtualFrame frame, Object receiver,
                          @Cached(inline = false) JolkDispatchNode dispatchNode) {
-        Object[] args = new Object[argumentNodes.length];
-        for (int i = 0; i < argumentNodes.length; i++) {
+        int arity = argumentNodes.length;
+        Object[] args = new Object[arity];
+        for (int i = 0; i < arity; i++) {
             args[i] = argumentNodes[i].executeGeneric(frame);
         }
         return dispatchNode.execute(frame, dispatchNode, receiver, selector, args);

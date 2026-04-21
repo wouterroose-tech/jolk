@@ -6,11 +6,19 @@ import java.lang.reflect.Method;
 
 import tolk.JolcTestBase;
 
+
+///
+/// set these argumens to activate GraalJIT
+///    vmArgs:
+///     -XX:+UnlockExperimentalVMOptions,
+///     -XX:+UnlockExperimentalVMOptions",
+///     -XX:+EnableJVMCI,
+///     -XX:+UseJVMCICompiler 
+/// 
 public class BasicPerformanceTest extends JolcTestBase {
 
     public static void main(String[] args) {
         BasicPerformanceTest test = new BasicPerformanceTest();
-        test.setUp();
         try {
             test.setUp();
             test.test();

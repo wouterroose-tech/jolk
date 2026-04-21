@@ -57,7 +57,7 @@ public abstract class JolkTryWithResourceNode extends JolkExpressionNode {
     @Specialization
     @SuppressWarnings("truffle-static-method")
     protected Object doTry(VirtualFrame frame, Object resourceProviderNode, Object logicNode, Object catchNode,
-                           @Cached(inline = true) JolkDispatchNode dispatchNode,
+                           @Cached(inline = false) JolkDispatchNode dispatchNode,
                            @CachedLibrary(limit = "3") InteropLibrary interop) {
         try {
             return dispatchNode.execute(frame, this, resourceProviderNode, "try", new Object[]{logicNode});

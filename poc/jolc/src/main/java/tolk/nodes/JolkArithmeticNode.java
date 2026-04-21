@@ -1,12 +1,11 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 /**
@@ -20,13 +19,10 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 @NodeInfo(shortName = "arithmetic")
 @NodeChild(value = "leftNode", type = JolkNode.class)
 @NodeChild(value = "rightNode", type = JolkNode.class)
+@NodeField(name = "operator", type = String.class)
 public abstract class JolkArithmeticNode extends JolkExpressionNode {
 
-    protected final String operator;
-
-    public JolkArithmeticNode(String operator) {
-        this.operator = operator;
-    }
+    public abstract String getOperator();
 
     /**
      * Specialized fast-path for primitive longs. 
@@ -34,14 +30,14 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      */
     @Specialization
     protected long doLongs(long l1, long l2) {
-        return switch (operator) {
+        return switch (getOperator()) {
             case "+" -> l1 + l2;
             case "-" -> l1 - l2;
             case "*" -> l1 * l2;
             case "/" -> l1 / l2;
             case "%" -> l1 % l2;
             case "**" -> (long) Math.pow(l1, l2);
-            default -> throw new RuntimeException("Unsupported long operator: " + operator);
+            default -> throw new RuntimeException("Unsupported long operator: " + getOperator());
         };
     }
 
@@ -61,8 +57,7 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      */
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object leftNode, Object rightNode,
-                                @Bind("this") Node node,
-                                @Cached(inline = true) JolkDispatchNode dispatchNode) {
-        return dispatchNode.execute(frame, node, leftNode, operator, new Object[]{rightNode});
+                                @Cached(inline = false) JolkDispatchNode dispatchNode) {
+        return dispatchNode.execute(frame, this, leftNode, getOperator(), new Object[]{rightNode});
     }
 }

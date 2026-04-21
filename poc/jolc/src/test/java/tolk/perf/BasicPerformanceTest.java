@@ -80,29 +80,33 @@ public class BasicPerformanceTest extends JolcTestBase {
             javaMethod.invoke(javaTest, n, 1);
         }
 
-        // 2. Warmup Jolk (Trigger Truffle Compilation)
-        // We need many entries to the RootNode to trigger Graal JIT.
-        // Compilation Thresholds: Truffle typically waits for a method to be called 1,000 times (default) before compiling it.
-        for (int i = 0; i < 20000; i++) {
-            jolkTest.invokeMember(testCase, n, 1);
-        }
-
         // Engineered Integrity: Ensure the JIT compilation threads have finished
         // and the GC has reclaimed any temporary warmup objects before measuring.
         System.gc();
         Thread.sleep(500); 
     
-        // 3. Measure Java
+        // 2. Measure Java
         long start = System.nanoTime();
         javaMethod.invoke(javaTest, n, iterations);
         long javaTime = System.nanoTime() - start;
+
+        // 3. Warmup Jolk (Trigger Truffle Compilation)
+        // We need many entries to the RootNode to trigger Graal JIT.
+        // Compilation Thresholds: Truffle typically waits for a method to be called 1,000 times (default) before compiling it.
+        for (int i = 0; i < 30000; i++) {
+            jolkTest.invokeMember(testCase, n, 1);
+        }
+
+        // reset before measuring Jolk
+        System.gc();
+        Thread.sleep(500); 
 
         // 4. Measure Jolk
         start = System.nanoTime();
         jolkTest.invokeMember(testCase, n, iterations);
         long jolkTime = System.nanoTime() - start;
-
         double ratio = (double) jolkTime / javaTime;
+
         System.out.printf("%-25s %-11d %-6d %-13d %-13d %.2fx\n", testCase, iterations, n, javaTime, jolkTime, ratio);
     }
 
@@ -110,14 +114,14 @@ public class BasicPerformanceTest extends JolcTestBase {
         String source = """
             class JolkPerformanceTest {
                 Long run(Long n, Long times) {
-                    String s = n #toString + " - " + n #toString;
+                    String s = "" + n + " - " + n;
                     Long res = (n * times / 2) == 0 ? 0 : 1;
                     ^ res + self #factorial(n) + self #fibonacci(n) + s #length
                 }
                 Long runString(Long n, Long times) {
                     Long totalLength = 0;
                     times #times [
-                        String s = n #toString + " - " + n #toString;
+                        String s = "" + n + " - " + n;
                         totalLength = totalLength + s #length
                     ];
                     ^ totalLength
@@ -187,7 +191,7 @@ public class BasicPerformanceTest extends JolcTestBase {
     private class JavaPerformanceTest {
         @SuppressWarnings("unused")
         long run(long n, long times) {
-            String s = n + " - " + n;
+            String s = "" + n + " - " + n;
             long res = 0;
             if ((n * times / 2) == 0) { 
                 res = 0;
@@ -200,7 +204,7 @@ public class BasicPerformanceTest extends JolcTestBase {
         long runString(long n, long times) {
             long totalLength = 0;
             for (long i = 0; i < times; i++) {
-                String s = n + " - " + n;
+                String s = "" + n + " - " + n;
                 totalLength += s.length();
             }
             return totalLength;

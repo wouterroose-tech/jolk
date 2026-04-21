@@ -1,13 +1,12 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Bind;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 /**
@@ -17,13 +16,10 @@ import com.oracle.truffle.api.nodes.NodeInfo;
  */
 @NodeInfo(shortName = "unary")
 @NodeChild(value = "valueNode", type = JolkNode.class)
+@NodeField(name = "operator", type = String.class)
 public abstract class JolkUnaryNode extends JolkExpressionNode {
 
-    protected final String operator;
-
-    public JolkUnaryNode(String operator) {
-        this.operator = operator;
-    }
+    public abstract String getOperator();
 
     @Specialization(guards = "isNot()")
     protected boolean doBoolean(boolean value) {
@@ -43,18 +39,20 @@ public abstract class JolkUnaryNode extends JolkExpressionNode {
 
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object valueNode,
-                                @Bind("this") Node node,
-                                @Cached(inline = true) JolkDispatchNode dispatchNode) {
-        return dispatchNode.execute(frame, node, valueNode, operator, new Object[0]);
+                                @Cached(inline = false) JolkDispatchNode dispatchNode) {
+        return dispatchNode.execute(frame, this, valueNode, getOperator(), new Object[0]);
     }
+
+    @Override
+    public abstract Object executeGeneric(VirtualFrame frame);
 
     @Idempotent
     protected boolean isNot() {
-        return "!".equals(operator);
+        return "!".equals(getOperator());
     }
 
     @Idempotent
     protected boolean isNegation() {
-        return "-".equals(operator);
+        return "-".equals(getOperator());
     }
 }

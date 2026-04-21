@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.Arrays;
 import org.antlr.v4.runtime.tree.ParseTree;
+
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import tolk.grammar.jolkBaseVisitor;
@@ -507,7 +508,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.logic_and().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.logic_and(i));
-            left = JolkLogicalNodeGen.create(op, right, left);
+            left = JolkLogicalNodeGen.create(left, right, op);
         }
         return left;
     }
@@ -518,7 +519,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.inclusive_or().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.inclusive_or(i));
-            left = JolkLogicalNodeGen.create(op, right, left);
+            left = JolkLogicalNodeGen.create(left, right, op);
         }
         return left;
     }
@@ -581,7 +582,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.term().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.term(i));
-            left = JolkComparisonNodeGen.create(op, left, right);
+            left = JolkComparisonNodeGen.create(left, right, op);
         }
         return left;
     }
@@ -592,7 +593,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.factor().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.factor(i));
-            left = JolkArithmeticNodeGen.create(op, left, right);
+            left = JolkArithmeticNodeGen.create(left, right, op);
         }
         return left;
     }
@@ -603,7 +604,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.unary().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.unary(i));
-            left = JolkArithmeticNodeGen.create(op, left, right);
+            left = JolkArithmeticNodeGen.create(left, right, op);
         }
         return left;
     }
@@ -613,7 +614,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.power() != null)  return visit(ctx.power());
         String op = ctx.getChild(0).getText();
         JolkNode operand = visit(ctx.unary());
-        return JolkUnaryNodeGen.create(op, operand);
+        return JolkUnaryNodeGen.create(operand, op);
     }
 
     @Override
@@ -622,7 +623,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.powOp() != null) {
             String op = ctx.powOp().getText();
             JolkNode right = visit(ctx.unary());
-            left = JolkArithmeticNodeGen.create(op, left, right);
+            left = JolkArithmeticNodeGen.create(left, right, op);
         }
         if (ctx.NULL_COALESCE() != null) {
             // Lazy Evaluation: The fallback expression must be wrapped in a closure.

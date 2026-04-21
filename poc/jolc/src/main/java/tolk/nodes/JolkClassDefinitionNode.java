@@ -216,7 +216,8 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         if (methods.size() == 1) {
             JolkMethodNode method = methods.get(0); 
             FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
-            builder.addSlots(method.getFrameSlots(), FrameSlotKind.Object);
+            // Allow type specialization for local variables
+            builder.addSlots(method.getFrameSlots(), FrameSlotKind.Illegal);
             
             // PERFORMANCE: If there is only one method implementation, bypass the 
             // ArityDispatchNode entirely. This removes a loop and an array 

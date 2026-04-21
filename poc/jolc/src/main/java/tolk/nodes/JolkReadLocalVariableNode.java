@@ -23,9 +23,25 @@ public class JolkReadLocalVariableNode extends JolkNode {
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        Frame targetFrame = getTargetFrame(frame, depth);
+        Frame targetFrame;
+        if (depth == 0) {
+            targetFrame = frame;
+        } else if (depth == 1) {
+            Object[] args = frame.getArguments();
+            targetFrame = (args.length > 0 && args[0] instanceof Frame f) ? f : null;
+        } else {
+            targetFrame = getTargetFrame(frame, depth);
+        }
+
         if (targetFrame == null) return JolkNothing.INSTANCE;
-        // Access the indexed slot in the frame.
-        return lift(targetFrame.getObject(index));
+
+        if (targetFrame.isLong(index)) {
+            return targetFrame.getLong(index);
+        } else if (targetFrame.isBoolean(index)) {
+            return targetFrame.getBoolean(index);
+        }
+        // If the variable is an object, assume it's already lifted or handle null efficiently.
+        Object value = targetFrame.getObject(index);
+        return (value == null) ? JolkNothing.INSTANCE : value;
     }
 }

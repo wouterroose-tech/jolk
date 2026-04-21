@@ -39,7 +39,7 @@ public abstract class JolkUnaryNode extends JolkExpressionNode {
 
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object valueNode,
-                                @Cached(inline = false) JolkDispatchNode dispatchNode) {
+                                @Cached JolkDispatchNode dispatchNode) {
         return dispatchNode.execute(frame, this, valueNode, getOperator(), new Object[0]);
     }
 

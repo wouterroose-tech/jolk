@@ -37,27 +37,10 @@ public abstract class JolkNode extends Node {
     /// 
     /// @param value The value to lift.
     /// @return The lifted value (either the original object or JolkNothing.INSTANCE).
-    public final static Object lift(Object value) {
-        if (value == null) return JolkNothing.INSTANCE;
-        
-        // Industrial Fast Path: Handle standard JVM types and guest identities.
-        if (value instanceof Long || value instanceof Integer || value instanceof Boolean || 
-            value instanceof String || value instanceof com.oracle.truffle.api.strings.TruffleString ||
-            value instanceof Double || value instanceof Character) {
-            return value;
-        }
-
-        // Verified Jolk Identities (Optimized Path)
-        if (value instanceof tolk.runtime.JolkNothing || 
-            value instanceof com.oracle.truffle.api.object.DynamicObject || 
-            value instanceof tolk.runtime.JolkMatch || 
-            value instanceof tolk.runtime.JolkClosure || 
-            value instanceof tolk.runtime.JolkEnumConstant) {
-            return value;
-        }
-
-        // Interop Nulls and Foreign Objects
-        return liftSlow(value);
+    public static Object lift(Object value) {
+        // INDUSTRIAL OPTIMIZATION: Streamline lift to a simple null-check.
+        // Complex coercion is handled at the Interop boundary.
+        return (value == null) ? JolkNothing.INSTANCE : value;
     }
 
     @TruffleBoundary

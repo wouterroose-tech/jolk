@@ -60,7 +60,7 @@ public abstract class JolkMessageSendNode extends JolkExpressionNode {
     @Specialization
     @ExplodeLoop
     public Object doSend(VirtualFrame frame, Object receiver,
-                         @Cached(inline = false) JolkDispatchNode dispatchNode) {
+                         @Cached JolkDispatchNode dispatchNode) {
         int arity = argumentNodes.length;
         Object[] args = new Object[arity];
         for (int i = 0; i < arity; i++) {

@@ -114,8 +114,17 @@
                     <argLine>
                         -XX:+UnlockExperimentalVMOptions
                         -XX:+EnableJVMCI
-                        -Dpolyglot.engine.WarnInterpreterOnly=false
+                        -XX:+UseJVMCICompiler
+                        -Dpolyglot.engine.WarnInterpreterOnly=true
+                        -Dpolyglot.engine.TraceCompilation=true
+                        -Dpolyglot.engine.IterationThreshold=1000
                         --add-opens=java.base/sun.misc=ALL-UNNAMED
+                        --add-exports=jdk.internal.vm.ci/jdk.vm.ci.runtime=ALL-UNNAMED
+                        --add-exports=jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED
+                        --add-exports=jdk.internal.vm.ci/jdk.vm.ci.common=ALL-UNNAMED
+                        --add-exports=jdk.internal.vm.ci/jdk.vm.ci.meta=ALL-UNNAMED
+                        --add-exports=jdk.internal.vm.ci/jdk.vm.ci.services=ALL-UNNAMED
+                        --add-modules=jdk.internal.vm.ci
                     </argLine>
                 </configuration>
             </plugin>

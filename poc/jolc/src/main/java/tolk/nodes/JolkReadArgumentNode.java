@@ -1,6 +1,7 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import tolk.runtime.JolkNothing;
 
@@ -27,8 +28,19 @@ public class JolkReadArgumentNode extends JolkNode {
     @Override
     @ExplodeLoop
     public Object executeGeneric(VirtualFrame frame) {
-        Object[] targetArgs = getTargetArgs(frame, depth);
-        if (targetArgs == null) return JolkNothing.INSTANCE;
-        return (index < targetArgs.length) ? lift(targetArgs[index]) : JolkNothing.INSTANCE;
+        Object[] targetArgs;
+        if (depth == 0) {
+            targetArgs = frame.getArguments();
+        } else if (depth == 1) {
+            Object[] args = frame.getArguments();
+            targetArgs = (args.length > 0 && args[0] instanceof Frame f) ? f.getArguments() : null;
+        } else {
+            targetArgs = getTargetArgs(frame, depth);
+        }
+
+        if (targetArgs == null || index >= targetArgs.length) {
+            return JolkNothing.INSTANCE;
+        }
+        return lift(targetArgs[index]);
     }
 }

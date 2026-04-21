@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
+import com.oracle.truffle.api.strings.TruffleString;
 import tolk.grammar.jolkBaseVisitor;
 import tolk.language.JolkLanguage;
 import tolk.language.JolkSemanticException;
@@ -708,7 +709,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         }
 
         FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
-        builder.addSlots(frameSlots, FrameSlotKind.Object);
+        // Essential for PEA: Allow the closure frame to specialize slots to primitives
+        builder.addSlots(frameSlots, FrameSlotKind.Illegal);
         
         // Closures are not method boundaries; isMethod must be false to
         // allow Non-Local Returns (^) to propagate to the defining method.
@@ -850,7 +852,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             String text = ctx.StringLiteral().getText();
             // Remove the surrounding quotes
             String val = text.substring(1, text.length() - 1);
-            return new JolkLiteralNode(val);
+            // INDUSTRIAL OPTIMIZATION: Lift literals to TruffleString at parse-time.
+            return new JolkLiteralNode(TruffleString.fromJavaStringUncached(val, TruffleString.Encoding.UTF_16));
         }
 
         if (ctx.CharLiteral() != null) {

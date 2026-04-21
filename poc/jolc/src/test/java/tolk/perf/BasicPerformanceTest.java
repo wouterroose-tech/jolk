@@ -11,9 +11,12 @@ import tolk.JolcTestBase;
 /// set these argumens to activate GraalJIT
 ///    vmArgs:
 ///     -XX:+UnlockExperimentalVMOptions,
-///     -XX:+UnlockExperimentalVMOptions",
 ///     -XX:+EnableJVMCI,
 ///     -XX:+UseJVMCICompiler 
+///     -Xms4G -Xmx4G
+///     -XX:MetaspaceSize=512m
+///     -XX:ReservedCodeCacheSize=512m
+///     -XX:+HeapDumpOnOutOfMemoryError
 /// 
 public class BasicPerformanceTest extends JolcTestBase {
 
@@ -35,12 +38,15 @@ public class BasicPerformanceTest extends JolcTestBase {
 
         Value jolkTest = getJolkTest();
         JavaPerformanceTest javaTest = getJavaTest();
+
+        // Warmup Phase: Gradually increase iterations to trigger JIT compilation and observe performance trends.
+        this.warmup(jolkTest);
         
         // High iteration count ensures we spend more time in compiled code than in the JIT thread.
         long iterations = 50000;
         
-        System.out.println("Benchmarking              iterations  param  java          jolk          factor");
-        System.out.println("-------------------------|-----------|------|-------------|-------------|-------");
+        System.out.println("Benchmarking               iterations   param   java          jolk          factor");
+        System.out.println("-------------------------|------------|-------|-------------|-------------|--------");
         test(jolkTest, javaTest, "run", 7, iterations);
         test(jolkTest, javaTest, "runString", 1024, iterations);
         test(jolkTest, javaTest, "runNumerical", 1024, iterations);
@@ -115,7 +121,34 @@ public class BasicPerformanceTest extends JolcTestBase {
         long jolkTime = System.nanoTime() - start;
         double ratio = (double) jolkTime / javaTime;
 
-        System.out.printf("%-25s %-11d %-6d %-13d %-13d %.2fx\n", testCase, iterations, n, javaTime, jolkTime, ratio);
+        System.out.printf("%-25s %12d %7d %13d %13d %7.2fx\n", testCase, iterations, n, javaTime, jolkTime, ratio);
+    }
+
+    private void warmup(Value jolkTest) throws InterruptedException {
+
+        System.out.println("iterations   run          runString    runNumerical runFibonacci");
+        System.out.println("------------|------------|------------|------------|------------");
+
+
+        int it = 1;
+        for (int i = 1; i <= 16; i++) {
+            it = it * 2;
+            long tRun = measureJolk(jolkTest, "run", 7, it);
+            long tString = measureJolk(jolkTest, "runString", 1024, it);
+            long tNumerical = measureJolk(jolkTest, "runNumerical", 1024, it);
+            long tFib = measureJolk(jolkTest, "runFibonacci", 7, it);
+
+            System.out.printf("%12d|%12d|%12d|%12d|%12d\n", it, tRun / it, tString / it, tNumerical / it, tFib / it);
+        System.gc();
+        Thread.sleep(100); 
+        }
+        System.out.println();
+    }
+
+    private long measureJolk(Value jolkTest, String member, long n, long iterations) {
+        long start = System.nanoTime();
+        jolkTest.invokeMember(member, n, iterations);
+        return System.nanoTime() - start;
     }
 
     private Value getJolkTest() {

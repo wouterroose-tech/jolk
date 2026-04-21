@@ -32,7 +32,7 @@ public abstract class JolkLogicalNode extends JolkExpressionNode {
      */
     @Specialization
     protected Object doLogical(VirtualFrame frame, boolean leftNode,
-                               @Shared("logicalDispatch") @Cached(inline = false) JolkDispatchNode dispatchNode) {
+                               @Shared("logicalDispatch") @Cached JolkDispatchNode dispatchNode) {
         if ("&&".equals(getOperator())) {
             if (!leftNode) return false;
         } else if ("||".equals(getOperator())) {
@@ -53,7 +53,7 @@ public abstract class JolkLogicalNode extends JolkExpressionNode {
      */
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object leftNode,
-                                @Shared("logicalDispatch") @Cached(inline = false) JolkDispatchNode dispatchNode) {
+                                @Shared("logicalDispatch") @Cached JolkDispatchNode dispatchNode) {
         // Jolk Messaging Fallback: If left is Nothing, logic fails to Nothing
         if (leftNode == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
 

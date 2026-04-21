@@ -48,7 +48,7 @@ public abstract class JolkComparisonNode extends JolkExpressionNode {
      */
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object leftNode, Object rightNode,
-                                @Cached(inline = false) JolkDispatchNode dispatchNode) {
+                                @Cached JolkDispatchNode dispatchNode) {
         return dispatchNode.execute(frame, this, leftNode, getOperator(), new Object[]{rightNode});
     }
 }

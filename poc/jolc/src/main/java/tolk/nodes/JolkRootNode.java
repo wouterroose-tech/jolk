@@ -58,10 +58,10 @@ public final class JolkRootNode extends RootNode {
                     throw e;
                 }
             }
-            return JolkNode.lift(result);
+            return result; // Result should be lifted by the nodes that produce it, not the root.
         } else {
             Object result = bodyNode.executeGeneric(frame);
-            return JolkNode.lift(result);
+            return result;
         }
     }
 

@@ -298,20 +298,20 @@ public abstract class JolkDispatchNode extends JolkNode {
             case "ifPresent" -> {
                 if (!isAbsent) {
                     Object val = (receiver instanceof JolkMatch match) ? match.getValue() : receiver;
-                    return lift(callNode.call(env, lift(val)));
+                    return callNode.call(env, val);
                 }
                 return JolkNothing.INSTANCE;
             }
             case "ifEmpty", "??" -> {
-                if (isAbsent) return lift(callNode.call(env));
+                if (isAbsent) return callNode.call(env);
                 return receiver;
             }
             case "?" -> {
-                if (receiver instanceof Boolean b && b) return lift(callNode.call(env));
+                if (receiver instanceof Boolean b && b) return callNode.call(env);
                 return receiver;
             }
             case "?!" -> {
-                if (receiver instanceof Boolean b && !b) return lift(callNode.call(env));
+                if (receiver instanceof Boolean b && !b) return callNode.call(env);
                 return receiver;
             }
         }
@@ -334,7 +334,7 @@ public abstract class JolkDispatchNode extends JolkNode {
         Object unwrappedReceiver = unwrap(receiver);
         if (unwrappedReceiver instanceof Boolean b) {
             boolean condition = isTernarySelector(selector, "? :") ? b : !b;
-            return condition ? lift(thenNode.call(thenC.getEnvironment())) : lift(elseNode.call(elseC.getEnvironment()));
+            return condition ? thenNode.call(thenC.getEnvironment()) : elseNode.call(elseC.getEnvironment());
         }
         return JolkNothing.INSTANCE;
     }
@@ -428,7 +428,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// Handles `#try` when the receiver is a JolkClosure resource provider. This
     /// specialization executes the resource factory, passes the resulting resource
     /// into the logic closure, and guarantees cleanup via the AutoCloseable bridge.
-    @Specialization(guards = {"isTry(selector)", "isClosure(receiver)"}, limit = "3")
+    @Specialization(guards = {"isTry(selector)", "isClosure(receiver)"})
     protected Object doClosureTry(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode,
                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
@@ -565,13 +565,13 @@ public abstract class JolkDispatchNode extends JolkNode {
                                   @Cached("create(closure.getCallTarget())") DirectCallNode callNode) {
         long limit = receiver.longValue();
         Object env = closure.getEnvironment();
-        // The loop is now part of the Truffle graph. Because callNode is a DirectCallNode
-        // with a constant CallTarget, Graal will inline the closure body here.
+        // INDUSTRIAL OPTIMIZATION: Use call overloads to avoid array traffic entirely in the fast path.
         for (long i = 0; i < limit; i++) {
             callNode.call(env, i);
         }
         return limit;
     }
+
 
     @Specialization(guards = "isTimes(selector)", replaces = "doTimesDirect")
     protected Object doTimesIndirect(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Number receiver, String selector, Object[] arguments,
@@ -601,13 +601,17 @@ public abstract class JolkDispatchNode extends JolkNode {
                               @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure predicate) {
             List<Object> result = new ArrayList<>();
+            Object env = predicate.getEnvironment();
+            CallTarget target = predicate.getCallTarget();
+            Object[] args = new Object[]{env, null};
             for (Object item : receiver) {
-                Object matches = callNode.call(predicate.getCallTarget(), new Object[]{predicate.getEnvironment(), lift(item)});
+                args[1] = item;
+                Object matches = callNode.call(target, args);
                 if (matches instanceof Boolean b && b) {
-                    result.add(lift(item));
+                    result.add(item);
                 }
             }
-            return lift(result);
+            return result;
         }
         throw new RuntimeException("Invalid arguments for #filter: expected a single closure.");
     }
@@ -617,17 +621,21 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// Implements the anyMatch protocol for java.util.List. The IndirectCallNode 
     /// allows Graal to inline the predicate logic. It returns true as soon as 
     /// the predicate returns true for any element, otherwise false.
-    @Specialization(guards = "isAnyMatch(selector)", limit = "3")
+    @Specialization(guards = "isAnyMatch(selector)")
     protected Object doAnyMatch(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, List<?> receiver, String selector, Object[] arguments,
                                 @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure predicate) {
+            Object env = predicate.getEnvironment();
+            CallTarget target = predicate.getCallTarget();
+            Object[] args = new Object[]{env, null};
             for (Object item : receiver) {
-                Object matches = callNode.call(predicate.getCallTarget(), new Object[]{predicate.getEnvironment(), lift(item)});
+                args[1] = item;
+                Object matches = callNode.call(target, args);
                 if (matches instanceof Boolean b && b) {
-                    return lift(true); // Found a match, return true
+                    return true;
                 }
             }
-            return lift(false); // No match found
+            return false;
         }
         throw new RuntimeException("Invalid arguments for #anyMatch: expected a single closure.");
     }
@@ -636,12 +644,16 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// 
     /// Projects the **Functional Flow** of an Iterator directly into a message-passing 
     /// loop. This is the implementation of the IteratorExtension.
-    @Specialization(guards = "isForEach(selector)", limit = "3")
+    @Specialization(guards = "isForEach(selector)")
     protected Object doIteratorForEach(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, java.util.Iterator<?> receiver, String selector, Object[] arguments,
                                        @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure action) {
+            Object env = action.getEnvironment();
+            CallTarget target = action.getCallTarget();
+            Object[] args = new Object[]{env, null};
             while (receiver.hasNext()) {
-                callNode.call(action.getCallTarget(), new Object[]{action.getEnvironment(), lift(receiver.next())});
+                args[1] = receiver.next();
+                callNode.call(target, args);
             }
             return JolkNothing.INSTANCE;
         }
@@ -651,19 +663,19 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// ### Fast Path for Map Iteration (#forEach)
     /// 
     /// Maps the associative archetype to a two-argument closure.
-    @Specialization(guards = "isForEach(selector)", limit = "3")
+    @Specialization(guards = "isForEach(selector)")
     protected Object doMapForEach(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Map<?, ?> receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure action) {
+            Object env = action.getEnvironment();
+            CallTarget target = action.getCallTarget();
+            Object[] args = new Object[]{env, null, null};
             for (Map.Entry<?, ?> entry : receiver.entrySet()) {
-                // Jolk Map #forEach sends (key, value) to the closure
-                callNode.call(action.getCallTarget(), new Object[]{
-                    action.getEnvironment(), 
-                    lift(entry.getKey()), 
-                    lift(entry.getValue())
-                });
+                args[1] = entry.getKey();
+                args[2] = entry.getValue();
+                callNode.call(target, args);
             }
-            return lift(receiver);
+            return receiver;
         }
         throw new RuntimeException("Invalid arguments for #forEach: expected a single closure.");
     }
@@ -675,18 +687,19 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// and Loop Fusion will "boil away" the intermediate allocation when 
     /// messages are chained, resulting in zero-overhead single-pass execution.
     @Specialization(guards = "isMap(selector)")
-    @Specialization(guards = "isMap(selector)", limit = "3")
     protected Object doMap(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, List<?> receiver, String selector, Object[] arguments,
                            @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure mapper) {
             List<Object> result = new ArrayList<>(receiver.size());
+            Object env = mapper.getEnvironment();
+            CallTarget target = mapper.getCallTarget();
+            Object[] args = new Object[]{env, null};
             for (Object item : receiver) {
-                // The IndirectCallNode allows Graal to inline the closure logic 
-                // directly into this loop.
-                Object projected = callNode.call(mapper.getCallTarget(), new Object[]{mapper.getEnvironment(), lift(item)});
+                args[1] = item;
+                Object projected = callNode.call(target, args);
                 result.add(projected);
             }
-            return lift(result);
+            return result;
         }
         throw new RuntimeException("Invalid arguments for #map: expected a single closure.");
     }
@@ -701,12 +714,12 @@ public abstract class JolkDispatchNode extends JolkNode {
                                          @Cached("lookupLongMember(cachedSelector)") Object cachedMember,
                                          @Cached("getClosureTarget(cachedMember)") CallTarget target,
                                          @Cached("create(target)") DirectCallNode callNode) {
-        if (arguments.length == 0) return lift(callNode.call(receiver));
-        if (arguments.length == 1) return lift(callNode.call(receiver, arguments[0]));
+        if (arguments.length == 0) return callNode.call(receiver);
+        if (arguments.length == 1) return callNode.call(receiver, arguments[0]);
         Object[] args = new Object[arguments.length + 1];
         args[0] = receiver;
         System.arraycopy(arguments, 0, args, 1, arguments.length);
-        return lift(callNode.call((Object)args));
+        return callNode.call((Object)args);
     }
 
     @Specialization(guards = "selector == cachedSelector", replaces = "doLongClosureDirect", limit = "3")

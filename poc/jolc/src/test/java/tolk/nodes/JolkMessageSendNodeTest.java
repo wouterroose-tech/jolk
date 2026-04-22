@@ -53,7 +53,7 @@ class JolkMessageSendNodeTest extends JolcTestBase {
         JolkNode node = JolkMessageSendNodeGen.create("toString", args, receiver);
 
             Object result = execute(node);
-            assertEquals("instance of Test", result);
+            assertEquals("instance of Test", result.toString());
         } finally {
             context.leave();
         }

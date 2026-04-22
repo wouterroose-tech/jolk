@@ -9,6 +9,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.strings.TruffleString;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 /**
@@ -26,6 +27,15 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 public abstract class JolkArithmeticNode extends JolkExpressionNode {
 
     public abstract String getOperator();
+
+    @Override
+    public abstract long executeLong(VirtualFrame frame) throws UnexpectedResultException;
+
+    @Override
+    public abstract boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException;
+
+    @Override
+    public abstract TruffleString executeTruffleString(VirtualFrame frame) throws UnexpectedResultException;
 
     /**
      * Specialized fast-path for primitive longs. 
@@ -71,10 +81,10 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
     }
 
     @Specialization(guards = "isPlus()")
-    protected TruffleString doStringLong(TruffleString s1, long l2,
+    protected TruffleString doStringLong(TruffleString s1, Number n2,
                                          @Shared("fromLong") @Cached TruffleString.FromLongNode fromLongNode,
                                          @Shared("concat") @Cached TruffleString.ConcatNode concatNode) {
-        TruffleString s2 = fromLongNode.execute(l2, TruffleString.Encoding.UTF_16, true);
+        TruffleString s2 = fromLongNode.execute(n2.longValue(), TruffleString.Encoding.UTF_16, true);
         return concatNode.execute(s1, s2, TruffleString.Encoding.UTF_16, true);
     }
 
@@ -126,6 +136,6 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object leftNode, Object rightNode,
                                 @Cached JolkDispatchNode dispatchNode) {
-        return dispatchNode.execute(frame, this, leftNode, getOperator(), new Object[]{rightNode});
+        return dispatchNode.execute(frame, leftNode, getOperator(), new Object[]{rightNode});
     }
 }

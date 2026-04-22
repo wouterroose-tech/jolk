@@ -3,6 +3,8 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.api.strings.TruffleString;
 import tolk.runtime.JolkNothing;
 
 /// # JolkReadArgumentNode
@@ -42,5 +44,32 @@ public class JolkReadArgumentNode extends JolkNode {
             return JolkNothing.INSTANCE;
         }
         return lift(targetArgs[index]);
+    }
+
+    @Override
+    public long executeLong(VirtualFrame frame) throws UnexpectedResultException {
+        Object[] args = (depth == 0) ? frame.getArguments() : getTargetArgs(frame, depth);
+        if (args != null && index < args.length && args[index] instanceof Long val) {
+            return val;
+        }
+        throw new UnexpectedResultException(executeGeneric(frame));
+    }
+
+    @Override
+    public boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException {
+        Object[] args = (depth == 0) ? frame.getArguments() : getTargetArgs(frame, depth);
+        if (args != null && index < args.length && args[index] instanceof Boolean val) {
+            return val;
+        }
+        throw new UnexpectedResultException(executeGeneric(frame));
+    }
+
+    @Override
+    public TruffleString executeTruffleString(VirtualFrame frame) throws UnexpectedResultException {
+        Object[] args = (depth == 0) ? frame.getArguments() : getTargetArgs(frame, depth);
+        if (args != null && index < args.length && args[index] instanceof TruffleString val) {
+            return val;
+        }
+        throw new UnexpectedResultException(executeGeneric(frame));
     }
 }

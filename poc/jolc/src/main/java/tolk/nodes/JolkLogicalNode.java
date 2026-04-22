@@ -1,13 +1,9 @@
 package tolk.nodes;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Cached.Shared;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.NodeChild;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
+
 import tolk.runtime.JolkNothing;
 
 /**
@@ -17,48 +13,59 @@ import tolk.runtime.JolkNothing;
  * Unlike arithmetic nodes, this node manually controls the execution of its 
  * children to preserve short-circuiting behavior.
  */
-@NodeInfo(shortName = "logical")
-@NodeChild(value = "leftNode", type = JolkNode.class)
-@NodeField(name = "rightNode", type = JolkNode.class)
-@NodeField(name = "operator", type = String.class)
-public abstract class JolkLogicalNode extends JolkExpressionNode {
+@NodeInfo(shortName = "logic")
+public class JolkLogicalNode extends JolkExpressionNode {
 
-    public abstract String getOperator();
-    public abstract JolkNode getRightNode();
+    @Child private JolkNode leftNode;
+    @Child private JolkNode rightNode;
+    @Child private JolkDispatchNode dispatchNode;
+    private final String operator;
 
-    /**
-     * Specialized fast-path for primitive booleans with short-circuiting.
-     * Only the left operand is a NodeChild; the right is evaluated lazily.
-     */
-    @Specialization
-    protected Object doLogical(VirtualFrame frame, boolean leftNode,
-                               @Shared("logicalDispatch") @Cached JolkDispatchNode dispatchNode) {
-        if ("&&".equals(getOperator())) {
-            if (!leftNode) return false;
-        } else if ("||".equals(getOperator())) {
-            if (leftNode) return true;
-        }
-
-        Object right = getRightNode().executeGeneric(frame);
-        if (right instanceof Boolean b2) {
-            return b2; // Result determined by the right operand
-        }
-        
-        // Fallback for right-hand side if it's not a boolean (Custom Messaging)
-        return dispatchNode.execute(frame, this, leftNode, getOperator(), new Object[]{right});
+    public JolkLogicalNode(JolkNode leftNode, JolkNode rightNode, String operator) {
+        this.leftNode = leftNode;
+        this.rightNode = rightNode;
+        this.operator = operator;
+        this.dispatchNode = JolkDispatchNodeGen.create();
     }
 
-    /**
-     * Unified Messaging Fallback: Handles Nothing identities and custom operator overloading.
-     */
-    @Fallback
-    protected Object doFallback(VirtualFrame frame, Object leftNode,
-                                @Shared("logicalDispatch") @Cached JolkDispatchNode dispatchNode) {
-        // Jolk Messaging Fallback: If left is Nothing, logic fails to Nothing
-        if (leftNode == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
+    public String getOperator() {
+        return operator;
+    }
 
+    @Override
+    public Object executeGeneric(VirtualFrame frame) {
+        Object left = leftNode.executeGeneric(frame);
+
+        // Jolk Messaging Fallback: If left is Nothing, logic fails to Nothing
+        if (left == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
+
+        if (left instanceof Boolean) {
+            boolean l = (boolean) left;
+            if ("&&".equals(operator)) {
+                if (!l) return false;
+            } else if ("||".equals(operator)) {
+                if (l) return true;
+            }
+
+            Object right = rightNode.executeGeneric(frame);
+            if (right instanceof Boolean b2) {
+                return b2;
+            }
+            // Fallback for right-hand side if it's not a boolean (Custom Messaging)
+            return dispatchNode.execute(frame, left, operator, new Object[]{right});
+        }
+        
         // Dispatch for custom operator overloading
-        Object right = getRightNode().executeGeneric(frame);
-        return dispatchNode.execute(frame, this, leftNode, getOperator(), new Object[]{right});
+        Object right = rightNode.executeGeneric(frame);
+        return dispatchNode.execute(frame, left, operator, new Object[]{right});
+    }
+
+    @Override
+    public boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException {
+        Object result = executeGeneric(frame);
+        if (result instanceof Boolean) {
+            return (boolean) result;
+        }
+        throw new UnexpectedResultException(result);
     }
 }

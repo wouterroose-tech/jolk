@@ -22,7 +22,7 @@ import tolk.nodes.JolkComparisonNodeGen;
 import tolk.nodes.JolkClassDefinitionNode;
 import tolk.nodes.JolkBlockNode;
 import tolk.nodes.JolkReadEnvironmentNode;
-import tolk.nodes.JolkLogicalNodeGen;
+import tolk.nodes.JolkLogicalNode;
 import tolk.nodes.JolkMessageSendNode;
 import tolk.nodes.JolkMessageSendNodeGen;
 import tolk.nodes.JolkUnaryNodeGen;
@@ -509,7 +509,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.logic_and().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.logic_and(i));
-            left = JolkLogicalNodeGen.create(left, right, op);
+            left = new JolkLogicalNode(left, right, op);
         }
         return left;
     }
@@ -520,7 +520,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         for (int i = 1; i < ctx.inclusive_or().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText();
             JolkNode right = visit(ctx.inclusive_or(i));
-            left = JolkLogicalNodeGen.create(left, right, op);
+            left = new JolkLogicalNode(left, right, op);
         }
         return left;
     }
@@ -1031,7 +1031,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         try {
             JolkNode body = visit(tree);
             FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
-            builder.addSlots(1, FrameSlotKind.Object);
+            // INDUSTRIAL OPTIMIZATION: Allow ternary branches to use primitive slots
+            builder.addSlots(1, FrameSlotKind.Illegal);
             RootNode root = new JolkRootNode(language, builder.build(), body, "closure", false);
             return new JolkClosureNode(root.getCallTarget());
         } finally {

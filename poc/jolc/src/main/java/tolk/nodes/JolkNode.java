@@ -7,6 +7,8 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import com.oracle.truffle.api.strings.TruffleString;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;
 
@@ -30,6 +32,20 @@ public abstract class JolkNode extends Node {
     /// @return The result of executing this node.
     public abstract Object executeGeneric(VirtualFrame frame);
 
+    /// Specialized execution for primitive longs.
+    public long executeLong(VirtualFrame frame) throws UnexpectedResultException {
+        return JolkTypesGen.expectLong(executeGeneric(frame));
+    }
+
+    /// Specialized execution for primitive booleans.
+    public boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException {
+        return JolkTypesGen.expectBoolean(executeGeneric(frame));
+    }
+
+    public TruffleString executeTruffleString(VirtualFrame frame) throws UnexpectedResultException {
+        return JolkTypesGen.expectTruffleString(executeGeneric(frame));
+    }
+
     /// Performs "Identity Restitution" by lifting a potential raw Java null into the 
     /// Jolk {@link JolkNothing#INSTANCE}. This ensures that even uninitialized states 
     /// or nulls passed from the Java host can safely participate in Jolk's unified 
@@ -38,18 +54,33 @@ public abstract class JolkNode extends Node {
     /// @param value The value to lift.
     /// @return The lifted value (either the original object or JolkNothing.INSTANCE).
     public static Object lift(Object value) {
-        // INDUSTRIAL OPTIMIZATION: Streamline lift to a simple null-check.
-        // Complex coercion is handled at the Interop boundary.
-        return (value == null) ? JolkNothing.INSTANCE : value;
+        if (value == null) return JolkNothing.INSTANCE;
+
+        // IDENTITY RESTITUTION: Ensure host types match Jolk guest currency.
+        // Integer to Long (common in interop) and String to TruffleString.
+        if (value instanceof Long || value instanceof Boolean || value instanceof TruffleString || value instanceof JolkNothing) {
+            return value;
+        }
+        if (value instanceof Integer i) return i.longValue();
+        if (value instanceof String s) {
+            return TruffleString.fromJavaStringUncached(s, TruffleString.Encoding.UTF_16);
+        }
+
+        return liftSlow(value);
     }
 
     @TruffleBoundary
     private static Object liftSlow(Object value) {
-        if (InteropLibrary.getUncached().isNull(value)) {
-            return JolkNothing.INSTANCE;
+        try {
+            if (InteropLibrary.getUncached().isNull(value)) {
+                return JolkNothing.INSTANCE;
+            }
+            // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
+            return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
+        } catch (AssertionError | IllegalStateException e) {
+            // Handled: Context-less execution path (e.g. low-level runtime unit tests)
+            return value;
         }
-        // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
-        return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
     }
 
     /// Performs **Impedance Resolution**. If the provided value is a wrapped 

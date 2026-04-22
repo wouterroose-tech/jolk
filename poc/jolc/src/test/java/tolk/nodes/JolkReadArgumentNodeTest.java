@@ -30,7 +30,7 @@ public class JolkReadArgumentNodeTest {
 
         // Read arg0 (index 0, depth 0)
         JolkReadArgumentNode readArg0 = new JolkReadArgumentNode(0, 0);
-        assertEquals("value0", readArg0.executeGeneric(frame), "Should read the correct argument from the current frame.");
+        assertEquals("value0", readArg0.executeGeneric(frame).toString(), "Should read the correct argument from the current frame.");
 
         // Read arg1 (index 1, depth 0)
         JolkReadArgumentNode readArg1 = new JolkReadArgumentNode(1, 0);
@@ -59,7 +59,7 @@ public class JolkReadArgumentNodeTest {
 
         // Read "outerArg" (index 0, depth 1)
         JolkReadArgumentNode readOuterArg = new JolkReadArgumentNode(0, 1);
-        assertEquals("outerValue", readOuterArg.executeGeneric(currentFrame),
+        assertEquals("outerValue", readOuterArg.executeGeneric(currentFrame).toString(),
                 "Should read the correct argument from the outer frame.");
     }
 }

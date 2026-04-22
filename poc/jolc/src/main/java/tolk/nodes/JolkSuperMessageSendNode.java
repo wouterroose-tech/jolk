@@ -79,7 +79,7 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
             // we delegate to the intrinsic protocol. This ensures that 'super #new' 
             // correctly performs the raw allocation of the current instance.
             if (JolkDispatchNode.isObjectIntrinsic(selector)) {
-                return lift(JolkDispatchNode.dispatchObjectIntrinsic(this, self, selector, args, InteropLibrary.getUncached()));
+                return lift(JolkDispatchNode.dispatchObjectIntrinsic(self, selector, args, InteropLibrary.getUncached()));
             }
 
             throw new RuntimeException("Message not understood: #" + selector + " in super hierarchy of " + holderClass.name);

@@ -45,6 +45,9 @@ public final class JolkIntrinsicProtocol {
                 }
                 case "==" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver == JolkNothing.INSTANCE && arguments[0] == JolkNothing.INSTANCE) {
+                        return true; // Nothing == Nothing
+                    }
                     Object other = arguments[0];
                     if (receiver == other) return true;
                     if (receiver instanceof Number n1 && other instanceof Number n2) return n1.longValue() == n2.longValue();
@@ -60,11 +63,18 @@ public final class JolkIntrinsicProtocol {
                     return false;
                 }
                 case "!=" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver == JolkNothing.INSTANCE && arguments[0] == JolkNothing.INSTANCE) {
+                        return false; // Nothing != Nothing is false
+                    }
                     Object eq = dispatchObjectIntrinsic(receiver, "==", arguments, interop);
                     return (eq instanceof Boolean b) ? !b : true;
                 }
                 case "~~" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver == JolkNothing.INSTANCE && arguments[0] == JolkNothing.INSTANCE) {
+                        return true; // Nothing ~~ Nothing
+                    }
                     Object other = arguments[0];
                     if (receiver instanceof Number n1 && other instanceof Number n2) {
                         return n1.longValue() == n2.longValue();
@@ -76,6 +86,10 @@ public final class JolkIntrinsicProtocol {
                     return receiver.equals(other);
                 }
                 case "!~" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver == JolkNothing.INSTANCE && arguments[0] == JolkNothing.INSTANCE) {
+                        return false; // Nothing !~ Nothing is false
+                    }
                     Object eq = dispatchObjectIntrinsic(receiver, "~~", arguments, interop);
                     return (eq instanceof Boolean b) ? !b : true;
                 }

@@ -1,6 +1,7 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.dsl.TypeSystem;
+import com.oracle.truffle.api.strings.TruffleString;
 
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkBooleanExtension;
@@ -20,6 +21,7 @@ import tolk.runtime.JolkObject;
     long.class,
     boolean.class,
     String.class,
+    TruffleString.class,
     JolkBooleanExtension.class,
     JolkLongExtension.class,
     JolkMatch.class,

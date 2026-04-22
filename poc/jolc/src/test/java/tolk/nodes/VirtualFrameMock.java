@@ -41,6 +41,36 @@ public class VirtualFrameMock implements MaterializedFrame {
     }
 
     @Override
+    public boolean isLong(int slotIndex) {
+        return locals[slotIndex] instanceof Long;
+    }
+
+    @Override
+    public long getLong(int slotIndex) {
+        return (long) locals[slotIndex];
+    }
+
+    @Override
+    public void setLong(int slotIndex, long value) {
+        locals[slotIndex] = value;
+    }
+
+    @Override
+    public boolean isBoolean(int slotIndex) {
+        return locals[slotIndex] instanceof Boolean;
+    }
+
+    @Override
+    public boolean getBoolean(int slotIndex) {
+        return (boolean) locals[slotIndex];
+    }
+
+    @Override
+    public void setBoolean(int slotIndex, boolean value) {
+        locals[slotIndex] = value;
+    }
+
+    @Override
     public FrameDescriptor getFrameDescriptor() {
         return frameDescriptor;
     }

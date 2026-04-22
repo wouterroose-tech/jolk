@@ -8,6 +8,7 @@ import com.oracle.truffle.api.strings.TruffleString;
 import com.oracle.truffle.api.dsl.GenerateInline;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Cached.Exclusive;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.dsl.Idempotent;
 import com.oracle.truffle.api.dsl.Cached.Shared;
 import com.oracle.truffle.api.dsl.GenerateCached;
@@ -80,24 +81,18 @@ import tolk.runtime.JolkIntrinsicProtocol;
 /// dynamic messaging.
 @GenerateInline(false)
 @GenerateCached(true)
-public abstract class JolkDispatchNode extends JolkNode {
+public abstract class JolkDispatchNode extends Node {
 
-    /// Executes the message dispatch.
-    /// 
-    /// @param frame The current execution frame.
-    /// @param receiver The object receiving the message.
-    /// @param selector The message name (selector).
-    /// @param arguments The arguments passed to the message.
-    /// @return The result of the message send.
-    public abstract Object execute(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments);
-
-    /// This method is not intended to be called directly on a JolkDispatchNode.
-    /// It is marked as `final` to satisfy the requirement from {@link JolkNode} 
-    /// while shielding it from the Truffle DSL's specialization generator. 
-    @Override
-    public final Object executeGeneric(VirtualFrame frame) {
-        throw new UnsupportedOperationException("JolkDispatchNode is not designed to be executed directly via executeGeneric(VirtualFrame). Use execute(...) instead.");
-    }
+    /**
+     * Executes the message dispatch.
+     * 
+     * @param frame The current execution frame.
+     * @param receiver The object receiving the message.
+     * @param selector The message name (selector).
+     * @param arguments The arguments passed to the message.
+     * @return The result of the message send.
+     */
+    public abstract Object execute(VirtualFrame frame, Object receiver, String selector, Object[] arguments);
 
     // --- Helper methods for @Specialization guards ---
     protected static boolean isTimes(String selector) {
@@ -185,8 +180,12 @@ public abstract class JolkDispatchNode extends JolkNode {
     // --- End of Helper methods ---
 
     @Specialization(guards = {"isNothing(receiver)", "!isControlFlow(selector)", "!isClosureCatch(selector)"})
-    protected Object doNothing(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
-                                @CachedLibrary(value = "getNothing()") InteropLibrary interop) {
+    protected Object doNothing(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
+                                @Exclusive @CachedLibrary(value = "getNothing()") InteropLibrary interop) {
+        // Handle core protocol for Nothing (e.g., #class, #toString) explicitly.
+        if (isObjectIntrinsic(selector)) {
+            return JolkNode.lift(dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop));
+        }
         try { 
             // ### Safe Navigation (Silent Absorption)
             //
@@ -196,16 +195,13 @@ public abstract class JolkDispatchNode extends JolkNode {
             // Nothing absorbs the message by returning 
             // itself, allowing the communicative flow to continue without 
             // executing logic on an absent state.
-            return lift(interop.invokeMember(JolkNothing.INSTANCE, selector, arguments));
+            return JolkNode.lift(interop.invokeMember(JolkNothing.INSTANCE, selector, arguments));
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
-            if (isObjectIntrinsic(selector)) {
-                return lift(dispatchObjectIntrinsic(node, JolkNothing.INSTANCE, selector, arguments, interop));
-            }
             try {
                 // Fallback to host member heuristic for Nothing
-                return lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
+                return JolkNode.lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
             } catch (UnknownIdentifierException ex) {
                 // SAFE NAVIGATION: As per the Jolk philosophy, Nothing consumes unknown 
                 // messages and returns itself to allow message chains to collapse gracefully.
@@ -232,11 +228,11 @@ public abstract class JolkDispatchNode extends JolkNode {
         "selector == cachedSelector",
         "property != null"
     }, limit = "3")
-    protected Object doShapeRead(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, DynamicObject receiver, String selector, Object[] arguments,
+    protected Object doShapeRead(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
                                 @Cached("receiver.getShape()") Shape cachedShape,
                                 @Cached("selector") String cachedSelector,
                                 @Cached("cachedShape.getProperty(selector)") Property property,
-                                @Exclusive @CachedLibrary(value = "receiver") DynamicObjectLibrary objLib) {
+                                @CachedLibrary(limit = "3") DynamicObjectLibrary objLib) {
 
         if (arguments.length == 0) {
             // Getter Pattern: #field
@@ -284,12 +280,12 @@ public abstract class JolkDispatchNode extends JolkNode {
         "arguments.length == 1",
         "getArg0(arguments) == cachedClosure"
     }, limit = "3")
-    protected Object doControlFlowDirect(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
+    protected Object doControlFlowDirect(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                         @Cached("getArg0(arguments)") Object cachedClosure,
                                         @Cached("asClosure(cachedClosure)") JolkClosure closure,
                                         @Cached("create(closure.getCallTarget())") DirectCallNode callNode,
                                         @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
-        Object unwrappedReceiver = unwrap(receiver);
+        Object unwrappedReceiver = JolkNode.unwrap(receiver);
         boolean isAbsent = (unwrappedReceiver == null || unwrappedReceiver == JolkNothing.INSTANCE || interop.isNull(unwrappedReceiver));
         if (unwrappedReceiver instanceof JolkMatch match) isAbsent = !match.isPresent();
 
@@ -315,7 +311,7 @@ public abstract class JolkDispatchNode extends JolkNode {
                 return receiver;
             }
         }
-        return doControlFlow(frame, node, receiver, selector, arguments, IndirectCallNode.getUncached(), interop);
+        return doControlFlow(frame, receiver, selector, arguments, IndirectCallNode.getUncached(), interop);
     }
 
     @Specialization(guards = {
@@ -324,14 +320,14 @@ public abstract class JolkDispatchNode extends JolkNode {
         "getArg0(arguments) == cachedThen",
         "getArg(arguments, 1) == cachedElse"
     }, limit = "3")
-    protected Object doTernaryDirect(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
+    protected Object doTernaryDirect(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                     @Cached("getArg0(arguments)") Object cachedThen,
                                     @Cached("getArg(arguments, 1)") Object cachedElse,
                                     @Cached("asClosure(cachedThen)") JolkClosure thenC,
                                     @Cached("asClosure(cachedElse)") JolkClosure elseC,
                                     @Cached("create(thenC.getCallTarget())") DirectCallNode thenNode,
                                     @Cached("create(elseC.getCallTarget())") DirectCallNode elseNode) {
-        Object unwrappedReceiver = unwrap(receiver);
+        Object unwrappedReceiver = JolkNode.unwrap(receiver);
         if (unwrappedReceiver instanceof Boolean b) {
             boolean condition = isTernarySelector(selector, "? :") ? b : !b;
             return condition ? thenNode.call(thenC.getEnvironment()) : elseNode.call(elseC.getEnvironment());
@@ -340,11 +336,11 @@ public abstract class JolkDispatchNode extends JolkNode {
     }
 
     @Specialization(guards = "isControlFlow(selector)", replaces = {"doControlFlowDirect", "doTernaryDirect"})
-    protected Object doControlFlow(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
+    protected Object doControlFlow(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode,
                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         
-        Object unwrappedReceiver = unwrap(receiver);
+        Object unwrappedReceiver = JolkNode.unwrap(receiver);
         // Shared Absence Logic: Handles Nothing, null, and empty Matches 
         boolean isAbsent = (unwrappedReceiver == null || unwrappedReceiver == JolkNothing.INSTANCE || interop.isNull(unwrappedReceiver));
         if (unwrappedReceiver instanceof JolkMatch match) {
@@ -356,31 +352,31 @@ public abstract class JolkDispatchNode extends JolkNode {
                 case "ifPresent" -> {
                     if (!isAbsent) {
                         Object val = (receiver instanceof JolkMatch match) ? match.getValue() : receiver;
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment(), lift(val)}));
+                        return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment(), JolkNode.lift(val)}));
                     }
                     return JolkNothing.INSTANCE;
                 }
                 case "ifEmpty" -> {
                     if (isAbsent) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                        return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
                     return receiver;
                 }
                 case "??" -> {
                     if (isAbsent) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                        return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
                     return receiver;
                 }
                 case "?" -> {
                     if (receiver instanceof Boolean b && b) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                        return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
                     return receiver;
                 }
                 case "?!" -> {
                     if (receiver instanceof Boolean b && !b) {
-                        return lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
+                        return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
                     return receiver;
                 }
@@ -412,15 +408,15 @@ public abstract class JolkDispatchNode extends JolkNode {
         if (arguments.length == 2 && arguments[0] instanceof JolkClosure thenC && arguments[1] instanceof JolkClosure elseC) {
             if ("? :".equals(selector) && unwrappedReceiver instanceof Boolean b) {
                 JolkClosure branch = b ? thenC : elseC;
-                return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
+                return JolkNode.lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
             }
             if ("?! :".equals(selector) && unwrappedReceiver instanceof Boolean b) {
                 JolkClosure branch = !b ? thenC : elseC;
-                return lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
+                return JolkNode.lift(callNode.call(branch.getCallTarget(), new Object[]{branch.getEnvironment()}));
             }
         }
         // Fallback to boundary for non-closure arguments or unhandled control flow
-        return lift(dispatchObjectIntrinsic(node, receiver, selector, arguments, interop));
+        return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
     }
 
     /// ### Fast Path for Closure Try-With-Resources
@@ -429,7 +425,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// specialization executes the resource factory, passes the resulting resource
     /// into the logic closure, and guarantees cleanup via the AutoCloseable bridge.
     @Specialization(guards = {"isTry(selector)", "isClosure(receiver)"})
-    protected Object doClosureTry(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
+    protected Object doClosureTry(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode,
                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         if (arguments.length != 1 || !(arguments[0] instanceof JolkClosure logic)) {
@@ -438,7 +434,7 @@ public abstract class JolkDispatchNode extends JolkNode {
 
         JolkClosure provider = (JolkClosure) receiver;
         Object resource = callNode.call(provider.getCallTarget(), new Object[]{provider.getEnvironment()});
-        Object liftedResource = lift(resource);
+        Object liftedResource = JolkNode.lift(resource);
 
         Throwable thrown = null;
         try {
@@ -521,19 +517,19 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// Handles #catch on JolkClosure by routing to the closure's interop protocol.
     /// This enables exception handling for closures.
     @Specialization(guards = {"isClosureCatch(selector)", "isClosure(receiver)"})
-    protected Object doClosureCatch(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
+    protected Object doClosureCatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                    @Shared("callNode") @Cached IndirectCallNode callNode,
                                    @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         try {
             if (receiver instanceof JolkClosure riskyClosure && arguments.length == 1 && arguments[0] instanceof JolkClosure handlerClosure) {
                 try {
                     // 1. Try to execute the primary closure (the risky logic)
-                    return lift(callNode.call(riskyClosure.getCallTarget(), new Object[]{riskyClosure.getEnvironment()}));
+                    return JolkNode.lift(callNode.call(riskyClosure.getCallTarget(), new Object[]{riskyClosure.getEnvironment()}));
                 } catch (JolkReturnException e) {
                     throw e; // Non-local returns (^) must propagate past the catch block
                 } catch (Throwable e) {
                     // 2. Execute the handler closure with the caught exception
-                    return lift(callNode.call(handlerClosure.getCallTarget(), new Object[]{handlerClosure.getEnvironment(), lift(e)}));
+                    return JolkNode.lift(callNode.call(handlerClosure.getCallTarget(), new Object[]{handlerClosure.getEnvironment(), JolkNode.lift(e)}));
                 }
             }
 
@@ -541,16 +537,16 @@ public abstract class JolkDispatchNode extends JolkNode {
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = receiver;
             System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
-            return lift(interop.invokeMember(receiver, selector, argsWithReceiver));
+            return JolkNode.lift(interop.invokeMember(receiver, selector, argsWithReceiver));
         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException e) {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiver, e);
         }
     }
 
     @Specialization(guards = "isClosureCatch(selector)", replaces = "doClosureCatch")
-    protected Object doCatchPassThrough(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments) {
+    protected Object doCatchPassThrough(VirtualFrame frame, Object receiver, String selector, Object[] arguments) {
         // If the receiver is not a closure, the 'try' block already succeeded.
-        return lift(receiver);
+        return JolkNode.lift(receiver);
     }
 
     /// ### Fast Path for Long-based Iteration (#times)
@@ -559,7 +555,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// via an IndirectCallNode in a loop. This enables Truffle to perform inlining of the
     /// closure body, significantly improving performance compared to interop execution.
     @Specialization(guards = {"isTimes(selector)", "getArg0(arguments) == cachedClosure"}, limit = "3")
-    protected Object doTimesDirect(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Number receiver, String selector, Object[] arguments,
+    protected Object doTimesDirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                   @Cached("getArg0(arguments)") Object cachedClosure,
                                   @Cached("asClosure(cachedClosure)") JolkClosure closure,
                                   @Cached("create(closure.getCallTarget())") DirectCallNode callNode) {
@@ -574,7 +570,7 @@ public abstract class JolkDispatchNode extends JolkNode {
 
 
     @Specialization(guards = "isTimes(selector)", replaces = "doTimesDirect")
-    protected Object doTimesIndirect(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Number receiver, String selector, Object[] arguments,
+    protected Object doTimesIndirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                     @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure closure) {
             long limit = receiver.longValue();
@@ -597,7 +593,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// Implements the filter protocol for java.util.List. The IndirectCallNode 
     /// allows Graal to inline the predicate logic.
     @Specialization(guards = "isFilter(selector)")
-    protected Object doFilter(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, List<?> receiver, String selector, Object[] arguments,
+    protected Object doFilter(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                               @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure predicate) {
             List<Object> result = new ArrayList<>();
@@ -622,7 +618,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// allows Graal to inline the predicate logic. It returns true as soon as 
     /// the predicate returns true for any element, otherwise false.
     @Specialization(guards = "isAnyMatch(selector)")
-    protected Object doAnyMatch(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, List<?> receiver, String selector, Object[] arguments,
+    protected Object doAnyMatch(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                                 @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure predicate) {
             Object env = predicate.getEnvironment();
@@ -645,7 +641,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// Projects the **Functional Flow** of an Iterator directly into a message-passing 
     /// loop. This is the implementation of the IteratorExtension.
     @Specialization(guards = "isForEach(selector)")
-    protected Object doIteratorForEach(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, java.util.Iterator<?> receiver, String selector, Object[] arguments,
+    protected Object doIteratorForEach(VirtualFrame frame, java.util.Iterator<?> receiver, String selector, Object[] arguments,
                                        @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure action) {
             Object env = action.getEnvironment();
@@ -664,7 +660,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// 
     /// Maps the associative archetype to a two-argument closure.
     @Specialization(guards = "isForEach(selector)")
-    protected Object doMapForEach(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Map<?, ?> receiver, String selector, Object[] arguments,
+    protected Object doMapForEach(VirtualFrame frame, Map<?, ?> receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure action) {
             Object env = action.getEnvironment();
@@ -687,7 +683,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// and Loop Fusion will "boil away" the intermediate allocation when 
     /// messages are chained, resulting in zero-overhead single-pass execution.
     @Specialization(guards = "isMap(selector)")
-    protected Object doMap(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, List<?> receiver, String selector, Object[] arguments,
+    protected Object doMap(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                            @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure mapper) {
             List<Object> result = new ArrayList<>(receiver.size());
@@ -709,7 +705,7 @@ public abstract class JolkDispatchNode extends JolkNode {
         "selector == cachedSelector",
         "isReifiedMethod(cachedMember)"
     }, limit = "3")
-    protected Object doLongClosureDirect(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Number receiver, String selector, Object[] arguments,
+    protected Object doLongClosureDirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                          @Cached("selector") String cachedSelector,
                                          @Cached("lookupLongMember(cachedSelector)") Object cachedMember,
                                          @Cached("getClosureTarget(cachedMember)") CallTarget target,
@@ -723,7 +719,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     }
 
     @Specialization(guards = "selector == cachedSelector", replaces = "doLongClosureDirect", limit = "3")
-    protected Object doLongCached(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Number receiver, String selector, Object[] arguments,
+    protected Object doLongCached(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                  @Cached("selector") String cachedSelector,
                                  @Cached("lookupLongMember(cachedSelector)") Object cachedMember,
                                  @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
@@ -751,38 +747,40 @@ public abstract class JolkDispatchNode extends JolkNode {
 
         if (cachedMember != null && !isNothing(cachedMember) && interop.isExecutable(cachedMember)) {
             try {
-                if (arguments.length == 0) return lift(interop.execute(cachedMember, (Object)receiver));
+                InteropLibrary memberInterop = InteropLibrary.getUncached(cachedMember);
+                if (arguments.length == 0) return JolkNode.lift(memberInterop.execute(cachedMember, (Object)receiver));
                 Object[] args = prepareArguments(cachedMember, receiver, arguments);
-                return lift(interop.execute(cachedMember, args));
+                return JolkNode.lift(memberInterop.execute(cachedMember, args));
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        return doLong(frame, node, receiver, selector, arguments, interop);
+        return doLong(frame, receiver, selector, arguments, interop);
     }
 
     @Specialization(replaces = "doLongCached")
-    protected Object doLong(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Number receiver, String selector, Object[] arguments,
+    protected Object doLong(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                             @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         try {
             Object member = lookupLongMember(selector);
             if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                InteropLibrary memberInterop = InteropLibrary.getUncached(member);
                 Object[] args = prepareArguments(member, receiver, arguments);
-                return lift(interop.execute(member, args));
+                return JolkNode.lift(memberInterop.execute(member, args));
             }
             
-            if (arguments.length == 1 && "??".equals(selector)) return lift(receiver);
-            return lift(interop.invokeMember(receiver, selector, arguments));
+            if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
+            return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
 
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (isObjectIntrinsic(selector)) {
-                return lift(dispatchObjectIntrinsic(node, receiver, selector, arguments, interop));
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
             }
             try {
-                return lift(dispatchHostMember(receiver, selector, arguments));
+                return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on Long", e);
             }
@@ -800,19 +798,20 @@ public abstract class JolkDispatchNode extends JolkNode {
     ///
     /// Implements **Identity Erasure** with Inline Caching for Boolean logic.
     @Specialization(guards = "selector == cachedSelector", limit = "3")
-    protected Object doBooleanCached(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Boolean receiver, String selector, Object[] arguments,
+    protected Object doBooleanCached(VirtualFrame frame, Boolean receiver, String selector, Object[] arguments,
                                     @Cached("selector") String cachedSelector,
                                     @Cached("lookupBooleanMember(cachedSelector)") Object cachedMember,
                                     @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         if (cachedMember != null && !isNothing(cachedMember) && interop.isExecutable(cachedMember)) {
             try {
+                InteropLibrary memberInterop = InteropLibrary.getUncached(cachedMember);
                 Object[] args = prepareArguments(cachedMember, receiver, arguments);
-                return lift(interop.execute(cachedMember, args));
+                return JolkNode.lift(memberInterop.execute(cachedMember, args));
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {
                 throw new RuntimeException(e);
             }
         }
-        return doBoolean(frame, node, receiver, selector, arguments, interop);
+        return doBoolean(frame, receiver, selector, arguments, interop);
     }
 
     @TruffleBoundary
@@ -821,30 +820,31 @@ public abstract class JolkDispatchNode extends JolkNode {
     }
 
     @Specialization(replaces = "doBooleanCached")
-    protected Object doBoolean(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Boolean receiver, String selector, Object[] arguments,
+    protected Object doBoolean(VirtualFrame frame, Boolean receiver, String selector, Object[] arguments,
                                 @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         try {
             // 1. Prototype Lookup: Check for Jolk-defined boolean extensions
             Object member = lookupBooleanMember(selector);
             if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                InteropLibrary memberInterop = InteropLibrary.getUncached(member);
                 Object[] args = prepareArguments(member, receiver, arguments);
-                return lift(interop.execute(member, args));
+                return JolkNode.lift(memberInterop.execute(member, args));
             }
 
             // Identity-Based Flow Control: #?? on a non-null Boolean always returns the receiver.
-            if (arguments.length == 1 && "??".equals(selector)) return lift(receiver);
+            if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
 
             // 2. Host Fallback: Dispatch to standard Java Boolean members (if any)
-            return lift(interop.invokeMember(receiver, selector, arguments));
+            return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
 
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
-                return lift(dispatchObjectIntrinsic(node, receiver, selector, arguments, interop));
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
             }
             try {
-                return lift(dispatchHostMember(receiver, selector, arguments));
+                return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on Boolean", e);
             }
@@ -864,64 +864,71 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// memory-efficient deduplication and high-performance interop with the 
     /// JVM substrate.
     @Specialization(guards = "receiver != null")
-    protected Object doTruffleString(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, TruffleString receiver, String selector, Object[] arguments,
+    protected Object doTruffleString(VirtualFrame frame, TruffleString receiver, String selector, Object[] arguments,
                              @Cached TruffleString.ToJavaStringNode toJavaStringNode,
                              @Cached TruffleString.CodePointLengthNode lengthNode,
                              @Cached TruffleString.EqualNode equalNode,
-                             @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
-                             @Cached TruffleString.ConcatNode concatNode) {
-        
+                             @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
+                             @Cached TruffleString.ConcatNode concatNode,
+                             @Cached TruffleString.FromLongNode fromLongNode) {
+       
         // The internal encoding used for all Jolk String Identities
         TruffleString.Encoding encoding = TruffleString.Encoding.UTF_16;
 
-        String javaString = toJavaStringNode.execute(receiver);
-
         try {
-            // Shim-less Optimization: Direct dispatch for common String methods 
+            // FAST PATH: Intrinsify metadata and basic operations to avoid materialization.
             if (arguments.length == 0) {
                 if ("length".equals(selector)) return (long) lengthNode.execute(receiver, encoding);
                 if ("isEmpty".equals(selector)) return lengthNode.execute(receiver, encoding) == 0;
-                
-                // For complex transformations, we lower to Java String temporarily 
-                // until Jolk-native TruffleString extensions are fully implemented.
-                if ("toUpperCase".equals(selector)) return lift(javaString.toUpperCase());
-                if ("toLowerCase".equals(selector)) return lift(javaString.toLowerCase());
-                if ("trim".equals(selector)) return lift(javaString.trim());
             }
             
             if (arguments.length == 1 && "+".equals(selector)) {
-                String other;
-                try {
-                    other = interop.asString(arguments[0]);
-                } catch (UnsupportedMessageException e) {
-                    other = String.valueOf(arguments[0]);
+                Object other = arguments[0];
+                if (other instanceof TruffleString ts) {
+                    return concatNode.execute(receiver, ts, encoding, true);
+                } else if (other instanceof Long l) {
+                    return concatNode.execute(receiver, fromLongNode.execute(l, encoding, true), encoding, true);
                 }
-                return lift(javaString + other);
+                // Fallback for other types via interop
+            }
+
+            if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
+
+            // 0. Intrinsic Lookup: Handle core protocol (like #class or #hash) before materialization.
+            if (isObjectIntrinsic(selector)) {
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+            }
+
+            if (arguments.length == 0) {
+                // For complex transformations, we lower to Java String temporarily 
+                // until Jolk-native TruffleString extensions are fully implemented.
+                if ("toUpperCase".equals(selector)) return JolkNode.lift(toJavaStringNode.execute(receiver).toUpperCase());
+                if ("toLowerCase".equals(selector)) return JolkNode.lift(toJavaStringNode.execute(receiver).toLowerCase());
+                if ("trim".equals(selector)) return JolkNode.lift(toJavaStringNode.execute(receiver).trim());
+            }
+            
+            if (arguments.length == 1 && "+".equals(selector)) {
+                return JolkNode.lift(toJavaStringNode.execute(receiver) + String.valueOf(arguments[0]));
             }
 
             if (arguments.length == 1 && "matches".equals(selector)) {
-                return lift(javaString.matches(interop.asString(arguments[0])));
+                return JolkNode.lift(toJavaStringNode.execute(receiver).matches(interop.asString(arguments[0])));
             }
-
-            if (arguments.length == 1 && "??".equals(selector)) return lift(receiver);
 
             // 1. Prototype Lookup: Check for Jolk-defined string extensions
             Object member = lookupStringMember(selector);
             if (member != null && !isNothing(member) && interop.isExecutable(member)) {
                 Object[] args = prepareArguments(member, receiver, arguments);
-                return lift(interop.execute(member, args));
+                return JolkNode.lift(interop.execute(member, args));
             }
 
             // 2. Host Fallback: Lowering to java.lang.String for interoperability
-            return lift(interop.invokeMember(javaString, selector, arguments));
+            return JolkNode.lift(interop.invokeMember(toJavaStringNode.execute(receiver), selector, arguments));
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
-            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
-                return lift(dispatchObjectIntrinsic(node, receiver, selector, arguments, interop));
-            }
             try {
-                return lift(dispatchHostMember(javaString, selector, arguments));
+                return JolkNode.lift(dispatchHostMember(toJavaStringNode.execute(receiver), selector, arguments));
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on TruffleString", e);
             }
@@ -929,6 +936,7 @@ public abstract class JolkDispatchNode extends JolkNode {
             throw new RuntimeException("Message dispatch failed: #" + selector + " on TruffleString", e);
         }
     }
+    
 
     @TruffleBoundary
     protected Object lookupStringMember(String selector) {
@@ -941,35 +949,35 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// [TruffleString] identity. This implements the **Identity Restitution** 
     /// protocol at the metaboundary.
     @Specialization
-    protected Object doJavaString(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, String receiver, String selector, Object[] arguments,
+    protected Object doJavaString(VirtualFrame frame, String receiver, String selector, Object[] arguments,
                                  @Shared("fromJavaStringNode") @Cached TruffleString.FromJavaStringNode fromJavaStringNode,
                                  @Cached JolkDispatchNode dispatchNode) {
         // Lift the host string into the guest identity
         TruffleString lifted = fromJavaStringNode.execute(receiver, TruffleString.Encoding.UTF_16);
-        return dispatchNode.execute(frame, dispatchNode, lifted, selector, arguments);
+        return dispatchNode.execute(frame, lifted, selector, arguments);
     }
 
     /// ### Fast Path for Lists
     /// Handles java.util.List instances by routing messages to the Jolk Array extension.
     @Specialization
-    protected Object doList(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, List<?> receiver, String selector, Object[] arguments,
+    protected Object doList(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                            @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         try {
             // 1. Prototype Lookup: Check for Jolk-defined Array extensions (e.g., #at, #put)
             Object member = lookupArrayMember(selector);
             if (member != null && !isNothing(member) && interop.isExecutable(member)) {
                 Object[] args = prepareArguments(member, receiver, arguments);
-                return lift(interop.execute(member, args));
+                return JolkNode.lift(interop.execute(member, args));
             }
 
             // 2. Host Fallback: Dispatch to standard java.util.List members
-            return lift(interop.invokeMember(receiver, selector, arguments));
+            return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
-                return lift(dispatchObjectIntrinsic(node, receiver, selector, arguments, interop));
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
             }
             try {
-                return lift(dispatchHostMember(receiver, selector, arguments));
+                return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on List", e);
             }
@@ -992,7 +1000,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     /// member lookup. This is critical for maintaining **Shim-less Integration** 
     /// where the language must control the stack unwinding process.
     @Specialization
-    protected Object doThrowable(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Throwable receiver, String selector, Object[] arguments, 
+    protected Object doThrowable(VirtualFrame frame, Throwable receiver, String selector, Object[] arguments, 
                                @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if ("throw".equals(selector)) {
             if (arguments.length != 0) {
@@ -1003,15 +1011,15 @@ public abstract class JolkDispatchNode extends JolkNode {
         }
         try {
             Object result = interop.invokeMember(receiver, selector, arguments);
-            return lift(result);
+            return JolkNode.lift(result);
         } catch (JolkReturnException e) {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
-                return lift(dispatchObjectIntrinsic(node, receiver, selector, arguments, interop));
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
             }
             try {
-                return lift(dispatchHostMember(receiver, selector, arguments));
+                return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on Throwable", e);
             }
@@ -1033,7 +1041,7 @@ public abstract class JolkDispatchNode extends JolkNode {
         "selector == cachedSelector",
         "isReifiedMethod(member)"
     }, limit = "3")
-    protected Object doUserDirect(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, DynamicObject receiver, String selector, Object[] arguments,
+    protected Object doUserDirect(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
                                    @Cached("receiver.getShape()") Shape cachedShape,
                                    @Cached("selector") String cachedSelector,
                                    @Cached("asClosure(lookupUserMember(receiver, cachedSelector))") JolkClosure member,
@@ -1042,15 +1050,15 @@ public abstract class JolkDispatchNode extends JolkNode {
         int arity = arguments.length;
         if (arity == 1) {
             // Pattern: factorial(n) -> [Self, n]
-            return lift(callNode.call(receiver, arguments[0]));
+            return JolkNode.lift(callNode.call(receiver, arguments[0]));
         } else if (arity == 0) {
-            return lift(callNode.call(receiver));
+            return JolkNode.lift(callNode.call(receiver));
         } else {
             // Generic case: Jolk Calling Convention [Self, ...Args]
             Object[] callArgs = new Object[arity + 1];
             callArgs[0] = receiver;
             System.arraycopy(arguments, 0, callArgs, 1, arity);
-            return lift(callNode.call(callArgs));
+            return JolkNode.lift(callNode.call(callArgs));
         }
     }
 
@@ -1058,21 +1066,22 @@ public abstract class JolkDispatchNode extends JolkNode {
         "receiver.getShape() == cachedShape",
         "selector == cachedSelector"
     }, limit = "3", replaces = "doUserDirect")
-    protected Object doUserDispatch(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, DynamicObject receiver, String selector, Object[] arguments,
+    protected Object doUserDispatch(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
                                    @Cached("receiver.getShape()") Shape cachedShape,
                                    @Cached("selector") String cachedSelector,
                                    @Cached("lookupUserMember(receiver, cachedSelector)") Object member,
                                    @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         if (member != null && !isNothing(member) && interop.isExecutable(member)) {
             try {
+                InteropLibrary memberInterop = InteropLibrary.getUncached(member); // Get interop for the member
                 Object[] args = prepareArguments(member, receiver, arguments);
-                return lift(interop.execute(member, args));
+                return JolkNode.lift(memberInterop.execute(member, args));
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {
                 throw new RuntimeException(e);
             }
         }
         // If member is null, fall back to generic dispatch (e.g. host members)
-        return doDispatch(frame, node, receiver, selector, arguments, interop);
+        return doDispatch(frame, receiver, selector, arguments, interop);
     }
 
     /// ### Generic Dispatch
@@ -1087,28 +1096,28 @@ public abstract class JolkDispatchNode extends JolkNode {
         "doIteratorForEach", "doMapForEach", "doLongClosureDirect", "doLongCached", 
         "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable"
     })
-    protected Object doDispatch(VirtualFrame frame, com.oracle.truffle.api.nodes.Node node, Object receiver, String selector, Object[] arguments,
+    protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                 @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
-        Object unwrappedReceiver = unwrap(receiver);
+        Object unwrappedReceiver = JolkNode.unwrap(receiver);
         try {
             // 1. Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
             // We explicitly check for JolkNothing.INSTANCE to support the identity even 
             // if it no longer exports isNull() to the substrate.
             if (isNothing(unwrappedReceiver) || interop.isNull(receiver)) {
                 if (isObjectIntrinsic(selector)) {
-                    return lift(dispatchObjectIntrinsic(node, JolkNothing.INSTANCE, selector, arguments, interop));
+                    return JolkNode.lift(dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop));
                 }
                 
                 // Re-use logic for Nothing lookup to ensure Graal can inline it.
                 Object member = lookupNothingMember(selector);
                 if (member != null && !isNothing(member) && interop.isExecutable(member)) {
                     Object[] args = prepareArguments(member, JolkNothing.INSTANCE, arguments);
-                    return lift(interop.execute(member, args));
+                    return JolkNode.lift(interop.execute(member, args));
                 }
 
                 try {
                     // Identity Restitution: Fallback to host member heuristic for Nothing
-                    return lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
+                    return JolkNode.lift(dispatchHostMember(JolkNothing.INSTANCE, selector, arguments));
                 } catch (UnknownIdentifierException ex) {
                     // SAFE NAVIGATION: Gracefully collapse the message chain.
                     return JolkNothing.INSTANCE;
@@ -1134,8 +1143,9 @@ public abstract class JolkDispatchNode extends JolkNode {
             if (meta != null) {
                 Object member = lookupMetaInstanceMember(meta, selector);
                 if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                    InteropLibrary memberInterop = InteropLibrary.getUncached(member); // Get interop for the member
                     Object[] args = prepareArguments(member, receiver, arguments);
-                    return lift(interop.execute(member, args));
+                    return JolkNode.lift(memberInterop.execute(member, args));
                 }
             }
 
@@ -1144,7 +1154,7 @@ public abstract class JolkDispatchNode extends JolkNode {
                 Object member = lookupMetaMember(jmc, selector);
                 if (member != null && !isNothing(member) && interop.isExecutable(member)) {
                     Object[] args = prepareArguments(member, receiver, arguments);
-                    return lift(interop.execute(member, args));
+                    return JolkNode.lift(interop.execute(member, args));
                 }
             }
 
@@ -1170,25 +1180,25 @@ public abstract class JolkDispatchNode extends JolkNode {
                     // annotations helps the DSL resolve this ambiguity, ensuring that
                     // only one specialization is chosen for a given receiver/selector combination.
                     if (interop.isInstantiable(receiver)) {
-                        return lift(interop.instantiate(receiver, arguments));
+                        return JolkNode.lift(interop.instantiate(receiver, arguments));
                     }
-                    return lift(dispatchHostMember(receiver, selector, arguments));
+                    return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
                 } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException | RuntimeException e) {
                     throw new RuntimeException("Failed to instantiate host object: " + receiver + " with arguments.", e);
                 }
             }
 
             try {
-                return lift(interop.invokeMember((Object) receiver, selector, arguments));
+                return JolkNode.lift(interop.invokeMember((Object) receiver, selector, arguments));
             } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
                 // Identity Restitution Protocol: Intrinsic messages act as a fallback 
                 // for all objects that do not explicitly override them.
                 if (isObjectIntrinsic(selector)) {
-                    return lift(dispatchObjectIntrinsic(node, receiver, selector, arguments, interop));
+                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
                 }
                 // Impedance Resolution: Fallback to host member heuristic
                 try {
-                    return lift(dispatchHostMember(receiver, selector, arguments));
+                    return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
                 } catch (UnknownIdentifierException ex) {
                     throw new RuntimeException("Message dispatch failed: #" + selector, e);
                 }
@@ -1273,7 +1283,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     }
 
     @TruffleBoundary
-    public static Object dispatchObjectIntrinsic(com.oracle.truffle.api.nodes.Node node, Object receiver, String name, Object[] arguments, InteropLibrary interop) {
+    public static Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
         InteropLibrary genericInterop = InteropLibrary.getUncached();
         try {
             switch (name) {
@@ -1401,7 +1411,7 @@ public abstract class JolkDispatchNode extends JolkNode {
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (isNothing(receiver)) return "null";
-                    return lift(receiver.toString());
+                    return JolkNode.lift(receiver.toString());
                 }
                 case "isPresent" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -1495,7 +1505,7 @@ public abstract class JolkDispatchNode extends JolkNode {
                     // ensuring we avoid infinite recursion loops during super-dispatch.
                     if (receiver instanceof JolkMetaClass meta) {
                         try {
-                            return lift(new JolkObject(meta, arguments));
+                            return JolkNode.lift(new JolkObject(meta, arguments));
                         } catch (Exception ignored) {}
                     }
 
@@ -1509,11 +1519,11 @@ public abstract class JolkDispatchNode extends JolkNode {
                     // we perform the creation protocol directly.
                     if (interop.isInstantiable(receiver)) {
                         try {
-                            return lift(interop.instantiate(receiver, arguments));
+                            return JolkNode.lift(interop.instantiate(receiver, arguments));
                         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException ignored) {}
                     }
                     // Identity Restitution: Final attempt to instantiate via reflection if interop failed
-                    Object unwrapped = unwrap(receiver);
+                    Object unwrapped = JolkNode.unwrap(receiver);
                     if (unwrapped instanceof Class<?> clazz) {
                         return tryInvokeViaReflection(clazz, "new", arguments);
                     }
@@ -1560,7 +1570,7 @@ public abstract class JolkDispatchNode extends JolkNode {
                     if (convertedArgs != null) {
                         // Identity Restitution: Coerced host objects (like Lambdas) must be lifted into TruffleObjects
                         for (int i = 0; i < finalArgs.length; i++) {
-                            finalArgs[i] = lift(finalArgs[i]);
+                            finalArgs[i] = JolkNode.lift(finalArgs[i]);
                         }
                     }
                     return interop.invokeMember(receiver, candidate, finalArgs);
@@ -1629,7 +1639,7 @@ public abstract class JolkDispatchNode extends JolkNode {
             }
         }
 
-        Object unwrapped = unwrap(receiver);
+        Object unwrapped = JolkNode.unwrap(receiver);
         try {
             // 1. Meta-Object Instantiation: If selector is #new and receiver is a Class, 
             // map directly to constructors to support Jolk's object creation protocol.
@@ -1639,7 +1649,7 @@ public abstract class JolkDispatchNode extends JolkNode {
                     if (matched != null) {
                         Object[] coerced = coerceArguments(c.getParameterTypes(), matched);
                         try {
-                            return lift(c.newInstance(coerced));
+                            return JolkNode.lift(c.newInstance(coerced));
                         } catch (Exception e) {
                             // continue to next candidate
                         }
@@ -1663,7 +1673,7 @@ public abstract class JolkDispatchNode extends JolkNode {
                                 // Receiver Retention: return receiver for void methods
                                 return receiver;
                             }
-                            return lift(result);
+                            return JolkNode.lift(result);
                         } catch (Exception e) {
                             // continue to next candidate
                         }
@@ -1893,7 +1903,7 @@ public abstract class JolkDispatchNode extends JolkNode {
     @TruffleBoundary
     private static Object[] convertArgumentsForMethod(Object receiver, String methodName, Object[] arguments) {
         try {
-            Object unwrapped = unwrap(receiver);
+            Object unwrapped = JolkNode.unwrap(receiver);
             if (unwrapped == null) return null;
             Class<?> lookupClass = (unwrapped instanceof Class<?> clazz) ? clazz : unwrapped.getClass();
             for (java.lang.reflect.Method m : lookupClass.getMethods()) {

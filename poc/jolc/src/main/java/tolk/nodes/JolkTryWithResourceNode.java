@@ -60,7 +60,7 @@ public abstract class JolkTryWithResourceNode extends JolkExpressionNode {
                            @Cached JolkDispatchNode dispatchNode,
                            @CachedLibrary(limit = "3") InteropLibrary interop) {
         try {
-            return dispatchNode.execute(frame, this, resourceProviderNode, "try", new Object[]{logicNode});
+            return dispatchNode.execute(frame, resourceProviderNode, "try", new Object[]{logicNode});
         } catch (JolkReturnException e) {
             throw e;
         } catch (Throwable throwable) {

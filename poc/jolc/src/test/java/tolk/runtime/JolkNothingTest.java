@@ -5,16 +5,20 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import org.junit.jupiter.api.Test;
+import tolk.JolcTestBase;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class JolkNothingTest {
+public class JolkNothingTest extends JolcTestBase {
 
     @Test
     void testInvokeIfEmpty() throws Exception {
+        eval(""); // Initialize context and language
+        context.enter();
+        try {
         Object nothing = JolkNothing.INSTANCE;
         AtomicBoolean executed = new AtomicBoolean(false);
         TestExecutable action = new TestExecutable(() -> executed.set(true));
@@ -23,10 +27,16 @@ public class JolkNothingTest {
         InteropLibrary.getUncached().invokeMember(nothing, "ifEmpty", action);
 
         assertTrue(executed.get(), "Action should be executed for Nothing");
+        } finally {
+            context.leave();
+        }
     }
 
     @Test
     void testInvokeIfPresent() throws Exception {
+        eval("");
+        context.enter();
+        try {
         Object nothing = JolkNothing.INSTANCE;
         AtomicBoolean executed = new AtomicBoolean(false);
         TestExecutable action = new TestExecutable(() -> executed.set(true));
@@ -34,6 +44,9 @@ public class JolkNothingTest {
         InteropLibrary.getUncached().invokeMember(nothing, "ifPresent", action);
 
         assertFalse(executed.get(), "Action should NOT be executed for Nothing");
+        } finally {
+            context.leave();
+        }
     }
 
     @Test

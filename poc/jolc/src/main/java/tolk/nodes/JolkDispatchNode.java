@@ -49,7 +49,7 @@ import tolk.runtime.JolkIntrinsicProtocol;
 /// primary gateway between the Jolk AST and object behavior, ensuring every
 /// interaction remains a formal message send.
 ///
-/// This node acts as the terminal enforcer of the **Metaboundary**. Because it
+/// This node acts as the terminal enforcer of the **metaboundary**. Because it
 /// only resolves messages defined in the **Flattened Registry**, it provides
 /// the mechanical foundation for making **intrusive reflection a semantic 
 /// impossibility** within the guest language environment.
@@ -214,7 +214,7 @@ public abstract class JolkDispatchNode extends Node {
 
     /// ### Fast Path for Shape-based Property Access (Field Flattening)
     ///
-    /// This specialization implements the **Protocol-Driven Flow** for object state. 
+    /// This specialization implements the **protocol-driven flow** for object state. 
     /// By caching the {@link Shape} and the specific {@link Property} offset, 
     /// the engine performs **Instructional Projection**. This collapses a 
     /// dynamic message send (e.g., `#field`) into a direct memory offset load 
@@ -724,6 +724,14 @@ public abstract class JolkDispatchNode extends Node {
                                  @Cached("lookupLongMember(cachedSelector)") Object cachedMember,
                                  @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
                                  @Shared("fromJavaStringNode") @Cached TruffleString.FromJavaStringNode fromJavaStringNode) {
+        /**
+         * ### Identity Erasure for Primitives
+         * 
+         * Unlike Java's Type Erasure (which removes generic metadata), Jolk's 
+         * **Identity Erasure** physically strips away object structures at the 
+         * machine level. This specialization operates directly on the 
+         * substrate-native 64-bit scalar to bypass boxing overhead entirely.
+         */
         long r = receiver.longValue();
 
         if (arguments.length == 0 && "toString".equals(cachedSelector)) {
@@ -858,11 +866,13 @@ public abstract class JolkDispatchNode extends Node {
     /// Specialized **Fast Path** for the **String Identity**.
     /// 
     /// This specialization allows [TruffleString] instances to participate 
-    /// in the Jolk messaging protocol by prioritizing Jolk-native string 
-    /// augmentations. Architecturally, this node targets **Identity Erasure** 
-    /// by leveraging `TruffleString` for all guest-level operations, ensuring 
-    /// memory-efficient deduplication and high-performance interop with the 
-    /// JVM substrate.
+    /// in the Jolk messaging protocol. Architecturally, this node enforces 
+    /// **Identity Congruence**: while the JVM sees a `TruffleObject`, the guest 
+    /// environment interacts with a first-class String identity. 
+    /// 
+    /// This implements **Semantic Flattening** by leveraging `TruffleString` 
+    /// for guest-level operations, ensuring memory-efficient deduplication 
+    /// and high-performance instructional projection during the JIT phase.
     @Specialization(guards = "receiver != null")
     protected Object doTruffleString(VirtualFrame frame, TruffleString receiver, String selector, Object[] arguments,
                              @Cached TruffleString.ToJavaStringNode toJavaStringNode,

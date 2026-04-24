@@ -8,6 +8,8 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -149,6 +151,21 @@ public class JolkLongTest {
     }
 
     @Test
+    void testTimesWithIndex() throws Exception {
+        Object op = getOperation("times");
+        List<Long> indices = new ArrayList<>();
+        IndexedIntTestExecutable action = new IndexedIntTestExecutable(args -> {
+            if (args.length > 0 && args[0] instanceof Long) indices.add((Long) args[0]);
+        });
+
+        execute(op, 3L, action);
+        assertEquals(3, indices.size());
+        assertEquals(0L, indices.get(0));
+        assertEquals(1L, indices.get(1));
+        assertEquals(2L, indices.get(2));
+    }
+
+    @Test
     void testToString() throws Exception {
         Object op = getOperation("toString");
         assertEquals("42", execute(op, 42L));
@@ -281,6 +298,26 @@ public class JolkLongTest {
         @ExportMessage
         public Object execute(Object[] arguments) {
             return supplier.get();
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static class IndexedIntTestExecutable implements TruffleObject {
+        private final java.util.function.Consumer<Object[]> consumer;
+
+        public IndexedIntTestExecutable(java.util.function.Consumer<Object[]> consumer) {
+            this.consumer = consumer;
+        }
+
+        @ExportMessage
+        public boolean isExecutable() {
+            return true;
+        }
+
+        @ExportMessage
+        public Object execute(Object[] arguments) {
+            consumer.accept(arguments);
+            return JolkNothing.INSTANCE;
         }
     }
 }

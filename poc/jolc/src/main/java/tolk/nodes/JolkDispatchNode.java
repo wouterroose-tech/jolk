@@ -356,6 +356,33 @@ public abstract class JolkDispatchNode extends Node {
         return JolkNothing.INSTANCE;
     }
 
+    /**
+     * ### Fast Path for Literal Ternaries
+     *
+     * This specialization implements **Logical Gate Flattening** for cases where the
+     * ternary branches are values (literals) rather than closures. By avoiding
+     * the interop execution path, the engine allows Graal to treat the message
+     * send as a raw hardware branch, which is crucial for loop-invariant
+     * code motion.
+     */
+    @Specialization(guards = {
+        "isTernary(selector)",
+        "arguments.length == 2",
+        "!isClosure(getArg0(arguments))",
+        "!isClosure(getArg(arguments, 1))"
+    }, limit = "3")
+    protected Object doTernaryValues(VirtualFrame frame, Boolean receiver, String selector, Object[] arguments) {
+        // Implementation of the ternary logic directly on Boolean scalars.
+        // This ensures the logic is transparent to the Graal JIT, enabling
+        // it to hoist constant calculations out of loops (like in runNumerical).
+        boolean condition = isTernarySelector(selector, "? :") ? receiver : !receiver;
+        Object result = condition ? arguments[0] : arguments[1];
+
+        // Identity Restitution: Ensure null is lifted to Nothing
+        return (result == null) ? JolkNothing.INSTANCE : result;
+    }
+
+
     @Specialization(guards = "isControlFlow(selector)", replaces = {"doControlFlowDirect", "doTernaryDirect"})
     protected Object doControlFlow(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode,
@@ -573,8 +600,12 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Fast Path for Long-based Iteration (#times)
     /// 
     /// As an entry point for **Functional Flow**, this handles the `Long #times [closure]` message by directly executing the JolkClosure
-    /// via an DirectCallNode in a loop. This enables Truffle to perform inlining of the
+    /// via a DirectCallNode in a loop. This enables Truffle to perform inlining of the
     /// closure body, significantly improving performance compared to interop execution.
+    /// 
+    /// This implementation supports **Signature-Aware Iteration**: the index is always 
+    /// passed to the call node, allowing the closure to optionally bind it to a 
+    /// parameter (e.g., `[ i -> ... ]`) or ignore it (e.g., `[ ... ]`).
     @Specialization(guards = {"isTimes(selector)", "getClosureTarget(getArg0(arguments)) == cachedTarget"}, limit = "3")
     protected Object doTimesDirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                   @Cached("getClosureTarget(getArg0(arguments))") CallTarget cachedTarget,
@@ -736,7 +767,7 @@ public abstract class JolkDispatchNode extends Node {
         Object[] args = new Object[arguments.length + 1];
         args[0] = receiver;
         System.arraycopy(arguments, 0, args, 1, arguments.length);
-        return callNode.call((Object)args);
+        return callNode.call(args);
     }
 
     @Specialization(guards = "selector == cachedSelector", replaces = "doLongClosureDirect", limit = "3")
@@ -766,6 +797,8 @@ public abstract class JolkDispatchNode extends Node {
                 case "-"  -> { return r - o; }
                 case "+"  -> { return r + o; }
                 case "/"  -> { return r / o; }
+                case "%"  -> { return r % o; }
+                case "**" -> { return (long) Math.pow(r, o); }
                 case "==" -> { return r == o; }
                 case "<=" -> { return r <= o; }
                 case ">=" -> { return r >= o; }

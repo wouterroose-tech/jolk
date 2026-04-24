@@ -61,9 +61,7 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                 }
                 Long runNumerical(Long n, Long times) {
                     Long sum = 0;
-                    times #times [
-                        sum = sum + ((n * times / 2) == 0 ? 0 : 1)
-                    ];
+                    times #times [ i ->  sum = sum + ((i * times % 2) == 0 ? 0 : 1) ];
                     ^ sum
                 }
                 Long factorial(Long n) {
@@ -78,11 +76,7 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                     Long sum = 0;
                     times #times [
                         Long result = 1;
-                        Long i = 2;
-                        n #times [
-                            result = result * i;
-                            i = i + 1
-                        ];
+                        n #times [ i -> result = result * (i + 2) ];
                         sum = sum + result;
                     ];
                     ^ sum
@@ -99,12 +93,10 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                     Long sum = 0;
                     times #times [
                         Long a = 0; Long b = 1;
-                        Long i = 0;
-                        n #times [
+                        n #times [ i ->
                             Long temp = a;
                             a = b;
-                            b = temp + b;
-                            i = i + 1
+                            b = temp + b
                         ];
                         sum = sum + a;
                     ];

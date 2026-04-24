@@ -236,7 +236,15 @@ public final class JolkLongExtension {
             long count = asLong(arguments[0]);
             Object action = arguments[1];
             for (long i = 0; i < count; i++) {
-                InteropLibrary.getUncached().execute(action);
+                // ### Support for Signature-Aware Iteration
+                // We pass the index 'i' to the closure. Truffle's execution protocol
+                // automatically handles the signature match: if the closure is 0-arg, 
+                // the index is ignored; if it is 1-arg, the index is bound to the parameter.
+                //
+                // This allows both:
+                // 10 #times [ ... ]       (Repeat logic)
+                // 10 #times [ i -> ... ]  (Indexed iteration)
+                InteropLibrary.getUncached().execute(action, i);
             }
             return count; // Result still boxes here due to Object return type
         }

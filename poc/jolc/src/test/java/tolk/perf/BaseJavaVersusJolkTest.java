@@ -13,20 +13,21 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
 
     protected void test() throws Exception {
 
-        Value jolkTest = getJolkTest();
         JavaPerformanceTest javaTest = getJavaTest();        
         // High iteration count ensures we spend more time in compiled code than in the JIT thread.
         long iterations = 100000;
         
         System.out.println("Benchmark               iterations   param   java          jolk          factor");
         System.out.println("----------------------|------------|-------|-------------|-------------|--------");
-        test(jolkTest, javaTest, "runBase", 7, iterations);
-        test(jolkTest, javaTest, "runString", 1024, iterations);
-        test(jolkTest, javaTest, "runNumerical", 1024, iterations);
-        test(jolkTest, javaTest, "runFactorial", 20, iterations);
-        test(jolkTest, javaTest, "runFactorialIterative", 20, iterations);
-        test(jolkTest, javaTest, "runFibonacci", 7, iterations);
-        test(jolkTest, javaTest, "runFibonacciIterative", 7, iterations);
+        
+        String[] tests = {"runBase", "runString", "runNumerical", "runFactorial", "runFactorialIterative", "runFibonacci", "runFibonacciIterative"};
+        long[] params = {7, 1024, 1024, 20, 20, 7, 7};
+
+        for (int i = 0; i < tests.length; i++) {
+            // RE-INITIALIZE Jolk for every test to prevent Profile Pollution
+            Value freshJolk = getJolkTest();
+            test(freshJolk, javaTest, tests[i], params[i], iterations);
+        }
     }
 
     void test(Value jolkTest, JavaPerformanceTest javaTest, String testCase, long n, long iterations) throws Exception {
@@ -34,7 +35,7 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
         javaMethod.setAccessible(true);
 
         // 1. Warmup Java
-        for (int i = 0; i < 5000; i++) {
+        for (int i = 0; i < 10000; i++) {
             javaMethod.invoke(javaTest, n, 1);
         }
 
@@ -51,7 +52,7 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
         // 3. Warmup Jolk (Trigger Truffle Compilation)
         // We need many entries to the RootNode to trigger Graal JIT.
         // Compilation Thresholds: Truffle typically waits for a method to be called 1,000 times (default) before compiling it.
-        for (int i = 0; i < 30000; i++) {
+        for (int i = 0; i < 50000; i++) {
             jolkTest.invokeMember(testCase, n, 1);
         }
 
@@ -98,7 +99,7 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
         long runNumerical(long n, long times) {
             long sum = 0;
             for (long i = 0; i < times; i++) {
-                sum += ((n * times / 2) == 0) ? 0 : 1;
+                sum += ((i * times % 2) == 0) ? 0 : 1;
             }
             return sum;
         }

@@ -83,34 +83,26 @@ import tolk.runtime.JolkIntrinsicProtocol;
 @GenerateCached(true)
 public abstract class JolkDispatchNode extends Node {
 
-    /**
-     * Executes the message dispatch.
-     * 
-     * @param frame The current execution frame.
-     * @param receiver The object receiving the message.
-     * @param selector The message name (selector).
-     * @param arguments The arguments passed to the message.
-     * @return The result of the message send.
-     */
+    /// Executes the message dispatch.
+    /// 
+    /// @param frame The current execution frame.
+    /// @param receiver The object receiving the message.
+    /// @param selector The message name (selector).
+    /// @param arguments The arguments passed to the message.
+    /// @return The result of the message send.
     public abstract Object execute(VirtualFrame frame, Object receiver, String selector, Object[] arguments);
 
-    /**
-     * Specialized dispatch for 1 argument to avoid Object[] allocation.
-     */
+    /// Specialized dispatch for 1 argument to avoid Object[] allocation.
     public final Object execute1(VirtualFrame frame, Object receiver, String selector, Object arg0) {
         return execute(frame, receiver, selector, new Object[]{arg0});
     }
 
-    /**
-     * Specialized dispatch for 2 arguments to avoid Object[] allocation.
-     */
+    /// Specialized dispatch for 2 arguments to avoid Object[] allocation.
     public final Object execute2(VirtualFrame frame, Object receiver, String selector, Object arg0, Object arg1) {
         return execute(frame, receiver, selector, new Object[]{arg0, arg1});
     }
 
-    /**
-     * Specialized dispatch for 0 arguments.
-     */
+    /// Specialized dispatch for 0 arguments.
     public final Object execute0(VirtualFrame frame, Object receiver, String selector) {
         return execute(frame, receiver, selector, new Object[0]);
     }
@@ -163,28 +155,22 @@ public abstract class JolkDispatchNode extends Node {
         return receiver instanceof JolkClosure;
     }
 
-    /**
-     * Helper to retrieve an argument safely for DSL guards.
-     */
+    /// Helper to retrieve an argument safely for DSL guards.
     protected static Object getArg(Object[] arguments, int index) {
         return (arguments != null && index < arguments.length) ? arguments[index] : null;
     }
 
-    /**
-     * ### getArg0
-     *
-     * Helper for Truffle DSL to access arguments in guards/cache expressions.
-     * Truffle's expression parser does not support direct array indexing `[]`.
-     */
+    /// ### getArg0
+    ///
+    /// Helper for Truffle DSL to access arguments in guards/cache expressions.
+    /// Truffle's expression parser does not support direct array indexing `[]`.
     protected static Object getArg0(Object[] arguments) {
         return arguments.length > 0 ? arguments[0] : null;
     }
 
-    /**
-     * ### asClosure
-     *
-     * Helper for Truffle DSL to cast cached objects to JolkClosure.
-     */
+    /// ### asClosure
+    ///
+    /// Helper for Truffle DSL to cast cached objects to JolkClosure.
     protected static JolkClosure asClosure(Object obj) {
         return obj instanceof JolkClosure ? (JolkClosure) obj : null;
     }
@@ -356,21 +342,19 @@ public abstract class JolkDispatchNode extends Node {
         return JolkNothing.INSTANCE;
     }
 
-    /**
-     * ### Fast Path for Literal Ternaries
-     *
-     * This specialization implements **Logical Gate Flattening** for cases where the
-     * ternary branches are values (literals) rather than closures. By avoiding
-     * the interop execution path, the engine allows Graal to treat the message
-     * send as a raw hardware branch, which is crucial for loop-invariant
-     * code motion.
-     */
+    /// ### Fast Path for Literal Ternaries
+    ///
+    /// This specialization implements **Logical Gate Flattening** for cases where the
+    /// ternary branches are values (literals) rather than closures. By avoiding
+    /// the interop execution path, the engine allows Graal to treat the message
+    /// send as a raw hardware branch, which is crucial for loop-invariant
+    /// code motion.
     @Specialization(guards = {
         "isTernary(selector)",
         "arguments.length == 2",
         "!isClosure(getArg0(arguments))",
         "!isClosure(getArg(arguments, 1))"
-    }, limit = "3")
+    })
     protected Object doTernaryValues(VirtualFrame frame, Boolean receiver, String selector, Object[] arguments) {
         // Implementation of the ternary logic directly on Boolean scalars.
         // This ensures the logic is transparent to the Graal JIT, enabling
@@ -539,9 +523,7 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
-    /**
-     * Attempts to unwrap a host object one level. If no further unwrapping is possible, returns the same object.
-     */
+    /// Attempts to unwrap a host object one level. If no further unwrapping is possible, returns the same object.
     private static Object tryUnwrapOnce(Object obj) {
         try {
             var env = tolk.language.JolkLanguage.getContext().env;
@@ -1276,11 +1258,9 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
-    /**
-     * ### prepareArguments
-     * 
-     * Ensures arguments match the Jolk calling convention for the target member.
-     */
+    /// ### prepareArguments
+    /// 
+    /// Ensures arguments match the Jolk calling convention for the target member.
     protected Object[] prepareArguments(Object member, Object receiver, Object[] arguments) {
         if (member instanceof JolkClosure closure) {
             if (closure.getEnvironment() == null) {
@@ -1789,21 +1769,19 @@ public abstract class JolkDispatchNode extends Node {
         return result;
     }
 
-    /**
-     * ### coerceArguments
-     * 
-     * Implements **Guided Coercion** for the reflection boundary. It ensures that 
-     * Jolk's 64-bit Longs are narrowed to match the target Java parameter types 
-     * (int, short, byte) where necessary.
-     * 
-     * ### The Opaque Boundary
-     * 
-     * When a JolkClosure is coerced into a Java Functional Interface, it enters 
-     * an "Opaque" state. The implementation wrappers below must execute the 
-     * closure normally. Because these callbacks originate from the Java host, 
-     * any {@link JolkReturnException} thrown will result in a runtime error 
-     * as there is no Lexical Home on the Java side of the stack.
-     */
+    /// ### coerceArguments
+    /// 
+    /// Implements **Guided Coercion** for the reflection boundary. It ensures that 
+    /// Jolk's 64-bit Longs are narrowed to match the target Java parameter types 
+    /// (int, short, byte) where necessary.
+    /// 
+    /// ### The Opaque Boundary
+    /// 
+    /// When a JolkClosure is coerced into a Java Functional Interface, it enters 
+    /// an "Opaque" state. The implementation wrappers below must execute the 
+    /// closure normally. Because these callbacks originate from the Java host, 
+    /// any {@link JolkReturnException} thrown will result in a runtime error 
+    /// as there is no Lexical Home on the Java side of the stack.
     private static Object[] coerceArguments(Class<?>[] types, Object[] args) {
         InteropLibrary interop = InteropLibrary.getUncached();
         Object[] coerced = new Object[args.length];

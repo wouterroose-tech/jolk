@@ -12,6 +12,7 @@
     <modules>
         <module>grammar</module>
         <module>jolc</module>
+        <module>jolc-bench</module>
         <module>jolc-demo</module>
     </modules>
 

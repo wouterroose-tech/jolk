@@ -26,18 +26,27 @@ public abstract class JolcTestBase {
     public void setUp() {
         out = new ByteArrayOutputStream();
         err = new ByteArrayOutputStream();
-        engine = Engine.newBuilder()
+        engine = getEngine().build();
+        context = getContext().build();
+    }
+
+    protected Engine.Builder getEngine() {
+        return Engine.newBuilder()
+                .allowExperimentalOptions(true)
                 .out(out)
-                .err(err)
-                //.allowExperimentalOptions(true)
-                .build();
-        context = Context.newBuilder(JolkLanguage.ID)
+                .err(err);
+    }
+
+    protected Context.Builder getContext() {
+        return Context.newBuilder(JolkLanguage.ID)
                 .engine(engine)                
                 .allowAllAccess(true)
-                .allowHostAccess(HostAccess.ALL) // Allow Jolk to access all public host (Java) members
-                .allowHostClassLookup(className -> true) // Allow Jolk to look up any Java class
-                .build();
+                // Allow Jolk to access all public host (Java) members
+                .allowHostAccess(HostAccess.ALL) 
+                 // Allow Jolk to look up any Java class;
+                .allowHostClassLookup(className -> true);
     }
+
 
     @AfterEach
     public void tearDown() {

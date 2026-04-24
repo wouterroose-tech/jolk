@@ -1,5 +1,6 @@
 package tolk.perf;
 
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
 import tolk.JolcTestBase;
@@ -133,15 +134,33 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
         System.out.println("Vendor: " + vendor);
         System.out.println("Java Home: " + javaHome);
         
-        boolean isGraal = vmName.contains("GraalVM") || vmVersion.contains("GraalVM") || 
-                          vmVersion.contains("jvmci") || javaHome.toLowerCase().contains("graalvm");
+        boolean isJVMCI = vmVersion.contains("jvmci") || vmName.contains("GraalVM");
 
-        if (!isGraal) {
+        if (!isJVMCI) {
             System.err.println("----------------------------------------------------------------------");
             System.err.println("WARNING: NOT RUNNING ON GRAALVM.");
             System.err.println("Jolk code will be interpreted. Expect 10x-500x slower execution.");
             System.err.println("To fix: Ensure %JAVA_HOME% is at the top of your system PATH.");
             System.err.println("----------------------------------------------------------------------");
+            return;
+        }
+
+        try (Engine engine = Engine.create()) {
+            String impl = engine.getImplementationName();
+            String version = engine.getVersion();
+            System.out.println("Polyglot Engine: " + impl + " | Version: " + version);
+            
+            if (impl.contains("Interpreted") || impl.contains("fallback")) {
+                System.err.println("----------------------------------------------------------------------");
+                System.err.println("CRITICAL: FALLBACK RUNTIME DETECTED (No JIT).");
+                System.err.println("The JVMCI flags are present, but the Truffle compiler is missing.");
+                System.err.println("Action: Ensure 'org.graalvm.truffle:truffle-runtime' is on the classpath.");
+                System.err.println("----------------------------------------------------------------------");
+            } else {
+                System.out.println("SUCCESS: Graal JIT is active for Jolk execution.");
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to initialize Polyglot Engine: " + e.getMessage());
         }
     }
 

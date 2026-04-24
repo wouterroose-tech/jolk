@@ -17,7 +17,7 @@
          | Align with the GraalVM and Java versions you are targeting.
          | Using Java 25 aligns with Jolk's future-proofing goals.
         -->
-        <graalvm.version>25.0.2</graalvm.version> <!-- Use a GraalVM version compatible with JDK 25 -->
+        <graalvm.version>25.0.2</graalvm.version> <!-- Known stable version with all profiler artifacts available -->
         <maven.compiler.release>25</maven.compiler.release>
     </properties>
 
@@ -31,19 +31,31 @@
             <groupId>org.graalvm.truffle</groupId>
             <artifactId>truffle-api</artifactId>
             <version>${graalvm.version}</version>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.graalvm.truffle</groupId>
+            <artifactId>truffle-runtime</artifactId>
+            <version>${graalvm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.graalvm.sdk</groupId>
             <artifactId>graal-sdk</artifactId>
             <version>${graalvm.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.graalvm.polyglot</groupId>
             <artifactId>polyglot</artifactId>
             <version>${graalvm.version}</version>
-            <scope>provided</scope>
+        </dependency>
+        <!-- 
+         | Ensure this dependency is present to provide the 'cpusampler' 
+         | tool to the Truffle Engine during tests.
+        -->
+        <dependency>
+            <groupId>org.graalvm.tools</groupId>
+            <artifactId>profiler-tool</artifactId>
+            <version>${graalvm.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -115,6 +127,7 @@
                         -XX:+UnlockExperimentalVMOptions
                         -XX:+EnableJVMCI
                         -XX:+UseJVMCICompiler
+                        -XX:+UseCountedLoopSafepoints
                         -Dpolyglot.engine.WarnInterpreterOnly=true
                         -Dpolyglot.engine.TraceCompilation=true
                         -Dpolyglot.engine.IterationThreshold=1000

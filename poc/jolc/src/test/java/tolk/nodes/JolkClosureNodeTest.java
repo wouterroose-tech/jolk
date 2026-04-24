@@ -31,7 +31,7 @@ public class JolkClosureNodeTest {
     void testExecuteGenericReturnsClosure() {
         JolkNode body = new JolkLiteralNode("test");
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target);
+        JolkClosureNode closureNode = JolkClosureNodeGen.create(target);
 
         Object result = execute(closureNode);
 
@@ -48,7 +48,7 @@ public class JolkClosureNodeTest {
     void testClosureExecution() throws UnsupportedMessageException, ArityException, UnsupportedTypeException {
         JolkNode body = new JolkLiteralNode(123);
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target);
+        JolkClosureNode closureNode = JolkClosureNodeGen.create(target);
 
         Object closureObject = execute(closureNode);
         assertTrue(closureObject instanceof JolkClosure);
@@ -69,7 +69,7 @@ public class JolkClosureNodeTest {
     void testClosureWithComplexMetadata() {
         JolkNode body = new JolkLiteralNode(true);
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode node = new JolkClosureNode(target);
+        JolkClosureNode node = JolkClosureNodeGen.create(target);
 
         Object result = execute(node);
         assertNotNull(result, "Should result in a non-null closure object even when parameters are defined.");
@@ -120,7 +120,7 @@ public class JolkClosureNodeTest {
     void testEnvironmentCapture() {
         JolkNode body = new JolkLiteralNode("env");
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target);
+        JolkClosureNode closureNode = JolkClosureNodeGen.create(target);
 
         // Define lexical arguments to be captured by the node
         Object[] expectedEnv = {"outerValue", 99L};
@@ -137,7 +137,7 @@ public class JolkClosureNodeTest {
     void testExecuteWithNullFrame() {
         JolkNode body = new JolkLiteralNode(1);
         CallTarget target = new JolkRootNode(null, body, "closure", false).getCallTarget();
-        JolkClosureNode closureNode = new JolkClosureNode(target);
+        JolkClosureNode closureNode = JolkClosureNodeGen.create(target);
 
         JolkClosure result = (JolkClosure) closureNode.executeGeneric(null);
         assertNull(getEnvironmentViaReflection(result), "Closure environment should be null if executed without a frame context.");

@@ -51,7 +51,7 @@ public class JolkExpressionTest extends JolcTestBase {
         assertEquals(0L, instance.invokeMember("val12").asLong());
         assertEquals(42L, instance.invokeMember("val13").asLong());
         assertEquals(42L, instance.invokeMember("val14").asLong());
-        assertEquals(0L, instance.invokeMember("val15").asLong());
+        assertEquals(0L, instance.invokeMember("val15").asLong()); // Corrected: true ?! [^42] : [^0] should be 0
         assertEquals(0L, instance.invokeMember("val16").asLong());
         assertEquals(42L, instance.invokeMember("val17").asLong());
         assertEquals(42L, instance.invokeMember("val18").asLong());

@@ -94,6 +94,27 @@ public abstract class JolkDispatchNode extends Node {
      */
     public abstract Object execute(VirtualFrame frame, Object receiver, String selector, Object[] arguments);
 
+    /**
+     * Specialized dispatch for 1 argument to avoid Object[] allocation.
+     */
+    public final Object execute1(VirtualFrame frame, Object receiver, String selector, Object arg0) {
+        return execute(frame, receiver, selector, new Object[]{arg0});
+    }
+
+    /**
+     * Specialized dispatch for 2 arguments to avoid Object[] allocation.
+     */
+    public final Object execute2(VirtualFrame frame, Object receiver, String selector, Object arg0, Object arg1) {
+        return execute(frame, receiver, selector, new Object[]{arg0, arg1});
+    }
+
+    /**
+     * Specialized dispatch for 0 arguments.
+     */
+    public final Object execute0(VirtualFrame frame, Object receiver, String selector) {
+        return execute(frame, receiver, selector, new Object[0]);
+    }
+
     // --- Helper methods for @Specialization guards ---
     protected static boolean isTimes(String selector) {
         return "times".equals(selector);
@@ -278,14 +299,14 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(guards = {
         "isControlFlow(selector)",
         "arguments.length == 1",
-        "getArg0(arguments) == cachedClosure"
+        "getClosureTarget(getArg0(arguments)) == cachedTarget"
     }, limit = "3")
     protected Object doControlFlowDirect(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
-                                        @Cached("getArg0(arguments)") Object cachedClosure,
-                                        @Cached("asClosure(cachedClosure)") JolkClosure closure,
-                                        @Cached("create(closure.getCallTarget())") DirectCallNode callNode,
+                                        @Cached("getClosureTarget(getArg0(arguments))") CallTarget cachedTarget,
+                                        @Cached("create(cachedTarget)") DirectCallNode callNode,
                                         @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
+        JolkClosure closure = asClosure(arguments[0]);
         boolean isAbsent = (unwrappedReceiver == null || unwrappedReceiver == JolkNothing.INSTANCE || interop.isNull(unwrappedReceiver));
         if (unwrappedReceiver instanceof JolkMatch match) isAbsent = !match.isPresent();
 
@@ -317,16 +338,16 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(guards = {
         "isTernary(selector)",
         "arguments.length == 2",
-        "getArg0(arguments) == cachedThen",
-        "getArg(arguments, 1) == cachedElse"
+        "getClosureTarget(getArg0(arguments)) == targetThen",
+        "getClosureTarget(getArg(arguments, 1)) == targetElse"
     }, limit = "3")
     protected Object doTernaryDirect(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
-                                    @Cached("getArg0(arguments)") Object cachedThen,
-                                    @Cached("getArg(arguments, 1)") Object cachedElse,
-                                    @Cached("asClosure(cachedThen)") JolkClosure thenC,
-                                    @Cached("asClosure(cachedElse)") JolkClosure elseC,
-                                    @Cached("create(thenC.getCallTarget())") DirectCallNode thenNode,
-                                    @Cached("create(elseC.getCallTarget())") DirectCallNode elseNode) {
+                                    @Cached("getClosureTarget(getArg0(arguments))") CallTarget targetThen,
+                                    @Cached("getClosureTarget(getArg(arguments, 1))") CallTarget targetElse,
+                                    @Cached("create(targetThen)") DirectCallNode thenNode,
+                                    @Cached("create(targetElse)") DirectCallNode elseNode) {
+        JolkClosure thenC = asClosure(arguments[0]);
+        JolkClosure elseC = asClosure(arguments[1]);
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
         if (unwrappedReceiver instanceof Boolean b) {
             boolean condition = isTernarySelector(selector, "? :") ? b : !b;
@@ -552,13 +573,13 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Fast Path for Long-based Iteration (#times)
     /// 
     /// As an entry point for **Functional Flow**, this handles the `Long #times [closure]` message by directly executing the JolkClosure
-    /// via an IndirectCallNode in a loop. This enables Truffle to perform inlining of the
+    /// via an DirectCallNode in a loop. This enables Truffle to perform inlining of the
     /// closure body, significantly improving performance compared to interop execution.
-    @Specialization(guards = {"isTimes(selector)", "getArg0(arguments) == cachedClosure"}, limit = "3")
+    @Specialization(guards = {"isTimes(selector)", "getClosureTarget(getArg0(arguments)) == cachedTarget"}, limit = "3")
     protected Object doTimesDirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
-                                  @Cached("getArg0(arguments)") Object cachedClosure,
-                                  @Cached("asClosure(cachedClosure)") JolkClosure closure,
-                                  @Cached("create(closure.getCallTarget())") DirectCallNode callNode) {
+                                  @Cached("getClosureTarget(getArg0(arguments))") CallTarget cachedTarget,
+                                  @Cached("create(cachedTarget)") DirectCallNode callNode) {
+        JolkClosure closure = asClosure(arguments[0]);
         long limit = receiver.longValue();
         Object env = closure.getEnvironment();
         // INDUSTRIAL OPTIMIZATION: Use call overloads to avoid array traffic entirely in the fast path.
@@ -1638,14 +1659,26 @@ public abstract class JolkDispatchNode extends Node {
         for (int i = 0; i < arguments.length; i++) {
             Object arg = arguments[i];
             if (arg == null || arg == JolkNothing.INSTANCE) unboxed[i] = null;
-            else if (arg instanceof JolkLongExtension jl) unboxed[i] = JolkLongExtension.asLong(jl);
-            else if (arg instanceof JolkBooleanExtension jb) unboxed[i] = JolkBooleanExtension.asBoolean(jb);
-            else if (interop.isString(arg)) {
-                try { unboxed[i] = interop.asString(arg); } catch (UnsupportedMessageException e) { unboxed[i] = arg; }
-            } else if (interop.isNumber(arg)) {
-                try { unboxed[i] = interop.asLong(arg); } catch (UnsupportedMessageException e) { unboxed[i] = arg; }
-            } else {
-                unboxed[i] = arg;
+            else {
+                try {
+                    // Attempt to convert to long
+                    unboxed[i] = JolkLongExtension.asLong(arg);
+                } catch (UnsupportedTypeException e) {
+                    // If not a long, try to convert to boolean
+                    Boolean b = JolkBooleanExtension.asBoolean(arg);
+                    if (b != null) {
+                        unboxed[i] = b;
+                    } else {
+                        // If Jolk-specific conversions fail, try interop conversions
+                        if (interop.isString(arg)) {
+                            try { unboxed[i] = interop.asString(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = arg; }
+                        } else if (interop.isNumber(arg)) {
+                            try { unboxed[i] = interop.asLong(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = arg; }
+                        } else {
+                            unboxed[i] = arg; // If neither, keep original arg
+                        }
+                    }
+                }
             }
         }
 

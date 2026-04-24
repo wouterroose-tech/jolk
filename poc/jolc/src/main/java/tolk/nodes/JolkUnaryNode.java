@@ -19,6 +19,10 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 @NodeField(name = "operator", type = String.class)
 public abstract class JolkUnaryNode extends JolkExpressionNode {
 
+    // INDUSTRIAL OPTIMIZATION: Interned constants for identity comparison (==).
+    private static final String OP_NOT = "!".intern();
+    private static final String OP_NEG = "-".intern();
+
     public abstract String getOperator();
 
     @Specialization(guards = "isNot()")
@@ -32,7 +36,7 @@ public abstract class JolkUnaryNode extends JolkExpressionNode {
     }
 
     @Specialization(replaces = "doLong", guards = "isNegation()")
-    protected Object doNumber(Number value) {
+    protected long doNumber(Number value) {
         // Semantic Flattening for host-provided numbers
         return -value.longValue();
     }
@@ -48,11 +52,11 @@ public abstract class JolkUnaryNode extends JolkExpressionNode {
 
     @Idempotent
     protected boolean isNot() {
-        return "!".equals(getOperator());
+        return getOperator() == OP_NOT;
     }
 
     @Idempotent
     protected boolean isNegation() {
-        return "-".equals(getOperator());
+        return getOperator() == OP_NEG;
     }
 }

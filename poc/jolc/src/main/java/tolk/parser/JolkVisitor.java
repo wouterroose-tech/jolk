@@ -20,6 +20,7 @@ import tolk.grammar.jolkParser;
 import tolk.nodes.JolkArithmeticNodeGen;
 import tolk.nodes.JolkComparisonNodeGen;
 import tolk.nodes.JolkClassDefinitionNode;
+import tolk.nodes.JolkTernaryNode;
 import tolk.nodes.JolkBlockNode;
 import tolk.nodes.JolkReadEnvironmentNode;
 import tolk.nodes.JolkLogicalNode;
@@ -28,7 +29,7 @@ import tolk.nodes.JolkMessageSendNodeGen;
 import tolk.nodes.JolkUnaryNodeGen;
 import tolk.nodes.JolkReadTypeNode;
 import tolk.nodes.JolkReturnNode;
-import tolk.nodes.JolkClosureNode;
+import tolk.nodes.JolkClosureNodeGen;
 import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkFieldNode;
 import tolk.nodes.JolkIdentityNode;
@@ -495,19 +496,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Handle ternary operations: condition ? trueBranch : falseBranch
         if (!ctx.expression().isEmpty()) {
             String op = ctx.getChild(1).getText(); // "?" or "?!"
-            // We pass the raw ParseTree (the expression context) to ensureClosure.
-            // This allows the visitor to decide whether to wrap it in an implicit closure
-            // or visit it directly if it's already a closure literal.
-            JolkNode thenBranch = ensureClosure(ctx.expression(0));
+            boolean negate = "?!".equals(op);
 
             if (ctx.expression().size() > 1) {
-                // Atomic ternary: if both branches are present, we dispatch a single message
-                // to ensure the branch result is returned instead of the Boolean receiver.
-                String selector = op + " :"; // results in "? :" or "?! :"
-                JolkNode elseBranch = ensureClosure(ctx.expression(1));
-                result = JolkMessageSendNodeGen.create(selector, new JolkNode[]{thenBranch, elseBranch}, result);
+                // INDUSTRIAL OPTIMIZATION: Intrinsify atomic ternary (? :)
+                // This bypasses closure creation and message dispatch entirely.
+                JolkNode thenNode = visit(ctx.expression(0));
+                JolkNode elseNode = visit(ctx.expression(1));
+                result = new JolkTernaryNode(negate, result, thenNode, elseNode);
             } else {
-                // Binary branching: behaves as a control-flow message returning the receiver.
+                JolkNode thenBranch = ensureClosure(ctx.expression(0));
                 result = JolkMessageSendNodeGen.create(op, new JolkNode[]{thenBranch}, result);
             }
         }
@@ -576,7 +574,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
         // Iterate over the rest of the terms (if any)
         for (int i = 1; i < ctx.comparison().size(); i++) {
-            String op = ctx.getChild(2 * i - 1).getText(); // Operators are at odd indices: term op term
+            String op = ctx.getChild(2 * i - 1).getText().intern(); // Operators are at odd indices: term op term
             JolkNode right = visit(ctx.comparison(i));
 
             switch (op) {
@@ -592,7 +590,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitComparison(jolkParser.ComparisonContext ctx) {
         JolkNode left = visit(ctx.term(0));
         for (int i = 1; i < ctx.term().size(); i++) {
-            String op = ctx.getChild(2 * i - 1).getText();
+            String op = ctx.getChild(2 * i - 1).getText().intern();
             JolkNode right = visit(ctx.term(i));
             left = JolkComparisonNodeGen.create(left, right, op);
         }
@@ -603,7 +601,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitTerm(jolkParser.TermContext ctx) {
         JolkNode left = visit(ctx.factor(0));
         for (int i = 1; i < ctx.factor().size(); i++) {
-            String op = ctx.getChild(2 * i - 1).getText();
+            String op = ctx.getChild(2 * i - 1).getText().intern();
             JolkNode right = visit(ctx.factor(i));
             left = JolkArithmeticNodeGen.create(left, right, op);
         }
@@ -614,7 +612,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitFactor(jolkParser.FactorContext ctx) {
         JolkNode left = visit(ctx.unary(0));
         for (int i = 1; i < ctx.unary().size(); i++) {
-            String op = ctx.getChild(2 * i - 1).getText();
+            String op = ctx.getChild(2 * i - 1).getText().intern();
             JolkNode right = visit(ctx.unary(i));
             left = JolkArithmeticNodeGen.create(left, right, op);
         }
@@ -624,7 +622,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitUnary(jolkParser.UnaryContext ctx) {
         if (ctx.power() != null)  return visit(ctx.power());
-        String op = ctx.getChild(0).getText();
+        String op = ctx.getChild(0).getText().intern();
         JolkNode operand = visit(ctx.unary());
         return JolkUnaryNodeGen.create(operand, op);
     }
@@ -633,7 +631,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitPower(jolkParser.PowerContext ctx) {
         JolkNode left = visit(ctx.message());
         if (ctx.powOp() != null) {
-            String op = ctx.powOp().getText();
+            String op = ctx.powOp().getText().intern();
             JolkNode right = visit(ctx.unary());
             left = JolkArithmeticNodeGen.create(left, right, op);
         }
@@ -726,7 +724,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Closures are not method boundaries; isMethod must be false to
         // allow Non-Local Returns (^) to propagate to the defining method.
         JolkRootNode jolkRootNode = new JolkRootNode(language, builder.build(), body, "closure", false);
-        return new JolkClosureNode(jolkRootNode.getCallTarget());
+        return JolkClosureNodeGen.create(jolkRootNode.getCallTarget());
     }
 
     @Override
@@ -1045,7 +1043,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             // INDUSTRIAL OPTIMIZATION: Allow ternary branches to use primitive slots
             builder.addSlots(1, FrameSlotKind.Illegal);
             RootNode root = new JolkRootNode(language, builder.build(), body, "closure", false);
-            return new JolkClosureNode(root.getCallTarget());
+            return JolkClosureNodeGen.create(root.getCallTarget());
         } finally {
             scopes.pop();
             parameterThresholds.pop();

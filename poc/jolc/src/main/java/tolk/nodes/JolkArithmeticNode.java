@@ -26,6 +26,15 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 @NodeField(name = "operator", type = String.class)
 public abstract class JolkArithmeticNode extends JolkExpressionNode {
 
+    // INDUSTRIAL OPTIMIZATION: Interned constants for identity comparison (==).
+    // This allows Graal to fold these comparisons into integer-like checks.
+    private static final String OP_PLUS = "+".intern();
+    private static final String OP_MINUS = "-".intern();
+    private static final String OP_MUL = "*".intern();
+    private static final String OP_DIV = "/".intern();
+    private static final String OP_MOD = "%".intern();
+    private static final String OP_POW = "**".intern();
+
     public abstract String getOperator();
 
     @Override
@@ -62,16 +71,16 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      * Handles cases where one or both operands are already boxed (e.g. from Host Interop).
      */
     @Specialization(replaces = {"doAdd", "doSub", "doMul", "doDiv", "doMod", "doPow"})
-    protected Object doNumbers(Number n1, Number n2) {
-        return switch (getOperator()) {
-            case "+" -> n1.longValue() + n2.longValue();
-            case "-" -> n1.longValue() - n2.longValue();
-            case "*" -> n1.longValue() * n2.longValue();
-            case "/" -> n1.longValue() / n2.longValue();
-            case "%" -> n1.longValue() % n2.longValue();
-            case "**" -> (long) Math.pow(n1.longValue(), n2.longValue());
-            default -> throw new RuntimeException("Unsupported operator: " + getOperator());
-        };
+    protected long doNumbers(Number n1, Number n2) {
+        String op = getOperator();
+        if (op == OP_PLUS)  return n1.longValue() + n2.longValue();
+        if (op == OP_MINUS) return n1.longValue() - n2.longValue();
+        if (op == OP_MUL)   return n1.longValue() * n2.longValue();
+        if (op == OP_DIV)   return n1.longValue() / n2.longValue();
+        if (op == OP_MOD)   return n1.longValue() % n2.longValue();
+        if (op == OP_POW)   return (long) Math.pow(n1.longValue(), n2.longValue());
+        
+        throw new RuntimeException("Unsupported operator: " + op);
     }
 
     @Specialization(guards = "isPlus()")
@@ -101,32 +110,32 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
 
     @Idempotent
     protected boolean isPlus() {
-        return "+".equals(getOperator());
+        return getOperator() == OP_PLUS;
     }
 
     @Idempotent
     protected boolean isMinus() {
-        return "-".equals(getOperator());
+        return getOperator() == OP_MINUS;
     }
 
     @Idempotent
     protected boolean isMultiply() {
-        return "*".equals(getOperator());
+        return getOperator() == OP_MUL;
     }
 
     @Idempotent
     protected boolean isDivide() {
-        return "/".equals(getOperator());
+        return getOperator() == OP_DIV;
     }
 
     @Idempotent
     protected boolean isModulo() {
-        return "%".equals(getOperator());
+        return getOperator() == OP_MOD;
     }
 
     @Idempotent
     protected boolean isPower() {
-        return "**".equals(getOperator());
+        return getOperator() == OP_POW;
     }
 
     /**

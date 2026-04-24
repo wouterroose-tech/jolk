@@ -7,7 +7,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /// # JolkLong
@@ -29,44 +29,44 @@ public final class JolkLongExtension {
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
             JolkArchetype.CLASS, 
-            new HashMap<>(), 
-            new HashMap<>()
+            new LinkedHashMap<>(), 
+            new LinkedHashMap<>()
         );
 
-        Map<String, Object> members = new HashMap<>();
-        members.put("+", new LongAdd());
-        members.put("-", new LongSubtract());
-        members.put("*", new LongMultiply());
-        members.put("/", new LongDivide());
-        members.put("%", new LongModulo());
-        members.put("==", new LongEquals());
-        members.put("!=", new LongNotEquals());
-        members.put(">", new LongGreaterThan());
-        members.put("<", new LongLessThan());
-        members.put(">=", new LongGreaterOrEqual());
-        members.put("<=", new LongLessOrEqual());
-        members.put("times", new LongTimes());
-        members.put("**", new LongPower());
+        Map<String, Object> members = new LinkedHashMap<>();
+        members.put("+".intern(), new LongAdd());
+        members.put("-".intern(), new LongSubtract());
+        members.put("*".intern(), new LongMultiply());
+        members.put("/".intern(), new LongDivide());
+        members.put("%".intern(), new LongModulo());
+        members.put("==".intern(), new LongEquals());
+        members.put("!=".intern(), new LongNotEquals());
+        members.put(">".intern(), new LongGreaterThan());
+        members.put("<".intern(), new LongLessThan());
+        members.put(">=".intern(), new LongGreaterOrEqual());
+        members.put("<=".intern(), new LongLessOrEqual());
+        members.put("times".intern(), new LongTimes());
+        members.put("**".intern(), new LongPower());
         // Object Protocol
-        members.put("toString", new LongToString());
-        members.put("hash", new LongHash());
-        members.put("~~", new LongEquals()); // Equivalence defaults to Equality for Long
-        members.put("!~", new LongNotEquals());
-        members.put("ifPresent", new LongIfPresent());
-        members.put("ifEmpty", new LongIfEmpty());
-        members.put("isPresent", new LongIsPresent());
-        members.put("isEmpty", new LongIsEmpty());
-        members.put("class", new LongClassAccessor());
-        members.put("instanceOf", new LongInstanceOf());
+        members.put("toString".intern(), new LongToString());
+        members.put("hash".intern(), new LongHash());
+        members.put("~~".intern(), new LongEquals()); // Equivalence defaults to Equality for Long
+        members.put("!~".intern(), new LongNotEquals());
+        members.put("ifPresent".intern(), new LongIfPresent());
+        members.put("ifEmpty".intern(), new LongIfEmpty());
+        members.put("isPresent".intern(), new LongIsPresent());
+        members.put("isEmpty".intern(), new LongIsEmpty());
+        members.put("class".intern(), new LongClassAccessor());
+        members.put("instanceOf".intern(), new LongInstanceOf());
         // Synthesized Meta-Methods: accessible via instances
         Constant MIN = new Constant(Long.MIN_VALUE);
         Constant MAX = new Constant(Long.MAX_VALUE);
-        members.put("MIN", MIN);
-        members.put("MAX", MAX);
+        members.put("MIN".intern(), MIN);
+        members.put("MAX".intern(), MAX);
 
-        Map<String, Object> metaMembers = new HashMap<>();
-        metaMembers.put("MIN", MIN);
-        metaMembers.put("MAX", MAX);
+        Map<String, Object> metaMembers = new LinkedHashMap<>();
+        metaMembers.put("MIN".intern(), MIN);
+        metaMembers.put("MAX".intern(), MAX);
         
         // Hydrate the existing identity
         for (var e : members.entrySet()) LONG_TYPE.registerInstanceMethod(e.getKey(), e.getValue());
@@ -76,10 +76,19 @@ public final class JolkLongExtension {
     private JolkLongExtension() {
     }
 
-    public static Long asLong(Object arg) {
+    /**
+     * ### asLong
+     * 
+     * Performs **Impedance Resolution** to extract a primitive long from 
+     * substrate types. Returns a primitive to avoid the "Object Sink" (boxing).
+     * 
+     * @throws UnsupportedTypeException if the argument is not a compatible number.
+     */
+    public static long asLong(Object arg) throws UnsupportedTypeException {
         if (arg instanceof Long l) return l;
         if (arg instanceof Integer i) return i.longValue();
-        return null;
+        if (arg instanceof Number n) return n.longValue();
+        throw UnsupportedTypeException.create(new Object[]{arg});
     }
 
     /// Helper to expose substrate constants as Jolk meta-members.
@@ -101,12 +110,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a + b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) + asLong(arguments[1]);
         }
     }
 
@@ -116,19 +120,10 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length == 1) {
-                Long a = asLong(arguments[0]);
-                if (a != null) {
-                    return -a;
-                }
-                throw UnsupportedTypeException.create(arguments);
+                return -asLong(arguments[0]);
             }
             if (arguments.length == 2) {
-                Long a = asLong(arguments[0]);
-                Long b = asLong(arguments[1]);
-                if (a != null && b != null) {
-                    return a - b;
-                }
-                throw UnsupportedTypeException.create(arguments);
+                return asLong(arguments[0]) - asLong(arguments[1]);
             }
             throw ArityException.create(1, 2, arguments.length);
         }
@@ -140,12 +135,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a * b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) * asLong(arguments[1]);
         }
     }
 
@@ -155,12 +145,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a / b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) / asLong(arguments[1]);
         }
     }
 
@@ -170,12 +155,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a % b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) % asLong(arguments[1]);
         }
     }
 
@@ -185,12 +165,11 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a.equals(b);
+            try {
+                return asLong(arguments[0]) == asLong(arguments[1]);
+            } catch (UnsupportedTypeException e) {
+                return false;
             }
-            return false;
         }
     }
 
@@ -200,12 +179,11 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return !a.equals(b);
+            try {
+                return asLong(arguments[0]) != asLong(arguments[1]);
+            } catch (UnsupportedTypeException e) {
+                return true;
             }
-            return true;
         }
     }
 
@@ -215,12 +193,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a > b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) > asLong(arguments[1]);
         }
     }
 
@@ -230,12 +203,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a < b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) < asLong(arguments[1]);
         }
     }
 
@@ -245,12 +213,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a >= b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) >= asLong(arguments[1]);
         }
     }
 
@@ -260,12 +223,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return a <= b;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return asLong(arguments[0]) <= asLong(arguments[1]);
         }
     }
 
@@ -275,15 +233,12 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long count = asLong(arguments[0]);
-            if (count != null) {
-                Object action = arguments[1];
-                for (long i = 0; i < count; i++) {
-                    InteropLibrary.getUncached().execute(action);
-                }
-                return count; // Return self
+            long count = asLong(arguments[0]);
+            Object action = arguments[1];
+            for (long i = 0; i < count; i++) {
+                InteropLibrary.getUncached().execute(action);
             }
-            throw UnsupportedTypeException.create(arguments);
+            return count; // Result still boxes here due to Object return type
         }
     }
 
@@ -293,12 +248,7 @@ public final class JolkLongExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Long a = asLong(arguments[0]);
-            Long b = asLong(arguments[1]);
-            if (a != null && b != null) {
-                return (long) Math.pow(a, b);
-            }
-            throw UnsupportedTypeException.create(arguments);
+            return (long) Math.pow(asLong(arguments[0]), asLong(arguments[1]));
         }
     }
 

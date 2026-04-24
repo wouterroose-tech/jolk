@@ -5,6 +5,7 @@ import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
 /**
@@ -62,11 +63,42 @@ public abstract class JolkMessageSendNode extends JolkExpressionNode {
     public Object doSend(VirtualFrame frame, Object receiver,
                          @Cached JolkDispatchNode dispatchNode) {
         int arity = argumentNodes.length;
+
+        // INDUSTRIAL OPTIMIZATION: Bypass array allocation for common message arities.
+        if (arity == 0) {
+            return dispatchNode.execute0(frame, receiver, selector);
+        } else if (arity == 1) {
+            Object arg0 = argumentNodes[0].executeGeneric(frame);
+            return dispatchNode.execute1(frame, receiver, selector, arg0);
+        } else if (arity == 2) {
+            Object arg0 = argumentNodes[0].executeGeneric(frame);
+            Object arg1 = argumentNodes[1].executeGeneric(frame);
+            return dispatchNode.execute2(frame, receiver, selector, arg0, arg1);
+        }
+
         Object[] args = new Object[arity];
         for (int i = 0; i < arity; i++) {
             args[i] = argumentNodes[i].executeGeneric(frame);
         }
         return dispatchNode.execute(frame, receiver, selector, args);
+    }
+
+    @Override
+    public long executeLong(VirtualFrame frame) throws UnexpectedResultException {
+        Object result = executeGeneric(frame);
+        if (result instanceof Long l) {
+            return l;
+        }
+        throw new UnexpectedResultException(result);
+    }
+
+    @Override
+    public boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException {
+        Object result = executeGeneric(frame);
+        if (result instanceof Boolean b) {
+            return b;
+        }
+        throw new UnexpectedResultException(result);
     }
 
     /**

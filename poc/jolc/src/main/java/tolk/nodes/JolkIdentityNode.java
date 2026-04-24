@@ -3,6 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.TruffleObject;
 
@@ -85,5 +86,23 @@ public class JolkIdentityNode extends JolkExpressionNode {
                obj instanceof Boolean || obj instanceof Byte || obj instanceof Short ||
                obj instanceof Integer || obj instanceof Long || obj instanceof Float ||
                obj instanceof Double || obj instanceof Character || obj instanceof String;
+    }
+
+    @Override
+    public boolean executeBoolean(VirtualFrame frame) throws UnexpectedResultException {
+        try {
+            // Fast Path: Direct primitive comparison
+            long left = leftNode.executeLong(frame);
+            long right = rightNode.executeLong(frame);
+            boolean eq = left == right;
+            return negate ? !eq : eq;
+        } catch (UnexpectedResultException e) {
+            // Fallback to generic unwrap logic
+            Object result = executeGeneric(frame);
+            if (result instanceof Boolean b) {
+                return b;
+            }
+            throw new UnexpectedResultException(result);
+        }
     }
 }

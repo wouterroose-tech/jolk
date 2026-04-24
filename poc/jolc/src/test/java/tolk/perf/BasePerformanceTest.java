@@ -1,6 +1,5 @@
 package tolk.perf;
 
-import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
@@ -31,10 +30,6 @@ public class BasePerformanceTest extends BasicPerformanceTest {
                  */
                 ;
     }
-
-    protected Context.Builder getContext() {
-        return super.getContext();
-    }
     
 
     public void test() throws InterruptedException {
@@ -45,7 +40,7 @@ public class BasePerformanceTest extends BasicPerformanceTest {
         System.out.println("----|------------|------------|------------|------------|------------");
 
         long it = 1; // Increased to 10M to ensure the sampler can catch the tight loops
-        for (int i = 1; i <= 32; i++) {
+        for (int i = 1; i <= 64; i++) {
             long tRun = measureJolk(jolkTest, "runBase", 7, it);
             long tString = measureJolk(jolkTest, "runString", 1024, it);
             long tNumerical = measureJolk(jolkTest, "runNumerical", 1024, it);

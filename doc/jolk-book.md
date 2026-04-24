@@ -1492,6 +1492,8 @@ The Tolk Parser facilitates the transition from raw source code to a structured 
 ## Tolk Engine
 
 ### Kernel Types
+**First-class Identities** Nothing
+**Primitive Identities:** Numbers Long, Int ...
 
 **Primitive Identities:** The engine applies *Identity Erasure* to prevent boxing overhead for primitives. This optimization is architecturally anchored in the Truffle `@TypeSystem`, which provides the structural foundation for specialization and generates the optimized check-and-cast logic required to navigate the *Sparse Type System*. Primitive Identities are integrated into the AST through Type Specialisation, a process that enables the framework to bypass traditional object boxing and execute logic at hardware speeds. The *Numeric Identity* is implemented via specialised nodes (e.g., `JolkLongExtension`) that operate directly on Java primitives such as `long`. Through **Node Rewriting** (specifically realized in `tolk.nodes.JolkDispatchNode.doLong` and `doBoolean`), the engine replaces generic dispatch nodes with these specialised variants when type stability is detected, effectively collapsing the messaging exchange into substrate-native scalar operations. During this process, the engine strips away the object headers and identity metadata to emit raw 64-bit hardware instructions.
 
@@ -1529,6 +1531,13 @@ Through these specializations, the Tolk Engine resolves dynamic protocols into s
 ### Exception Handling
 
 ### Ternary Expression Projection
+
+Ternary Expression Projection reifies conditional branching as a formal message exchange between a `Boolean` receiver and two competing logical continuations. By eliding procedural keywords, Jolk treats branching as a **Polymorphic Message Dispatch** mediated through the `?` and `:` selectors. This architecture ensures that decision logic adheres to the receiver-centric execution model, where the boolean state determines the execution path. The Tolk Engine utilizes the Truffle DSL to collapse this abstraction, targeting performance parity with native JVM branching. This is achieved through two primary specialization paths within `tolk.nodes.JolkDispatchNode`:
+
+**Closure-Direct Projection**: For branches expressed as closures, the engine employs specialized call nodes (`doTernaryDirect`) to facilitate aggressive inlining. By caching the `CallTarget` of the closure arguments, the engine enables the Graal JIT to perform **Partial Evaluation**, collapsing the closure boundary and allowing **Partial Escape Analysis (PEA)** to elide the allocation of logic blocks during steady-state execution.
+**Value-Scalar Projection**: For literal branches (e.g., `receiver ? 0 : 1`), the engine applies **Identity Erasure** via the `doTernaryValues` specialization. By operating directly on substrate primitives, the engine bypasses the `JolkClosure` protocol entirely. This transparency enables the JIT to treat the message send as a primitive hardware branch, facilitating **Loop-Invariant Code Motion (LICM)** to hoist invariant results out of high-frequency iterative workloads.
+
+By transforming branching into a reified projection, Jolk ensures that control flow remains an extensible property of the object model while achieving the execution density of native JVM control structures.
 
 ### Null-Coalescing
 

@@ -70,8 +70,7 @@ import tolk.runtime.JolkIntrinsicProtocol;
 ///     via optimized call nodes. The current implementation of `doMap`, 
 ///     `doFilter`, and `doTimes` is specifically laid out to support this 
 ///     flattening by using `@Shared("callNode") @Cached IndirectCallNode callNode`, 
-///     providing the exact "hooks" Graal needs to inline closures and 
-///     initiate the Partial Escape Analysis (PEA) that results in Kinetic 
+///     providing the exact "hooks" Graal needs to inline closures and achieve Kinetic 
 ///     **Functional Flow**. Chained Boolean messages (`? :`) are similarly treated 
 ///     as **Logical Gate Flattening** candidates, allowing the engine to 
 ///     collapse ternary logic into raw hardware branches.
@@ -194,7 +193,7 @@ public abstract class JolkDispatchNode extends Node {
             return JolkNode.lift(dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop));
         }
         try { 
-            // ### Safe Navigation (Silent Absorption)
+            // ### Safe Navigation
             //
             // Implements the **Safe Navigation** protocol. In Jolk, safe navigation 
             // is an inherent property of the Nothing identity rather than a 
@@ -276,9 +275,9 @@ public abstract class JolkDispatchNode extends Node {
     /// Handles #ifPresent and #ifEmpty by directly executing the JolkClosure via 
     /// an IndirectCallNode. This enables Truffle to perform inlining of the 
     /// closure body, significantly improving performance compared to interop execution. 
-    /// This method is the primary orchestration site for **Monadic Flow Flattening**; 
-    /// by unwrapping `JolkMatch` containers and passing their values to inlined 
-    /// closures, the engine enables Graal's PEA to elide the container allocation.
+    /// This method orchestrates **Monadic Flow Flattening**; by unwrapping 
+    /// `JolkMatch` containers and passing values to inlined closures, the engine 
+    /// enables the JIT to elide the physical container allocation.
     /// **Logical Gate Flattening** is primarily orchestrated here; the logic 
     /// handles ternary messages (`? :`) by picking a closure and calling it via 
     /// specialized DirectCallNodes to enable full JIT inlining.

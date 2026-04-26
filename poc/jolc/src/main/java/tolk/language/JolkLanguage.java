@@ -24,11 +24,14 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 
 /**
- * <p>The Jolk TruffleLanguage implementation. This class orchestrates the parsing of Jolk
- * source code and the construction of the Truffle AST.</p>
+ * <p>The entry point for the Jolk Semantic Messaging Overlay. This class 
+ * orchestrates the projection of Jolk protocols and behavioral semantics 
+ * onto the JVM by parsing source directives and constructing a 
+ * self-optimizing Truffle AST on top of existing host identities.</p>
  *
- * <p>It enforces a strict validation boundary during parsing to ensure that only syntactically
- * correct code proceeds to AST reification.</p>
+ * <p>It enforces a strict validation boundary during the projection phase 
+ * to ensure that only semantically valid message flows proceed to 
+ * AST reification.</p>
  */
 @TruffleLanguage.Registration(id = "jolk", name = "Jolk", defaultMimeType = "application/x-jolk",
                               characterMimeTypes = "application/x-jolk", fileTypeDetectors = JolkLanguage.JolkFileDetector.class)

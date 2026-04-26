@@ -1,5 +1,5 @@
 # Jolk
-Jolk a Message Oriented Programming Language for the JVM
+Jolk: A Semantic Messaging Overlay and Meta-layer for the JVM
 
 
 ## Community and Contributions

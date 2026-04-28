@@ -69,7 +69,7 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
         
         JolkMetaClass metaReceiverObj = new JolkMetaClass(
             "Constants", null, JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
-            Collections.emptyMap(), Collections.emptyMap(), mockMetaMembers, mockMetaFields
+            Collections.emptyMap(), Collections.emptyMap(), mockMetaMembers, mockMetaFields, Collections.emptySet()
         );
 
         // Hydrate the actual value and attach the synthesized accessor

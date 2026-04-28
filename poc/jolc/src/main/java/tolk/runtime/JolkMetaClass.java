@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Collections;
 import java.util.Set;
 
 /// # JolkMetaClass (Meta-Object Descriptor)
@@ -64,6 +65,7 @@ public class JolkMetaClass extends DynamicObject {
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
+    protected Set<String> stableFields;
 
     private static final Shape ROOT_META_SHAPE = Shape.newBuilder().build();
 
@@ -78,23 +80,23 @@ public class JolkMetaClass extends DynamicObject {
     private final Map<String, JolkEnumConstant> enumConstants = new HashMap<>();
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>());
+        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet());
     }
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>());
+        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet());
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>());
+        this(name, superclass, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet());
     }
 
     // Convenience constructor for unit tests providing instance field templates
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, new HashMap<>());
+        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, new HashMap<>(), Collections.emptySet());
     }
 
-    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers, Map<String, Object> metaFields) {
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers, Map<String, Object> metaFields, Set<String> stableFields) {
         super(ROOT_META_SHAPE);
         this.name = name;
         this.superclass = superclass;
@@ -106,6 +108,7 @@ public class JolkMetaClass extends DynamicObject {
         this.fieldIndices = new HashMap<>();
         this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.metaMembers = metaMembers;
+        this.stableFields = stableFields;
     }
 
     /// Performs **Late Flattening**.
@@ -187,6 +190,16 @@ public class JolkMetaClass extends DynamicObject {
      */
     public JolkArchetype getArchetype() {
         return archetype;
+    }
+
+    /**
+     * Returns true if the named field is marked as stable or constant.
+     * Records implicitly treat all fields as stable.
+     */
+    public boolean isFieldStable(String fieldName) {
+        if (archetype == JolkArchetype.RECORD) return true;
+        if (stableFields != null && stableFields.contains(fieldName)) return true;
+        return superclass != null && superclass.isFieldStable(fieldName);
     }
 
     /**
@@ -575,6 +588,10 @@ public class JolkMetaClass extends DynamicObject {
                 // Getter Pattern: Type #field
                 return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
             } else if (arguments.length == 1) {
+                // Immutability Enforcement: Meta constants are non-assignable.
+                if (isFieldStable(member)) {
+                    throw UnsupportedMessageException.create();
+                }
                 // Setter Pattern: Type #field(val) -> Returns Self (Fluent Contract)
                 objLib.put(this, member, arguments[0]);
                 return this;
@@ -833,7 +850,7 @@ public class JolkMetaClass extends DynamicObject {
             // Initialize with minimal skeleton state. 
             // Fields and registries will be populated during updatePlaceholder.
             super(name, null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-                  new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
+                  new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet());
             this.hydrated = false;
             // Initialize empty registries for defensive access during hydration
             this.instanceRegistry = new HashMap<>();
@@ -872,6 +889,7 @@ public class JolkMetaClass extends DynamicObject {
             // Registry and Cache synchronization
             this.instanceRegistry = actualClass.instanceRegistry;
             this.metaRegistry = actualClass.metaRegistry;
+            this.stableFields = actualClass.stableFields;
             this.cachedInstanceMemberNames = actualClass.cachedInstanceMemberNames;
             this.cachedMetaMemberNames = actualClass.cachedMetaMemberNames;
             

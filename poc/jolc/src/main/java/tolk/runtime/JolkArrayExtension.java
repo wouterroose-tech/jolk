@@ -4,6 +4,7 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -35,7 +36,8 @@ public class JolkArrayExtension {
             new HashMap<>(), 
             new HashMap<>(), // Physical fields are managed by the Java substrate
             new HashMap<>(), 
-            new HashMap<>()
+            new HashMap<>(),
+            Collections.emptySet()
         );
 
         // --- Instance Methods ---

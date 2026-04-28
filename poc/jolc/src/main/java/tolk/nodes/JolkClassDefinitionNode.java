@@ -8,8 +8,11 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
+
 import tolk.language.JolkLanguage;
 import tolk.language.JolkContext;
 import tolk.runtime.JolkMetaClass;
@@ -94,6 +97,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         Map<String, Object> runtimeInstanceFields = new LinkedHashMap<>();
         Map<String, Object> runtimeMetaMembers = new LinkedHashMap<>();
         Map<String, Object> runtimeMetaFields = new LinkedHashMap<>();
+        Set<String> stableFields = new HashSet<>();
 
         JolkMetaClass superMetaClass = null;
         if (superclassName != null) {
@@ -122,6 +126,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                     // Resolve the reified identity as a hint for correct default value initialization
                     Object hint = (field.getInitializer() instanceof JolkEmptyNode) ? context.getOrCreateClass(field.getTypeName()) : JolkNothing.INSTANCE;
                     runtimeMetaFields.put(entry.getKey(), hint);
+                    if (field.isStable()) {
+                        stableFields.add(entry.getKey());
+                    }
                 }
             }
         }
@@ -132,6 +139,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
             JolkFieldNode fieldNode = entry.getValue();
             if (fieldNode.getInitializer() instanceof JolkEmptyNode) {
+                if (fieldNode.isStable()) {
+                    stableFields.add(entry.getKey());
+                }
                 // Structural Hint: Resolve the reified identity for the defaulting protocol.
                 runtimeInstanceFields.put(entry.getKey(), context.getOrCreateClass(fieldNode.getTypeName()));
             } else {
@@ -139,11 +149,14 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
                 Object initialValue = lift(root.getCallTarget().call());
                 runtimeInstanceFields.put(entry.getKey(), initialValue);
+                if (fieldNode.isStable()) {
+                    stableFields.add(entry.getKey());
+                }
             }
         }
 
         // Jolk Lifecycle Protocol: Instantiate the Identity now that the field map is stable.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields);
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields);
 
         // Register enum constants for ENUM archetype
         if (archetype == JolkArchetype.ENUM) {

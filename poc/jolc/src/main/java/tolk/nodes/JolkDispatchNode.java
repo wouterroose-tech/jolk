@@ -238,6 +238,7 @@ public abstract class JolkDispatchNode extends Node {
                                 @Cached("receiver.getShape()") Shape cachedShape,
                                 @Cached("selector") String cachedSelector,
                                 @Cached("cachedShape.getProperty(selector)") Property property,
+                                @Cached("isStable(receiver, selector)") boolean isStable,
                                 @CachedLibrary(limit = "3") DynamicObjectLibrary objLib) {
 
         if (arguments.length == 0) {
@@ -246,6 +247,11 @@ public abstract class JolkDispatchNode extends Node {
             // Identity Restitution: Ensure null substrate values are lifted to Nothing
             return JolkNode.lift(result);
         } else if (arguments.length == 1) {
+            // Immutability Enforcement: Check the Lexical Fence for stable fields/constants.
+            if (isStable) {
+                // Throwing descriptive error for protocol violation in the fast path.
+                throw new RuntimeException("Immutable field mutation prohibited: " + selector);
+            }
             // Setter Pattern: #field(val)
             objLib.put(receiver, cachedSelector, arguments[0]);
             // Self-Return Contract: Setters return the receiver for fluent chaining
@@ -255,6 +261,19 @@ public abstract class JolkDispatchNode extends Node {
         // Arity mismatch for a field access
         throw new RuntimeException("Invalid arity for field access: " + selector);
     }
+
+    /**
+     * Helper used by the DSL to cache the stability of a field for a given receiver/selector.
+     */
+    protected static boolean isStable(DynamicObject receiver, String selector) {
+        if (receiver instanceof JolkObject jo) {
+            return jo.getJolkMetaClass().isFieldStable(selector);
+        } else if (receiver instanceof JolkMetaClass mc) {
+            return mc.isFieldStable(selector);
+        }
+        return false;
+    }
+
     /// ### isNothing
     /// 
     /// Guard used to identify if the receiver should be treated as the Jolk 

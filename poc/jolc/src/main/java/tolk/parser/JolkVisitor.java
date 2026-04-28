@@ -370,6 +370,13 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // If inside a method/closure, this is a local variable declaration
         if (!scopes.isEmpty()) {
             List<String> currentScope = scopes.peek();
+            
+            // Lexical Fence: Prevent shadowing or re-declaring parameters
+            LocalInfo existing = resolveLocal(name);
+            if (existing != null && existing.depth == 0 && existing.isParameter) {
+                throw new JolkSemanticException("Cannot re-declare or shadow immutable parameter '" + name + "'", ctx.getStart().getLine());
+            }
+
             currentScope.add(name);
             LocalInfo info = resolveLocal(name);
             return new JolkWriteLocalVariableNode(info.index, info.depth, initializer);
@@ -387,6 +394,13 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
         if (!scopes.isEmpty()) {
             List<String> currentScope = scopes.peek();
+
+            // Lexical Fence: Constants cannot shadow parameters
+            LocalInfo existing = resolveLocal(name);
+            if (existing != null && existing.depth == 0 && existing.isParameter) {
+                throw new JolkSemanticException("Cannot re-declare parameter '" + name + "' as a constant.", ctx.getStart().getLine());
+            }
+
             currentScope.add(name);
             LocalInfo info = resolveLocal(name);
             // Note: PoC assumes write capability for initialization;
@@ -407,7 +421,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (info != null) {
             // Parameters are immutable in Jolk; only locals can be reassigned.
             if (info.isParameter) {
-                throw new RuntimeException("Jolk Error: Cannot reassign immutable parameter '" + name + "'");
+                throw new JolkSemanticException("Cannot reassign immutable parameter '" + name + "'", ctx.getStart().getLine());
             }
             return new JolkWriteLocalVariableNode(info.index, info.depth, expression);
         }

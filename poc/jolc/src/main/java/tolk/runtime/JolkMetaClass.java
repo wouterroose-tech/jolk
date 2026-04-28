@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import java.util.Collections;
 import java.util.Set;
 
@@ -65,7 +66,7 @@ public class JolkMetaClass extends DynamicObject {
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
-    protected Set<String> stableFields;
+    @CompilationFinal protected final Set<String> stableFields;
 
     private static final Shape ROOT_META_SHAPE = Shape.newBuilder().build();
 
@@ -80,20 +81,20 @@ public class JolkMetaClass extends DynamicObject {
     private final Map<String, JolkEnumConstant> enumConstants = new HashMap<>();
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet());
+        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.unmodifiableSet(Collections.emptySet()));
     }
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet());
+        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.unmodifiableSet(Collections.emptySet()));
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet());
+        this(name, superclass, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.unmodifiableSet(Collections.emptySet()));
     }
 
     // Convenience constructor for unit tests providing instance field templates
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, new HashMap<>(), Collections.emptySet());
+        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, new HashMap<>(), Collections.unmodifiableSet(Collections.emptySet()));
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers, Map<String, Object> metaFields, Set<String> stableFields) {
@@ -108,7 +109,7 @@ public class JolkMetaClass extends DynamicObject {
         this.fieldIndices = new HashMap<>();
         this.metaFields = metaFields; // Maintain reference to allow deferred hydration
         this.metaMembers = metaMembers;
-        this.stableFields = stableFields;
+        this.stableFields = Collections.unmodifiableSet(new HashSet<>(stableFields));
     }
 
     /// Performs **Late Flattening**.
@@ -850,7 +851,7 @@ public class JolkMetaClass extends DynamicObject {
             // Initialize with minimal skeleton state. 
             // Fields and registries will be populated during updatePlaceholder.
             super(name, null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-                  new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet());
+                  new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.unmodifiableSet(Collections.emptySet()));
             this.hydrated = false;
             // Initialize empty registries for defensive access during hydration
             this.instanceRegistry = new HashMap<>();
@@ -869,30 +870,23 @@ public class JolkMetaClass extends DynamicObject {
             // Ensure the actual class is fully hydrated before copying its state.
             actualClass.ensureHydrated();
             this.actualClass = actualClass;
-
             // Identity and Hierarchy synchronization
             this.name = actualClass.name;
             this.superclass = actualClass.superclass;
-            
             // Structural state synchronization
             this.totalFieldCount = actualClass.totalFieldCount;
             this.defaultFieldValues = actualClass.defaultFieldValues;
-            
             this.flattenedFieldNames = actualClass.flattenedFieldNames;
-
             // Synchronize meta-properties
             DynamicObjectLibrary metaLib = DynamicObjectLibrary.getUncached();
             for (String key : actualClass.getMetaPropertyKeys()) {
                 metaLib.put(this, key, metaLib.getOrDefault(actualClass, key, JolkNothing.INSTANCE));
             }
-
             // Registry and Cache synchronization
             this.instanceRegistry = actualClass.instanceRegistry;
             this.metaRegistry = actualClass.metaRegistry;
-            this.stableFields = actualClass.stableFields;
             this.cachedInstanceMemberNames = actualClass.cachedInstanceMemberNames;
             this.cachedMetaMemberNames = actualClass.cachedMetaMemberNames;
-            
             this.hydrated = true;
         }
 
@@ -904,6 +898,11 @@ public class JolkMetaClass extends DynamicObject {
         @Override
         public boolean isReady() {
             return actualClass != null;
+        }
+
+        @Override
+        public boolean isFieldStable(String fieldName) {
+            return actualClass != null ? actualClass.isFieldStable(fieldName) : super.isFieldStable(fieldName);
         }
 
         @Override

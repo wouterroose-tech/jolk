@@ -37,7 +37,7 @@ public class JolkArrayExtension {
             new HashMap<>(), // Physical fields are managed by the Java substrate
             new HashMap<>(), 
             new HashMap<>(),
-            Collections.emptySet()
+            Collections.unmodifiableSet(Collections.emptySet())
         );
 
         // --- Instance Methods ---

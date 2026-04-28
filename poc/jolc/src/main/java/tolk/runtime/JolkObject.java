@@ -163,6 +163,11 @@ public class JolkObject extends DynamicObject {
                 // Getter Pattern: #field
                 return objLib.getOrDefault(this, name, JolkNothing.INSTANCE);
             } else if (arguments.length == 1) {
+                // Immutability Enforcement: Records do not have setters.
+                // In Jolk, a record's state is anchored during instantiation.
+                if (metaClass.getArchetype() == JolkArchetype.RECORD) {
+                    throw UnsupportedMessageException.create();
+                }
                 // Setter Pattern: #field(val) -> Returns Self (Fluent Contract)
                 objLib.put(this, name, arguments[0]);
                 return this;

@@ -242,9 +242,9 @@ public abstract class JolkDispatchNode extends Node {
 
         if (arguments.length == 0) {
             // Getter Pattern: #field
-            Object result = objLib.getOrDefault(receiver, cachedSelector, JolkNothing.INSTANCE);
+            Object result = objLib.getOrDefault(receiver, cachedSelector, null);
             // Identity Restitution: Ensure null substrate values are lifted to Nothing
-            return (result == null) ? JolkNothing.INSTANCE : result;
+            return JolkNode.lift(result);
         } else if (arguments.length == 1) {
             // Setter Pattern: #field(val)
             objLib.put(receiver, cachedSelector, arguments[0]);

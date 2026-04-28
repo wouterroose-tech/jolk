@@ -1,9 +1,8 @@
 package demo.validation;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -59,11 +58,11 @@ public class IssueTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("activate when Record is implemented")
+    //@Disabled("activate when Record is implemented")
     void testIssue() {
         Value level = this.levelEnum().getMember("ERROR");
         Value issue = this.issueType().invokeMember("new", null, "Test message", level);
-        assertEquals(true, issue.invokeMember("isError"));
+        assertTrue(issue.invokeMember("match", level).asBoolean());
     }
 
 }

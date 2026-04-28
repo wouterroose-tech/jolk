@@ -5,11 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import java.util.ArrayList;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
-
 
 /// This test class is for testing service classes of the Jolk Demo.
 /// test parsing, creation and protocol
@@ -45,12 +43,11 @@ public class ServicesTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("activate when Record is implemented")
     void testCity() {
         Value city = this.cityClass().invokeMember("new", 12345, "New York", "NY");
-        assertEquals(12345L, city.invokeMember("zipcode"));
-        assertEquals("New York", city.invokeMember("name"));
-        assertEquals("NY", city.invokeMember("province"));
+        assertEquals(12345L, city.invokeMember("zipcode").asLong());
+        assertEquals("New York", city.invokeMember("name").asString());
+        assertEquals("NY", city.invokeMember("province").asString());
     }
 
     @Test

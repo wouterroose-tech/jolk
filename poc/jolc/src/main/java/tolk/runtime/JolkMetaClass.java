@@ -183,6 +183,13 @@ public class JolkMetaClass extends DynamicObject {
     }
 
     /**
+     * Returns the structural archetype of this type (CLASS, RECORD, etc).
+     */
+    public JolkArchetype getArchetype() {
+        return archetype;
+    }
+
+    /**
      * Returns true if this class identity is stable and ready for hydration.
      * Placeholders are unready until their actual definition is published.
      */

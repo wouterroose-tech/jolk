@@ -128,6 +128,10 @@ public abstract class JolkDispatchNode extends Node {
         return "anyMatch".equals(selector);
     }
 
+    protected static boolean isFindFirst(String selector) {
+        return "findFirst".equals(selector);
+    }
+
     protected static boolean isTernary(String selector) {
         return "? :".equals(selector) || "?! :".equals(selector);
     }
@@ -692,6 +696,30 @@ public abstract class JolkDispatchNode extends Node {
         throw new RuntimeException("Invalid arguments for #anyMatch: expected a single closure.");
     }
 
+    /// ### Fast Path for Array FindFirst (#findFirst)
+    /// 
+    /// Implements the findFirst protocol for java.util.List. The IndirectCallNode 
+    /// allows Graal to inline the predicate logic. It returns the first element 
+    /// for which the predicate returns true, otherwise Nothing.
+    @Specialization(guards = "isFindFirst(selector)")
+    protected Object doFindFirst(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
+                                 @Shared("callNode") @Cached IndirectCallNode callNode) {
+        if (arguments.length == 1 && arguments[0] instanceof JolkClosure predicate) {
+            Object env = predicate.getEnvironment();
+            CallTarget target = predicate.getCallTarget();
+            Object[] args = new Object[]{env, null};
+            for (Object item : receiver) {
+                args[1] = item;
+                Object matches = callNode.call(target, args);
+                if (matches instanceof Boolean b && b) {
+                    return JolkNode.lift(item);
+                }
+            }
+            return JolkNothing.INSTANCE;
+        }
+        throw new RuntimeException("Invalid arguments for #findFirst: expected a single closure.");
+    }
+
     /// ### Fast Path for Iterator Traversal (#forEach)
     /// 
     /// Projects the **Functional Flow** of an Iterator directly into a message-passing 
@@ -1160,7 +1188,7 @@ public abstract class JolkDispatchNode extends Node {
         "doNothing", "doShapeRead", "doUserDispatch", "doClosureTry", 
         "doClosureCatch", "doCatchPassThrough", 
         "doControlFlowDirect", "doTernaryDirect", "doControlFlow",
-        "doTimesDirect", "doTimesIndirect", "doMap", "doFilter", "doAnyMatch", 
+        "doTimesDirect", "doTimesIndirect", "doMap", "doFilter", "doAnyMatch", "doFindFirst",
         "doIteratorForEach", "doMapForEach", "doLongClosureDirect", "doLongCached", 
         "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable"
     })

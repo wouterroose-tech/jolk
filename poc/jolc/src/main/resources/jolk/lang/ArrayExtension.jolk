@@ -56,4 +56,9 @@ extension ArrayExtension<T> on java.util.List<T> {
     /// @return true if any elements match the predicate, otherwise false
     Boolean anyMatch(Predicate<? super T> predicate) { }
     
+    /// Returns the first element of this array that matches the provided predicate, or null if no such element is found.
+    ///
+    /// @param predicate a non-interfering, stateless predicate to apply to each element
+    /// @return the first matching element, or null if no match is found
+    T #findFirst(Closure<Boolean> predicate) { }
 }

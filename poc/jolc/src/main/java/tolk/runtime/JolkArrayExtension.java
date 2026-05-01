@@ -99,6 +99,39 @@ public class JolkArrayExtension {
             }
         });
 
+        // #findFirst(predicate) -> Returns the matching element or Nothing.
+        ARRAY_TYPE.registerInstanceMethod("findFirst", new JolkBuiltinMethod() {
+            @Override
+            public Object execute(Object[] args) throws ArityException {
+                if (args.length != 2) throw ArityException.create(1, 1, args.length - 1);
+                List<?> list = (List<?>) unwrap(args[0]);
+                Object predicate = args[1];
+                
+                for (Object element : list) {
+                    try {
+                        // Cast to JolkClosure and call directly
+                        if (predicate instanceof JolkClosure closure) {
+                            Object result = closure.execute(new Object[]{element});
+                            if (result instanceof Boolean && (Boolean) result) {
+                                return lift(element);
+                            }
+                        } else {
+                            // Fallback to interop
+                            Object result = InteropLibrary.getUncached()
+                                .invokeMember(predicate, "apply", element);
+                            if (result instanceof Boolean && (Boolean) result) {
+                                return lift(element);
+                            }
+                        }
+                    } catch (Exception e) {
+                        // If invocation fails, continue to next element
+                        continue;
+                    }
+                }
+                return JolkNothing.INSTANCE;
+            }
+        });
+
         /**
          * ### meta #new(elements...)
          * 

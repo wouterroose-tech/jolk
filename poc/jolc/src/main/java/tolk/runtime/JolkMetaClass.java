@@ -587,7 +587,11 @@ public class JolkMetaClass extends DynamicObject {
         if (objLib.containsKey(this, member)) {
             if (arguments.length == 0) {
                 // Getter Pattern: Type #field
-                return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
+                Object value = objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
+                if (value instanceof JolkLazyValue lazyValue) {
+                    return lazyValue.get(this); // Trigger lazy evaluation with the MetaClass as receiver
+                }
+                return value;
             } else if (arguments.length == 1) {
                 // Immutability Enforcement: Meta constants are non-assignable.
                 if (isFieldStable(member)) {

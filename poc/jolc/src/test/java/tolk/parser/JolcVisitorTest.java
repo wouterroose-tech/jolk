@@ -328,7 +328,6 @@ public class JolcVisitorTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Activate when lazy evaluation is implemented")
     void testVisitLazy() {
         // Verify the lazy keyword on fields and methods
         eval("class LazyTest { lazy Int x; lazy setup() {} }");

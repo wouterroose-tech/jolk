@@ -18,6 +18,7 @@ import tolk.language.JolkContext;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkFinality;
+import tolk.runtime.JolkLazyValue;
 import tolk.runtime.JolkVisibility;
 import tolk.runtime.JolkArchetype;
 import tolk.runtime.JolkClosure;
@@ -124,7 +125,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 } else if (node instanceof JolkFieldNode) {
                     JolkFieldNode field = (JolkFieldNode) node;
                     // Resolve the reified identity as a hint for correct default value initialization
-                    Object hint = (field.getInitializer() instanceof JolkEmptyNode) ? context.getOrCreateClass(field.getTypeName()) : JolkNothing.INSTANCE;
+                    Object hint = field.isLazy() 
+                        ? new JolkLazyValue(field.getInitializer(), field.getName(), lang)
+                        : (field.getInitializer() instanceof JolkEmptyNode) ? context.getOrCreateClass(field.getTypeName()) : JolkNothing.INSTANCE;
                     runtimeMetaFields.put(entry.getKey(), hint);
                     if (field.isStable()) {
                         stableFields.add(entry.getKey());
@@ -181,7 +184,11 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             for (JolkNode node : nodes) {
                 if (node instanceof JolkMethodNode m) methods.add(m);
                 else if (node instanceof JolkFieldNode field) {
-                    if (!(field.getInitializer() instanceof JolkEmptyNode)) {
+                    if (field.isLazy()) {
+                        JolkLazyValue lazyVal = new JolkLazyValue(field.getInitializer(), name, lang);
+                        newMetaClass.setMetaFieldValue(name, lazyVal);
+                        runtimeMetaFields.put(name, lazyVal);
+                    } else if (!(field.getInitializer() instanceof JolkEmptyNode)) {
                         JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
                         Object initialValue = lift(root.getCallTarget().call());
                         // Update both the storage slot and the map hint for initializeDefaultValues

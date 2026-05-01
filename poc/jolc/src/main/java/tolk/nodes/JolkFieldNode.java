@@ -12,31 +12,33 @@ public class JolkFieldNode extends JolkNode {
     private final String typeName;
     @Child private JolkNode initializer;
     private final boolean isStable;
+    private final boolean isLazy;
 
-    /**
-     * Convenience constructor for unit tests or untyped declarations.
-     */
+    /// Convenience constructor for unit tests or untyped declarations.
     public JolkFieldNode(String name, JolkNode initializer) {
-        this(name, "Object", initializer, false);
+        this(name, "Object", initializer, false, false);
     }
 
-    /**
-     * Convenience constructor for unit tests or untyped declarations with stability control.
-     */
+    /// Convenience constructor for unit tests or untyped declarations with stability control.
     public JolkFieldNode(String name, JolkNode initializer, boolean isStable) {
-        this(name, "Object", initializer, isStable);
+        this(name, "Object", initializer, isStable, false);
     }
 
     // Creates a new field node that is mutable by default.
     public JolkFieldNode(String name, String typeName, JolkNode initializer) {
-        this(name, typeName, initializer, false);
+        this(name, typeName, initializer, false, false);
     }
 
     public JolkFieldNode(String name, String typeName, JolkNode initializer, boolean isStable) {
+        this(name, "Object", initializer, isStable, false);
+    }    
+    
+    public JolkFieldNode(String name, String typeName, JolkNode initializer, boolean isStable, boolean isLazy) {
         this.name = name;
         this.typeName = typeName;
         this.initializer = initializer;
         this.isStable = isStable;
+        this.isLazy = isLazy;
     }
 
     public String getName() {
@@ -45,6 +47,10 @@ public class JolkFieldNode extends JolkNode {
 
     public String getTypeName() {
         return typeName;
+    }
+
+    public boolean isLazy() { // New getter
+        return isLazy;
     }
 
     public JolkNode getInitializer() {

@@ -64,8 +64,26 @@ public class JolkFieldStabilityTest extends JolcTestBase {
         assertEquals(10L, point.invokeMember("x").asLong());
 
         // Records must not have setters
-        assertThrows(Exception.class, () -> {
-            point.invokeMember("x", 100L);
-        }, "Records are inherently immutable; setters must be suppressed.");
+        assertThrows(Exception.class, () -> point.invokeMember("x", 100L) );
+    }
+
+    @Test
+    void testLazyMetaFieldInitialization() {
+        String source = """
+            class LazyMetaFieldTest {
+                meta Long count = 0;
+                meta Long initialize() {
+                    self #count( self #count + 1);
+                    ^ 100;
+                }
+                meta lazy Long VALUE = self #initialize;
+            }
+            """;
+        Value meta = eval(source);
+        assertEquals(0, meta.invokeMember("count").asLong());
+        assertEquals(100L, meta.invokeMember("VALUE").asLong());
+        assertEquals(1, meta.invokeMember("count").asLong());
+        assertEquals(100L, meta.invokeMember("VALUE").asLong());
+        assertEquals(1, meta.invokeMember("count").asLong());
     }
 }

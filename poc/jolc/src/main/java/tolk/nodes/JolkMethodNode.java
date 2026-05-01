@@ -9,19 +9,25 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 public class JolkMethodNode extends JolkNode {
 
     private final String name;
-    @Child private JolkNode body;
     private final String[] parameters;
+    @Child private JolkNode body;
     private final boolean isVariadic;
     private final int frameSlots;
     private final boolean hasNL;
+    private final boolean isLazy;
 
-    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots, boolean hasNL) {
+    public JolkMethodNode(String name, JolkNode body, String[] parameterNames, boolean isVariadic, int frameSlots, boolean hasNL, boolean isLazy) {
         this.name = name;
-        this.body = body;
-        this.parameters = parameters;
+        this.body = body; // The body of the method
+        this.parameters = parameterNames; // Store the parameter names directly
         this.isVariadic = isVariadic;
         this.frameSlots = frameSlots;
         this.hasNL = hasNL;
+        this.isLazy = isLazy;
+    }
+
+    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots, boolean hasNL) {
+        this(name, body, parameters, isVariadic, frameSlots, hasNL, false);
     }
 
     /**
@@ -29,7 +35,7 @@ public class JolkMethodNode extends JolkNode {
      * defaulting to 0.
      */
     public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
-        this(name, body, parameters, isVariadic, 0, true);
+        this(name, body, parameters, isVariadic, 0, true, false);
     }
 
     public String getName() {

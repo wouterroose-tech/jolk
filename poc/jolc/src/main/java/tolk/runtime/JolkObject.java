@@ -131,7 +131,11 @@ public class JolkObject extends DynamicObject {
                              @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib,
                              @Exclusive @CachedLibrary(limit = "3") InteropLibrary interop) throws UnknownIdentifierException, UnsupportedMessageException {
         if (metaClass.getFieldIndex(member) != -1) {
-            return objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
+            Object value = objLib.getOrDefault(this, member, JolkNothing.INSTANCE);
+            if (value instanceof JolkLazyValue lazyValue) {
+                return lazyValue.get(this);
+            }
+            return value;
         }
         if (interop.isMemberReadable(metaClass, member)) {
             return JolkNode.lift(interop.readMember(metaClass, member));
@@ -161,7 +165,11 @@ public class JolkObject extends DynamicObject {
         if (metaClass.getFieldIndex(name) != -1) {
             if (arguments.length == 0) {
                 // Getter Pattern: #field
-                return objLib.getOrDefault(this, name, JolkNothing.INSTANCE);
+                Object value = objLib.getOrDefault(this, name, JolkNothing.INSTANCE);
+                if (value instanceof JolkLazyValue lazyValue) {
+                    return lazyValue.get(this);
+                }
+                return value;
             } else if (arguments.length == 1) {
                 // Immutability Enforcement: Respect stable fields and Record archetypes.
                 if (metaClass.isFieldStable(name)) {

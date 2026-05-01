@@ -32,7 +32,7 @@ type_mbr        : annotation* (member | enum_constant) ;
 member          : vis_mod? ( META? state SEMI | finality? META? method ) ;
 state           : constant | field ;
 constant        : CONSTANT type identifier assignment ;
-field           : STABLE? type identifier assignment? ;
+field           : (STABLE | LAZY)? type identifier assignment? ;
 binding         : identifier assignment ;
 assignment      : ASSIGN expression ;
 enum_constant   : MetaId arguments? ';' ;

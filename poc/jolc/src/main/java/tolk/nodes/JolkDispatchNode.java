@@ -42,6 +42,7 @@ import tolk.runtime.JolkArrayExtension;
 import tolk.runtime.JolkLongExtension;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkIntrinsicProtocol;
+import tolk.runtime.JolkLazyValue;
 
 /// # JolkDispatchNode (The Message Gateway)
 ///
@@ -52,7 +53,7 @@ import tolk.runtime.JolkIntrinsicProtocol;
 /// This node acts as the terminal enforcer of the **metaboundary**. Because it
 /// only resolves messages defined in the **Flattened Registry**, it provides
 /// the mechanical foundation for making **intrusive reflection a semantic 
-/// impossibility** within the guest language environment.
+/// impossibility** within the guest language environment. 
 ///
 /// This node implements the engine's **Instructional Projection** by mapping 
 /// intrinsic selectors directly to optimized machine-code paths during 
@@ -221,10 +222,9 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Fast Path for Shape-based Property Access (Field Flattening)
     ///
     /// This specialization implements the **protocol-driven flow** for object state. 
-    /// By caching the {@link Shape} and the specific {@link Property} offset, 
-    /// the engine performs **Instructional Projection**. This collapses a 
-    /// dynamic message send (e.g., `#field`) into a direct memory offset load 
-    /// or store at the machine level.
+    /// By caching the {@link Shape} and the specific {@link Property} offset.
+    /// This collapses a dynamic message send (e.g., `#field`) into a direct memory
+    /// offset load or store at the machine level.
     ///
     /// By projecting the object's structural identity into the execution path, 
     /// the engine ensures that the "Lexical Fence" surrounding fields does not 
@@ -243,7 +243,11 @@ public abstract class JolkDispatchNode extends Node {
 
         if (arguments.length == 0) {
             // Getter Pattern: #field
-            Object result = objLib.getOrDefault(receiver, cachedSelector, null);
+        Object result = objLib.getOrDefault(receiver, cachedSelector, null); // Get the raw value
+        if (result instanceof JolkLazyValue lazyValue) {
+            result = lazyValue.get(receiver); // Trigger lazy evaluation with the receiver context
+        }
+
             // Identity Restitution: Ensure null substrate values are lifted to Nothing
             return JolkNode.lift(result);
         } else if (arguments.length == 1) {

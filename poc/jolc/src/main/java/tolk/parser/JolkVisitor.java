@@ -359,7 +359,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitField(jolkParser.FieldContext ctx) {
         // The 'stable' keyword signals instance-level immutability.
         // We check for the terminal presence to set the stability flag.
-        boolean isStable = ctx.STABLE() != null;
+        boolean isLazy = ctx.LAZY() != null; // Check for lazy keyword
+        // Jolk Integrity: A lazy field is logically stable post-initialization.
+        boolean isStable = ctx.STABLE() != null || isLazy;
         String name = ctx.identifier().getText().intern();
         String typeName = ctx.type().getText().intern();
         JolkNode initializer = new JolkEmptyNode();
@@ -382,7 +384,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return new JolkWriteLocalVariableNode(info.index, info.depth, initializer);
         }
 
-        return new JolkFieldNode(name, typeName, initializer, isStable);
+        return new JolkFieldNode(name, typeName, initializer, isStable, isLazy);
     }
 
     @Override
@@ -444,6 +446,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
         String name = ctx.selector_id().getText().intern();
+        
+        // Check for the 'lazy' modifier to enable memoization logic
+        boolean isLazy = ctx.LAZY() != null;
 
         // Signature Fence: Identify if this is a Command method (implicit self return).
         // If the return type is 'Self' or the class name, it follows the Self-Return Contract.
@@ -483,7 +488,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
             frameSlots = methodScope.size();
             boolean hasNL = nonLocalReturnFound.peek();
-            return new JolkMethodNode(name, body, params, isVariadic, frameSlots, hasNL);
+            return new JolkMethodNode(name, body, params, isVariadic, frameSlots, hasNL, isLazy); // Pass isLazy
         } finally {
             scopes.pop();
             parameterThresholds.pop();

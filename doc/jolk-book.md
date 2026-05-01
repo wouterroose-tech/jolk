@@ -287,10 +287,11 @@ Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' t
 **The Reification of Absence**: The traditional `null` pointer is replaced by a formal identity. In Jolk, the absence of a value—represented by the reserved literal `null`—is a singleton instance of the `Nothing` class. By reifying nothingness as a first-class object, Jolk ensures that every identity remains a valid receiver, shifting failures from opaque runtime crashes to predictable semantic responses.
 
 The modifier protocol defines a specification for member management:
-`meta`: Designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta layer.   
-`constant`: Establishes a field as non-assignable (shallow immutability)
-`stable`:  a field or local remains unchanged after its initial binding
-`lazy`	: Designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.
+
+`meta`: Designates non-instance members, defining their association with type-level metadata and enforcing member segregation between the Instance and Meta layer.  
+`constant`: Establishes a field as non-assignable (shallow immutability)  
+`stable`:  a field or local remains unchanged after its initial binding  
+`lazy`	: Designates deferred member initialisation, facilitating the creation of an identity only upon the reception of its primary message.  
 
 ### Mathematical and Equality Operators
 
@@ -396,6 +397,13 @@ This distinction allows the binding production to function exclusively as a stat
 The _Jolk Core Protocol_ establishes the _Jolk Object Foundation_, ensuring every instance is operationally complete and predictable from the moment of instantiation. This foundation is anchored by high-density selectors that govern state and flow: _Equivalence_ (`~~` / `!~`), _Identification_ (`#hash`), _Pattern Matching_ (`#isInstance` / `#instanceOf`), _Representation_ (`#toString`), _Identity State_ (`#isPresent` / `#isEmpty`), and _Flow Control_ (`#ifPresent` / `#ifEmpty`).
 
 By treating object creation via `#new` as a formal capability, the protocol ensures that archetype-specific behaviours—such as the immutable, cached-hash nature of _Records_ or the identity-optimised constants of _Enums_—are applied with _Structural Density_. This unified model achieves _Signal Determinism_, shifting the focus from internal storage to external capability through _Protocol Standardisation_ across all archetypes.
+
+### Deferred Computation
+
+Jolk's `lazy` keyword enables deferred, memoized initialization and computation for both fields and methods. This ensures that expensive operations or resource-heavy instantiations are only executed when absolutely necessary—upon their first access or invocation. Once computed, the result is cached, and subsequent interactions return the same value without re-evaluation. This mechanism is thread-safe and includes internal guards to detect and prevent circular dependencies during initialization.
+
+*   **Lazy Fields**: Acting as a compiler intrinsic for "Thunk Projection," `lazy` fields allow for on-demand instance initialisation. This serves as a general-purpose resource management tool, reducing startup overhead by only creating dependencies when they are first required.
+*   **Lazy Methods**: When a method is marked `lazy`, its body is executed only once. The result is memoized within the instance. This is ideal for expensive properties that depend on an object's state but do not need to be recalculated every time they are accessed, effectively transforming a method into a memoized, computed property.
 
 ### Archetypes
 
@@ -566,7 +574,7 @@ By implementing these as literal anchors, Jolk remains "bracket-light" while uph
 
 **Constants**
 
-In Jolk, class-level constants are reified as Meta-Objects within the Meta-Object Descriptor, distinguished by Semantic Casing (PascalCase/UPPERCASE) at the lexer level. This syntactic convention serves as a "fence" that ensures Zero Token Ambiguity, allowing the Tolk engine to resolve identifiers like `Math #PI` within the Meta-Object stratum using Dual-Stratum Resolution. This ensures that constants are not merely data points, but first-class participants in the meta-level protocol.
+In Jolk, class-level constants are reified as Meta-Objects within the Meta-Object Descriptor, distinguished by semantic casing (PascalCase/UPPERCASE) at the lexer level. This syntactic convention serves as a "fence", allowing the Tolk engine to resolve identifiers like `Math #PI` within the Meta-Object stratum using Dual-Stratum Resolution. This ensures that constants are not merely data points, but first-class participants in the meta-level protocol.
 
 	class Math {
 	
@@ -1124,6 +1132,8 @@ Jolk is a *Convergent Architecture* where the static safety of Java acts as the 
 
 *Scala Influence*: The *Monadic Flow* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types[20]. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.
 
+*Lazy Evaluation*: While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization. Deferred computation provides a native mechanism for thread-safe, on-demand initialisation and resource management.
+
 ---
 
 # Part Three
@@ -1404,13 +1414,13 @@ The Pivot Pattern prevents *Syntactic Drift*. As architectures grow, the temptat
 
 ## Dependency Injection
 
-Dependency Injection is established as JIT-DI (Just-In-Time Dependency Injection), a language-native model that replaces reflection-heavy containers with Structural Synthesis. By treating component assembly as a fundamental application of native Object-Oriented principles, JIT-DI ensures that the dependency graph remains strictly traceable and only materialises when needed. This approach reduces DI to a transparent message-passing pattern where the developer retains full authority over the instantiation, wiring, and lifecycle of every component through explicit, statically traceable code.
+Dependency Injection is established as JIT-DI (Just-In-Time Dependency Injection), a model that replaces reflection-heavy containers with Structural Synthesis. By treating component assembly as a fundamental application of native Object-Oriented principles, JIT-DI ensures that the dependency graph remains strictly traceable and only materialises when needed. This approach reduces DI to a transparent message-passing pattern where the developer retains full authority over the instantiation, wiring, and lifecycle of every component through explicit, statically traceable code.
 
-At the core of this model lies the lazy feature, acting as a compiler intrinsic for Thunk Projection to provide thread-safe, memoised instances that are only hydrated upon the reception of their primary message. This native mechanism eliminates the requirement for intrusive, overlaid frameworks. Because Jolk enforces immutable constructor parameters, this contract provides a level of structural integrity that ensures every object is "Correct by Construction," physically preventing the bypass of the dependency contract once an object is created.
+At the core of this model lies the `lazy` feature, acting as a compiler intrinsic for Thunk Projection to provide thread-safe, memoised instances that are only hydrated upon the reception of their primary message. While independently conceived to support Jolk's messaging architecture, this mechanism provides a native solution for resource management without intrusive frameworks. Because Jolk enforces immutable constructor parameters, this contract provides a level of structural integrity that ensures every object is "Correct by Construction," physically preventing the bypass of the dependency contract once an object is created.
 
 ### The Federated Model and Local Injection
 
-Jolk rejects centralised registries and global ApplicationContexts in favour of a Federated Model to prevent context pollution. To avoid "parameter push-down" in deep hierarchies, the system employs Local Injection via Polymorphic Meta-Parameters. Components receive abstract meta ConfigurationProviders as resource bundles and use a Meta Constant Lens to retrieve specific dependencies. The Tolk Engine subsequently flattens these access paths, treating resource access as a static dispatch after initial hydration.
+Jolk rejects centralised registries and global ApplicationContexts in favour of a Federated Model to prevent context pollution. To avoid "parameter push-down" in deep hierarchies, the system employs Local Injection via Polymorphic Meta-Parameters. Components receive abstract meta ConfigurationProviders as resource bundles and use a Meta Constant Lens to retrieve specific dependencies. The Tolk Engine subsequently flattens these access paths, treating resource access as a static dispatch after initial resolution.
 
 This native architecture elegantly replaces the "magic" of traditional DI features with language-level equivalents. Singleton scopes are inherently managed by the lazy modifier, while prototype scopes are implemented as factory methods. Dependency wiring is accomplished through standard method calls and polymorphism. This results in significant performance gains, as Jolk applications achieve fast startup times through the absence of classpath scanning or proxy generation.
 
@@ -1528,16 +1538,16 @@ The `jolk.lang` class definitions for these types act as a formal bridge to the 
 
 **Nothing (`null`):** Reified as the `JolkNothing` singleton, this identity represents the fact of absence. Jolk achieves safe navigation through identity-level polymorphism; the implementation in `JolkNothing.java` exports the `InteropLibrary` and overrides `invokeMember` to return the receiver for unknown selectors. This ensures that message chains collapse gracefully. The Tolk Engine optimizes this via a *Monomorphic Fast Path* in `JolkDispatchNode.doNothing`, allowing safe navigation to occur at the speed of a single reference comparison.
 
-**Boolean (`true` / `false`):** Booleans are treated as atomic identities that encapsulate branching behavior. While the guest language interacts with them as first-class objects, the implementation applies *Identity Erasure* to project these identities onto substrate-native scalars. In `JolkDispatchNode.doBooleanCached`, the engine utilizes *Instructional Projection* to map messages like `?` or `?!` directly to specialized call nodes. By caching the `CallTarget` of branches, the engine enables the Graal JIT to resolve high-level logical gates into raw hardware branch instructions. This transformation ensures that Jolk’s keyword-less control flow achieves execution parity with procedural hardware-level branches.
+**Boolean (`true` / `false`):** Booleans are treated as atomic identities that encapsulate branching behavior. While the guest language interacts with them as first-class objects, the implementation applies *Identity Erasure* to project these identities onto substrate-native scalars. In `JolkDispatchNode.doBooleanCached`, the engine utilizes specialization to map messages like `?` or `?!` directly to specialized call nodes. By caching the `CallTarget` of branches, the engine enables the Graal JIT to resolve high-level logical gates into raw hardware branch instructions. This transformation ensures that Jolk’s keyword-less control flow achieves execution parity with procedural hardware-level branches.
 
 **Primitive Identities:** The engine applies *Identity Erasure* to prevent boxing overhead for primitive types (`Long`, `Int`, ...). This optimization is architecturally anchored in the Truffle `@TypeSystem`, which provides the structural foundation for specialization and generates the optimized check-and-cast logic. Primitive Identities are integrated into the AST through Type Specialisation*, a process that enables the framework to bypass traditional object boxing and execute logic at hardware speeds. The numeric identity is implemented via specialised nodes (e.g., `JolkLongExtension`) that operate directly on Java primitives such as `long`. 
-
+ 
 Through *Node Rewriting* (specifically realized in `tolk.nodes.JolkDispatchNode.doLong` and `doBoolean`), the engine replaces generic dispatch nodes with these specialised variants when type stability is detected, effectively collapsing the messaging exchange into substrate-native scalar operations. During this process, the engine strips away the object headers and identity metadata to emit raw 64-bit hardware instructions.
 
 **String Identity:** The String Identity is reified through Truffle type specialisation as an irreducible leaf node within the AST. By leveraging `TruffleString`, the implementation ensures the immutable state of literal data and facilitates memory-efficient deduplication across the *unified communicative field*. This transformation is mechanically operationalised within the `tolk.nodes.JolkDispatchNode` through two distinct specialisations:
 * `doTruffleString`: Serves as the high-performance fast path for guest operations, performing instructional projection for messages such as `#length` and `#isEmpty` to bypass substrate overhead while prioritizing Jolk-native extensions.
 * `doJavaString`: Manages the metaboundary by intercepting raw `java.lang.String` instances and applying Identity Restitution to lift them into the optimized `TruffleString` identity.
-
+ 
 This architecture allows the engine to treat text as a specialized primitive, maintaining full compatibility with the host JVM through automated lifting and lowering.
 
 
@@ -1556,14 +1566,14 @@ This architecture allows the engine to treat text as a specialized primitive, ma
 ### Semantic Flattening
 This is the mechanical process of collapsing high-level messaging protocols into optimized machine code. The foundations of this process trace back to the *Self Language (1989)*[13], which pioneered "Maps" (the conceptual predecessor to Truffle Shapes) to flatten object dispatch. Tolk evolves this by utilizing the *Truffle framework's* implementation of *Partial Evaluation*—the mathematical realization of the Futamura Projections. By taking the generic Jolk interpreter and the specific execution path of a Jolk source file, the engine "collapses" the high-level AST into specialized instructions through the following mechanisms:
 
-**Late Flattening and Registry Hydration:** In the `JolkMetaClass` implementation, the engine avoids the overhead of recursive hierarchy walks during message dispatch. Through the `ensureHydrated()` protocol, complex inheritance trees are collapsed into a consolidated, flattened registry. This transforms what would traditionally be a costly search into an $O(1)$ lookup. By deferring this hydration until the first message is sent, the engine resolves forward references and dynamic extensions without sacrificing runtime density.
+**Registry Initialisation:** In the `JolkMetaClass` implementation, the engine avoids the overhead of recursive hierarchy walks during message dispatch. Through the `ensureHydrated()` protocol, complex inheritance trees are collapsed into a consolidated, flattened registry. This transforms what would traditionally be a costly search into a deterministic lookup. By deferring this initialisation until the first message is sent, the engine resolves forward references and dynamic extensions without sacrificing runtime density.
 
-**Instructional Projection (Field Access):** Because Jolk enforces a strict "Lexical Fence" where fields are never accessed directly, the `doShapeRead` specialization in `JolkDispatchNode` caches the Truffle `Shape` and the specific `Property` offset for a given selector. During partial evaluation, this dynamic lookup is "boiled away," collapsing a message (e.g., `user #name`) into a raw machine-code memory offset load or store.
-
+**Field Access Specialization** Because Jolk enforces a "Lexical Fence" where fields are never accessed directly, the `doShapeRead` specialization in `JolkDispatchNode` caches the Truffle `Shape` and the specific `Property` offset for a given selector. During partial evaluation, this dynamic lookup is elided, collapsing a message (e.g., `user #name`) into a raw machine-code memory offset load or store.
+ 
 **Logical Gate Flattening:** This optimization is orchestrated within the `doControlFlow` specialization of `JolkDispatchNode`. By utilizing a `@Shared("callNode")`, the engine provides the Graal JIT with the context to inline multiple execution branches (such as `? :` ternary chains). This collapses the dynamic message sends into optimized hardware branch instructions or JVM `tableswitch` opcodes.
 
 **Functional Flow Flattening:** The engine utilizes loop fusion to collapse iterative patterns into single-pass loops. The `JolkDispatchNode` leverages `@Cached IndirectCallNode` to inline closure bodies, allowing the compiler to elide intermediate collection allocations.
-
+ 
 **Monadic Flow Flattening:** The JIT collapses `Match<T>` AST nodes into hardware branches by identifying logical patterns that allow the physical container to be elided from the compiled execution.
 
 Through these specializations, the Tolk Engine resolves dynamic protocols into static hardware instructions, ensuring performance parity with procedural JVM languages while maintaining a pure message-passing model.
@@ -1601,6 +1611,14 @@ By transforming branching into a reified projection, Jolk ensures that control f
 
 ### Null-Coalescing
 
+### Deferred Computation
+
+Jolk's `lazy` keyword, enabling deferred and memoized initialization, is operationalized at the engine level through the `JolkLazyValue` identity. This mechanism ensures that resource-heavy computations or object instantiations are performed only once, upon their first access, and their results are then cached for subsequent retrievals.
+
+The core of this implementation resides in the `JolkLazyValue` class, which encapsulates the `initializer` (a `JolkNode` representing the deferred computation) and manages its lifecycle. It employs an `AtomicReference` to store the computed value, utilizing a sentinel pattern for efficient, thread-safe state management. Upon the first access to a `lazy` field or method, the `JolkDispatchNode.doShapeRead` specialization intercepts the read operation. If the field's value is a `JolkLazyValue` instance, it triggers the `get(receiver)` method.
+
+Within this `get` method, the Tolk Engine orchestrates the on-demand execution of the initializer. To maintain integrity, a `ThreadLocal` guard is utilized to detect and prevent circular dependencies during initialization, throwing a `JolkSemanticException` if a cycle is identified. Once computed, the result is atomically stored, ensuring that all subsequent accesses retrieve the cached value without re-evaluation. Although the initial evaluation path is marked with `@TruffleBoundary` as a slow path, the subsequent direct access to the memoized result benefits from specialization, effectively collapsing the lookup into a direct memory read after the first resolution. This approach provides a native, high-performance solution for resource management and dependency initialisation, aligning with Jolk's pure message-passing architecture.
+ 
 ### Meta-Layer
 
 ### Concurrency
@@ -1673,7 +1691,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a message coordinate in a communicative field.  
 **Lexical Fence**: A structural boundary that enforces message-only interaction.  
 **Message-Passing Paradigm**: A computational model where all computation is realized as a dynamic exchange of messages between autonomous entities. Jolk extends this paradigm to a unified field, where even fundamental operations like control flow and arithmetic are resolved through polymorphic dispatch.  
-**metaboundary**: The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*, rendering intrusive reflection a semantic impossibility by ensuring the guest language has no primitives capable of bypassing the defined protocol.  
+**Metaboundary**: The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*, rendering intrusive reflection a semantic impossibility by ensuring the guest language has no primitives capable of bypassing the defined protocol.  
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.  
 **Monadic Flow Flattening**: An architectural optimization where the Tolk Engine recognizes monadic patterns (such as the `Match<T>` container) and elides the physical object allocation during partial evaluation, reducing the logic to zero-cost machine instructions.  
 **Nothing**: A reified, first-class Atomic Identity representing the fact of absence and referred to by the reserved object identifier `null`.  

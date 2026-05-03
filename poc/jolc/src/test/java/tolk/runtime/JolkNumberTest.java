@@ -13,7 +13,7 @@ public class JolkNumberTest extends JolcTestBase {
 
     @Test
     void testGuidedCoercion() {
-        // Mixing Double and Long should trigger automatic promotion to Double (Passive Coercion)
+        // Mixing Decimal, Double and Long should trigger automatic promotion to Double (Passive Coercion)
         String source = """
             class CoercionTest {
                 Double mixedAdd(Double d, Long l) { ^ d + l }

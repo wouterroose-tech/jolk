@@ -57,7 +57,7 @@ public class JolkClosureNodeTest {
         assertTrue(interop.isExecutable(closureObject), "JolkClosure must be an executable Truffle object.");
 
         Object result = interop.execute(closureObject);
-        assertEquals(123, result, "Executing the closure should return the value of its body node.");
+        assertEquals(123L, result, "Executing the closure should return the value of its body node.");
     }
 
     ///
@@ -100,7 +100,7 @@ public class JolkClosureNodeTest {
         }, "finalizer", false).getCallTarget());
 
         Object result = interop.invokeMember(closure, "finally", finalAction);
-        assertEquals(42, result, "Finally should return the result of the original closure.");
+        assertEquals(42L, result, "Finally should return the result of the original closure.");
         assertTrue(finallyExecuted[0], "The 'finally' action must be executed.");
 
         // Test #catch: Ensure no catch occurs if no exception is thrown
@@ -109,7 +109,7 @@ public class JolkClosureNodeTest {
         // This test needs to be updated when the catch protocol is properly implemented.
         // For now, skip the catch test or use a valid argument type.
         Object noCatchResult = interop.invokeMember(closure, "catch", "Exception", catchHandler);
-        assertEquals(42, noCatchResult, "Should return original result if no exception occurs.");
+        assertEquals(42L, noCatchResult, "Should return original result if no exception occurs.");
     }
 
     ///

@@ -1,6 +1,7 @@
 ~ jolk.lang;
 
 /// # Closure
+///
 /// A first-class representation of a block of code or function.
 ///
 /// Closures in Jolk are intrinsic identities that represent pure functional blocks.

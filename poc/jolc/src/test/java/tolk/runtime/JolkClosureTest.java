@@ -45,7 +45,7 @@ public class JolkClosureTest extends JolcTestBase {
         try {
             JolkClosure closure = createClosure(args -> "executed");
             Object result = InteropLibrary.getUncached().execute(closure);
-            assertEquals("executed", result);
+            assertEquals("executed", result.toString());
         } finally {
             context.leave();
         }
@@ -83,7 +83,7 @@ public class JolkClosureTest extends JolcTestBase {
             });
             
             Object result = closure.invokeMember("apply", new Object[]{"hello"});
-            assertEquals("hello", result);
+            assertEquals("hello", result.toString());
         } finally {
             context.leave();
         }
@@ -103,7 +103,7 @@ public class JolkClosureTest extends JolcTestBase {
             JolkClosure action = createClosure(args -> "result");
 
             Object result = action.invokeMember("finally", new Object[]{cleanup});
-            assertEquals("result", result);
+            assertEquals("result", result.toString());
             assertTrue(cleanupRan.get(), "Finally block should have run");
         } finally {
             context.leave();
@@ -150,7 +150,7 @@ public class JolkClosureTest extends JolcTestBase {
             });
 
             Object result = action.invokeMember("catch", new Object[]{errorType, handler});
-            assertEquals("Caught: oops", result);
+            assertEquals("Caught: oops", result.toString());
         } finally {
             context.leave();
         }
@@ -193,7 +193,7 @@ public class JolkClosureTest extends JolcTestBase {
             });
 
             Object result = provider.invokeMember("try", new Object[]{logic});
-            assertEquals("success", result);
+            assertEquals("success", result.toString());
             assertTrue(closed.get(), "Resource should be closed");
         } finally {
             context.leave();
@@ -238,7 +238,7 @@ public class JolkClosureTest extends JolcTestBase {
             });
 
             Object result = provider.invokeMember("try", new Object[]{logic});
-            assertEquals("success", result);
+            assertEquals("success", result.toString());
             assertTrue(closed.get(), "Host AutoCloseable resources should be closed");
         } finally {
             context.leave();

@@ -122,9 +122,9 @@ public class JolkClosure implements TruffleObject {
                     return execute(new Object[0]);
                 } catch (RuntimeException | Error t) {
                     if (errorType instanceof Class<?> clazz) {
-                         if (clazz.isInstance(t)) return InteropLibrary.getUncached().execute(handler, t);
+                         if (clazz.isInstance(t)) return InteropLibrary.getUncached().execute(handler, lift(t));
                     } else if (InteropLibrary.getUncached().isMetaInstance(errorType, t)) {
-                         return InteropLibrary.getUncached().execute(handler, t);
+                         return InteropLibrary.getUncached().execute(handler, lift(t));
                     }
                     throw t;
                 }
@@ -186,12 +186,7 @@ public class JolkClosure implements TruffleObject {
 
     @TruffleBoundary
     private static Object lift(Object value) {
-        if (value == null || value == JolkNothing.INSTANCE) return JolkNothing.INSTANCE;
-        if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character || value instanceof TruffleObject) {
-            return value;
-        }
-        // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
-        return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
+        return JolkNode.lift(value);
     }
 
     @TruffleBoundary

@@ -368,7 +368,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.assignment() != null) {
             initializer = visit(ctx.assignment());
         }
-
+        // Guided Coercion: If the declared type is Double and the initializer is a BigDecimal literal, convert it.
+        // This handles cases like `Double x = 3.14;` where `3.14` is initially parsed as BigDecimal.
+        initializer = applyGuidedCoercion(typeName, initializer);
         // If inside a method/closure, this is a local variable declaration
         if (!scopes.isEmpty()) {
             List<String> currentScope = scopes.peek();
@@ -390,9 +392,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitConstant(jolkParser.ConstantContext ctx) {
         // Constants are implicitly stable (immutable) identities.
-        String name = ctx.identifier().getText().intern();
         String typeName = ctx.type().getText().intern();
+        String name = ctx.identifier().getText().intern();
         JolkNode initializer = visit(ctx.assignment());
+
+        // Guided Coercion: If the declared type is Double and the initializer is a BigDecimal literal, convert it.
+        initializer = applyGuidedCoercion(typeName, initializer);
 
         if (!scopes.isEmpty()) {
             List<String> currentScope = scopes.peek();
@@ -411,6 +416,24 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         }
 
         return new JolkFieldNode(name, typeName, initializer, true);
+    }
+
+    /**
+     * Applies guided coercion for literal initializers based on the declared type.
+     * This handles cases like `Double x = 3.14;` where `3.14` is initially parsed as BigDecimal.
+     *
+     * @param declaredTypeName The declared type name (e.g., "Double", "Long").
+     * @param initializer The initializer expression.
+     * @return A potentially coerced JolkLiteralNode, or the original initializer.
+     */
+    private JolkNode applyGuidedCoercion(String declaredTypeName, JolkNode initializer) {
+        if (initializer instanceof JolkLiteralNode literalNode) {
+            Object literalValue = literalNode.executeGeneric(null); // Execute to get the literal value
+            if (literalValue instanceof java.math.BigDecimal bigDecimal && "Double".equals(declaredTypeName)) {
+                return new JolkLiteralNode(bigDecimal.doubleValue());
+            }
+        }
+        return initializer;
     }
 
     @Override
@@ -848,6 +871,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             if ("Number".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNumberExtension.NUMBER_TYPE);
             if ("Long".equals(name) || "Int".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLongExtension.LONG_TYPE);
             if ("Double".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkDoubleExtension.DOUBLE_TYPE);
+            if ("Decimal".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkDecimalExtension.DECIMAL_TYPE);
             if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBooleanExtension.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
             if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkStringExtension.STRING_TYPE);
@@ -875,8 +899,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.NumberLiteral() != null) {
             String text = ctx.NumberLiteral().getText();
             if (text.contains(".")) {
-                // Floating-point literal (Double)
-                return new JolkLiteralNode(Double.parseDouble(text));
+                // Jolk Identity Hierarchy: In financial and high-precision contexts, 
+                // floating-point literals default to the high-rank Decimal identity (BigDecimal)
+                // to ensure deterministic precision from the parse phase.
+                return new JolkLiteralNode(new java.math.BigDecimal(text));
             } else {
                 // Use parseUnsignedLong to handle magnitudes up to 2^64-1 (bit-pattern representation).
                 // This correctly handles 9223372036854775808 (2^63) which is then Negated 

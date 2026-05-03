@@ -24,6 +24,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.library.CachedLibrary;
 
 import tolk.runtime.JolkClosure;
+import tolk.runtime.JolkDecimalExtension;
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkObject;
 import tolk.runtime.JolkStringExtension;
@@ -752,6 +754,41 @@ public abstract class JolkDispatchNode extends Node {
         return JolkDoubleExtension.DOUBLE_TYPE.lookupInstanceMember(selector);
     }
 
+    /**
+     * ### doDecimal
+     * 
+     * Handles general message dispatch for BigDecimal instances.
+     */
+    @Specialization(guards = "isBigDecimal(receiver)")
+    protected Object doDecimal(VirtualFrame frame, BigDecimal receiver, String selector, Object[] arguments,
+                               @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+        try {
+            Object member = lookupDecimalMember(selector);
+            if (member == null) member = lookupNumberMember(selector);
+
+            if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                InteropLibrary memberInterop = InteropLibrary.getUncached(member);
+                Object[] args = prepareArguments(member, receiver, arguments);
+                return JolkNode.lift(memberInterop.execute(member, args));
+            }
+            
+            if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
+            
+            return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on Decimal: " + e.getMessage(), e);
+        }
+    }
+
+    protected static boolean isBigDecimal(Object receiver) {
+        return receiver instanceof BigDecimal;
+    }
+
+    @TruffleBoundary
+    protected Object lookupDecimalMember(String selector) {
+        return JolkDecimalExtension.DECIMAL_TYPE.lookupInstanceMember(selector);
+    }
+
     /// ### prepareArguments
     /// 
     /// Ensures arguments match the Jolk calling convention for the target member.
@@ -760,21 +797,27 @@ public abstract class JolkDispatchNode extends Node {
             if (closure.getEnvironment() == null) {
                 // Reified Method: Prepend only receiver (Self at 0)
                 Object[] args = new Object[arguments.length + 1];
-                args[0] = receiver;
-                System.arraycopy(arguments, 0, args, 1, arguments.length);
+                args[0] = JolkNode.lift(receiver); // Lift the receiver
+                for (int i = 0; i < arguments.length; i++) { // Lift all arguments
+                    args[i + 1] = JolkNode.lift(arguments[i]);
+                }
                 return args;
             } else {
                 // Reified Closure: Prepend environment (Env at 0)
                 Object[] args = new Object[arguments.length + 1];
                 args[0] = closure.getEnvironment();
-                System.arraycopy(arguments, 0, args, 1, arguments.length);
+                for (int i = 0; i < arguments.length; i++) { // Lift all arguments
+                    args[i + 1] = JolkNode.lift(arguments[i]);
+                }
                 return args;
             }
         } else {
             // Built-in or Host Member: Prepend receiver (Self at 0)
             Object[] args = new Object[arguments.length + 1];
-            args[0] = receiver;
-            System.arraycopy(arguments, 0, args, 1, arguments.length);
+            args[0] = JolkNode.lift(receiver); // Lift the receiver
+            for (int i = 0; i < arguments.length; i++) { // Lift all arguments
+                args[i + 1] = JolkNode.lift(arguments[i]);
+            }
             return args;
         }
     }
@@ -1031,7 +1074,7 @@ public abstract class JolkDispatchNode extends Node {
     }
 
     @Specialization(replaces = "doLongCached")
-    protected Object doLong(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
+    protected Object doLong(VirtualFrame frame, Long receiver, String selector, Object[] arguments,
                             @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
                             @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
         try {
@@ -1233,7 +1276,7 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization
     protected Object doJavaString(VirtualFrame frame, String receiver, String selector, Object[] arguments,
                                  @Shared("fromJavaStringNode") @Cached TruffleString.FromJavaStringNode fromJavaStringNode,
-                                 @Cached JolkDispatchNode dispatchNode) {
+                                 @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
         // Lift the host string into the guest identity
         TruffleString lifted = fromJavaStringNode.execute(receiver, TruffleString.Encoding.UTF_16);
         return dispatchNode.execute(frame, lifted, selector, arguments);
@@ -1352,8 +1395,7 @@ public abstract class JolkDispatchNode extends Node {
                                    @Cached("receiver.getShape()") Shape cachedShape,
                                    @Cached("selector") String cachedSelector,
                                    @Cached("lookupUserMember(receiver, cachedSelector)") Object member,
-                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
-                                   @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
+                                   @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (member != null && !isNothing(member) && interop.isExecutable(member)) {
             try {
                 InteropLibrary memberInterop = InteropLibrary.getUncached(member); // Get interop for the member
@@ -1364,7 +1406,7 @@ public abstract class JolkDispatchNode extends Node {
             }
         }
         // If member is null, fall back to generic dispatch (e.g. host members)
-        return doDispatch(frame, receiver, selector, arguments, interop, dispatchNode);
+        return doDispatch(frame, receiver, selector, arguments, interop);
     }
 
     /// ### Generic Dispatch
@@ -1374,14 +1416,13 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(replaces = {
         "doNothing", "doShapeRead", "doUserDispatch", "doClosureTry", 
         "doClosureCatch", "doCatchPassThrough", 
-        "doControlFlowDirect", "doTernaryDirect", "doControlFlow",
+        "doControlFlowDirect", "doTernaryDirect", "doControlFlow", "doDecimal",
         "doTimesDirect", "doTimesIndirect", "doMap", "doFilter", "doAnyMatch", "doFindFirst",
         "doIteratorForEach", "doMapForEach", "doLongClosureDirect", "doLongCached", 
         "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable", "doDoubleArithmetic"
     })
     protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
-                                @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
-                                @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
+                                @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
         try {
             // 1. Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
@@ -1413,6 +1454,7 @@ public abstract class JolkDispatchNode extends Node {
             JolkMetaClass meta = null;
             if (unwrappedReceiver instanceof Long) meta = JolkLongExtension.LONG_TYPE;
             else if (unwrappedReceiver instanceof Double) meta = JolkDoubleExtension.DOUBLE_TYPE;
+            else if (unwrappedReceiver instanceof BigDecimal) meta = JolkDecimalExtension.DECIMAL_TYPE;
             else if (unwrappedReceiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
             else if (unwrappedReceiver instanceof String || unwrappedReceiver instanceof TruffleString) meta = JolkStringExtension.STRING_TYPE;
             else if (unwrappedReceiver instanceof List) meta = JolkArrayExtension.ARRAY_TYPE;
@@ -1542,13 +1584,7 @@ public abstract class JolkDispatchNode extends Node {
     /// @param member The selector name to check.
     /// @return true if the selector is a Jolk intrinsic.
     public static boolean isObjectIntrinsic(String member) {
-        if (member == null) return false;
-        return switch (member) {
-            case "new", "catch", "finally", "throw", "==", "!=", "~~", "!~", "??", "hash", "toString", "class", 
-                 "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
-                 "?", "? :", "?!", "?! :" -> true;
-            default -> false;
-        };
+        return JolkIntrinsicProtocol.isObjectIntrinsic(member);
     }
 
     @TruffleBoundary

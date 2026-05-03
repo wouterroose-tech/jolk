@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.jupiter.api.Disabled;
-
 ///
 /// Verifies that a visitor can correctly traverse the parse tree generated
 /// from Jolk source code. This test uses a custom visitor to build an

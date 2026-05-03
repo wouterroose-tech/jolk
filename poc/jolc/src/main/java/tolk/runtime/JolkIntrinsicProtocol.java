@@ -7,6 +7,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import tolk.nodes.JolkNode;
 import tolk.nodes.JolkReturnException;
 
+import java.math.BigDecimal;
 import java.util.Set;
 
 /**
@@ -18,7 +19,7 @@ import java.util.Set;
 public final class JolkIntrinsicProtocol {
 
     public static final Set<String> INTRINSIC_MEMBERS = Set.of(
-        "new", "catch", "finally", "throw", "==", "!=", "~~", "!~", "??", "hash", "toString", "class",
+        "new", "catch", "finally", "throw", "==", "!=", "~~", "!~", "??", "hash", "toString", "class", "asDecimal",
         "instanceOf", "isPresent", "isEmpty", "ifPresent", "ifEmpty", 
         "?", "? :", "?!", "?! :"
     );
@@ -51,21 +52,16 @@ public final class JolkIntrinsicProtocol {
                     Object other = arguments[0];
                     if (receiver == other) return true; // Reference equality
 
-                    // Numerical Identity Congruence: Compare by value, promoting to double for mixed types
+                    // Numerical Identity Congruence: Compare by value using rank promotion
                     if (receiver instanceof Number n1 && other instanceof Number n2) {
-                        if (n1 instanceof Long && n2 instanceof Long) {
-                            return n1.longValue() == n2.longValue();
-                        } else {
+                        if (n1 instanceof BigDecimal || n2 instanceof BigDecimal) {
+                            BigDecimal bd1 = (n1 instanceof BigDecimal) ? (BigDecimal) n1 : new BigDecimal(n1.toString());
+                            BigDecimal bd2 = (n2 instanceof BigDecimal) ? (BigDecimal) n2 : new BigDecimal(n2.toString());
+                            return bd1.compareTo(bd2) == 0;
+                        } else if (n1 instanceof Double || n2 instanceof Double || n1 instanceof Float || n2 instanceof Float) {
                             return n1.doubleValue() == n2.doubleValue();
-                        }
-                    }
-
-                    // Numerical Identity Congruence: Compare by value, promoting to double for mixed types
-                    if (receiver instanceof Number n1 && other instanceof Number n2) {
-                        if (n1 instanceof Long && n2 instanceof Long) {
-                            return n1.longValue() == n2.longValue();
                         } else {
-                            return n1.doubleValue() == n2.doubleValue();
+                            return n1.longValue() == n2.longValue();
                         }
                     }
                     if (receiver instanceof Boolean b1 && other instanceof Boolean b2) return b1.booleanValue() == b2.booleanValue();
@@ -159,6 +155,7 @@ public final class JolkIntrinsicProtocol {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (receiver instanceof Long || receiver instanceof Integer) return JolkLongExtension.LONG_TYPE;
                     if (receiver instanceof Double || receiver instanceof Float) return JolkDoubleExtension.DOUBLE_TYPE;
+                    if (receiver instanceof BigDecimal) return JolkDecimalExtension.DECIMAL_TYPE;
                     if (receiver instanceof Boolean) return JolkBooleanExtension.BOOLEAN_TYPE;
                     if (receiver instanceof String) return JolkStringExtension.STRING_TYPE;
                     if (unwrapped instanceof Throwable) return JolkExceptionExtension.EXCEPTION_TYPE;

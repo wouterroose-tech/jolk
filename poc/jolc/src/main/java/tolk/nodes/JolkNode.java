@@ -58,7 +58,9 @@ public abstract class JolkNode extends Node {
 
         // IDENTITY RESTITUTION: Ensure host types match Jolk guest currency.
         // Integer to Long (common in interop) and String to TruffleString.
-        if (value instanceof Long || value instanceof Boolean || value instanceof TruffleString || value instanceof JolkNothing) {
+        if (value instanceof Long || value instanceof Double || 
+                value instanceof Boolean || value instanceof TruffleString || 
+                value instanceof JolkNothing) {
             return value;
         }
         if (value instanceof Integer i) return i.longValue();

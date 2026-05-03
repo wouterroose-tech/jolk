@@ -68,16 +68,19 @@ public class JolkArrayExtension {
                 
                 for (Object element : list) {
                     try {
+                        // Identity Restitution: Ensure host elements are lifted before participating in messaging.
+                        Object guestElement = lift(element);
+
                         // Cast to JolkClosure and call directly
                         if (predicate instanceof JolkClosure closure) {
-                            Object result = closure.execute(new Object[]{element});
+                            Object result = closure.execute(new Object[]{guestElement});
                             if (result instanceof Boolean && (Boolean) result) {
                                 return lift(true);
                             }
                         } else {
                             // Fallback to interop
                             Object result = InteropLibrary.getUncached()
-                                .invokeMember(predicate, "apply", element);
+                                .invokeMember(predicate, "apply", guestElement);
                             if (result instanceof Boolean && (Boolean) result) {
                                 return lift(true);
                             }
@@ -101,18 +104,21 @@ public class JolkArrayExtension {
                 
                 for (Object element : list) {
                     try {
+                        // Identity Restitution: Ensure host elements are lifted before participating in messaging.
+                        Object guestElement = lift(element);
+
                         // Cast to JolkClosure and call directly
                         if (predicate instanceof JolkClosure closure) {
-                            Object result = closure.execute(new Object[]{element});
+                            Object result = closure.execute(new Object[]{guestElement});
                             if (result instanceof Boolean && (Boolean) result) {
-                                return lift(element);
+                                return guestElement;
                             }
                         } else {
                             // Fallback to interop
                             Object result = InteropLibrary.getUncached()
-                                .invokeMember(predicate, "apply", element);
+                                .invokeMember(predicate, "apply", guestElement);
                             if (result instanceof Boolean && (Boolean) result) {
-                                return lift(element);
+                                return guestElement;
                             }
                         }
                     } catch (Exception e) {

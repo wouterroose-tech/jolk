@@ -57,4 +57,14 @@ extension NumberExtension on java.lang.Number {
 
     /// Returns true if this Number is not structurally equivalent to the other.
     Boolean !~(Number other) { }
+
+    /// Converts this Number to a Long, truncating any fractional part.
+    Long asLong() { }
+
+    /// Converts this Number to a Double.
+    Double asDouble() { }
+
+    /// Converts this Number to a Decimal.
+    Decimal asDecimal() { }
+
 }

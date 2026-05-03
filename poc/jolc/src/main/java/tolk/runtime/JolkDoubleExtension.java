@@ -58,6 +58,8 @@ public class JolkDoubleExtension {
         members.put("class".intern(), new DoubleClassAccessor());
         members.put("instanceOf".intern(), new DoubleInstanceOf());
         members.put("round".intern(), new DoubleRound());
+        members.put("asLong".intern(), new DoubleAsLong());
+        members.put("asDouble".intern(), new DoubleAsDouble());
 
         Map<String, Object> metaMembers = new LinkedHashMap<>();
         metaMembers.put("random".intern(), new DoubleRandom());
@@ -266,6 +268,24 @@ public class JolkDoubleExtension {
             // Jolk Meta-Protocol: receiver (MetaClass) is always arguments[0]
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
             return Math.random();
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static final class DoubleAsLong implements TruffleObject {
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+            return (long) asDouble(arguments[0]); // Explicit Coercion: Truncation
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static final class DoubleAsDouble implements TruffleObject {
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+            return arguments[0]; // Receiver Retention: return self
         }
     }
 }

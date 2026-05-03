@@ -390,6 +390,12 @@ public class JolkMetaClass extends DynamicObject {
             || hint.equalsIgnoreCase("jolk.lang.Long");
     }
 
+    public static boolean isDecimalHint(String hint) {
+        if (hint == null) return false;
+        return hint.equalsIgnoreCase("Decimal") 
+            || hint.equalsIgnoreCase("jolk.lang.Decimal");
+    }
+
     public static boolean isDoubleHint(String hint) {
         if (hint == null) return false;
         return hint.equalsIgnoreCase("Double") 
@@ -454,6 +460,7 @@ public class JolkMetaClass extends DynamicObject {
             if (isNumberHint(this.name)) return true;
             if (isLongHint(this.name)) return true;
             if (isDoubleHint(this.name)) return true;
+            if (isDecimalHint(this.name)) return true;
         }
 
         // 3. Handle Jolk's intrinsic `Boolean` archetype.

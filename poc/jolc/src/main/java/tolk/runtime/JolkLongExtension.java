@@ -58,6 +58,8 @@ public final class JolkLongExtension {
         members.put("isEmpty".intern(), new LongIsEmpty());
         members.put("class".intern(), new LongClassAccessor());
         members.put("instanceOf".intern(), new LongInstanceOf());
+        members.put("asLong".intern(), new LongAsLong());
+        members.put("asDouble".intern(), new LongAsDouble());
         
         // Hydrate the existing identity
         for (var e : members.entrySet()) LONG_TYPE.registerInstanceMethod(e.getKey(), e.getValue());
@@ -320,4 +322,21 @@ public final class JolkLongExtension {
         }
     }
 
+    @ExportLibrary(InteropLibrary.class)
+    public static final class LongAsLong implements TruffleObject {
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+            return arguments[0]; // Receiver Retention: return self
+        }
+    }
+
+    @ExportLibrary(InteropLibrary.class)
+    public static final class LongAsDouble implements TruffleObject {
+        @ExportMessage public boolean isExecutable() { return true; }
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
+            if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+            return (double) asLong(arguments[0]);
+        }
+    }
 }

@@ -12,6 +12,9 @@ import com.oracle.truffle.api.strings.TruffleString;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
+import java.math.MathContext;
+import java.math.BigDecimal;
+
 /**
  * ### JolkArithmeticNode
  * 
@@ -72,6 +75,20 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      */
     @Specialization(replaces = {"doAdd", "doSub", "doMul", "doDiv", "doMod", "doPow"})
     protected Object doNumbers(Number n1, Number n2) {
+        // Guided Coercion: Highest Rank (Decimal / BigDecimal)
+        if (n1 instanceof BigDecimal || n2 instanceof BigDecimal) {
+            BigDecimal d1 = (n1 instanceof BigDecimal) ? (BigDecimal) n1 : new BigDecimal(n1.toString());
+            BigDecimal d2 = (n2 instanceof BigDecimal) ? (BigDecimal) n2 : new BigDecimal(n2.toString());
+            String op = getOperator();
+            if (op == OP_PLUS) return d1.add(d2);
+            if (op == OP_MINUS) return d1.subtract(d2);
+            if (op == OP_MUL) return d1.multiply(d2);
+            if (op == OP_DIV) return d1.divide(d2, MathContext.DECIMAL128);
+            if (op == OP_MOD) return d1.remainder(d2);
+            if (op == OP_POW) return d1.pow(n2.intValue()); 
+            throw new RuntimeException("Unsupported decimal operator: " + op);
+        }
+
         // Guided Coercion: If either is a Double, promote both to Double for the operation.
         if (n1 instanceof Double || n2 instanceof Double || n1 instanceof Float || n2 instanceof Float) {
             double d1 = n1.doubleValue();

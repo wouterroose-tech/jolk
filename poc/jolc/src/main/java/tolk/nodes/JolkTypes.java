@@ -7,6 +7,8 @@ import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkLongExtension;
 import tolk.runtime.JolkMatch;
+import java.math.BigDecimal;
+
 import tolk.runtime.JolkObject;
 
 /// # JolkTypes
@@ -21,6 +23,7 @@ import tolk.runtime.JolkObject;
     long.class,
     double.class,
     boolean.class,
+    BigDecimal.class,
     String.class,
     TruffleString.class,
     JolkBooleanExtension.class,

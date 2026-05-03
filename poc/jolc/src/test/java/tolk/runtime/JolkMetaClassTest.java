@@ -259,7 +259,7 @@ public class JolkMetaClassTest extends JolcTestBase {
             Map<String, Object> metaFields = Collections.singletonMap("count", JolkLongExtension.LONG_TYPE);
             // constructor handles registering accessors in metaMembers
             JolkMetaClass meta = new JolkMetaClass("StaticTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
-                                                  Collections.emptyMap(), Collections.emptyMap(), new java.util.HashMap<>(), metaFields, Collections.emptySet());
+                                                  Collections.emptyMap(), Collections.emptyMap(), new java.util.HashMap<>(), metaFields, Collections.emptySet(), null);
             
             InteropLibrary interop = InteropLibrary.getUncached();
             

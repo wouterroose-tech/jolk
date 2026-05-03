@@ -49,8 +49,25 @@ public final class JolkIntrinsicProtocol {
                         return true; // Nothing == Nothing
                     }
                     Object other = arguments[0];
-                    if (receiver == other) return true;
-                    if (receiver instanceof Number n1 && other instanceof Number n2) return n1.longValue() == n2.longValue();
+                    if (receiver == other) return true; // Reference equality
+
+                    // Numerical Identity Congruence: Compare by value, promoting to double for mixed types
+                    if (receiver instanceof Number n1 && other instanceof Number n2) {
+                        if (n1 instanceof Long && n2 instanceof Long) {
+                            return n1.longValue() == n2.longValue();
+                        } else {
+                            return n1.doubleValue() == n2.doubleValue();
+                        }
+                    }
+
+                    // Numerical Identity Congruence: Compare by value, promoting to double for mixed types
+                    if (receiver instanceof Number n1 && other instanceof Number n2) {
+                        if (n1 instanceof Long && n2 instanceof Long) {
+                            return n1.longValue() == n2.longValue();
+                        } else {
+                            return n1.doubleValue() == n2.doubleValue();
+                        }
+                    }
                     if (receiver instanceof Boolean b1 && other instanceof Boolean b2) return b1.booleanValue() == b2.booleanValue();
                     if ((receiver instanceof String || genericInterop.isString(receiver)) && 
                         (other instanceof String || genericInterop.isString(other))) {
@@ -68,7 +85,7 @@ public final class JolkIntrinsicProtocol {
                         return false; // Nothing != Nothing is false
                     }
                     Object eq = dispatchObjectIntrinsic(receiver, "==", arguments, interop);
-                    return (eq instanceof Boolean b) ? !b : true;
+                    return (eq instanceof Boolean b) ? !b : true; // If comparison fails, assume not equal
                 }
                 case "~~" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
@@ -76,8 +93,13 @@ public final class JolkIntrinsicProtocol {
                         return true; // Nothing ~~ Nothing
                     }
                     Object other = arguments[0];
+                    // Numerical Equivalence: Compare by value, promoting to double for mixed types
                     if (receiver instanceof Number n1 && other instanceof Number n2) {
-                        return n1.longValue() == n2.longValue();
+                        if (n1 instanceof Long && n2 instanceof Long) {
+                            return n1.longValue() != n2.longValue();
+                        } else {
+                            return n1.doubleValue() != n2.doubleValue();
+                        }
                     }
                     if ((receiver instanceof String || genericInterop.isString(receiver)) && 
                         (other instanceof String || genericInterop.isString(other))) {
@@ -136,6 +158,7 @@ public final class JolkIntrinsicProtocol {
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (receiver instanceof Long || receiver instanceof Integer) return JolkLongExtension.LONG_TYPE;
+                    if (receiver instanceof Double || receiver instanceof Float) return JolkDoubleExtension.DOUBLE_TYPE;
                     if (receiver instanceof Boolean) return JolkBooleanExtension.BOOLEAN_TYPE;
                     if (receiver instanceof String) return JolkStringExtension.STRING_TYPE;
                     if (unwrapped instanceof Throwable) return JolkExceptionExtension.EXCEPTION_TYPE;

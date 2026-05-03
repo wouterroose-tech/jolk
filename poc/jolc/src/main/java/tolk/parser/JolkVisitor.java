@@ -845,7 +845,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // 2. Semantic Casing: Uppercase names are Meta-Objects (Types/Constants)
         if (Character.isUpperCase(name.charAt(0))) {
             // Priority 1: Intrinsic Types (Resolved as static literals for performance)
+            if ("Number".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNumberExtension.NUMBER_TYPE);
             if ("Long".equals(name) || "Int".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkLongExtension.LONG_TYPE);
+            if ("Double".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkDoubleExtension.DOUBLE_TYPE);
             if ("Boolean".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkBooleanExtension.BOOLEAN_TYPE);
             if ("Nothing".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkNothing.NOTHING_TYPE);
             if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkStringExtension.STRING_TYPE);
@@ -870,12 +872,19 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitLiteral(jolkParser.LiteralContext ctx) {
-        if (ctx.NumberLiteral() != null) 
-            // Use parseUnsignedLong to handle magnitudes up to 2^64-1 (bit-pattern representation).
-            // This correctly handles 9223372036854775808 (2^63) which is then Negated 
-            // by the unary operator in the runtime to result in Long.MIN_VALUE.
-            return new JolkLiteralNode(Long.parseUnsignedLong(ctx.NumberLiteral().getText()));
-            
+        if (ctx.NumberLiteral() != null) {
+            String text = ctx.NumberLiteral().getText();
+            if (text.contains(".")) {
+                // Floating-point literal (Double)
+                return new JolkLiteralNode(Double.parseDouble(text));
+            } else {
+                // Use parseUnsignedLong to handle magnitudes up to 2^64-1 (bit-pattern representation).
+                // This correctly handles 9223372036854775808 (2^63) which is then Negated 
+                // by the unary operator in the runtime to result in Long.MIN_VALUE.
+                return new JolkLiteralNode(Long.parseUnsignedLong(text));
+            }
+        }
+
         if (ctx.StringLiteral() != null) {
             String text = ctx.StringLiteral().getText();
             // Remove the surrounding quotes

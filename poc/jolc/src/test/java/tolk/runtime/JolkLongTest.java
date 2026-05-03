@@ -422,8 +422,8 @@ public class JolkLongTest extends JolcTestBase {
             class MinMaxTest {
             Long getMax() { ^ 9223372036854775807 }
             Long getMin() { ^ -9223372036854775808 }
-            Long getMaxConst() { ^ Long #MAX }
-            Long getMinConst() { ^ Long #MIN }
+            Long getMaxConst() { ^ Long #MAX_VALUE }
+            Long getMinConst() { ^ Long #MIN_VALUE }
             Long wrap() { ^ 9223372036854775807 + 1 } }
             """;
         Value instance = eval(source).invokeMember("new");
@@ -446,6 +446,7 @@ public class JolkLongTest extends JolcTestBase {
             Long val6() { ^ (2 * 1) + (20 * 2)}
             Long val6() { ^ (2 ** 2) + (19 * 2)}
             Int int() { ^ 42 }
+            String toString() { ^ 42 #toString }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  
@@ -457,5 +458,6 @@ public class JolkLongTest extends JolcTestBase {
         assertEquals(42L, instance.invokeMember("val6").asLong());
         assertEquals(42L, instance.invokeMember("val6").asLong());
         assertEquals(42L, instance.invokeMember("int").asLong());
+        assertEquals("42", instance.invokeMember("toString").asString());
     }
 }

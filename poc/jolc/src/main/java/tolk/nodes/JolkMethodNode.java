@@ -14,7 +14,6 @@ public class JolkMethodNode extends JolkNode {
     private final boolean isVariadic;
     private final int frameSlots;
     private final boolean hasNL;
-    private final boolean isLazy;
 
     public JolkMethodNode(String name, JolkNode body, String[] parameterNames, boolean isVariadic, int frameSlots, boolean hasNL, boolean isLazy) {
         this.name = name;
@@ -23,7 +22,8 @@ public class JolkMethodNode extends JolkNode {
         this.isVariadic = isVariadic;
         this.frameSlots = frameSlots;
         this.hasNL = hasNL;
-        this.isLazy = isLazy;
+        // unUse the isLazy parameter for now, as we are not implementing lazy evaluation in this version.
+        // this.isLazy = isLazy;
     }
 
     public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots, boolean hasNL) {

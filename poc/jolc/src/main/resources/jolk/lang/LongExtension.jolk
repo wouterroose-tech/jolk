@@ -3,51 +3,13 @@
 /// # Long
 ///
 /// The **Long** type represents a 64-bit signed Integer, serving as the 
-/// fundamental building block for numerical computations and indexing 
-/// within the Jolk language.
+/// fundamental building block for numerical computations and indexing.
 ///
 /// @author Wouter Roose
 
 @Intrinsic
 extension LongExtension on java.lang.Long {
 
-    /// The maximum value for a Long (2^63-1).
-    meta constant Self MAX = 9223372036854775807;
-    
-    /// The minimum value for a Long (-2^63).
-    meta constant Self MIN = -9223372036854775808;
-
-    /// Adds the other Long to this one.
-    Long +(java.lang.Long other) { }
-
-    /// Subtracts the other Long from this one.
-    Long -(java.lang.Long other) { }
-
-    /// Multiplies this Long by the other.
-    Long *(java.lang.Long other) { }
-
-    /// Divides this Long by the other.
-    Long /(java.lang.Long other) { }
-
-    /// Computes the remainder of the division of this Long by the other.
-    Long %(java.lang.Long other) { }
-
-    /// Computes this Long raised to the power of the other.
-    Long **(java.lang.Long other) { }
-
-    /// Returns true if this Long is greater than the other.
-    Boolean >(java.lang.Long other) { }
-
-    /// Returns true if this Long is less than the other.
-    Boolean <(java.lang.Long other) { }
-
-    /// Returns true if this Long is greater than or equal to the other.
-    Boolean >=(java.lang.Long other) { }
-
-    /// Returns true if this Long is less than or equal to the other.
-    Boolean <=(java.lang.Long other) { }
-
-    /// Executes the provided closure this number of times.
     ///
     /// This method supports two forms of closures:
     /// - A closure with an index parameter: `times #times [ i -> ... ]`

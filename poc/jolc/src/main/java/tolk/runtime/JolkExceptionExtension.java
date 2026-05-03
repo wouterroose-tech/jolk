@@ -3,8 +3,6 @@ package tolk.runtime;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
-import java.util.HashMap;
-
 /**
  * ### JolkExceptionExtension
  * 
@@ -27,8 +25,7 @@ public class JolkExceptionExtension {
             "Exception", // Nominal identity in Jolk manuscripts
             JolkFinality.OPEN, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS, 
-            new HashMap<>() // instance members are handled by Interop/Throwable
+            JolkArchetype.CLASS
         );
 
         // #throw -> Bridges the identity into the JVM's unwinding mechanism.

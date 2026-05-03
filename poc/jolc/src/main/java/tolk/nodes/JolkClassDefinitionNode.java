@@ -159,7 +159,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         }
 
         // Jolk Lifecycle Protocol: Instantiate the Identity now that the field map is stable.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields);
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, null); // No direct hostClass for user-defined classes
 
         // Register enum constants for ENUM archetype
         if (archetype == JolkArchetype.ENUM) {

@@ -36,8 +36,11 @@ public abstract class JolkUnaryNode extends JolkExpressionNode {
     }
 
     @Specialization(replaces = "doLong", guards = "isNegation()")
-    protected long doNumber(Number value) {
+    protected Object doNumber(Number value) {
         // Semantic Flattening for host-provided numbers
+        if (value instanceof Double || value instanceof Float) {
+            return -value.doubleValue();
+        }
         return -value.longValue();
     }
 

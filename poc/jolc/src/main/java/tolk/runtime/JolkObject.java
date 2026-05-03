@@ -153,6 +153,7 @@ public class JolkObject extends DynamicObject {
         // 1. Prioritize user-defined members for overridable selectors.
         if (metaClass.hasInstanceMember(name)) {
             Object instanceMember = metaClass.lookupInstanceMember(name);
+            
             // Prepend 'this' (receiver) to arguments as Jolk instance members expect it
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = this;

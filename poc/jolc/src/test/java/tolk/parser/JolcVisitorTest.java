@@ -261,7 +261,6 @@ public class JolcVisitorTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Activate when floating-point literals are supported")
     void testVisitDouble() {
         // Numbers
         eval("class MyClass { run() { 12.34 } }");

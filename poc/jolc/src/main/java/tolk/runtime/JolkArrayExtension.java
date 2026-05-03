@@ -4,8 +4,6 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -29,15 +27,9 @@ public class JolkArrayExtension {
         // Jolk collections are polite citizens: they respond to standard Object protocol.
         ARRAY_TYPE = new JolkMetaClass(
             "Array", 
-            null, // Superclass resolved at runtime or defaults to Object
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS, 
-            new HashMap<>(), 
-            new HashMap<>(), // Physical fields are managed by the Java substrate
-            new HashMap<>(), 
-            new HashMap<>(),
-            Collections.unmodifiableSet(Collections.emptySet())
+            JolkArchetype.CLASS
         );
 
         // --- Instance Methods ---

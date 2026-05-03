@@ -1,0 +1,13 @@
+~ jolk.lang;
+
+/// # Decimal
+///
+/// The `Decimal` class represents a 64-bit floating-point number,
+serving as the fundamental building block for numerical computations.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+final class Decimal {
+
+}

@@ -39,7 +39,9 @@ import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkExceptionExtension;
 import tolk.runtime.JolkArrayExtension;
+import tolk.runtime.JolkDoubleExtension;
 import tolk.runtime.JolkLongExtension;
+import tolk.runtime.JolkNumberExtension;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkIntrinsicProtocol;
 import tolk.runtime.JolkLazyValue;
@@ -130,6 +132,15 @@ public abstract class JolkDispatchNode extends Node {
 
     protected static boolean isFindFirst(String selector) {
         return "findFirst".equals(selector);
+    }
+
+    /**
+     * ### isDouble
+     * 
+     * Helper for Truffle DSL guards to identify Double substrate values.
+     */
+    protected static boolean isDouble(Object receiver) {
+        return receiver instanceof Double;
     }
 
     protected static boolean isTernary(String selector) {
@@ -648,6 +659,126 @@ public abstract class JolkDispatchNode extends Node {
         throw new RuntimeException("Invalid arguments for #times: expected a single closure.");
     }
 
+    /// ### Fast Path for Double Arithmetic
+    ///
+    /// Handles arithmetic and comparison operations for `java.lang.Double` receivers.
+    /// This specialization implements **Guided Coercion** for cross-type numerical
+    /// operations, promoting `Long` arguments to `Double` to maintain precision.
+    @Specialization(guards = {"isDouble(receiver)", "selector == cachedSelector", "isNumberArithmetic(selector)"}, limit = "3")
+    protected Object doDoubleArithmetic(VirtualFrame frame, Double receiver, String selector, Object[] arguments,
+                                        @Cached("selector") String cachedSelector,
+                                        @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
+                                        @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
+        double r = receiver;
+
+        if (arguments.length == 1) {
+            Object other = arguments[0];
+            if (other instanceof Number) {
+                double dO = ((Number) other).doubleValue(); // Promote other to double
+                if (cachedSelector == "+") return r + dO;
+                if (cachedSelector == "-") return r - dO;
+                if (cachedSelector == "*") return r * dO;
+                if (cachedSelector == "/") return r / dO;
+                if (cachedSelector == "%") return r % dO;
+                if (cachedSelector == "**") return Math.pow(r, dO);
+                if (cachedSelector == "==") return r == dO;
+                if (cachedSelector == "!=") return r != dO;
+                if (cachedSelector == "<=") return r <= dO;
+                if (cachedSelector == ">=") return r >= dO;
+                if (cachedSelector == "<") return r < dO;
+                if (cachedSelector == ">") return r > dO;
+                if (cachedSelector == "~~") return r == dO;
+                if (cachedSelector == "!~") return r != dO;
+                throw new RuntimeException("Unsupported operator for Double: " + cachedSelector);
+            }
+        }
+
+        // Fallback to generic dispatch if not a direct arithmetic operation
+        try {
+            Object member = lookupDoubleMember(selector); // Check DoubleExtension first
+            if (member == null) member = lookupNumberMember(selector); // Then NumberExtension
+            if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                InteropLibrary memberInterop = InteropLibrary.getUncached(member);
+                Object[] args = prepareArguments(member, receiver, arguments);
+                return JolkNode.lift(memberInterop.execute(member, args));
+            }
+            if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
+            return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
+        } catch (JolkReturnException e) {
+            throw e;
+        } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+            if (isObjectIntrinsic(selector)) {
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+            }
+            try {
+                // Fallback to host member heuristic
+                return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                // Bridge checked exception to RuntimeException for the engine
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Double", ex);
+            }
+        }
+    }
+
+    /**
+     * ### doDouble
+     * 
+     * Handles general message dispatch for Double instances (e.g., #toString, #hash).
+     */
+    @Specialization(replaces = "doDoubleArithmetic")
+    protected Object doDouble(VirtualFrame frame, Double receiver, String selector, Object[] arguments,
+                            @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
+                            @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
+        try {
+            Object member = lookupDoubleMember(selector);
+            if (member == null) member = lookupNumberMember(selector);
+
+            if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                InteropLibrary memberInterop = InteropLibrary.getUncached(member);
+                Object[] args = prepareArguments(member, receiver, arguments);
+                return JolkNode.lift(memberInterop.execute(member, args));
+            }
+            
+            if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
+            
+            return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on Double", e);
+        }
+    }
+
+    @TruffleBoundary
+    protected Object lookupDoubleMember(String selector) {
+        return JolkDoubleExtension.DOUBLE_TYPE.lookupInstanceMember(selector);
+    }
+
+    /// ### prepareArguments
+    /// 
+    /// Ensures arguments match the Jolk calling convention for the target member.
+    protected Object[] prepareArguments(Object member, Object receiver, Object[] arguments) {
+        if (member instanceof JolkClosure closure) {
+            if (closure.getEnvironment() == null) {
+                // Reified Method: Prepend only receiver (Self at 0)
+                Object[] args = new Object[arguments.length + 1];
+                args[0] = receiver;
+                System.arraycopy(arguments, 0, args, 1, arguments.length);
+                return args;
+            } else {
+                // Reified Closure: Prepend environment (Env at 0)
+                Object[] args = new Object[arguments.length + 1];
+                args[0] = closure.getEnvironment();
+                System.arraycopy(arguments, 0, args, 1, arguments.length);
+                return args;
+            }
+        } else {
+            // Built-in or Host Member: Prepend receiver (Self at 0)
+            Object[] args = new Object[arguments.length + 1];
+            args[0] = receiver;
+            System.arraycopy(arguments, 0, args, 1, arguments.length);
+            return args;
+        }
+    }
+
     /// ### Fast Path for Array Filtering (#filter)
     /// 
     /// Implements the filter protocol for java.util.List. The IndirectCallNode 
@@ -694,6 +825,30 @@ public abstract class JolkDispatchNode extends Node {
             return false;
         }
         throw new RuntimeException("Invalid arguments for #anyMatch: expected a single closure.");
+    }
+
+    @TruffleBoundary
+    protected Object lookupNumberMember(String selector) {
+        return JolkNumberExtension.NUMBER_TYPE.lookupInstanceMember(selector);
+    }
+
+    /**
+     * ### selectReifiedMethod
+     * 
+     * Determines which reified method to execute, prioritizing the specialized 
+     * extension over the generic numerical protocol. This method is marked 
+     * as idempotent because it contains no side effects and always returns 
+     * the same result for the same input pairs.
+     */
+    @Idempotent
+    @TruffleBoundary
+    protected Object selectReifiedMethod(Object longMember, Object numberMember) {
+        // Prioritize LongExtension's reified methods if present, otherwise use NumberExtension's.
+        return longMember != null ? longMember : numberMember;
+    }
+
+    protected static boolean isNumberArithmetic(String selector) {
+        return "+".equals(selector) || "-".equals(selector) || "*".equals(selector) || "/".equals(selector) || "%".equals(selector) || "**".equals(selector) || "==".equals(selector) || "!=".equals(selector) || "<=".equals(selector) || ">=".equals(selector) || "<".equals(selector) || ">".equals(selector) || "~~".equals(selector) || "!~".equals(selector);
     }
 
     /// ### Fast Path for Array FindFirst (#findFirst)
@@ -787,12 +942,13 @@ public abstract class JolkDispatchNode extends Node {
     /// ### Fast Path for Longs
     @Specialization(guards = {
         "selector == cachedSelector",
-        "isReifiedMethod(cachedMember)"
+        "isReifiedMethod(selectReifiedMethod(longMember, numberMember))"
     }, limit = "3")
     protected Object doLongClosureDirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                          @Cached("selector") String cachedSelector,
-                                         @Cached("lookupLongMember(cachedSelector)") Object cachedMember,
-                                         @Cached("getClosureTarget(cachedMember)") CallTarget target,
+                                         @Cached("lookupLongMember(cachedSelector)") Object longMember,
+                                         @Cached("lookupNumberMember(cachedSelector)") Object numberMember,
+                                         @Cached("getClosureTarget(selectReifiedMethod(longMember, numberMember))") CallTarget target,
                                          @Cached("create(target)") DirectCallNode callNode) {
         if (arguments.length == 0) return callNode.call(receiver);
         if (arguments.length == 1) return callNode.call(receiver, arguments[0]);
@@ -802,11 +958,13 @@ public abstract class JolkDispatchNode extends Node {
         return callNode.call(args);
     }
 
-    @Specialization(guards = "selector == cachedSelector", replaces = "doLongClosureDirect", limit = "3")
+    // This specialization handles direct arithmetic and comparison operations for Long receivers.
+    // It includes Guided Coercion for Double arguments.
+    @Specialization(guards = {"selector == cachedSelector", "isNumberArithmetic(selector)"}, replaces = "doLongClosureDirect", limit = "3")
     protected Object doLongCached(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                  @Cached("selector") String cachedSelector,
-                                 @Cached("lookupLongMember(cachedSelector)") Object cachedMember,
                                  @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
+                                 // JolkDispatchNode is needed for recursive calls if we delegate to generic dispatch
                                  @Shared("fromJavaStringNode") @Cached TruffleString.FromJavaStringNode fromJavaStringNode) {
         /**
          * ### Identity Erasure for Primitives
@@ -822,42 +980,64 @@ public abstract class JolkDispatchNode extends Node {
             return fromJavaStringNode.execute(String.valueOf(r), TruffleString.Encoding.UTF_16);
         }
 
-        if (arguments.length == 1 && arguments[0] instanceof Number other) {
-            long o = other.longValue();
-            switch (cachedSelector) {
-                case "*"  -> { return r * o; }
-                case "-"  -> { return r - o; }
-                case "+"  -> { return r + o; }
-                case "/"  -> { return r / o; }
-                case "%"  -> { return r % o; }
-                case "**" -> { return (long) Math.pow(r, o); }
-                case "==" -> { return r == o; }
-                case "<=" -> { return r <= o; }
-                case ">=" -> { return r >= o; }
-                case "<"  -> { return r < o; }
-                case ">"  -> { return r > o; }
+        if (arguments.length == 1) { // All arithmetic and comparison operators are binary
+            Object other = arguments[0];
+            if (other instanceof Number) {
+                if (other instanceof Double) {
+                    // Guided Coercion: Promote Long to Double for Double operations
+                    double dR = r;
+                    double dO = ((Number) other).doubleValue();
+                    return switch (selector) {
+                        case "+" -> dR + dO;
+                        case "-" -> dR - dO;
+                        case "*" -> dR * dO;
+                        case "/" -> dR / dO;
+                        case "%" -> dR % dO;
+                        case "**" -> Math.pow(dR, dO);
+                        case "==" -> dR == dO;
+                        case "!=" -> dR != dO;
+                        case "<=" -> dR <= dO;
+                        case ">=" -> dR >= dO;
+                        case "<" -> dR < dO;
+                        case ">" -> dR > dO;
+                        case "~~" -> dR == dO;
+                        case "!~" -> dR != dO;
+                        default -> throw new RuntimeException("Unsupported operator for Double: " + selector);
+                    };
+                } else {
+                    // Both are Longs (or can be treated as Longs)
+                    long o = ((Number) other).longValue();
+                    return switch (selector) {
+                        case "+" -> r + o;
+                        case "-" -> r - o;
+                        case "*" -> r * o;
+                        case "/" -> r / o;
+                        case "%" -> r % o;
+                        case "**" -> (long) Math.pow(r, o);
+                        case "==" -> r == o;
+                        case "!=" -> r != o;
+                        case "<=" -> r <= o;
+                        case ">=" -> r >= o;
+                        case "<" -> r < o;
+                        case ">" -> r > o;
+                        case "~~" -> r == o;
+                        case "!~" -> r != o;
+                        default -> throw new RuntimeException("Unsupported operator for Long: " + selector);
+                    };
+                }
             }
         }
-
-        if (cachedMember != null && !isNothing(cachedMember) && interop.isExecutable(cachedMember)) {
-            try {
-                InteropLibrary memberInterop = InteropLibrary.getUncached(cachedMember);
-                if (arguments.length == 0) return JolkNode.lift(memberInterop.execute(cachedMember, (Object)receiver));
-                Object[] args = prepareArguments(cachedMember, receiver, arguments);
-                return JolkNode.lift(memberInterop.execute(cachedMember, args));
-            } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        return doLong(frame, receiver, selector, arguments, interop);
+        throw new RuntimeException("Invalid arguments for numeric operation: " + selector);
     }
 
     @Specialization(replaces = "doLongCached")
     protected Object doLong(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
-                            @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+                            @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop,
+                            @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
         try {
             Object member = lookupLongMember(selector);
+            if (member == null) member = lookupNumberMember(selector); // Check NumberExtension as well
+
             if (member != null && !isNothing(member) && interop.isExecutable(member)) {
                 InteropLibrary memberInterop = InteropLibrary.getUncached(member);
                 Object[] args = prepareArguments(member, receiver, arguments);
@@ -865,6 +1045,12 @@ public abstract class JolkDispatchNode extends Node {
             }
             
             if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
+            
+            // If it's an arithmetic operation, delegate to the specialized node
+            if (isNumberArithmetic(selector)) {
+                return dispatchNode.execute(frame, receiver, selector, arguments);
+            }
+            
             return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
 
         } catch (JolkReturnException e) {
@@ -876,10 +1062,10 @@ public abstract class JolkDispatchNode extends Node {
             try {
                 return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
             } catch (UnknownIdentifierException ex) {
-                throw new RuntimeException("Message dispatch failed: #" + selector + " on Long", e);
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Number", e);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error executing #" + selector + " on Long", e);
+            throw new RuntimeException("Error executing #" + selector + " on Number", e);
         }
     }
 
@@ -1166,7 +1352,8 @@ public abstract class JolkDispatchNode extends Node {
                                    @Cached("receiver.getShape()") Shape cachedShape,
                                    @Cached("selector") String cachedSelector,
                                    @Cached("lookupUserMember(receiver, cachedSelector)") Object member,
-                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
+                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
+                                   @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
         if (member != null && !isNothing(member) && interop.isExecutable(member)) {
             try {
                 InteropLibrary memberInterop = InteropLibrary.getUncached(member); // Get interop for the member
@@ -1177,7 +1364,7 @@ public abstract class JolkDispatchNode extends Node {
             }
         }
         // If member is null, fall back to generic dispatch (e.g. host members)
-        return doDispatch(frame, receiver, selector, arguments, interop);
+        return doDispatch(frame, receiver, selector, arguments, interop, dispatchNode);
     }
 
     /// ### Generic Dispatch
@@ -1190,10 +1377,11 @@ public abstract class JolkDispatchNode extends Node {
         "doControlFlowDirect", "doTernaryDirect", "doControlFlow",
         "doTimesDirect", "doTimesIndirect", "doMap", "doFilter", "doAnyMatch", "doFindFirst",
         "doIteratorForEach", "doMapForEach", "doLongClosureDirect", "doLongCached", 
-        "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable"
+        "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable", "doDoubleArithmetic"
     })
     protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
-                                @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
+                                @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
+                                @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
         try {
             // 1. Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
@@ -1223,7 +1411,8 @@ public abstract class JolkDispatchNode extends Node {
             // 2. Jolk Prototype Lookup (Megamorphic / Generic Path)
             // We normalize the receiver lookup by checking the unwrapped identity.
             JolkMetaClass meta = null;
-            if (unwrappedReceiver instanceof Number) meta = JolkLongExtension.LONG_TYPE;
+            if (unwrappedReceiver instanceof Long) meta = JolkLongExtension.LONG_TYPE;
+            else if (unwrappedReceiver instanceof Double) meta = JolkDoubleExtension.DOUBLE_TYPE;
             else if (unwrappedReceiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
             else if (unwrappedReceiver instanceof String || unwrappedReceiver instanceof TruffleString) meta = JolkStringExtension.STRING_TYPE;
             else if (unwrappedReceiver instanceof List) meta = JolkArrayExtension.ARRAY_TYPE;
@@ -1249,8 +1438,9 @@ public abstract class JolkDispatchNode extends Node {
             if (meta == null && unwrappedReceiver instanceof tolk.runtime.JolkMetaClass jmc) {
                 Object member = lookupMetaMember(jmc, selector);
                 if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                    InteropLibrary memberInterop = InteropLibrary.getUncached(member); // Get interop for the member
                     Object[] args = prepareArguments(member, receiver, arguments);
-                    return JolkNode.lift(interop.execute(member, args));
+                    return JolkNode.lift(memberInterop.execute(member, args));
                 }
             }
 
@@ -1286,7 +1476,7 @@ public abstract class JolkDispatchNode extends Node {
 
             try {
                 return JolkNode.lift(interop.invokeMember((Object) receiver, selector, arguments));
-            } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+            } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
                 // Identity Restitution Protocol: Intrinsic messages act as a fallback 
                 // for all objects that do not explicitly override them.
                 if (isObjectIntrinsic(selector)) {
@@ -1296,7 +1486,19 @@ public abstract class JolkDispatchNode extends Node {
                 try {
                     return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
                 } catch (UnknownIdentifierException ex) {
-                    throw new RuntimeException("Message dispatch failed: #" + selector, e);
+                    throw new RuntimeException("Message dispatch failed: #" + selector, ex);
+                }
+            } catch (UnknownIdentifierException e) { // Catch UnknownIdentifierException separately
+                // Identity Restitution Protocol: Intrinsic messages act as a fallback 
+                // for all objects that do not explicitly override them.
+                if (isObjectIntrinsic(selector)) {
+                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                }
+                // Impedance Resolution: Fallback to host member heuristic
+                try {
+                    return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
+                } catch (UnknownIdentifierException ex) {
+                    throw new RuntimeException("Message dispatch failed: #" + selector, ex);
                 }
             }
         } catch (JolkReturnException e) {
@@ -1305,33 +1507,6 @@ public abstract class JolkDispatchNode extends Node {
             // Use the full class name to distinguish between Value wrappers and internal HostObjects.
             String receiverStr = (receiver == null) ? "null" : receiver.getClass().getName() + " [" + receiver + "]";
             throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiverStr, e);
-        }
-    }
-
-    /// ### prepareArguments
-    /// 
-    /// Ensures arguments match the Jolk calling convention for the target member.
-    protected Object[] prepareArguments(Object member, Object receiver, Object[] arguments) {
-        if (member instanceof JolkClosure closure) {
-            if (closure.getEnvironment() == null) {
-                // Reified Method: Prepend only receiver (Self at 0)
-                Object[] args = new Object[arguments.length + 1];
-                args[0] = receiver;
-                System.arraycopy(arguments, 0, args, 1, arguments.length);
-                return args;
-            } else {
-                // Reified Closure: Prepend environment (Env at 0)
-                Object[] args = new Object[arguments.length + 1];
-                args[0] = closure.getEnvironment();
-                System.arraycopy(arguments, 0, args, 1, arguments.length);
-                return args;
-            }
-        } else {
-            // Built-in or Host Member: Prepend receiver (Self at 0)
-            Object[] args = new Object[arguments.length + 1];
-            args[0] = receiver;
-            System.arraycopy(arguments, 0, args, 1, arguments.length);
-            return args;
         }
     }
 
@@ -1649,7 +1824,7 @@ public abstract class JolkDispatchNode extends Node {
     /// @return The result of the invocation or the receiver in case of a setter.
     /// @throws UnknownIdentifierException If no matching host member is found.
     @TruffleBoundary
-    private static Object dispatchHostMember(Object receiver, String selector, Object[] arguments) throws UnknownIdentifierException {
+    public static Object dispatchHostMember(Object receiver, String selector, Object[] arguments) throws UnknownIdentifierException {
         InteropLibrary interop = InteropLibrary.getUncached();
         String capitalized = capitalize(selector);
 
@@ -1746,6 +1921,8 @@ public abstract class JolkDispatchNode extends Node {
         }
 
         Object unwrapped = JolkNode.unwrap(receiver);
+        Class<?> lookupClass = (unwrapped instanceof Class<?> clazz) ? clazz : unwrapped.getClass();
+
         try {
             // 1. Meta-Object Instantiation: If selector is #new and receiver is a Class, 
             // map directly to constructors to support Jolk's object creation protocol.
@@ -1763,11 +1940,20 @@ public abstract class JolkDispatchNode extends Node {
                 }
             }
 
-            // 2. Member Invocation: Simple heuristic for Shim-less Integration.
+            // 2. Field Access: Support for static constants and public instance fields
+            try {
+                java.lang.reflect.Field f = lookupClass.getField(methodName); // Corrected: lookupClass is now defined
+                if (f != null && java.lang.reflect.Modifier.isPublic(f.getModifiers())) {
+                    Object value = f.get(unwrapped instanceof Class<?> ? null : receiver);
+                    return JolkNode.lift(value);
+                }
+            } catch (NoSuchFieldException | IllegalAccessException | SecurityException e) {
+                // fall through to method check
+            }
+
+            // 3. Member Invocation: Simple heuristic for Shim-less Integration.
             // Allows Jolk to reach native methods on types like String and Long 
-            // which are often treated as "memberless" values by standard Interop.
-            if (unwrapped == null) return null;
-            Class<?> lookupClass = (unwrapped instanceof Class<?> clazz) ? clazz : unwrapped.getClass();
+            // which are often treated as "memberless" values by standard Interop.            
             for (java.lang.reflect.Method m : lookupClass.getMethods()) {
                 if (m.getName().equals(methodName)) {
                     Object[] matched = matchArguments(m.getParameterTypes(), m.isVarArgs(), unboxed);

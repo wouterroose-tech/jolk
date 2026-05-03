@@ -28,9 +28,7 @@ public final class JolkBooleanExtension {
             "Boolean", 
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS, 
-            new HashMap<>(), 
-            new HashMap<>()
+            JolkArchetype.CLASS
         );
 
         Map<String, Object> members = new HashMap<>();

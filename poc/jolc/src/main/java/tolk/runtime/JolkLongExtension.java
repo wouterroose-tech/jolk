@@ -26,11 +26,11 @@ public final class JolkLongExtension {
         // Breaking the circularity: Assign the identity BEFORE populating members
         LONG_TYPE = new JolkMetaClass(
             "Long", 
+            JolkNumberExtension.NUMBER_TYPE, // Identity hierarchy
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS, 
-            new LinkedHashMap<>(), 
-            new LinkedHashMap<>()
+            JolkArchetype.CLASS,
+            java.lang.Long.class // Associate with host class
         );
 
         Map<String, Object> members = new LinkedHashMap<>();
@@ -58,50 +58,18 @@ public final class JolkLongExtension {
         members.put("isEmpty".intern(), new LongIsEmpty());
         members.put("class".intern(), new LongClassAccessor());
         members.put("instanceOf".intern(), new LongInstanceOf());
-        // Synthesized Meta-Methods: accessible via instances
-        Constant MIN = new Constant(Long.MIN_VALUE);
-        Constant MAX = new Constant(Long.MAX_VALUE);
-        members.put("MIN".intern(), MIN);
-        members.put("MAX".intern(), MAX);
-
-        Map<String, Object> metaMembers = new LinkedHashMap<>();
-        metaMembers.put("MIN".intern(), MIN);
-        metaMembers.put("MAX".intern(), MAX);
         
         // Hydrate the existing identity
         for (var e : members.entrySet()) LONG_TYPE.registerInstanceMethod(e.getKey(), e.getValue());
-        for (var e : metaMembers.entrySet()) LONG_TYPE.registerMetaMethod(e.getKey(), e.getValue());
     }
 
     private JolkLongExtension() {
     }
-
-    /**
-     * ### asLong
-     * 
-     * Performs **Impedance Resolution** to extract a primitive long from 
-     * substrate types. Returns a primitive to avoid the "Object Sink" (boxing).
-     * 
-     * @throws UnsupportedTypeException if the argument is not a compatible number.
-     */
     public static long asLong(Object arg) throws UnsupportedTypeException {
         if (arg instanceof Long l) return l;
         if (arg instanceof Integer i) return i.longValue();
         if (arg instanceof Number n) return n.longValue();
         throw UnsupportedTypeException.create(new Object[]{arg});
-    }
-
-    /// Helper to expose substrate constants as Jolk meta-members.
-    @ExportLibrary(InteropLibrary.class)
-    public static final class Constant implements TruffleObject {
-        private final Object value;
-        public Constant(Object value) { this.value = value; }
-        @ExportMessage public boolean isExecutable() { return true; }
-        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
-            // Allow 0 args (meta-call) or 1 arg (instance-call where arg[0] is the receiver)
-            if (arguments.length > 1) throw ArityException.create(0, 1, arguments.length);
-            return value;
-        }
     }
 
     @ExportLibrary(InteropLibrary.class)

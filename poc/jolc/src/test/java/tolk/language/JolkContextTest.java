@@ -30,7 +30,7 @@ public class JolkContextTest extends JolcTestBase {
     @Test
     void testRegisterClass() {
         JolkContext jolkContext = getJolkContext();
-        jolkContext.registerClass(new JolkMetaClass("Test", null, null, null, null));
+        jolkContext.registerClass(new JolkMetaClass("Test", null, null, null));
         assertNotNull(jolkContext, "The JolkContext should be accessible from the polyglot context.");
 
         assertNotNull(jolkContext.getDefinedClass("Test"));

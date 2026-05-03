@@ -19,6 +19,7 @@ import tolk.runtime.JolkObject;
 @TypeSystem({
     int.class,
     long.class,
+    double.class,
     boolean.class,
     String.class,
     TruffleString.class,

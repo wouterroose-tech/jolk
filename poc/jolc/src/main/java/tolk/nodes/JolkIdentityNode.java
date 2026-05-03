@@ -33,9 +33,14 @@ public class JolkIdentityNode extends JolkExpressionNode {
         // Optimization: identical references are always the same identity.
         if (left == right) return negate ? false : true;
 
-        // Identity Congruence: intrinsic types match by value to ensure identity 
+        // Identity Congruence: intrinsic types match by value to ensure identity
         // is tied to value regardless of boxed storage (e.g. for Long ssn).
-        if (left instanceof Number n1 && right instanceof Number n2) {
+        if (left instanceof Number n1 && right instanceof Number n2) { // Handle mixed number types
+            if (n1 instanceof Double || n2 instanceof Double) {
+                boolean eq = n1.doubleValue() == n2.doubleValue();
+                return negate ? !eq : eq;
+            }
+            // Both are Longs or can be treated as Longs
             boolean eq = n1.longValue() == n2.longValue();
             return negate ? !eq : eq;
         }

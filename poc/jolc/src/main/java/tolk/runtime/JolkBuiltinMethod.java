@@ -3,6 +3,7 @@ package tolk.runtime;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
@@ -34,7 +35,7 @@ public abstract class JolkBuiltinMethod implements TruffleObject {
      * @throws UnsupportedTypeException If the argument types are invalid.
      */
     @ExportMessage
-    public abstract Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException;
+    public abstract Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException;
 
     /**
      * ### lift

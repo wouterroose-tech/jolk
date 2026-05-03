@@ -27,9 +27,7 @@ public final class JolkStringExtension {
             "String", 
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS, 
-            new HashMap<>(), 
-            new HashMap<>()
+            JolkArchetype.CLASS
         );
 
         Map<String, Object> members = new HashMap<>();

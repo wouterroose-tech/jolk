@@ -71,16 +71,32 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      * Handles cases where one or both operands are already boxed (e.g. from Host Interop).
      */
     @Specialization(replaces = {"doAdd", "doSub", "doMul", "doDiv", "doMod", "doPow"})
-    protected long doNumbers(Number n1, Number n2) {
+    protected Object doNumbers(Number n1, Number n2) {
+        // Guided Coercion: If either is a Double, promote both to Double for the operation.
+        if (n1 instanceof Double || n2 instanceof Double || n1 instanceof Float || n2 instanceof Float) {
+            double d1 = n1.doubleValue();
+            double d2 = n2.doubleValue();
+            String op = getOperator();
+            if (op == OP_PLUS) return d1 + d2;
+            if (op == OP_MINUS) return d1 - d2;
+            if (op == OP_MUL) return d1 * d2;
+            if (op == OP_DIV) return d1 / d2;
+            if (op == OP_MOD) return d1 % d2;
+            if (op == OP_POW) return Math.pow(d1, d2);
+            throw new RuntimeException("Unsupported floating-point operator: " + op);
+        }
+        // Otherwise, both are Longs (or can be treated as Longs)
+        long r = n1.longValue();
+        long o = n2.longValue();
         String op = getOperator();
-        if (op == OP_PLUS)  return n1.longValue() + n2.longValue();
-        if (op == OP_MINUS) return n1.longValue() - n2.longValue();
-        if (op == OP_MUL)   return n1.longValue() * n2.longValue();
-        if (op == OP_DIV)   return n1.longValue() / n2.longValue();
-        if (op == OP_MOD)   return n1.longValue() % n2.longValue();
-        if (op == OP_POW)   return (long) Math.pow(n1.longValue(), n2.longValue());
-        
-        throw new RuntimeException("Unsupported operator: " + op);
+        if (op == OP_PLUS) return r + o;
+        if (op == OP_MINUS) return r - o;
+        if (op == OP_MUL) return r * o;
+        if (op == OP_DIV) return r / o;
+        if (op == OP_MOD) return r % o;
+        if (op == OP_POW) return (long) Math.pow(r, o);
+
+        throw new RuntimeException("Unsupported integer operator: " + op);
     }
 
     @Specialization(guards = "isPlus()")

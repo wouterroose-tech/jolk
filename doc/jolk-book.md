@@ -659,7 +659,7 @@ Passive Coercion (Widening): Jolk performs *lossless promotions* when mixing typ
 
     // Result: 25.75 
 
-Active Coercion (Narrowing): The loss of precision is treated as a semantic boundary. A high-precision value cannot be silently "sunk" into a lower-precision container. When a transition is "lossy," the protocol pauses the evaluation, requiring an *Explicit Coercion*—a conversion message like `#asInt`—to confirm that the data loss is intentional.
+Active Coercion (Narrowing): The loss of precision is treated as a semantic boundary. A high-precision value cannot be silently "sunk" into a lower-precision container. When a transition is "lossy," the protocol pauses the evaluation, requiring an *Explicit Coercion*—a conversion message like `#asInteger`—to confirm that the data loss is intentional.
 
     // Active Coercion in action  
     Double price = 19.99;
@@ -669,11 +669,11 @@ Active Coercion (Narrowing): The loss of precision is treated as a semantic boun
     Int rounded = price;
 
     // The Explicit Coercion:  
-    Int finalPrice = price #asInt; 
+    Int finalPrice = price #asInteger; 
 
     // Result: 19 (The .99 is truncated)
 
-**Numeric Operation Evaluation Rule**: The numerical type ranking is `Int` \< `Long` \< `Float` \< `Double`; Ascent is automatic, Descent is explicit, and operations between types of the same rank remain at that rank.
+**Numeric Operation Evaluation Rule**: The numerical type ranking is `Int` \< `Long` \< `Float` \< `Double` \< `Decimal`; Ascent is automatic, Descent is explicit, and operations between types of the same rank remain at that rank.
 
 ### Null-Coalescing Operator
 
@@ -1264,7 +1264,7 @@ The domain types are a set of data objects and validation classes implementing a
 
 		Boolean ~~(Object other) {
 			(self == other) ? [ ^true ];
-			other #as(Person) #ifPresent [ p ->
+			other #instanceOf(Person) #ifPresent [ p ->
 				^ (self #ssn == p #ssn)
 					&& (self #firstName ~~ p #firstName)
 					&& (self #lastName ~~ p #lastName)
@@ -1684,7 +1684,7 @@ The terminology and recontextualized concepts of the Jolk language:
 
 **Archetype**: A structural template (`class`, `record`, `enum`, `value` or `protocol`) that defines the nature of an identity, harmonized under a single, consistent messaging protocol.  
 **Atomic Identity**: A terminal, first-class identity (such as `true`, `false`, `Nothing`or Value Objects) that participates in the messaging protocol as a recipient.   
-**Guided Coercion**: The active, type-aware alignment of differing numerical identities to a common protocol, requiring explicit guidance (e.g., `#asInt`) for any lossy transition.  
+**Guided Coercion**: The active, type-aware alignment of differing numerical identities to a common protocol, requiring explicit guidance (e.g., `#asInteger`) for any lossy transition.  
 **Identity Congruence**: The singular logical representation for all entities—including complex objects, primitives, and absence—by aligning the abstract identity defined in the source code with the physical representation of the substrate.  
 **Identity Erasure**: A performance strategy where the engine physically strips away object structures and headers at the machine level, replacing them with raw CPU registers or bit-patterns.  
 **Identity Restitution**: A metaboundary protocol that "lifts" raw JVM `null` pointers into the `Nothing` singleton to ensure they can safely receive messages.  

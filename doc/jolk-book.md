@@ -906,7 +906,7 @@ In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Re
 *   ***Transparent Selectors***: For library methods marked with `@Inline` (like `#withLock`), the compiler performs inlining, treating the closure as a structural extension of the method. The boundary is also transparent, granting the same *Scope Permeability* and support for non-local returns as intrinsic selectors. This allows developers to create custom, zero-overhead control structures.
 *   ***Opaque Selectors***: When a closure is passed to a standard functional selector (like `#map`), it operates as an encapsulated unit of logic. The boundary is *Opaque*. The closure is a self-contained unit, typically projected as a Java lambda. While it can still capture and mutate state from its defining environment (managed via *Identity Promotion*), it is forbidden from using the return terminal (`^`) to exit the parent method. The compiler enforces this via the *Semantic Guard* to prevent invalid stack manipulation.
 
-Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk enforces the *Functional Exclusion Principle*. Closures must not be embedded within a parenthesized argument list (e.g., `#do(param, [ ... ] )`). Instead, the language mandates *Selector Refining*, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do [ ... ]`). This nested builder pattern ensures that logic is never a secondary attribute but always the focus of the interaction.
+Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk favors functional exclusion, where closures are typically not embedded within a parenthesized argument list (e.g., `#do(param, [ ... ] )`). Instead, the language encourages selector refining, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do [ ... ]`). This nested builder pattern ensures that logic is never a secondary attribute but always the focus of the interaction.
 
 	@Intrinsic  
 	class Closure<T> {
@@ -1410,7 +1410,7 @@ By decoupling these concerns, the Sovereign remains "data-blind." It never inter
 		^ master // Terminal Reversion
 	}
 
-The Pivot Pattern prevents *Syntactic Drift*. As architectures grow, the temptation to add "helper methods" with complex signatures increases. This pattern provides a repeatable mechanism to absorb complexity into the object graph. 
+The Pivot Pattern prevents protocol explosion. As architectures grow, the temptation to add "helper methods" with complex signatures increases. This pattern provides a repeatable mechanism to absorb complexity into the object graph. 
 
 ## Dependency Injection
 

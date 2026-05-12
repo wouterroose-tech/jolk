@@ -27,20 +27,33 @@ public final class JolkMatch implements TruffleObject {
 
     private final Object value;
     private final boolean isPresent;
+    private final boolean terminal;
 
-    private JolkMatch(Object value, boolean isPresent) {
+    private JolkMatch(Object value, boolean isPresent, boolean terminal) {
         this.value = value;
         this.isPresent = isPresent;
+        this.terminal = terminal;
     }
 
     /// Creates a successful match containing a value.
     public static JolkMatch with(Object value) {
-        return new JolkMatch(value, true);
+        return new JolkMatch(value, true, false);
     }
 
     /// Creates an empty match.
     public static JolkMatch empty() {
-        return new JolkMatch(null, false);
+        return new JolkMatch(null, false, false);
+    }
+
+    /**
+     * ### terminal
+     * 
+     * Creates a terminal match that represents a completed dispatch branch.
+     * Subsequent #case checks in the chain will skip execution when receiving 
+     * this identity.
+     */
+    public static JolkMatch terminal(Object value) {
+        return new JolkMatch(value, true, true);
     }
 
     public Object getValue() {
@@ -51,8 +64,13 @@ public final class JolkMatch implements TruffleObject {
         return isPresent;
     }
 
+    public boolean isTerminal() {
+        return terminal;
+    }
+
     @ExportMessage
     public String toDisplayString(@SuppressWarnings("unused") boolean allowSideEffects) {
+        if (terminal) return "Match.terminal(" + value + ")";
         return isPresent ? "Match(" + value + ")" : "Match.empty";
     }
 

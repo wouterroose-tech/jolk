@@ -155,7 +155,7 @@ public abstract class JolkDispatchNode extends Node {
 
     protected static boolean isControlFlow(String selector) {
         return switch (selector) {
-            case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :", "finally" -> true;
+            case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :", "finally", "do", "default" -> true;
             default -> false;
         };
     }
@@ -471,6 +471,19 @@ public abstract class JolkDispatchNode extends Node {
                         callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
                         return receiver;
                     }
+                }
+                case "do" -> {
+                    if (receiver instanceof JolkMatch match && match.isPresent() && !match.isTerminal()) {
+                        Object val = match.getValue();
+                        return JolkMatch.terminal(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment(), JolkNode.lift(val)}));
+                    }
+                    return receiver; // Pass through empty or terminal match
+                }
+                case "default" -> {
+                    if (receiver instanceof JolkMatch match && match.isPresent()) {
+                        return match.getValue();
+                    }
+                    return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                 }
             }
         }
@@ -1584,7 +1597,7 @@ public abstract class JolkDispatchNode extends Node {
     /// @param member The selector name to check.
     /// @return true if the selector is a Jolk intrinsic.
     public static boolean isObjectIntrinsic(String member) {
-        return JolkIntrinsicProtocol.isObjectIntrinsic(member);
+        return "case".equals(member) || JolkIntrinsicProtocol.isObjectIntrinsic(member);
     }
 
     @TruffleBoundary
@@ -1770,6 +1783,14 @@ public abstract class JolkDispatchNode extends Node {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     Object type = arguments[0];
                     return (genericInterop.isMetaObject(type) && genericInterop.isMetaInstance(type, receiver)) ? JolkMatch.with(receiver) : JolkMatch.empty();
+                }
+                case "case" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    if (receiver instanceof JolkMatch match && match.isPresent()) {
+                        return receiver;
+                    }
+                    boolean matches = (Boolean) dispatchObjectIntrinsic(receiver, "~~", arguments, interop);
+                    return matches ? JolkMatch.with(receiver) : receiver;
                 }
                 case "?" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);

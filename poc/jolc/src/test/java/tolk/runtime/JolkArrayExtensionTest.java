@@ -248,6 +248,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
             class ArrayLiteralTest {
                 ArrayList<Long> emptyList = #[];
                 ArrayList<Long> longList = #[1, 2, 3];
+                ArrayList<String> colors = #["red", "green", "blue"];
                 Long run(Int key) { ^ self #longList #at(key) }  
                 Long run() { ^ self #longList #put(1, 42) #at(1) }          
             }""";
@@ -259,13 +260,16 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         assertEquals(3, ((List<?>) longList.asHostObject()).size());
         assertEquals(1L, instance.invokeMember("run", 0).asLong()); 
         assertEquals(42, instance.invokeMember("run").asLong()); 
+        Value colors = instance.invokeMember("colors");
+        assertEquals(3, ((List<?>) colors.asHostObject()).size());
+        assertEquals("red", ((List<?>) colors.asHostObject()).get(0).toString());
     } 
 
     @Test
     void testAnyMatch_2() {
         String source = """
             class AnyMatchTest {
-                 ArrayList<Long> elements = #[1, 2, 3];
+                ArrayList<Long> elements = #[1, 2, 3];
                 ArrayList<Long> elements = #[1, 2, 3];
                 Boolean run(Long x) { ^ self #elements #anyMatch [s -> s ~~ x] }          
             }""";

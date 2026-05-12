@@ -43,6 +43,7 @@ public final class JolkContext {
         registerClass(JolkStringExtension.STRING_TYPE);
         registerClass(JolkArrayExtension.ARRAY_TYPE);
         registerClass(JolkExceptionExtension.EXCEPTION_TYPE);
+        registerClass(JolkMessageNotUnderstoodException.TYPE);
     }
 
     public void registerClass(JolkMetaClass metaClass) {

@@ -6,6 +6,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import tolk.language.JolkMessageNotUnderstoodException;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkNothing;
 
@@ -82,7 +83,7 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
                 return lift(JolkDispatchNode.dispatchObjectIntrinsic(self, selector, args, InteropLibrary.getUncached()));
             }
 
-            throw new RuntimeException("Message not understood: #" + selector + " in super hierarchy of " + holderClass.name);
+            throw new JolkMessageNotUnderstoodException(self, selector);
         } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException  e) {
             throw new RuntimeException("Super message dispatch failed: #" + selector + " in " + holderClass.name, e);
         }

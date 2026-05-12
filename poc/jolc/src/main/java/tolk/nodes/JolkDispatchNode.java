@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import tolk.language.JolkMessageNotUnderstoodException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.library.CachedLibrary;
 
@@ -206,8 +207,14 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(guards = {"isNothing(receiver)", "!isControlFlow(selector)", "!isClosureCatch(selector)"})
     protected Object doNothing(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                 @Exclusive @CachedLibrary(value = "getNothing()") InteropLibrary interop) {
-        // Handle core protocol for Nothing (e.g., #class, #toString) explicitly.
+
+        /// ### Identity-Level Safe Navigation
+        /// 
+        /// Implements the "Neutral Response" model. Instead of throwing a NullPointerException,
+        /// the Nothing identity consumes unknown messages and returns itself. This projects
+        /// safe navigation as a polymorphic property of the identity.
         if (isObjectIntrinsic(selector)) {
+        // Handle core protocol for Nothing (e.g., #class, #toString) explicitly.
             return JolkNode.lift(dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop));
         }
         try { 
@@ -729,8 +736,7 @@ public abstract class JolkDispatchNode extends Node {
                 // Fallback to host member heuristic
                 return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
             } catch (UnknownIdentifierException ex) {
-                // Bridge checked exception to RuntimeException for the engine
-                throw new RuntimeException("Message dispatch failed: #" + selector + " on Double", ex);
+                throw new JolkMessageNotUnderstoodException(receiver, selector);
             }
         }
     }
@@ -1541,7 +1547,7 @@ public abstract class JolkDispatchNode extends Node {
                 try {
                     return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
                 } catch (UnknownIdentifierException ex) {
-                    throw new RuntimeException("Message dispatch failed: #" + selector, ex);
+                    throw new JolkMessageNotUnderstoodException(receiver, selector);
                 }
             } catch (UnknownIdentifierException e) { // Catch UnknownIdentifierException separately
                 // Identity Restitution Protocol: Intrinsic messages act as a fallback 
@@ -1553,15 +1559,14 @@ public abstract class JolkDispatchNode extends Node {
                 try {
                     return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
                 } catch (UnknownIdentifierException ex) {
-                    throw new RuntimeException("Message dispatch failed: #" + selector, ex);
+                    throw new JolkMessageNotUnderstoodException(receiver, selector);
                 }
             }
         } catch (JolkReturnException e) {
             throw e;
         } catch (Exception e) {
             // Use the full class name to distinguish between Value wrappers and internal HostObjects.
-            String receiverStr = (receiver == null) ? "null" : receiver.getClass().getName() + " [" + receiver + "]";
-            throw new RuntimeException("Message dispatch failed: #" + selector + " on " + receiverStr, e);
+            throw new JolkMessageNotUnderstoodException(receiver, selector);
         }
     }
 

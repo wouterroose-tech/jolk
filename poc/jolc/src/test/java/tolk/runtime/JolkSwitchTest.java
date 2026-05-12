@@ -1,7 +1,6 @@
 package tolk.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;

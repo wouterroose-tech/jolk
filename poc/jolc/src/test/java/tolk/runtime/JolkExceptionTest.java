@@ -1,4 +1,4 @@
-package tolk.parser;
+package tolk.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -149,6 +149,19 @@ public class JolkExceptionTest extends JolcTestBase {
                             scope #join
                             ]; 
                     ^ 42
+                }
+            } """;
+        Value instance = eval(myClass).invokeMember("new");
+        assertEquals(42, instance.invokeMember("run").asLong());
+    }
+
+    @Test
+    void testMessageNotUnderstood() {
+        String myClass = """
+            class MyClass {
+                Long run() {
+                    [ Object #undefinedMessage ]
+                        #catch [ MessageNotUnderstood e -> ^ 42 ]
                 }
             } """;
         Value instance = eval(myClass).invokeMember("new");

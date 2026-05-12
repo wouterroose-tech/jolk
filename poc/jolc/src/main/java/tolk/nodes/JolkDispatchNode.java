@@ -1964,11 +1964,10 @@ public abstract class JolkDispatchNode extends Node {
                     // Attempt to convert to long
                     unboxed[i] = JolkLongExtension.asLong(arg);
                 } catch (UnsupportedTypeException e) {
-                    // If not a long, try to convert to boolean
-                    Boolean b = JolkBooleanExtension.asBoolean(arg);
-                    if (b != null) {
-                        unboxed[i] = b;
-                    } else {
+                    try {
+                        // If not a long, try to convert to boolean
+                        unboxed[i] = JolkBooleanExtension.asBoolean(arg);
+                    } catch (UnsupportedTypeException e2) {
                         // If Jolk-specific conversions fail, try interop conversions
                         if (interop.isString(arg)) {
                             try { unboxed[i] = interop.asString(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = arg; }

@@ -60,9 +60,15 @@ public final class JolkBooleanExtension {
     private JolkBooleanExtension() {
     }
 
-    public static Boolean asBoolean(Object arg) {
-        if (arg instanceof Boolean b) return b;
-        return null;
+    /// ### asBoolean
+    /// 
+    /// Performs **Identity Projection** to extract a primitive boolean from 
+    /// substrate types. To maintain **Archetypal Rigidity**, this method 
+    /// enforces a strict identity check; if the argument is not a Boolean, 
+    /// it throws an exception to preserve the dispatch contract.
+    public static boolean asBoolean(Object arg) throws UnsupportedTypeException {
+        if (arg instanceof Boolean b) return b.booleanValue();
+        throw UnsupportedTypeException.create(new Object[]{arg});
     }
 
     @ExportLibrary(InteropLibrary.class)
@@ -71,10 +77,7 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Boolean a = asBoolean(arguments[0]);
-            Boolean b = asBoolean(arguments[1]);
-            if (a != null && b != null) return a && b;
-            throw UnsupportedTypeException.create(arguments);
+            return asBoolean(arguments[0]) && asBoolean(arguments[1]);
         }
     }
 
@@ -84,10 +87,7 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Boolean a = asBoolean(arguments[0]);
-            Boolean b = asBoolean(arguments[1]);
-            if (a != null && b != null) return a || b;
-            throw UnsupportedTypeException.create(arguments);
+            return asBoolean(arguments[0]) || asBoolean(arguments[1]);
         }
     }
 
@@ -97,9 +97,7 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-            Boolean a = asBoolean(arguments[0]);
-            if (a != null) return !a;
-            throw UnsupportedTypeException.create(arguments);
+            return !asBoolean(arguments[0]);
         }
     }
 
@@ -109,13 +107,10 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Boolean receiver = asBoolean(arguments[0]);
+            boolean receiver = asBoolean(arguments[0]);
             Object action = arguments[1];
-            if (receiver != null) {
-                if (receiver) InteropLibrary.getUncached().execute(action);
-                return receiver;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            if (receiver) InteropLibrary.getUncached().execute(action);
+            return receiver;
         }
     }
 
@@ -125,13 +120,10 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Boolean receiver = asBoolean(arguments[0]);
+            boolean receiver = asBoolean(arguments[0]);
             Object action = arguments[1];
-            if (receiver != null) {
-                if (!receiver) InteropLibrary.getUncached().execute(action);
-                return receiver;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            if (!receiver) InteropLibrary.getUncached().execute(action);
+            return receiver;
         }
     }
 
@@ -142,13 +134,10 @@ public final class JolkBooleanExtension {
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             // In a fluent chain, ":" behaves like "ifFalse" 
-            Boolean receiver = asBoolean(arguments[0]);
+            boolean receiver = asBoolean(arguments[0]);
             Object action = arguments[1];
-            if (receiver != null) {
-                if (!receiver) InteropLibrary.getUncached().execute(action);
-                return receiver;
-            }
-            throw UnsupportedTypeException.create(arguments);
+            if (!receiver) InteropLibrary.getUncached().execute(action);
+            return receiver;
         }
     }
 
@@ -158,15 +147,11 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 3) throw ArityException.create(3, 3, arguments.length);
-            Boolean receiver = asBoolean(arguments[0]);
+            boolean receiver = asBoolean(arguments[0]);
             Object thenAction = arguments[1];
             Object elseAction = arguments[2];
-            if (receiver != null) {
-                Object branch = receiver ? thenAction : elseAction;
-                // Returns the result of the branch execution.
-                return InteropLibrary.getUncached().execute(branch);
-            }
-            throw UnsupportedTypeException.create(arguments);
+            Object branch = receiver ? thenAction : elseAction;
+            return InteropLibrary.getUncached().execute(branch);
         }
     }
 
@@ -176,14 +161,11 @@ public final class JolkBooleanExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException, UnsupportedMessageException {
             if (arguments.length != 3) throw ArityException.create(3, 3, arguments.length);
-            Boolean receiver = asBoolean(arguments[0]);
+            boolean receiver = asBoolean(arguments[0]);
             Object thenAction = arguments[1];
             Object elseAction = arguments[2];
-            if (receiver != null) {
-                Object branch = !receiver ? thenAction : elseAction;
-                return InteropLibrary.getUncached().execute(branch);
-            }
-            throw UnsupportedTypeException.create(arguments);
+            Object branch = !receiver ? thenAction : elseAction;
+            return InteropLibrary.getUncached().execute(branch);
         }
     }
 
@@ -191,15 +173,11 @@ public final class JolkBooleanExtension {
     public static final class BooleanEquals implements TruffleObject {
         public BooleanEquals() {}
         @ExportMessage public boolean isExecutable() { return true; }
-        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
-            Boolean a = asBoolean(arguments[0]);
-            Boolean b = asBoolean(arguments[1]);
-            if (a != null && b != null) {
-                // Identity Congruence: Booleans match by value
-                return a.booleanValue() == b.booleanValue();
-            }
-            return false;
+            boolean a = asBoolean(arguments[0]);
+            boolean b = asBoolean(arguments[1]);
+            return a == b;
         }
     }
 
@@ -207,7 +185,7 @@ public final class JolkBooleanExtension {
     public static final class BooleanNotEquals implements TruffleObject {
         public BooleanNotEquals() {}
         @ExportMessage public boolean isExecutable() { return true; }
-        @ExportMessage public Object execute(Object[] arguments) throws ArityException {
+        @ExportMessage public Object execute(Object[] arguments) throws ArityException, UnsupportedTypeException {
             if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
             Object eq = new BooleanEquals().execute(arguments);
             return (eq instanceof Boolean b) ? !b : true;

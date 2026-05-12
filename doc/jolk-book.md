@@ -870,9 +870,14 @@ Jolk transitions Booleans from binary primitives into Identities of Choice, reif
 
 *Nothing \- null*
 
-The *Nullity Identity* reifies the null pointer into `Nothing`—a first-class identity represented by the reserved literal `null`. It constitutes the terminal state of the messaging exchange, implementing a structural Null Object Pattern[13]. As the meta-aware singleton, it serves as the default state for all uninitialised references. By transforming a hardware-level void into an identity, Jolk ensures every reference can receive messages.
+The *Nullity Identity* reifies the null pointer into `Nothing`—a first-class identity represented by the reserved literal `null`. It constitutes the terminal state of the messaging exchange, implementing a structural Null Object Pattern[13]. As the meta-aware singleton, it serves as the default state for all uninitialised references. By transforming a hardware-level void into an identity, Jolk enforces a universal receiver contract, ensuring every reference can receive any message without causing a substrate-level crash.
 
-Jolk achieves safe navigation through identity-level polymorphism, shifting failures from opaque runtime crashes to semantic, manageable MessageNotUnderstood errors. By consuming an incoming message and returning itself, `Nothing` allows chains to collapse gracefully without defensive branching. This neutral response model preserves the messaging architecture without the overhead of wrappers or the lexical clutter of null-checks. Jolk facilitates this through a protocol within the dispatch cycle that neutralises subsequent operations, designating the absence of a result as a predictable signal that forces the acknowledgement of an undefined state.
+Jolk achieves safe navigation through identity-level polymorphism. By consuming an incoming message and returning itself, the `Nothing` identity allows message chains to collapse gracefully without defensive branching. This neutral response model preserves the messaging architecture without the overhead of wrappers or the lexical clutter of null-checks. Jolk facilitates this through a protocol within the dispatch cycle that neutralises subsequent operations, designating the absence of a result as a predictable signal that forces the acknowledgement of an undefined state.
+
+*MessageNotUnderstood*
+
+Reified as a first-class Atomic Identity, `MessageNotUnderstood` transforms dispatch failures into manageable guest-level events. By shifting communication failures into a predictable identity, the system allows for graceful recovery via the `#catch` protocol, preserving the object-oriented contract where even an unhandled message results in a stable, interrogatable state.
+
 
 This identity-fencing preserves the object-oriented contract where the transition to a terminal state remains a stable outcome.
 
@@ -1528,15 +1533,18 @@ Kernel Types are the foundational identities from `jolk.lang` that enable Jolk's
 To the developer, these are high-level objects like `Int`, `Boolean`, or `Nothing`. To the Tolk Engine, they are *Pseudo-Identifiers* that undergo semantic flattening. This process "intrinsifies" messages into substrate-native instructions, bypassing standard method dispatch. Through *Identity Erasure*, messages like `1 + 2` are flattened to raw hardware arithmetic, and the `null` identity is projected directly as `aconst_null`. This ensures that Jolk’s expressive syntax executes with the speed of native Java while the compiler handles the "Guided Unboxing" required for shim-less interoperability.
 
 These kernel types constitute the language's logic engine:
-*   **Nothing**: The reified absence identity that safely absorbs messages without triggering a 
+*   **Nothing**: The reified absence identity that safely absorbs messages without triggering a `NullPointerException`.
+*   **MessageNotUnderstood**: The reified identity representing a dynamic dispatch failure.
 *   **Boolean**: Replaces `if/else` keywords with singletons that respond to `?` and `:` messages.
 *   **Int / Long**: Provides message-passing for numeric operations and iteration (`#times`).
-*   **Closure**: Represents deferred logic, handling control flow via messages like `#while` and `#catch`.`NullPointerException`.
+*   **Closure**: Represents deferred logic, handling control flow via messages like `#while` and `#catch`.
 *   **Array**: A message-passing facade for the Java Collections Framework.
 
 The `jolk.lang` class definitions for these types act as a formal bridge to the JVM. They provide method signatures that serve as anchors for documentation and static analysis, even though the Tolk Engine replaces the calls with direct machine code, preserving the object model without sacrificing performance.
 
 **Nothing (`null`):** Reified as the `JolkNothing` singleton, this identity represents the fact of absence. Jolk achieves safe navigation through identity-level polymorphism; the implementation in `JolkNothing.java` exports the `InteropLibrary` and overrides `invokeMember` to return the receiver for unknown selectors. This ensures that message chains collapse gracefully. The Tolk Engine optimizes this via a *Monomorphic Fast Path* in `JolkDispatchNode.doNothing`, allowing safe navigation to occur at the speed of a single reference comparison.
+
+**MessageNotUnderstood:** The Tolk Engine operationalizes this identity within the `JolkDispatchNode` by intercepting heterogeneous substrate failures—ranging from JVM linkage errors to polyglot `UnknownIdentifierException` signals—and projecting them onto a singular `JolkMessageNotUnderstoodException`. This semantic harmonization ensures that dispatch failures are no longer terminal system events but first-class communication signals within the guest environment. By mapping these failures to the `MessageNotUnderstood.jolk` kernel class, the engine enables the guest-level `#catch` protocol to interrogate the `receiver` and `selector` identities, transforming a low-level crash into a manageable and retryable messaging transaction.
 
 **Boolean (`true` / `false`):** Booleans are treated as atomic identities that encapsulate branching behavior. While the guest language interacts with them as first-class objects, the implementation applies *Identity Erasure* to project these identities onto substrate-native scalars. In `JolkDispatchNode.doBooleanCached`, the engine utilizes specialization to map messages like `?` or `?!` directly to specialized call nodes. By caching the `CallTarget` of branches, the engine enables the Graal JIT to resolve high-level logical gates into raw hardware branch instructions. This transformation ensures that Jolk’s keyword-less control flow achieves execution parity with procedural hardware-level branches.
 
@@ -1691,6 +1699,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a message coordinate in a communicative field.  
 **Lexical Fence**: A structural boundary that enforces message-only interaction.  
 **Message-Passing Paradigm**: A computational model where all computation is realized as a dynamic exchange of messages between autonomous entities. Jolk extends this paradigm to a unified field, where even fundamental operations like control flow and arithmetic are resolved through polymorphic dispatch.  
+**Sanitisation Reflex**: The message-passing pattern where untrusted or optional data is flowed through a sequence of `#ifPresent`, `#ifEmpty`, or `#instanceOf` gates to ensure logical safety before execution.
 **Metaboundary**: The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*, rendering intrusive reflection a semantic impossibility by ensuring the guest language has no primitives capable of bypassing the defined protocol.  
 **Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.  
 **Monadic Flow Flattening**: An architectural optimization where the Tolk Engine recognizes monadic patterns (such as the `Match<T>` container) and elides the physical object allocation during partial evaluation, reducing the logic to zero-cost machine instructions.  

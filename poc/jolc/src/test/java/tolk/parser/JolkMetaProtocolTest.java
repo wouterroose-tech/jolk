@@ -96,7 +96,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
     }
 
     @Test
-    @Disabled("Requires support for meta field projection, which is not yet implemented.")
+    //@Disabled("Requires support for meta field projection, which is not yet implemented.")
     void testMetaFProjection() {
         String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
         String classB = """

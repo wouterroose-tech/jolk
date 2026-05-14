@@ -32,7 +32,7 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
     * [Example](#example)
     * [Fragments](#fragments)
     * [Jolk Design Patterns](#jolk-design-patterns)
-    * [Dependency Injection](#dependency-injection)
+    * [The Meta-Layer Synthesis](#the-meta-layer-synthesis)
     * [Industrial Potential](#industrial-potential)
 * [Part Four: Tolk - The Engine Mechanics](#part-four)
     * [Implementation](#implementation)
@@ -695,7 +695,7 @@ To implement an operator, developers define a method using the symbol as the ide
 
 ### Keyword Selectors
 
-Jolk employs a Unified Messaging model that distinguishes between *Data Arguments* in parentheses and *Logic Arguments* in blocks. Anchored by a mandatory hashtag prefix, these selectors act as lexical fences that enable the Tolk engine to differentiate behaviour from data with $O(1)$ efficiency.
+Jolk employs a Unified Messaging model that distinguishes between *Data Arguments* in parentheses and *Logic Arguments* in blocks. Anchored by a mandatory hashtag prefix, these selectors act as lexical fences that enable the Tolk engine to differentiate behaviour from data.
 
 Property access, such as `#name`, requires no arguments and therefore omits parentheses. In contrast, data messages like list `#add(item)` require mandatory parentheses to encapsulate passive values. Logic-driven messages, such as `list #forEach [ i -> ... ]`, allow for a bracket-light syntax where parentheses are omitted for the closure.
 
@@ -743,13 +743,13 @@ Control loops are implemented as polymorphic dispatch messages sent to objects. 
 
 **Pattern matching** 
 
-Pattern Matching is not based on language keywords or a switch statement. Instead, it is an emergent property of the Message Chain. It relies on the Sanitisation Reflex to flow data through a series of 'gates' until it reaches the correct execution block. Because it is an expression, the match itself can be passed, returned, or nested without breaking the linear logic of the program.
+Pattern Matching is not based on language keywords or a switch statement. Instead, it is an emergent property of the message chain. It relies on the sanitisation reflex to flow data through a series of 'gates' until it reaches the correct execution block. Because it is an expression, the match itself can be passed, returned, or nested without breaking the linear logic of the program. By transforming pattern matching from a language-level conditional into a choreographed message chain of `#as` and `#ifPresent`, Jolk replaces the imperative branching with a pipeline that uses an Intrinsic `Match<T>` container to refine untrusted inputs into safe, typed executions.
 
-The Type-Gate message chain replaces pattern-matching syntax with a pipeline that uses an Intrinsic  Match container to refine untrusted inputs into safe, typed executions.
-
-    ^ String #isInstance(x)                     //Returns Match<String> with the value or Nothing  
-        #filter [ s -> !(s #isEmpty) ]          // If false the content of Selection is dropped  
+    ^ x #as(String)                            //Returns Match<String> with the value or Nothing  
+        #filter [ s -> !(s #isEmpty) ]         // If false the content of Selection is dropped  
         #map [ s -> System #out #println(s) ]  // It was a non-empty String so it gets printed
+
+Defined as *the invisible branch*, Jolk’s pattern matching is a state transition rather than a control structure. The system does not "branch"; it navigates through a sequence of negotiated outcomes where messages either realize an identity or are ignored.
 
 The `#case` selector acts as a logic gate that evaluates a closure only if the receiver matches the provided argument, maintaining the messaging paradigm. The Tolk toolchain identifies these sequences and "intrinsifies" them into native JVM switch opcodes.
 
@@ -758,9 +758,9 @@ The `#case` selector acts as a logic gate that evaluates a closure only if the r
         #case(404) #do ["Not Found"]       /// Returns if 404, or passes along  
         #default ["Unknown Error"]         /// default
 
-Pattern Matching results in a `Match<T>` to drive logic flow through a message chain, whereas `Optional<T>` is used to represent the state of a value that may be absent over time..
+Pattern Matching results in a `Match<T>` to drive logic flow through a message chain, whereas `Optional<T>` is used to represent the state of a value that may be absent over time.
 
-### Return & Self-return contract
+### Return & Self-return Contract
 
 Jolk’s return rule is a hybrid architectural model. At its core, the language employs the caret symbol (`^`) for explicit returns, ensuring type safety and allowing for early exits. For Self-returning methods, the self-return contract is a structural guarantee: because `Self` (PascalCase) is a dynamic, context-aware reference to the current type definition, the mapping ensures that methods are automatically subclass-safe. The language reinforces its Semantic Casing rules, where the type identity (`Self`) naturally governs the return of the instance (`self`). 
 
@@ -1417,7 +1417,18 @@ By decoupling these concerns, the Sovereign remains "data-blind." It never inter
 
 The Pivot Pattern prevents protocol explosion. As architectures grow, the temptation to add "helper methods" with complex signatures increases. This pattern provides a repeatable mechanism to absorb complexity into the object graph. 
 
-## Dependency Injection
+## The Meta-Layer Synthesis
+
+The Tolk Engine establishes a unified messaging model where type-level interactions are as rigorously managed as instance-level communications. This architectural symmetry simplifies the orchestration of dependency injection, configuration, and state extraction into a consistent, negotiable handshake. For tool builders, this design provides a clear and predictable protocol for interacting with Jolk's meta-layer:
+
+*   **Self-Projection**: A MetaClass can act as its own recipient for the `#project` message. This allows tools to configure meta-level state or trigger factory orchestration directly on the type.
+* **State Discovery and Extraction** (`#instanceProtocol`, `#metaProtocol`, `#stateProjection`): Tools can discover the communicative surface of any Jolk MetaClass without resorting to reflection.
+*   **Orchestration**: Dependency containers and configuration frameworks can leverage the `#project` message for both instance and meta-object configuration. 
+*   **Verification**: Mocking frameworks and other verification tools can rely on Jolk's robust identity and equivalence protocols.
+
+Crucially, Jolk's architecture explicitly prevents intrusive reflection. There are no guest-level primitives capable of bypassing the defined protocol to interrogate the object's structure. Every interaction, including object creation, is a negotiable handshake managed by the Tolk Engine, ensuring structural integrity across the substrate.
+
+### Dependency Injection
 
 Dependency Injection is established as JIT-DI (Just-In-Time Dependency Injection), a model that replaces reflection-heavy containers with Structural Synthesis. By treating component assembly as a fundamental application of native Object-Oriented principles, JIT-DI ensures that the dependency graph remains strictly traceable and only materialises when needed. This approach reduces DI to a transparent message-passing pattern where the developer retains full authority over the instantiation, wiring, and lifecycle of every component through explicit, statically traceable code.
 
@@ -1453,7 +1464,7 @@ Multi-environment and test configurations are managed through Specialization and
 
 		// Register the module's shutdown with the Substrate  
 		Runtime #onShutdown [ config #shutdown ]
-
+		
 		// ...  
 	}
 
@@ -1465,6 +1476,16 @@ Multi-environment and test configurations are managed through Specialization and
 
 		// ... execute tests  
 	}
+
+### Meta-Level Projection and Dynamic Message Send
+
+Within the Jolk ecosystem, the protocol serves as the singular bridge between static structural definitions and dynamic runtime orchestration, resolving the tension between pre-compiled safety and runtime fluidity by treating the Meta-Identity as the absolute unit of communication. This synthesis is operationalized through source generation, which provides a deterministic, type-safe API for formal vocabularies—such as REST APIs or database schemas—by defining the architectural "slots" utilized by `#project` during hydration, and identity projection, which facilitates total architectural fluidity for orchestration tools by enabling the runtime discovery of identities through `#instanceProtocol` and the reification of strings into active selectors via the `META #selector` handshake.
+
+The Dynamic Message Send API respects the metaboundary fence. If a generated DAO marks a field as private, the `#project` message will result in an exception. Furthermore only verified participants can initiate a meta-layer handshake through a reified selector. Because a `selector` in Jolk is a constant, the engine treats the `#project(identity, value)` message as a stable interaction. 
+
+During steady-state execution, the Graal JIT recognizes these patterns as candidates for *Speculative Pruning*. By treating the dynamic send as a candidate for *Polymorphic Inline Caching*, the dynamic dispatch is collapsed. Whether utilizing a generated DAO, a dynamic service container, or a mocking framework, the Tolk engine ensures the system operates within the highest possible performance density.
+
+Projection in Jolk offers architectural clarity that surpasses the obscurity of source-generated boilerplate. It establishes a *Single Source of Truth*, where the logic for value assignment is always a visible handshake, `Receiver #project(Identity, Value)`, eliminating the need to search through extensive generated code common in Java. Furthermore, it ensures Structural Clarity by making the state of an object consistently retrievable via `#stateProjection`, thereby removing the "black box" nature of generated Plain Old Java Objects (POJOs) and rendering the data flow across the unified communicative field explicit and auditable.
 
 ## Industrial Potential 
 
@@ -1491,6 +1512,8 @@ The implementation of the *Jolk Messaging Protocol* is operationalised through t
 The *Semantic Overlay* is manifested through the use of CallTarget objects, which represent the projection of Jolk protocols onto the substrate. When a message is dispatched, the AST performs a lookup to resolve the appropriate logic, facilitating the structural absorption of external code via method handles. As the execution graph stabilises, the Graal Compiler inlines these call targets to erase the overhead of the object boundary. This transition turns the messaging continuum into a high-density execution trace, ensuring that the *Sparse Type System* remains a high-performance machine state.
 
 ## Implementation
+
+*TBC*
 
 ## Tolk Parser
 

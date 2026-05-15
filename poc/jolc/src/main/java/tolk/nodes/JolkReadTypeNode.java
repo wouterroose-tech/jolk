@@ -42,16 +42,24 @@ public final class JolkReadTypeNode extends JolkExpressionNode {
         Object type = context.getDefinedClass(typeName);
         if (type != null) return type;
 
-        // Priority 2: Meta-Constant/Field Fallback (Message to Self's class)
+        // Priority 2: Meta-Projection Resolution (Lenses/Lifting)
+        // Resolves projected platform facts (static constants or methods) 
+        // established via the '&' or 'using meta' directives.
+        Object projected = context.lookupProjection(typeName);
+        if (projected != null) return JolkNode.lift(projected);
+
+        // Priority 3: Meta-Constant/Field Fallback (Message to Self's class)
         if (metaReceiver != null) {
             Object metaObj = metaReceiver.executeGeneric(frame);
-            if (metaObj != JolkNothing.INSTANCE) {
+            if (metaObj != null && metaObj != JolkNothing.INSTANCE) {
                 try {
                     InteropLibrary interop = InteropLibrary.getUncached(metaObj);
-                    if (interop.isMemberInvocable(metaObj, typeName)) {
-                        return interop.invokeMember(metaObj, typeName);
-                    } else if (interop.isMemberReadable(metaObj, typeName)) {
-                        return interop.readMember(metaObj, typeName);
+                    // Identity Resolution: Prioritize readable fields/constants over invocables.
+                    if (interop.isMemberReadable(metaObj, typeName)) {
+                        return JolkNode.lift(interop.readMember(metaObj, typeName));
+                    } else if (interop.isMemberInvocable(metaObj, typeName)) {
+                        // Returning the member itself for potential later invocation or reference.
+                        return JolkNode.lift(interop.invokeMember(metaObj, typeName));
                     }
                 } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) {
                     // Fall through to Nothing

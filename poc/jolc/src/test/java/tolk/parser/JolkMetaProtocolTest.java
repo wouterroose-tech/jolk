@@ -109,13 +109,35 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         assertEquals(42, instanceA.invokeMember("x").asLong());
     }
 
+    /// Verifies that a meta constant can be accessed from another class via the meta-receiver, 
+    /// demonstrating cross-class meta field access. This also tests the fallback resolution mechanism
+    /// for bare uppercase identifiers in instance methods, ensuring they are correctly resolved to
+    /// the meta-receiver's fields.
     @Test
-    void testMetaFProjection() {
+    void testMetaFieldProjection() {
         String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
         String classB = """
             & ClassA.FORTY_TWO;
             class ClassB {
                 Long val() { ^ FORTY_TWO }
+            }""";
+        eval(classA);
+        Value instanceB = eval(classB).invokeMember("new");
+        // access projected meta constant 
+        assertEquals(42, instanceB.invokeMember("val").asLong());
+    }
+
+    /// Verifies that a meta constant can be accessed from another class via the meta-receiver, 
+    /// demonstrating cross-class meta field access. This also tests the fallback resolution mechanism.
+    /// The `&` syntax is used to project the meta constant into the class scope, allowing it to be accessed
+    /// directly without needing to reference the meta-receiver explicitly.
+    @Test
+    void testMetaFieldAlias() {
+        String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
+        String classB = """
+            & FORTYTWO = ClassA.FORTY_TWO;
+            class ClassB {
+                Long val() { ^ FORTYTWO }
             }""";
         eval(classA);
         Value instanceB = eval(classB).invokeMember("new");

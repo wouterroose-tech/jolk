@@ -127,20 +127,41 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitProjection(jolkParser.ProjectionContext ctx) {
-        // TODO: Handle projection lens (using meta/&)
-        return super.visitProjection(ctx);
+        // The projection directive (& / using meta) is essentially a wrapper 
+        // for the lens registration logic. We delegate to the inclusion rule 
+        // to maintain modularity in the parse tree traversal.
+        return visit(ctx.inclusion());
     }
 
     @Override
     public JolkNode visitInclusion(jolkParser.InclusionContext ctx) {
-        // TODO: Handle namespace inclusion
-        return super.visitInclusion(ctx);
+        String path = ctx.namespace().getText();
+        String alias = null;
+        
+        // Resolve the local identifier if an alias is defined.
+        if (ctx.alias() != null) {
+            JolkNode aliasNode = visit(ctx.alias());
+            if (aliasNode instanceof JolkLiteralNode literal) {
+                alias = (String) literal.executeGeneric(null);
+            }
+        }
+        
+        boolean isStar = ctx.getText().contains(".*");
+
+        // Lens Projection: Resolve the platform path and register it as a 
+        // local symbol in the context. This implements the "Lens" mechanism 
+        // described in the Jolk specification for platform facts.
+        language.getContextReference().get(null).registerProjection(path, alias, isStar);
+
+        return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitAlias(jolkParser.AliasContext ctx) {
-        // TODO: Handle meta_id aliasing
-        return super.visitAlias(ctx);
+        // Since the visitor is typed to JolkNode, we wrap the alias identifier 
+        // in a literal node so that the parent Inclusion visitor can recover 
+        // the string during context registration.
+        return new JolkLiteralNode(ctx.MetaId().getText().intern());
     }
 
     @Override

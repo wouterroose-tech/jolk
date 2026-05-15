@@ -2,7 +2,7 @@ package examples;
 
 using demo.validation.domain.Person;
 
-/// Demonstrates various Jolk archetype features using the `Person` record.
+/// Demonstrates various Jolk archetype features using the `Person` class.
 ///
 /// This class showcases:
 /// * Basic and canonical object creation (`#new`).
@@ -12,7 +12,7 @@ using demo.validation.domain.Person;
 ///
 /// @author Wouter Roose
 
-final class ArchetypeDemonstrator {
+final class ArchetypeClassDemonstrator {
     
     Person runBasicNew() {
         ^ Person #new

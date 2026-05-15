@@ -1,0 +1,42 @@
+package examples;
+
+using demo.validation.engine.Level;
+
+/// # ArchetypeEnumDemonstrator
+///
+/// Demonstrates various Jolk archetype features using the `Level` enum.
+///
+/// This class showcases:
+/// * Accessing enum constants via meta-selectors on the Type identity.
+/// * Accessing synthesized enum components (like `#name`).
+/// * Declaration of mutable and immutable local variables for enums.
+/// * Standard protocol messaging (`#toString`).
+///
+/// @author Wouter Roose
+
+final class ArchetypeEnumDemonstrator {
+
+    Level runAccessConstant() {
+        ^ Level #ERROR
+    }
+
+    String runName() {
+        ^ Level #ERROR #name
+    }
+
+    String runVariable() {
+        Level level = Level #WARNING;
+        ^ level #name
+    }
+
+    String runConstant() {
+        constant Level level = Level #INFO;
+        ^ level #name
+    }
+
+    String runToString() {
+        // Enums inherit standard Object protocol
+        ^ Level #ERROR #toString
+    }
+
+}

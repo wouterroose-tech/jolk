@@ -4,7 +4,6 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.RootNode;
-import tolk.language.JolkLanguage;
 import tolk.JolcTestBase;
 
 import org.junit.jupiter.api.Test;
@@ -19,9 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JolkClosureTest extends JolcTestBase {
 
     private JolkClosure createClosure(Function<Object[], Object> logic) {
-        // Associate the node with the Jolk language to satisfy sharing layer requirements
-        JolkLanguage lang = JolkLanguage.getLanguage();
-        TestRootNode rootNode = new TestRootNode(lang, logic);
+        TestRootNode rootNode = new TestRootNode(logic);
         CallTarget callTarget = rootNode.getCallTarget();
         return new JolkClosure(callTarget);
     }
@@ -243,12 +240,13 @@ public class JolkClosureTest extends JolcTestBase {
             context.leave();
         }
     }
-
     static class TestRootNode extends RootNode {
         private final Function<Object[], Object> logic;
 
-        protected TestRootNode(JolkLanguage language, Function<Object[], Object> logic) {
-            super(language);
+        /// By passing null to super, we avoid the requirement for an entered polyglot
+        /// context during node instantiation in unit tests.
+        protected TestRootNode(Function<Object[], Object> logic) {
+            super(null);
             this.logic = logic;
         }
 

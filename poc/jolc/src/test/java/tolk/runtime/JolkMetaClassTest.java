@@ -282,7 +282,10 @@ public class JolkMetaClassTest extends JolcTestBase {
         context.enter();
         try {
             AtomicBoolean ran = new AtomicBoolean(false);
-            JolkNothingTest.TestExecutable executable = new JolkNothingTest.TestExecutable(() -> ran.set(true));
+            Object executable = new JolkClosure(new JolkClosureTest.TestRootNode(args -> {
+                ran.set(true);
+                return JolkNothing.INSTANCE;
+            }).getCallTarget());
             Map<String, Object> metaMembers = Collections.singletonMap("customMeta", executable);
             JolkMetaClass meta = new JolkMetaClass("MetaWithMethod", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), metaMembers);
             

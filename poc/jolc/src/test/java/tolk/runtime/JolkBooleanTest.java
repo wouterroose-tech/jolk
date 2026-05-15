@@ -1,15 +1,15 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
-
+import com.oracle.truffle.api.nodes.RootNode;
 import tolk.JolcTestBase;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * This includes logical operations, branching messages used for control flow,
  * and the standard object protocol.
  */
-public class JolkBooleanTest  extends JolcTestBase {
+public class JolkBooleanTest extends JolcTestBase {
 
     private Object getOperation(String opName) {
         Object op = JolkBooleanExtension.BOOLEAN_TYPE.lookupInstanceMember(opName);
@@ -29,6 +29,30 @@ public class JolkBooleanTest  extends JolcTestBase {
 
     private Object execute(Object op, Object... args) throws Exception {
         return InteropLibrary.getUncached().execute(op, args);
+    }
+
+    private Object createExecutable(Runnable runnable) {
+        TestRootNode rootNode = new TestRootNode(args -> {
+            runnable.run();
+            return JolkNothing.INSTANCE;
+        });
+        return new JolkClosure(rootNode.getCallTarget());
+    }
+
+    static class TestRootNode extends RootNode {
+        private final Function<Object[], Object> logic;
+
+        // By passing null to super, we avoid the requirement for an entered polyglot 
+        // context during node instantiation in unit tests.
+        protected TestRootNode(Function<Object[], Object> logic) {
+            super(null);
+            this.logic = logic;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return logic.apply(frame.getArguments());
+        }
     }
 
     @Test
@@ -70,7 +94,7 @@ public class JolkBooleanTest  extends JolcTestBase {
     void testIfTrue() throws Exception {
         Object op = getOperation("?");
         AtomicBoolean executed = new AtomicBoolean(false);
-        BooleanTestExecutable action = new BooleanTestExecutable(() -> executed.set(true));
+        Object action = createExecutable(() -> executed.set(true));
 
         // true ? [ action ]
         Object resTrue = execute(op, true, action);
@@ -88,7 +112,7 @@ public class JolkBooleanTest  extends JolcTestBase {
     void testIfFalse() throws Exception {
         Object op = getOperation("?!");
         AtomicBoolean executed = new AtomicBoolean(false);
-        BooleanTestExecutable action = new BooleanTestExecutable(() -> executed.set(true));
+        Object action = createExecutable(() -> executed.set(true));
 
         // false ?! [ action ]
         Object resFalse = execute(op, false, action);
@@ -108,8 +132,8 @@ public class JolkBooleanTest  extends JolcTestBase {
         AtomicBoolean thenExecuted = new AtomicBoolean(false);
         AtomicBoolean elseExecuted = new AtomicBoolean(false);
         
-        BooleanTestExecutable thenAction = new BooleanTestExecutable(() -> thenExecuted.set(true));
-        BooleanTestExecutable elseAction = new BooleanTestExecutable(() -> elseExecuted.set(true));
+        Object thenAction = createExecutable(() -> thenExecuted.set(true));
+        Object elseAction = createExecutable(() -> elseExecuted.set(true));
 
         // true ? [ then ] : [ else ]
         execute(op, true, thenAction, elseAction);
@@ -122,7 +146,7 @@ public class JolkBooleanTest  extends JolcTestBase {
     void testElse() throws Exception {
         Object op = getOperation(":");
         AtomicBoolean executed = new AtomicBoolean(false);
-        BooleanTestExecutable action = new BooleanTestExecutable(() -> executed.set(true));
+        Object action = createExecutable(() -> executed.set(true));
 
         // false : [ action ]
         Object resFalse = execute(op, false, action);
@@ -169,7 +193,7 @@ public class JolkBooleanTest  extends JolcTestBase {
     @Test
     void testPresenceLogic() throws Exception {
         AtomicBoolean executed = new AtomicBoolean(false);
-        BooleanTestExecutable action = new BooleanTestExecutable(() -> executed.set(true));
+        Object action = createExecutable(() -> executed.set(true));
 
         // ifPresent: Booleans are present identities, so action should execute
         Object resPresent = execute(getOperation("ifPresent"), true, action);
@@ -191,24 +215,6 @@ public class JolkBooleanTest  extends JolcTestBase {
         Object op = getOperation("instanceOf");
         Object match = execute(op, true, JolkBooleanExtension.BOOLEAN_TYPE);
         assertTrue((Boolean) InteropLibrary.getUncached().invokeMember(match, "isPresent"));
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    public static class BooleanTestExecutable implements TruffleObject {
-        private final Runnable runnable;
-
-        public BooleanTestExecutable(Runnable runnable) {
-            this.runnable = runnable;
-        }
-
-        @ExportMessage
-        public boolean isExecutable() { return true; }
-
-        @ExportMessage
-        public Object execute(Object[] arguments) {
-            runnable.run();
-            return JolkNothing.INSTANCE;
-        }
     }
 
     @Test

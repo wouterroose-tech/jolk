@@ -1,13 +1,13 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.RootNode;
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
+import java.util.function.Function;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Collections;
 
@@ -21,6 +21,28 @@ import static org.junit.jupiter.api.Assertions.*;
  * message passing through source evaluation.
  */
 public class JolkNothingTest extends JolcTestBase {
+
+    private Object createExecutable(Runnable runnable) {
+        TestRootNode rootNode = new TestRootNode(args -> {
+            runnable.run();
+            return JolkNothing.INSTANCE;
+        });
+        return new JolkClosure(rootNode.getCallTarget());
+    }
+
+    static class TestRootNode extends RootNode {
+        private final Function<Object[], Object> logic;
+
+        protected TestRootNode(Function<Object[], Object> logic) {
+            super(null);
+            this.logic = logic;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return logic.apply(frame.getArguments());
+        }
+    }
 
     private Value evalClass(String className, String source) {
         Value result = eval(source);
@@ -119,7 +141,7 @@ public class JolkNothingTest extends JolcTestBase {
         try {
         Object nothing = JolkNothing.INSTANCE;
         AtomicBoolean executed = new AtomicBoolean(false);
-        TestExecutable action = new TestExecutable(() -> executed.set(true));
+        Object action = createExecutable(() -> executed.set(true));
 
         // Execute: null #ifEmpty [ executed.set(true) ]
         InteropLibrary.getUncached().invokeMember(nothing, "ifEmpty", action);
@@ -137,7 +159,7 @@ public class JolkNothingTest extends JolcTestBase {
         try {
         Object nothing = JolkNothing.INSTANCE;
         AtomicBoolean executed = new AtomicBoolean(false);
-        TestExecutable action = new TestExecutable(() -> executed.set(true));
+        Object action = createExecutable(() -> executed.set(true));
 
         InteropLibrary.getUncached().invokeMember(nothing, "ifPresent", action);
 
@@ -230,25 +252,5 @@ public class JolkNothingTest extends JolcTestBase {
         // Test against an unrelated type
         Object noMatch = InteropLibrary.getUncached().invokeMember(nothing, "instanceOf", JolkLongExtension.LONG_TYPE);
         assertFalse((Boolean) InteropLibrary.getUncached().invokeMember(noMatch, "isPresent"));
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    public static class TestExecutable implements TruffleObject {
-        private final Runnable runnable;
-
-        public TestExecutable(Runnable runnable) {
-            this.runnable = runnable;
-        }
-
-        @ExportMessage
-        public boolean isExecutable() {
-            return true;
-        }
-
-        @ExportMessage
-        public Object execute(Object[] arguments) {
-            runnable.run();
-            return JolkNothing.INSTANCE;
-        }
     }
 }

@@ -217,9 +217,8 @@ public class JolkObjectTest extends JolcTestBase {
         eval("");
         context.enter();
         try {
-            var lang = tolk.language.JolkLanguage.getLanguage();
             // Create a method that returns raw Java null
-            JolkClosure nullReturner = new JolkClosure(new JolkClosureTest.TestRootNode(lang, args -> null).getCallTarget());
+            JolkClosure nullReturner = new JolkClosure(new JolkClosureTest.TestRootNode(args -> null).getCallTarget());
             Map<String, Object> members = Collections.singletonMap("getNull", nullReturner);
             JolkMetaClass meta = new JolkMetaClass("RestitutionTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
             

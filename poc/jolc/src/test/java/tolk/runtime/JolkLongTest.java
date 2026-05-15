@@ -1,17 +1,17 @@
 package tolk.runtime;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.library.ExportLibrary;
-import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.nodes.RootNode;
 
 import tolk.JolcTestBase;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 
+import java.util.function.Function;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,6 +33,25 @@ public class JolkLongTest extends JolcTestBase {
 
     private Object execute(Object op, Object... args) throws Exception {
         return InteropLibrary.getUncached().execute(op, args);
+    }
+
+    private Object createExecutable(Function<Object[], Object> logic) {
+        TestRootNode rootNode = new TestRootNode(logic);
+        return new JolkClosure(rootNode.getCallTarget());
+    }
+
+    static class TestRootNode extends RootNode {
+        private final Function<Object[], Object> logic;
+
+        protected TestRootNode(Function<Object[], Object> logic) {
+            super(null);
+            this.logic = logic;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            return logic.apply(frame.getArguments());
+        }
     }
 
     @Test
@@ -141,7 +160,7 @@ public class JolkLongTest extends JolcTestBase {
     void testTimes() throws Exception {
         Object op = getOperation("times");
         AtomicLong counter = new AtomicLong(0);
-        IntTestExecutable action = new IntTestExecutable(counter::incrementAndGet);
+        Object action = createExecutable(args -> counter.incrementAndGet());
 
         // Execute: 5 #times [ ... ]
         // Arguments: [5, action]
@@ -158,8 +177,9 @@ public class JolkLongTest extends JolcTestBase {
     void testTimesWithIndex() throws Exception {
         Object op = getOperation("times");
         List<Long> indices = new ArrayList<>();
-        IndexedIntTestExecutable action = new IndexedIntTestExecutable(args -> {
+        Object action = createExecutable(args -> {
             if (args.length > 0 && args[0] instanceof Long) indices.add((Long) args[0]);
+            return JolkNothing.INSTANCE;
         });
 
         execute(op, 3L, action);
@@ -199,7 +219,7 @@ public class JolkLongTest extends JolcTestBase {
     void testIfPresent() throws Exception {
         Object op = getOperation("ifPresent");
         // We expect the closure result (e.g. 42) to be returned
-        IntTestExecutable action = new IntTestExecutable(() -> 42L);
+        Object action = createExecutable(args -> 42L);
 
         // Execute: 5 #ifPresent [ ... ]
         Object result = execute(op, 5L, action);
@@ -211,7 +231,7 @@ public class JolkLongTest extends JolcTestBase {
     void testIfEmpty() throws Exception {
         Object op = getOperation("ifEmpty");
         AtomicLong counter = new AtomicLong(0);
-        IntTestExecutable action = new IntTestExecutable(counter::incrementAndGet);
+        Object action = createExecutable(args -> counter.incrementAndGet());
 
         // Execute: 5 #ifEmpty [ ... ]
         Object result = execute(op, 5L, action);
@@ -284,45 +304,6 @@ public class JolkLongTest extends JolcTestBase {
     void testTypeMismatch() {
         Object op = getOperation("+");
         assertThrows(UnsupportedTypeException.class, () -> execute(op, 1, "string"));
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    public static class IntTestExecutable implements TruffleObject {
-        private final java.util.function.Supplier<Object> supplier;
-
-        public IntTestExecutable(java.util.function.Supplier<Object> supplier) {
-            this.supplier = supplier;
-        }
-
-        @ExportMessage
-        public boolean isExecutable() {
-            return true;
-        }
-
-        @ExportMessage
-        public Object execute(Object[] arguments) {
-            return supplier.get();
-        }
-    }
-
-    @ExportLibrary(InteropLibrary.class)
-    public static class IndexedIntTestExecutable implements TruffleObject {
-        private final java.util.function.Consumer<Object[]> consumer;
-
-        public IndexedIntTestExecutable(java.util.function.Consumer<Object[]> consumer) {
-            this.consumer = consumer;
-        }
-
-        @ExportMessage
-        public boolean isExecutable() {
-            return true;
-        }
-
-        @ExportMessage
-        public Object execute(Object[] arguments) {
-            consumer.accept(arguments);
-            return JolkNothing.INSTANCE;
-        }
     }
 
     @Test

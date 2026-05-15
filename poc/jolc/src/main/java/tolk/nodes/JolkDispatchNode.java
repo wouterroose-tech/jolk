@@ -34,6 +34,7 @@ import tolk.language.JolkMessageNotUnderstoodException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.library.CachedLibrary;
 
+import tolk.runtime.JolkArchetype;
 import tolk.runtime.JolkClosure;
 import tolk.runtime.JolkDecimalExtension;
 import tolk.runtime.JolkNothing;
@@ -1809,6 +1810,12 @@ public abstract class JolkDispatchNode extends Node {
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (isNothing(receiver)) return "null";
+                    if (receiver instanceof JolkObject jo) {
+                        JolkArchetype archetype = jo.getJolkMetaClass().getArchetype();
+                        if (archetype == JolkArchetype.RECORD) return JolkNode.lift(formatRecord(jo));
+                        if (archetype == JolkArchetype.ENUM) return JolkNode.lift(getEnumName(jo));
+                    }
+                    // Identity Restitution: Ensure host strings are lifted to guest identities.
                     return JolkNode.lift(receiver.toString());
                 }
                 case "isPresent" -> {
@@ -2035,6 +2042,43 @@ public abstract class JolkDispatchNode extends Node {
         return null;
     }
 
+    @TruffleBoundary
+    private static String formatRecord(JolkObject jo) {
+        JolkMetaClass meta = jo.getJolkMetaClass();
+        StringBuilder sb = new StringBuilder();
+        sb.append(meta.name).append("[");
+        DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
+        Object[] keys = lib.getKeyArray(jo);
+        for (int i = 0; i < keys.length; i++) {
+            String key = (String) keys[i];
+            Object val = lib.getOrDefault(jo, key, JolkNothing.INSTANCE);
+            // Recurse into #toString dispatch to handle nested records or enums correctly.
+            Object stringified = dispatchObjectIntrinsic(val, "toString", new Object[0], InteropLibrary.getUncached());
+            String valStr = (stringified instanceof TruffleString ts) ? ts.toString() : String.valueOf(stringified);
+            
+            sb.append(key).append("=").append(valStr);
+            if (i < keys.length - 1) {
+                sb.append(", ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    @TruffleBoundary
+    private static String getEnumName(JolkObject jo) {
+        JolkMetaClass meta = jo.getJolkMetaClass();
+        DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
+        // Enums constants are singletons stored as meta-fields. We search the meta-registry
+        // to find the identifier matching this instance.
+        for (Object key : lib.getKeyArray(meta)) {
+            if (lib.getOrDefault(meta, key, null) == jo) {
+                return String.valueOf(key);
+            }
+        }
+        return jo.toString(); // Fallback to default representation
+    }
+    
     /// ### dispatchHostMember
     /// 
     /// Implements the **Shim-less Integration** heuristic by attempting to map a Jolk 

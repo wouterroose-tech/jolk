@@ -35,4 +35,11 @@ public final class JolkMemberNames implements TruffleObject {
     public boolean isArrayElementReadable(long index) {
         return index >= 0 && index < members.length;
     }
+
+    /// Returns a human-readable representation of the member collection for interop display.
+    @ExportMessage
+    @com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
+    public String toDisplayString(boolean allowSideEffects) {
+        return java.util.Arrays.toString(members);
+    }
 }

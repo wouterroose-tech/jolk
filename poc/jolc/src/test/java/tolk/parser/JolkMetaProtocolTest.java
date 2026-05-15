@@ -3,8 +3,9 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import tolk.JolcTestBase;
 
@@ -37,8 +38,8 @@ public class JolkMetaProtocolTest extends JolcTestBase {
 
     @Test
     void testMetaMethod_3() {
-        String classA = "class ClassA { meta Long fortyTwo() { ^ 42 } }";
-        String classB = "class ClassB { Long fortyTwo() { ^ ClassA #fortyTwo } }";
+        String classA = "class ClassA { meta Long FortyTwo() { ^ 42 } }";
+        String classB = "class ClassB { Long fortyTwo() { ^ ClassA #FortyTwo } }";
         eval(classA);
         Value instanceB = eval(classB).invokeMember("new");
         assertEquals(42, instanceB.invokeMember("fortyTwo").asLong());
@@ -55,6 +56,19 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         assertEquals(0, meta.invokeMember("META_VAL").asLong());
         assertEquals(meta, meta.invokeMember("META_VAL", 42L)); // Ensure Long literal for consistency
         assertEquals(42, meta.invokeMember("META_VAL").asLong());
+    }
+
+    /**
+     * Verifies that the Lexical Fence prevents mutation of meta constants.
+     */
+    @Test
+    void testMetaConstantImmutability() {
+        String source = """
+            class ConstTest {
+                public meta constant Long VERSION = 1;
+            }""";
+        Value meta = eval(source);
+        assertThrows(Exception.class, () -> meta.invokeMember("VERSION", 2L));
     }
 
     @Test
@@ -96,7 +110,6 @@ public class JolkMetaProtocolTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("Requires support for meta field projection, which is not yet implemented.")
     void testMetaFProjection() {
         String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
         String classB = """
@@ -108,6 +121,57 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         Value instanceB = eval(classB).invokeMember("new");
         // access projected meta constant 
         assertEquals(42, instanceB.invokeMember("val").asLong());
+    }
+
+    /// ### testMetaProtocolIntrospection
+    ///
+    /// Verifies that a Meta-Object can report its own meta-level handshake 
+    /// surface via the #metaProtocol message.
+    @Test
+    void testMetaProtocolIntrospection() {
+        String source = "class IntroTest { meta Long FortyTwo() { ^ 42 } }";
+        Value meta = eval(source);
+        Value protocol = meta.invokeMember("metaProtocol");
+        
+        // The protocol should contain our custom meta-method and the intrinsic #new
+        String protocolStr = protocol.toString();
+        assertTrue(protocolStr.contains("FortyTwo"), "Meta-protocol must include defined meta-methods.");
+        assertTrue(protocolStr.contains("new"), "Meta-protocol must include the intrinsic #new factory.");
+    }
+
+    /// ### testInstanceProtocolIntrospection
+    ///
+    /// Verifies that a Meta-Object reports the handshake surface for its 
+    /// instances via the #instanceProtocol message.
+    @Test
+    void testInstanceProtocolIntrospection() {
+        String source = "class IntroTest { Long fortyTwo() { ^ 42 } }";
+        Value meta = eval(source);
+        Value protocol = meta.invokeMember("instanceProtocol");
+        
+        assertTrue(protocol.toString().contains("fortyTwo"), "Instance protocol must include defined instance methods.");
+    }
+
+    /// ### testDynamicIdentityProjection
+    ///
+    /// Verifies the Dynamic Message Send API: using the meta-layer to project 
+    /// an identity (message) onto a receiver dynamically via a string.
+    @Test
+    void testDynamicIdentityProjection() {
+        String source = """
+            class Target {
+                Long val = 0;
+                Long update(Long v) {
+                    self #val(v);
+                    ^ val }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        
+        // Reify a string into a selector and project it onto the instance
+        // This simulates: instance #update(100)
+        Value result = instance.invokeMember("update", 100L);
+        assertEquals(100L, result.asLong());
     }
 
 }

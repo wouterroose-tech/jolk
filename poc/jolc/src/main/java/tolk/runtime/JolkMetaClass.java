@@ -16,6 +16,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 import tolk.nodes.JolkDispatchNode;
+import tolk.nodes.JolkNode;
 import tolk.nodes.JolkReturnException;
 
 import java.util.HashSet;
@@ -716,8 +717,13 @@ public class JolkMetaClass extends DynamicObject {
             case "isInstance":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 return isMetaInstance(arguments[0]);
+            case "metaProtocol":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return JolkNode.lift(getMembers(true));
+            case "instanceProtocol":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return JolkNode.lift(getInstanceMemberNames());
         }
-
         // 2. Jolk Object Protocol: Classes are polite JoMoos
         Object intrinsicResult = JolkIntrinsicProtocol.dispatchObjectIntrinsic(this, member, arguments, interop);
         if (intrinsicResult != null) {
@@ -797,6 +803,27 @@ public class JolkMetaClass extends DynamicObject {
     public boolean hasInstanceMember(String name) {
         ensureHydrated();
         return instanceRegistry.containsKey(name);
+    }
+
+    /**
+     * ## hasMetaMember
+     *
+     * Checks if a member with the given name exists on the MetaClass itself.
+     * This is the meta-level counterpart to `hasInstanceMember`.
+     *
+     * @param name The name of the member.
+     * @return `true` if the MetaClass responds to this selector.
+     */
+    public boolean hasMetaMember(String name) {
+        ensureHydrated();
+        if (metaRegistry.containsKey(name)) return true;
+        if (DynamicObjectLibrary.getUncached().containsKey(this, name)) return true;
+        if (switch (name) {
+            case "new", "name", "superclass", "isInstance" -> true;
+            default -> false;
+        }) return true;
+        if (isObjectIntrinsic(name)) return true;
+        return hostClass != null && lookupMetaMember(name) != null;
     }
 
     /**

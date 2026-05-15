@@ -245,10 +245,14 @@ public abstract class JolkDispatchNode extends Node {
 
     /// ### Fast Path for Shape-based Property Access (Field Flattening)
     ///
-    /// This specialization implements the **protocol-driven flow** for object state. 
-    /// By caching the {@link Shape} and the specific {@link Property} offset.
-    /// This collapses a dynamic message send (e.g., `#field`) into a direct memory
-    /// offset load or store at the machine level.
+    /// This specialization implements the **protocol-driven flow** for object state, 
+    /// enforcing both **Encapsulation** and **Local Retention**. By caching the 
+    /// {@link Shape} and the specific {@link Property} offset, the engine collapses 
+    /// a dynamic message send into a direct machine-level operation.
+    /// 
+    /// While getters follow the **Sovereign Fence**, setters are treated as 
+    /// formal protocol requests rather than raw assignments, preserving the 
+    /// object's internal authority over its own state.
     ///
     /// By projecting the object's structural identity into the execution path, 
     /// the engine ensures that the "Lexical Fence" surrounding fields does not 
@@ -1370,7 +1374,71 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
-    /// ### Fast Path for User-Defined Methods
+    /// ### doJolkMetaClass
+    ///
+    /// Specialized dispatch for `JolkMetaClass` receivers. This handles intrinsic
+    /// meta-protocol messages like `#metaProtocol`, `#instanceProtocol`, `#message`,
+    /// and `#stateProjection` directly, ensuring they are resolved before falling
+    /// back to custom meta-members or generic interop.
+    @Specialization
+    protected Object doJolkMetaClass(VirtualFrame frame, tolk.runtime.JolkMetaClass receiver, String selector, Object[] arguments,
+                                     @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
+        try {
+            switch (selector) {
+                case "metaProtocol" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    return JolkNode.lift(receiver.getMembers(true));
+                }
+                case "instanceProtocol" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    return JolkNode.lift(receiver.getInstanceMemberNames());
+                }
+                case "message" -> { // Dynamic Message Send API
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    // Reifies a string into a communicative identity (Selector)
+                    return JolkNode.lift(arguments[0]);
+                }
+                case "stateProjection" -> { 
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    java.util.Map<String, Object> state = new java.util.LinkedHashMap<>();
+                    DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
+                    for (Object key : lib.getKeyArray(receiver)) {
+                        if (key instanceof String s) {
+                            state.put(s, lib.getOrDefault(receiver, s, JolkNothing.INSTANCE));
+                        }
+                    }
+                    return state;
+                }
+                default -> {
+                    // 1. Try to find a custom meta-member (user-defined meta-method or meta-field)
+                    Object member = lookupMetaMember(receiver, selector);
+                    if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                        Object[] args = prepareArguments(member, receiver, arguments);
+                        return JolkNode.lift(interop.execute(member, args));
+                    }
+                    // 2. If not a custom meta-member, try intrinsic object protocol (e.g., #hash, #toString)
+                    if (isObjectIntrinsic(selector)) {
+                        return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                    }
+                    // 3. Fallback to generic interop on the JolkMetaClass itself (e.g., if it's a host object)
+                    try {
+                        return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
+                    } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                        // If all else fails, it's a message not understood
+                        throw new JolkMessageNotUnderstoodException(receiver, selector);
+                    }
+                }
+            }
+        } catch (JolkReturnException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on JolkMetaClass", e);
+        }
+    }
+
+    /// ### doUserDirect
+    ///
+    /// Fast Path for User-Defined Methods
     ///
     /// Specializes the dispatch for Jolk objects (DynamicObject). By caching the 
     /// method lookup result based on the shape and selector, we eliminate the 
@@ -1424,8 +1492,8 @@ public abstract class JolkDispatchNode extends Node {
                 throw new RuntimeException(e);
             }
         }
-        // If member is null, fall back to generic dispatch (e.g. host members)
-        return doDispatch(frame, receiver, selector, arguments, interop);
+        // If member is null, fall back to generic dispatch (e.g., host members)
+        return doDispatchGeneric(frame, receiver, selector, arguments, interop);
     }
 
     /// ### Generic Dispatch
@@ -1438,9 +1506,10 @@ public abstract class JolkDispatchNode extends Node {
         "doControlFlowDirect", "doTernaryDirect", "doControlFlow", "doDecimal",
         "doTimesDirect", "doTimesIndirect", "doMap", "doFilter", "doAnyMatch", "doFindFirst",
         "doIteratorForEach", "doMapForEach", "doLongClosureDirect", "doLongCached", 
-        "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable", "doDoubleArithmetic"
+        "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable", "doDoubleArithmetic",
+        "doJolkMetaClass"
     })
-    protected Object doDispatch(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
+    protected Object doDispatchGeneric(VirtualFrame frame, Object receiver, String selector, Object[] arguments, // Renamed to avoid conflict with doJolkMetaClass
                                 @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
         try {
@@ -1602,7 +1671,9 @@ public abstract class JolkDispatchNode extends Node {
     /// @param member The selector name to check.
     /// @return true if the selector is a Jolk intrinsic.
     public static boolean isObjectIntrinsic(String member) {
-        return "case".equals(member) || JolkIntrinsicProtocol.isObjectIntrinsic(member);
+        return "case".equals(member) || "project".equals(member) || "respondsTo".equals(member) || 
+               "metaProtocol".equals(member) || "instanceProtocol".equals(member) || "message".equals(member) ||
+               "stateProjection".equals(member) || JolkIntrinsicProtocol.isObjectIntrinsic(member);
     }
 
     @TruffleBoundary
@@ -1796,6 +1867,73 @@ public abstract class JolkDispatchNode extends Node {
                     }
                     boolean matches = (Boolean) dispatchObjectIntrinsic(receiver, "~~", arguments, interop);
                     return matches ? JolkMatch.with(receiver) : receiver;
+                }
+                case "project" -> {
+                    // DMS API / Identity Projection: Implements mass-assignment or directed projection.
+                    if (arguments.length == 1 && arguments[0] instanceof Map map) {
+                        // Map-based projection (from ObjectExtension snippet)
+                        for (Map.Entry<?, ?> entry : ((Map<?, ?>) map).entrySet()) {
+                            String key = String.valueOf(entry.getKey());
+                            dispatchHostMember(receiver, key, new Object[]{entry.getValue()});
+                        }
+                        return receiver;
+                    } else if (arguments.length >= 1) {
+                        // Selector-based projection: targetClass #project(selector, args)
+                        String selector = String.valueOf(arguments[0]);
+                        Object[] shiftArgs = new Object[arguments.length - 1];
+                        System.arraycopy(arguments, 1, shiftArgs, 0, shiftArgs.length);
+                        // Use Interop to perform the projected handshake
+                        return JolkNode.lift(interop.invokeMember(receiver, selector, shiftArgs));
+                    }
+                    throw ArityException.create(1, 1, arguments.length);
+                }
+                case "respondsTo" -> {
+                    // Identity Verification: Checks if the receiver adheres to a specific protocol signature.
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    String targetSelector = String.valueOf(arguments[0]);
+                    if (receiver instanceof JolkObject jo) {
+                        return jo.getJolkMetaClass().hasInstanceMember(targetSelector) || 
+                               jo.getJolkMetaClass().getFieldIndex(targetSelector) != -1;
+                    }
+                    if (receiver instanceof JolkMetaClass jmc) {
+                        return jmc.hasMetaMember(targetSelector);
+                    }
+                    return interop.isMemberInvocable(receiver, targetSelector);
+                }
+                case "metaProtocol" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    if (receiver instanceof tolk.runtime.JolkMetaClass jmc) {
+                        // Returns the flattened registry of meta-members (factory methods, constants)
+                        return JolkNode.lift(jmc.getMembers(true));
+                    }
+                    return JolkNothing.INSTANCE;
+                }
+                case "instanceProtocol" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    if (receiver instanceof tolk.runtime.JolkMetaClass jmc) {
+                        // Returns the handshake surface available to all instances of this class
+                        return JolkNode.lift(jmc.getInstanceMemberNames());
+                    }
+                    return JolkNothing.INSTANCE;
+                }
+                case "message" -> {
+                    if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
+                    // Reifies a string into a communicative identity (Selector)
+                    return JolkNode.lift(arguments[0]);
+                }
+                case "stateProjection" -> {
+                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                    if (receiver instanceof DynamicObject dobj) {
+                        java.util.Map<String, Object> state = new java.util.LinkedHashMap<>();
+                        DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
+                        for (Object key : lib.getKeyArray(dobj)) {
+                            if (key instanceof String s) {
+                                state.put(s, lib.getOrDefault(dobj, s, JolkNothing.INSTANCE));
+                            }
+                        }
+                        return state;
+                    }
+                    return JolkNothing.INSTANCE;
                 }
                 case "?" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);

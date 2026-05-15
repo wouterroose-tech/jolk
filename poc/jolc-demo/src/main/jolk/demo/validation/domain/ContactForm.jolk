@@ -7,4 +7,22 @@ final class ContactForm {
     public Person person;
     public String description;
     public Long zipCode;
+    public String email;
+
+    /// Returns a string representation of the contact form.
+    String toString() {
+        ^ "ContactForm[person=" + self #person + ", description=" + self #description + ", zipCode=" + self #zipCode + ", email=" + self #email + "]"
+    }
+
+    /// Performs a structural equivalence check.
+    Boolean ~~(Object other) {
+        (self == other) ? [ ^true ];
+        other #instanceOf(ContactForm) #ifPresent [ f -> 
+            ^ (self #person ~~ f #person)
+                && (self #description ~~ f #description)
+                && (self #zipCode ~~ f #zipCode)
+                && (self #email ~~ f #email)
+            ];
+        ^ false
+    }
 }

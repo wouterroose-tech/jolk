@@ -1217,6 +1217,7 @@ public abstract class JolkDispatchNode extends Node {
                              @Cached TruffleString.CodePointLengthNode lengthNode,
                              @Cached TruffleString.EqualNode equalNode,
                              @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop,
+                             @Shared("dispatch") @Cached JolkDispatchNode dispatchNode,
                              @Cached TruffleString.ConcatNode concatNode,
                              @Cached TruffleString.FromLongNode fromLongNode) {
        
@@ -1232,12 +1233,18 @@ public abstract class JolkDispatchNode extends Node {
             
             if (arguments.length == 1 && "+".equals(selector)) {
                 Object other = arguments[0];
+                TruffleString otherTS;
                 if (other instanceof TruffleString ts) {
-                    return concatNode.execute(receiver, ts, encoding, true);
+                    otherTS = ts;
                 } else if (other instanceof Long l) {
-                    return concatNode.execute(receiver, fromLongNode.execute(l, encoding, true), encoding, true);
+                    otherTS = fromLongNode.execute(l, encoding, true);
+                } else {
+                    // Identity Congruence: send #toString to the operand to respect the Jolk protocol.
+                    Object stringified = dispatchNode.execute(frame, other, "toString", new Object[0]);
+                    otherTS = (stringified instanceof TruffleString ts) ? ts : 
+                        TruffleString.fromJavaStringUncached(String.valueOf(stringified), encoding);
                 }
-                // Fallback for other types via interop
+                return concatNode.execute(receiver, otherTS, encoding, true);
             }
 
             if (arguments.length == 1 && "??".equals(selector)) return JolkNode.lift(receiver);
@@ -1254,11 +1261,6 @@ public abstract class JolkDispatchNode extends Node {
                 if ("toLowerCase".equals(selector)) return JolkNode.lift(toJavaStringNode.execute(receiver).toLowerCase());
                 if ("trim".equals(selector)) return JolkNode.lift(toJavaStringNode.execute(receiver).trim());
             }
-            
-            if (arguments.length == 1 && "+".equals(selector)) {
-                return JolkNode.lift(toJavaStringNode.execute(receiver) + String.valueOf(arguments[0]));
-            }
-
             if (arguments.length == 1 && "matches".equals(selector)) {
                 return JolkNode.lift(toJavaStringNode.execute(receiver).matches(interop.asString(arguments[0])));
             }

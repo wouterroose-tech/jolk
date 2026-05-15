@@ -41,13 +41,24 @@ public class DomainTest extends JolcTestBase {
         return eval(source);
     }
 
-    @Test
     private Value contactFormClass() {
         String source = """
             final class ContactForm {
                 public Person person;
                 public String description;
                 public Long zipCode;
+                String toString() {
+                    ^ "ContactForm[person=" + self #person + ", description=" + self #description + ", zipCode=" + self #zipCode + "]"
+                }
+                Boolean ~~(Object other) {
+                    (self == other) ? [ ^true ];
+                    other #instanceOf(ContactForm) #ifPresent [ f -> 
+                        ^ (self #person ~~ f #person)
+                            && (self #description ~~ f #description)
+                            && (self #zipCode ~~ f #zipCode)
+                        ];
+                    ^ false
+                }
             }""";
         return eval(source);
     }
@@ -69,10 +80,26 @@ public class DomainTest extends JolcTestBase {
 
     @Test
     void testContactForm() {
-        Value person = this.personClass().invokeMember("new", 123456789L, "John", "Doe");
-        Value form = this.contactFormClass().invokeMember("new", person, "Form", "1234");
+        Value person = this.personClass().invokeMember("new", 123456789, "John", "Doe");
+        Value form = this.contactFormClass().invokeMember("new", person, "Form", 1234L);
 
         assertEquals(person, form.invokeMember("person"));
+        assertEquals("Form", form.invokeMember("description").asString());
+        assertEquals(1234L, form.invokeMember("zipCode").asLong());
+
+        // Verify string representation (validates protocol interpolation)
+        assertEquals("ContactForm[person=Person[ssn=123456789, firstName=John, lastName=Doe], description=Form, zipCode=1234]", 
+                     form.invokeMember("toString").asString());
+
+        // Verify structural equivalence
+        assertTrue(form.invokeMember("~~", form).asBoolean(), "Form must be equivalent to itself.");
+        
+        Value person2 = this.personClass().invokeMember("new", 123456789, "John", "Doe");
+        Value form2 = this.contactFormClass().invokeMember("new", person2, "Form", 1234L);
+        assertTrue(form.invokeMember("~~", form2).asBoolean(), "Forms with equivalent data must be equivalent.");
+
+        Value form3 = this.contactFormClass().invokeMember("new", person, "Other", 9999L);
+        assertFalse(form.invokeMember("~~", form3).asBoolean(), "Forms with different data must not be equivalent.");
     }
 
 }

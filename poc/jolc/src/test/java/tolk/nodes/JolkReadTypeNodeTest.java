@@ -56,7 +56,6 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
      * message send to a meta-receiver (e.g. for internal constants like FORTY_TWO).
      */
     @Test
-    //@Disabled("activate once the fallback logic is implemented in JolkReadTypeNode")
     void testResolveMetaConstantFallback() {
         String constantName = "FORTY_TWO";
         long expectedValue = 42L;

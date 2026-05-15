@@ -169,8 +169,8 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         
         // Reify a string into a selector and project it onto the instance
-        // This simulates: instance #update(100)
-        Value result = instance.invokeMember("update", 100L);
+        // Jolk: selector = Target #message("update"); instance #project(selector, 100)
+        Value result = instance.invokeMember("project", "update", 100L);
         assertEquals(100L, result.asLong());
     }
 

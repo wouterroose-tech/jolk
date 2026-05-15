@@ -223,7 +223,6 @@ public class JolkClosureTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("Activate when interop protocol is implemented")
     void testTryWithAutoCloseableHostResource() throws Exception {
         eval("");
         context.enter();

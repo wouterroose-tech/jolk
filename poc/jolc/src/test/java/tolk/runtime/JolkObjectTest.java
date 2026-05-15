@@ -380,7 +380,6 @@ public class JolkObjectTest extends JolcTestBase {
      * Verifies mass-assignment via the '#project' message using a Map.
      */
     @Test
-    @Disabled("Pending implemetation of asProjection")
     void testProject() {
         String source = "class Projectable { String name; Long age; }";
         Value instance = eval(source).invokeMember("new");
@@ -392,6 +391,38 @@ public class JolkObjectTest extends JolcTestBase {
 
         assertEquals("Jolk", instance.invokeMember("name").asString());
         assertEquals(1L, instance.invokeMember("age").asLong());
+    }
+
+    /**
+     * ### testProjectSelector
+     * 
+     * Verifies the Dynamic Message Send (DMS) API via '#project' with a selector and arguments.
+     */
+    @Test
+    void testProjectSelector() {
+        String source = "class ProjectSelector { String val; }";
+        Value instance = eval(source).invokeMember("new");
+        
+        // Dynamic Message Send: instance #project(#val, "Dynamic")
+        instance.invokeMember("project", "val", "Dynamic");
+
+        assertEquals("Dynamic", instance.invokeMember("val").asString());
+    }
+
+    /**
+     * ### testProjectMeta
+     * 
+     * Verifies that '#project' can be used on a MetaClass to configure meta-level state.
+     */
+    @Test
+    void testProjectMeta() {
+        String source = "class MetaProject { public meta String config; }";
+        Value meta = eval(source);
+        
+        java.util.Map<String, Object> data = java.util.Map.of("config", "MetaActive");
+        meta.invokeMember("project", data);
+
+        assertEquals("MetaActive", meta.invokeMember("config").asString());
     }
 
     @Test

@@ -80,6 +80,26 @@ extension ObjectExtension on java.lang.Object {
         ^ true
     }
     
+    /// ## project
+    /// DMS API / Identity Projection: Implements mass-assignment or directed projection.
+    ///
+    /// This message facilitates the **Identity Projection** handshake. When provided 
+    /// with a Map, it performs a mass-assignment by invoking members corresponding 
+    /// to the map keys. When provided with a Selector and arguments, it performs 
+    /// a dynamic message send.
+    ///
+    /// - **map**: A Map of field identifiers to values for mass-assignment.
+    /// - **Returns**: `self`.
+    Self project(Map map) {}
+
+    /// ## project
+    /// Selector-based projection: receiver #project(selector, args)
+    ///
+    /// - **s**: The reified Selector (message) to project onto the receiver.
+    /// - **args**: Variadic arguments for the message send.
+    /// - **Returns**: The result of the projected message send.
+    Object project(Selector s, Object... args) {}
+
     /// ## isEmpty
     /// Checks if the receiver represents the absence of a value.
     ///

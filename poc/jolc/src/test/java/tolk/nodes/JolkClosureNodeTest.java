@@ -81,7 +81,6 @@ public class JolkClosureNodeTest {
      * Verifies the JolkClosure interop protocol for 'catch' and 'finally'.
      */
     @Test
-    //@Disabled("Activate when interop protocol is implemented")
     void testClosureProtocolHandlers() throws UnsupportedMessageException, ArityException, UnsupportedTypeException, UnknownIdentifierException {
         InteropLibrary interop = InteropLibrary.getUncached();
         

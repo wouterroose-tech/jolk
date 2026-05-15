@@ -113,11 +113,12 @@ public class JolkObject extends DynamicObject {
     @ExportMessage
     public boolean isMemberInvocable(String member,
                                      @Exclusive @CachedLibrary(limit = "3") InteropLibrary interop) {
+        InteropLibrary uncached = InteropLibrary.getUncached();
         // Recognise methods, intrinsics, and fields as invocable targets
         return metaClass.hasInstanceMember(member) 
             || JolkDispatchNode.isObjectIntrinsic(member)
             || metaClass.getFieldIndex(member) != -1
-            || interop.isMemberInvocable(metaClass, member);
+            || uncached.isMemberInvocable(metaClass, member);
     }
 
     @ExportMessage
@@ -137,8 +138,9 @@ public class JolkObject extends DynamicObject {
             }
             return value;
         }
-        if (interop.isMemberReadable(metaClass, member)) {
-            return JolkNode.lift(interop.readMember(metaClass, member));
+        InteropLibrary metaInterop = InteropLibrary.getUncached(metaClass);
+        if (metaInterop.isMemberReadable(metaClass, member)) {
+            return JolkNode.lift(metaInterop.readMember(metaClass, member));
         }
         throw UnknownIdentifierException.create(member);
     }
@@ -158,7 +160,7 @@ public class JolkObject extends DynamicObject {
             Object[] argsWithReceiver = new Object[arguments.length + 1];
             argsWithReceiver[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, argsWithReceiver, 1, arguments.length);
-            Object result = interop.execute(instanceMember, argsWithReceiver);
+            Object result = InteropLibrary.getUncached(instanceMember).execute(instanceMember, argsWithReceiver);
             return JolkNode.lift(result);
         }
 
@@ -183,6 +185,12 @@ public class JolkObject extends DynamicObject {
             throw ArityException.create(0, 1, arguments.length);
         }
 
+        // 3. Identity Projection (DMS API / Mass-Assignment)
+        if ("project".equals(name)) {
+            Object result = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
+            if (result != null) return result;
+        }
+
         // 3. Handle standard intrinsic protocol via the central dispatcher (ObjectExtension).
         Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
         if (intrinsicResult != null) {
@@ -191,8 +199,9 @@ public class JolkObject extends DynamicObject {
 
         // 4. Meta-Stratum Delegation (Dual-Stratum Resolution)
         // If the selector is not an instance member, check the MetaClass identity.
-        if (interop.isMemberInvocable(metaClass, name)) {
-            return JolkNode.lift(interop.invokeMember(metaClass, name, arguments));
+        InteropLibrary metaInterop = InteropLibrary.getUncached(metaClass);
+        if (metaInterop.isMemberInvocable(metaClass, name)) {
+            return JolkNode.lift(metaInterop.invokeMember(metaClass, name, arguments));
         }
 
         throw UnknownIdentifierException.create(member);

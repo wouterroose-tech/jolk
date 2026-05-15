@@ -19,6 +19,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.StopIterationException;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -37,6 +38,7 @@ import tolk.runtime.JolkClosure;
 import tolk.runtime.JolkDecimalExtension;
 import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkObject;
+import tolk.runtime.JolkSelector;
 import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkMatch;
 import tolk.runtime.JolkBooleanExtension;
@@ -1398,7 +1400,7 @@ public abstract class JolkDispatchNode extends Node {
                 case "message" -> { // Dynamic Message Send API
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     // Reifies a string into a communicative identity (Selector)
-                    return JolkNode.lift(arguments[0]);
+                    return JolkSelector.create(arguments[0]);
                 }
                 case "stateProjection" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -1872,13 +1874,32 @@ public abstract class JolkDispatchNode extends Node {
                 }
                 case "project" -> {
                     // DMS API / Identity Projection: Implements mass-assignment or directed projection.
-                    if (arguments.length == 1 && arguments[0] instanceof Map map) {
-                        // Map-based projection (from ObjectExtension snippet)
-                        for (Map.Entry<?, ?> entry : ((Map<?, ?>) map).entrySet()) {
-                            String key = String.valueOf(entry.getKey());
-                            dispatchHostMember(receiver, key, new Object[]{entry.getValue()});
+                    if (arguments.length == 1) {
+                        Object mapObj = arguments[0];
+                        InteropLibrary mapInterop = InteropLibrary.getUncached(mapObj);
+                        
+                        if (mapInterop.hasHashEntries(mapObj)) {
+                            try {
+                                Object keys = mapInterop.getHashKeysIterator(mapObj);
+                                InteropLibrary iterInterop = InteropLibrary.getUncached(keys);
+                                while (iterInterop.hasIteratorNextElement(keys)) {
+                                    Object keyObj = iterInterop.getIteratorNextElement(keys);
+                                    String key = String.valueOf(keyObj);
+                                    Object value = mapInterop.readHashValue(mapObj, keyObj);
+                                    
+                                    try {
+                                        // Use the receiver's interop to perform the projected handshake
+                                        interop.invokeMember(receiver, key, new Object[]{value});
+                                    } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+                                        // Fallback to host member heuristic if interop fails
+                                        dispatchHostMember(receiver, key, new Object[]{value});
+                                    }
+                                }
+                                return receiver;
+                            } catch (UnsupportedMessageException | UnknownIdentifierException | StopIterationException e) {
+                                // Fall through to standard selector projection if hash access fails
+                            }
                         }
-                        return receiver;
                     } else if (arguments.length >= 1) {
                         // Selector-based projection: targetClass #project(selector, args)
                         String selector = String.valueOf(arguments[0]);
@@ -1921,7 +1942,7 @@ public abstract class JolkDispatchNode extends Node {
                 case "message" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     // Reifies a string into a communicative identity (Selector)
-                    return JolkNode.lift(arguments[0]);
+                    return JolkSelector.create(arguments[0]);
                 }
                 case "stateProjection" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);

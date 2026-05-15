@@ -630,7 +630,7 @@ public class JolkMetaClass extends DynamicObject {
             metaArguments[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
             try {
-                return JolkBuiltinMethod.lift(interop.execute(memberObj, metaArguments));
+                return JolkBuiltinMethod.lift(InteropLibrary.getUncached(memberObj).execute(memberObj, metaArguments));
             } catch (JolkReturnException e) {
                 throw e; // Preserve signal for non-local returns
             }
@@ -651,7 +651,7 @@ public class JolkMetaClass extends DynamicObject {
             metaArguments[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
             try {
-                return JolkBuiltinMethod.lift(interop.execute(memberObj, metaArguments));
+                return JolkBuiltinMethod.lift(InteropLibrary.getUncached(memberObj).execute(memberObj, metaArguments));
             } catch (JolkReturnException e) {
                 throw e;
             }
@@ -668,7 +668,7 @@ public class JolkMetaClass extends DynamicObject {
                 Object[] metaArguments = new Object[arguments.length + 1];
                 metaArguments[0] = this;
                 if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
-                return JolkBuiltinMethod.lift(interop.execute(hostMember, metaArguments));
+                return JolkBuiltinMethod.lift(InteropLibrary.getUncached(hostMember).execute(hostMember, metaArguments));
             }
         }
 
@@ -723,6 +723,8 @@ public class JolkMetaClass extends DynamicObject {
             case "instanceProtocol":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return JolkNode.lift(getInstanceMemberNames());
+            case "project":
+                return JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop);
         }
         // 2. Jolk Object Protocol: Classes are polite JoMoos
         Object intrinsicResult = JolkIntrinsicProtocol.dispatchObjectIntrinsic(this, member, arguments, interop);
@@ -785,11 +787,17 @@ public class JolkMetaClass extends DynamicObject {
         throw UnknownIdentifierException.create(member);
     }
 
+    /// @param member The selector name to check.
+    /// @return true if the selector is a Jolk intrinsic.
     public static boolean isObjectIntrinsic(String member) {
-        return JolkIntrinsicProtocol.isObjectIntrinsic(member);
+        return "case".equals(member) || "project".equals(member) || "respondsTo".equals(member) || 
+               "metaProtocol".equals(member) || "instanceProtocol".equals(member) || "message".equals(member) ||
+               "stateProjection".equals(member) || JolkIntrinsicProtocol.isObjectIntrinsic(member);
     }
+    
+    
     // --- Instance member lookup (for JolkObject) ---
-
+    
     /**
      * ## hasInstanceMember
      *

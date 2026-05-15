@@ -58,7 +58,6 @@ public class IssueTest extends JolcTestBase {
     }
 
     @Test
-    //@Disabled("activate when Record is implemented")
     void testIssue() {
         Value level = this.levelEnum().getMember("ERROR");
         Value issue = this.issueType().invokeMember("new", null, "Test message", level);

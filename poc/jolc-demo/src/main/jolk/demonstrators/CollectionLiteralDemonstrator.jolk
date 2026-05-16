@@ -1,0 +1,48 @@
+~ demonstrators;
+
++ java.util.ArrayList;
+
+/// # CollectionLiteralDemonstrator
+///
+/// A collection literal (Array `#[ ]`, Set `#{ }` or Map `#( )`) is a shorthand
+/// notation for the underlying message-based variadic creation of a primary object. 
+///
+/// Demonstrates the syntax and usage of Collection literals (`#[]`, `#{}`, `#( )`) in Jolk.
+///
+/// This demonstrator showcases how Jolk collections (backed by `java.util.ArrayList`, 
+/// `java.util.HashSet`, and `java.util.HashMap`)  are initialized, queried using Jolk's 
+/// functional flow, and nested to create multi-dimensional structures. It emphasizes the use
+/// of Jolk's equivalence  protocol (`~~`) to bridge the gap between Guest and Host identities.
+/// 
+/// @author Wouter Roose
+
+final class CollectionLiteralDemonstrator {
+
+    stable ArrayList<String> colors = #["red", "green", "blue"];
+    //stable HashMap<String, String> colorMap = #{"red": "RED", "green": "GREEN", "blue": "BLUE"}};
+
+    /// Returns a literal array of strings.
+    ArrayList<String> runArrayLiteral() {
+        ^ #["a", "b", "c"]
+    }
+
+    /// Returns the contents of the `colors` field.
+    ArrayList<String> runArrayLiteralField() {
+        ^ colors
+    }
+
+    /// Returns an empty array literal.
+    ArrayList<Object> runEmptyArray() {
+        ^ #[]
+    }
+
+    /// Checks if the colors array contains a specific color.
+    Boolean runContains(String color) {
+        ^ colors #anyMatch [ c -> c ~~ color ]
+    }
+
+    /// Returns a nested array structure.
+    ArrayList<ArrayList<Long>> runNestedArray() {
+        ^ #[ #[1, 2], #[3, 4] ]
+    }
+}

@@ -1,5 +1,9 @@
 ~ examples;
 
+
+& java.lang.Math.PI;
+& TWO_PI = java.lang.Math.TAU;
+
 /// #Circle
 ///
 /// This class represents a simple circle with a radius and provides methods to calculate its area and circumference.
@@ -7,9 +11,6 @@
 /// method declaration, and method implementation and meta field projection in Jolk.
 /// 
 /// @author Wouter Roose
-
-& java.lang.Math.PI;
-& TWO_PI = java.lang.Math.TAU;
 
 final class Circle {
 

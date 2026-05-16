@@ -359,7 +359,7 @@ By the application of implicit field Encapsulation and standardising core capabi
 
 Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that distinguishes the protocol from the implementation lattice. This ensures that an object’s behavioural protocol is verified independently of its implementation lineage. Jolk employs a protocol specification that treats type arguments as first-class, reified components of an identity’s behavioural contract. The architecture utilizes angle bracket notation `< >` as the primary Lexical Anchor to define these generic protocols.
 
-### Fields
+### State
 
 To maintain rigorous encapsulation, fields are absolutely private and direct field manipulation in Jolk is restricted to initial binding during instance construction. Field interaction—mediated through the lexical terminals (^ `field` for retrieval or `field = value` for assignment)—is restricted to the Archetype's internal implementation logic.
 
@@ -742,15 +742,10 @@ Control loops are implemented as polymorphic dispatch messages sent to objects. 
     counter = 0;  
     [ counter < 5 ] #while [ counter = counter + 1 ]
 
-**Pattern matching** 
+**Pattern Matching and Identity Projection** 
 
-Pattern Matching is not based on language keywords or a switch statement. Instead, it is an emergent property of the message chain. It relies on the sanitisation reflex to flow data through a series of 'gates' until it reaches the correct execution block. Because it is an expression, the match itself can be passed, returned, or nested without breaking the linear logic of the program. By transforming pattern matching from a language-level conditional into a choreographed message chain of `#as` and `#ifPresent`, Jolk replaces the imperative branching with a pipeline that uses an Intrinsic `Match<T>` container to refine untrusted inputs into safe, typed executions.
-
-    ^ x #as(String)                            //Returns Match<String> with the value or Nothing  
-        #filter [ s -> !(s #isEmpty) ]         // If false the content of Selection is dropped  
-        #map [ s -> System #out #println(s) ]  // It was a non-empty String so it gets printed
-
-Defined as *the invisible branch*, Jolk’s pattern matching is a state transition rather than a control structure. The system does not "branch"; it navigates through a sequence of negotiated outcomes where messages either realize an identity or are ignored.
+Pattern Matching in Jolk is not a rigid control structure like a `switch` statement; rather, it is an emergent protocol born from the composition of safe-casting and logical gates. It utilizes **Monadic Chaining** to flow an identity through a pipeline until it is refined into a specific, actionable type.
+Defined as the *invisible branch*, Jolk’s pattern matching is a state transition rather than a control structure. The system does not "branch"; it navigates through a sequence of negotiated outcomes where messages either realize an identity or are ignored.
 
 The `#case` selector acts as a logic gate that evaluates a closure only if the receiver matches the provided argument, maintaining the messaging paradigm. The Tolk toolchain identifies these sequences and "intrinsifies" them into native JVM switch opcodes.
 
@@ -758,6 +753,14 @@ The `#case` selector acts as a logic gate that evaluates a closure only if the r
         #case(200) #do ["Success"]         /// Returns if 200, or passes along  
         #case(404) #do ["Not Found"]       /// Returns if 404, or passes along  
         #default ["Unknown Error"]         /// default
+
+Identity Projection (#as) bridges the gap between abstract protocols and concrete identities. Jolk utilizes the `#as(Type)` message as a *Safe Casting* mechanism. It is the primary tool for type narrowing at runtime, ensuring that casting is a communicative act that results in a manageable `Match` container. Identity Projection negotiates a new handshake, if the receiver cannot fulfill the requested protocol, the projection resolves to `Nothing`. This allows for logic to flow through filters and maps without the risk of a substrate-level crash.
+
+The pattern matching choreography relies on the Identity Projection message (`#as(Type)`), which performs a type-safe narrowing. Instead of returning a raw pointer or throwing a cast exception, `#as` returns a `Match<T>` container. This allows the logic to proceed through a chain of `#filter`, `#map`, or `#ifPresent` messages, transforming imperative branching into a declarative data flow.
+
+    ^ x #as(String)                            // Returns Match<String> with the value or Nothing
+        #filter [ s -> !(s #isEmpty) ]         // If false the content of Selection is dropped  
+        #map [ s -> System #out #println(s) ]  // It was a non-empty String so it gets printed
 
 Pattern Matching results in a `Match<T>` to drive logic flow through a message chain, whereas `Optional<T>` is used to represent the state of a value that may be absent over time.
 
@@ -818,7 +821,7 @@ For code that must execute regardless of whether an error occurred, Jolk uses th
 
 Identity Projection and the Meta-Level Protocol establish the absolute rules for communication within the unified Message-Passing. By treating archetypes as first-class Meta-Object Identities, Jolk replaces static keywords and traditional reflection with a unified, recursive protocol. In this architecture, the MetaClass is not merely a static descriptor but a sovereign identity; as a first-class object adhering to the foundational messaging protocol, the blueprint itself can receive any message defined in the root substrate, including those within the *Dynamic Message Send API*.
 
-Within this substrate, messages such as `#new` are standard signals transmitted to a class identity. Because the class operates as an instance of a `MetaClass`, it possesses the meta-awareness required to execute its own allocation logic. This transition from introspective observation to constructive projection ensures Dispatch Invariability. Whether synthesised as a mock or a serialiser, every Object exists as a native fact with a fixed coordinate, rendering runtime bytecode manipulation and reflective proxies obsolete.
+Within this substrate, messages such as `#new` are standard signals transmitted to a class identity. Because the class operates as an instance of a `MetaClass`, it possesses the meta-awareness required to execute its own allocation logic. This transition from introspective observation to constructive projection ensures dispatch invariability. Whether synthesised as a mock or a serialiser, every Object exists as a native fact with a fixed coordinate, rendering runtime bytecode manipulation and reflective proxies obsolete.
 
 To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *Intrinsic Synthesis Protocol*. Through the `@Intrinsic` directive, the compiler performs mapping of protocol constants during the build phase, flattening dynamic message-passing. This process elides the abstraction layer, allowing the Graal JIT[12] to apply speculative pruning and polymorphic inline caching. Consequently, dynamic projections achieve the same performance density as static execution.
 
@@ -849,7 +852,7 @@ If a receiver’s blueprint does not account for an identity, the projection is 
 
 ## Core Type System
 
-The *Sparse Type System*: Constituted through Type Coalescence—the projection of the messaging protocol onto the substrate as a semantic overlay, facilitating the structural absorption of external identities into the Jolk ecosystem.
+The *Sparse Type System*: Constituted through type coalescence—the projection of the messaging protocol onto the substrate as a semantic overlay, facilitating the structural absorption of external identities into the Jolk ecosystem.
 
 The Jolk Core Type System establishes a unified foundation for the language by seamlessly integrating native Java capabilities with refined, message-based semantics. Rather than acting as a simple wrapper, this system governs the identity and behaviour of every entity through Intrinsic types and Extensions, providing the behavioral substrate for Jolk Archetypes and host identities alike.
 
@@ -1002,10 +1005,12 @@ The *Universal Root Identity* constitutes the common denominator for all non-nul
 	    // Context-aware type reference  
 	    Metaclass<Self> getClass() { /* this.getClass() */ }
 	
-	    // The Jolk Type pattern match.   
-	    // At runtime, this flattens into an INSTANCEOF check and a conditional branch.  
-	    // At compile-time, the selector returns a Selection<T>, enabling execution in the fluent chain.  
-	    Selection<T> instanceOf(Type<T> type) { }
+		// Identity Projection: Narrow the identity into a specific protocol.
+		Match<T> instanceOf(Type<T> type) { }
+		Match<T> as(Type<T> type) { }
+
+		// Predicate: Verify if the identity adheres to a specific protocol.
+		Boolean isInstance(Type<T> type) { }
 	
 	    Self #project(Map[String, Object] fields) { 
 	        fields #forEach [ String key, Object value -> self #put(key, value) ];  
@@ -1136,7 +1141,7 @@ Jolk is a *Convergent Architecture* where the static safety of Java acts as the 
 
 *Receiver Retention*: while the behavior is identical to Smalltalk's ergonomics, receiver retention is a sanitization layer designed to preserve the message-passing paradigm of the language when operating within the procedural constraints of the Java Virtual Machine
 
-*Scala Influence*: The *Monadic Flow* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types[20]. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.
+*Scala Influence*: The *Monadic Chaining* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types[20]. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.
 
 *Lazy Evaluation*: While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization. Deferred computation provides a native mechanism for thread-safe, on-demand initialisation and resource management.
 
@@ -1606,7 +1611,7 @@ This is the mechanical process of collapsing high-level messaging protocols into
 
 **Functional Flow Flattening:** The engine utilizes loop fusion to collapse iterative patterns into single-pass loops. The `JolkDispatchNode` leverages `@Cached IndirectCallNode` to inline closure bodies, allowing the compiler to elide intermediate collection allocations.
  
-**Monadic Flow Flattening:** The JIT collapses `Match<T>` AST nodes into hardware branches by identifying logical patterns that allow the physical container to be elided from the compiled execution.
+**Monadic Flow Flattening**: The Tolk Engine identifies *Monadic Chaining* patterns (such as the `Match<T>` container) to elide physical object allocation during partial evaluation. By recognizing these logical structures, the JIT collapses high-level pipelines into raw hardware branches, reducing logic execution to zero-cost machine instructions.
 
 Through these specializations, the Tolk Engine resolves dynamic protocols into static hardware instructions, ensuring performance parity with procedural JVM languages while maintaining a pure message-passing model.
 
@@ -1723,10 +1728,8 @@ The terminology and recontextualized concepts of the Jolk language:
 **JoMoo (Jolk Message-Oriented Object)**: The primary structural unit of the language, functioning as a message coordinate in a communicative field.  
 **Lexical Fence**: A structural boundary that enforces message-only interaction.  
 **Message-Passing Paradigm**: A computational model where all computation is realized as a dynamic exchange of messages between autonomous entities. Jolk extends this paradigm to a unified field, where even fundamental operations like control flow and arithmetic are resolved through polymorphic dispatch.  
-**Sanitisation Reflex**: The message-passing pattern where untrusted or optional data is flowed through a sequence of `#ifPresent`, `#ifEmpty`, or `#instanceOf` gates to ensure logical safety before execution.
 **Metaboundary**: The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*, rendering intrusive reflection a semantic impossibility by ensuring the guest language has no primitives capable of bypassing the defined protocol.  
-**Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.  
-**Monadic Flow Flattening**: An architectural optimization where the Tolk Engine recognizes monadic patterns (such as the `Match<T>` container) and elides the physical object allocation during partial evaluation, reducing the logic to zero-cost machine instructions.  
+**Meta-Object Descriptor**: A reified architectural tier that separates instance-level logic from type-level metadata, allowing classes to participate in the same messaging protocol as instances.
 **Nothing**: A reified, first-class Atomic Identity representing the fact of absence and referred to by the reserved object identifier `null`.  
 **Receiver Retention**: A metaboundary protocol to ensure the receiver (`self`) is returned for chaining after interacting with Java `void` methods.  
 **Semantic Casing**: A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  

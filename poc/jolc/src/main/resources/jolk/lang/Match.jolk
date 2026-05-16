@@ -10,7 +10,7 @@
 /// message chains.
 ///
 /// While it functions as a monadic container at the language level, the Tolk compiler performs
-/// "Monadic Flow Flattening," eliminating the object allocation at runtime and translating
+/// "**Monadic Chaining Flattening**," eliminating the object allocation at runtime and translating
 /// message chains into efficient, direct bytecode instructions.
 ///
 /// @author Wouter Roose

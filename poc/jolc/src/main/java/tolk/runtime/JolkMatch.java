@@ -16,11 +16,11 @@ import tolk.nodes.JolkNode;
 /// Represents the runtime container for the `Match<T>` type.
 ///
 /// In the AST interpreter, this class serves as a necessary, concrete data carrier to
-/// pass the result of an `#instanceOf` check between execution nodes.
+/// pass the result of a **Safe Casting** message (`#as` or `#instanceOf`) between nodes.
 ///
 /// While acting as a data carrier in the interpreter, this object constitutes a 
-/// **zero-cost abstraction** in a compiled context. Through **Monadic Flow Flattening**, 
-/// the Tolk Engine utilizes Partial Escape Analysis to elide the container entirely, 
+/// zero-cost abstraction in a compiled context. Through **Monadic Chaining Flattening**, 
+/// the Tolk Engine utilizes Partial Escape Analysis (PEA) to elide the container, 
 /// reducing the logic to raw hardware registers and branch instructions.
 /// 
 @ExportLibrary(InteropLibrary.class)

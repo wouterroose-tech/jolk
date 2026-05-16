@@ -24,7 +24,7 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 * [Part Two: Identity and Type Architecture](#part-two)
     * [Types](#types)
     * [Messaging](#messaging)
-    * [Identity Projection and the Meta-Level Protocol](#identity-projection-and-the-meta-level-protocol)
+    * [Protocol Projection and the Meta-Level Protocol](#protocol-projection-and-the-meta-level-protocol)
     * [Core Type System](#core-type-system)
     * [Architectural Highlights](#architectural-highlights)
     * [Heritage & Foundation](#heritage--foundation)
@@ -742,10 +742,9 @@ Control loops are implemented as polymorphic dispatch messages sent to objects. 
     counter = 0;  
     [ counter < 5 ] #while [ counter = counter + 1 ]
 
-**Pattern Matching and Identity Projection** 
+**Pattern Matching and Safe Casting** 
 
-Pattern Matching in Jolk is not a rigid control structure like a `switch` statement; rather, it is an emergent protocol born from the composition of safe-casting and logical gates. It utilizes **Monadic Chaining** to flow an identity through a pipeline until it is refined into a specific, actionable type.
-Defined as the *invisible branch*, Jolk’s pattern matching is a state transition rather than a control structure. The system does not "branch"; it navigates through a sequence of negotiated outcomes where messages either realize an identity or are ignored.
+Pattern Matching in Jolk is not a rigid control structure like a `switch` statement; rather, it is an emergent protocol born from the composition of safe-casting and logical gates. It utilizes *Monadic Chaining* to flow an identity through a pipeline until it is refined into a specific, actionable type. Defined as the *invisible branch*, Jolk’s pattern matching is a state transition rather than a control structure. The system does not "branch"; it navigates through a sequence of negotiated outcomes where messages either realize an identity or are ignored.
 
 The `#case` selector acts as a logic gate that evaluates a closure only if the receiver matches the provided argument, maintaining the messaging paradigm. The Tolk toolchain identifies these sequences and "intrinsifies" them into native JVM switch opcodes.
 
@@ -754,9 +753,9 @@ The `#case` selector acts as a logic gate that evaluates a closure only if the r
         #case(404) #do ["Not Found"]       /// Returns if 404, or passes along  
         #default ["Unknown Error"]         /// default
 
-Identity Projection (#as) bridges the gap between abstract protocols and concrete identities. Jolk utilizes the `#as(Type)` message as a *Safe Casting* mechanism. It is the primary tool for type narrowing at runtime, ensuring that casting is a communicative act that results in a manageable `Match` container. Identity Projection negotiates a new handshake, if the receiver cannot fulfill the requested protocol, the projection resolves to `Nothing`. This allows for logic to flow through filters and maps without the risk of a substrate-level crash.
+Safe Casting is facilitated through the `#as(Type)` and `#instanceOf(Type)` messages, which bridge the gap between abstract protocols and concrete identities. In Jolk, `#instanceOf` is a projection mechanism. It serves as an instrument for *Type Narrowing* at runtime, ensuring that casting is a communicative act that results in a manageable `Match` container. Unlike a traditional cast, which **imposes a structural assertion** that risks a terminal failure, Safe Casting negotiates a new handshake; if the identity cannot adhere to the proposed protocol, the result resolves to `Nothing`.
 
-The pattern matching choreography relies on the Identity Projection message (`#as(Type)`), which performs a type-safe narrowing. Instead of returning a raw pointer or throwing a cast exception, `#as` returns a `Match<T>` container. This allows the logic to proceed through a chain of `#filter`, `#map`, or `#ifPresent` messages, transforming imperative branching into a declarative data flow.
+The pattern matching choreography relies on these safe-casting messages. Instead of returning a raw pointer or throwing a cast exception, they perform a type-safe narrowing and return a `Match<T>` container. This enables *Monadic Chaining* through a sequence of `#filter`, `#map`, or `#ifPresent` messages, transforming imperative branching into a declarative data flow.
 
     ^ x #as(String)                            // Returns Match<String> with the value or Nothing
         #filter [ s -> !(s #isEmpty) ]         // If false the content of Selection is dropped  
@@ -817,9 +816,9 @@ For code that must execute regardless of whether an error occurred, Jolk uses th
         #catch [ IOException e -> ... ]  
         #finally [ file #close ]
 
-## Identity Projection and the Meta-Level Protocol
+## Protocol Projection and the Meta-Level Protocol
 
-Identity Projection and the Meta-Level Protocol establish the absolute rules for communication within the unified Message-Passing. By treating archetypes as first-class Meta-Object Identities, Jolk replaces static keywords and traditional reflection with a unified, recursive protocol. In this architecture, the MetaClass is not merely a static descriptor but a sovereign identity; as a first-class object adhering to the foundational messaging protocol, the blueprint itself can receive any message defined in the root substrate, including those within the *Dynamic Message Send API*.
+Protocol Projection and the Meta-Level Protocol establish the absolute rules for communication within the unified Message-Passing. By treating archetypes as first-class Meta-Object Identities, Jolk replaces static keywords and traditional reflection with a unified, recursive protocol. In this architecture, the MetaClass is not merely a static descriptor but a sovereign identity; as a first-class object adhering to the foundational messaging protocol, the blueprint itself can receive any message defined in the root substrate, including those within the *Dynamic Message Send* API.
 
 Within this substrate, messages such as `#new` are standard signals transmitted to a class identity. Because the class operates as an instance of a `MetaClass`, it possesses the meta-awareness required to execute its own allocation logic. This transition from introspective observation to constructive projection ensures dispatch invariability. Whether synthesised as a mock or a serialiser, every Object exists as a native fact with a fixed coordinate, rendering runtime bytecode manipulation and reflective proxies obsolete.
 
@@ -846,7 +845,7 @@ To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *
 		Map stateProjection() {}
 	}
 
-Identity Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in the source code) and the Atomic Identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Identity Projection operates as a deterministic proposal strictly bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols rather than the violation of the lexical fence.
+Protocol Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in the source code) and the Atomic Identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Protocol Projection operates as a deterministic proposal strictly bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols rather than the violation of the lexical fence.
 
 If a receiver’s blueprint does not account for an identity, the projection is elevated to a deterministic failure. While the substrate produces `Nothing`, the system provides the #demand protocol to transform an unhandled handshake into a factual Interrupt or an `UnhandledIdentityException`. By unifying static and dynamic dispatch paths, Jolk ensures the unified communicative field remains a space of absolute accountability—a "Correct by Construction" environment where every signal is a verified, high-performance contract between identities.
 
@@ -1005,7 +1004,7 @@ The *Universal Root Identity* constitutes the common denominator for all non-nul
 	    // Context-aware type reference  
 	    Metaclass<Self> getClass() { /* this.getClass() */ }
 	
-		// Identity Projection: Narrow the identity into a specific protocol.
+		// Safe Casting: Narrow the identity into a specific protocol.
 		Match<T> instanceOf(Type<T> type) { }
 		Match<T> as(Type<T> type) { }
 

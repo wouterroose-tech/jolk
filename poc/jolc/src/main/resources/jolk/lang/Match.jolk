@@ -38,6 +38,10 @@ public final class Match<T> {
     /// Transforms the value if present.
     <U> Match<U> map(Closure<U> mapper) { }
     
+    /// ## get
+    /// Returns the value if present, otherwise returns Nothing.
+    T get() { }
+
     /// ## or
     /// Returns the value if present, otherwise returns the other value.
     T or(T other) { }

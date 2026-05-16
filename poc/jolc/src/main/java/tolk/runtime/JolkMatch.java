@@ -8,6 +8,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.nodes.JolkNode;
 
 /// # JolkMatch
@@ -37,12 +38,12 @@ public final class JolkMatch implements TruffleObject {
 
     /// Creates a successful match containing a value.
     public static JolkMatch with(Object value) {
-        return new JolkMatch(value, true, false);
+        return new JolkMatch(JolkNode.lift(value), true, false);
     }
 
     /// Creates an empty match.
     public static JolkMatch empty() {
-        return new JolkMatch(null, false, false);
+        return new JolkMatch(JolkNothing.INSTANCE, false, false);
     }
 
     /**
@@ -53,11 +54,31 @@ public final class JolkMatch implements TruffleObject {
      * this identity.
      */
     public static JolkMatch terminal(Object value) {
-        return new JolkMatch(value, true, true);
+        return new JolkMatch(JolkNode.lift(value), true, true);
     }
 
+    /// Returns the internal value.
+    /// Used for internal engine processing and explicit extraction.
     public Object getValue() {
-        return value;
+        return (isPresent && value != null) ? value : JolkNothing.INSTANCE;
+    }
+
+    @ExportMessage
+    public boolean isMemberReadable(String member) {
+        return switch (member) {
+            case "isPresent", "isEmpty", "get" -> true;
+            default -> false;
+        };
+    }
+
+    @ExportMessage
+    public Object readMember(String member) throws UnknownIdentifierException {
+        return switch (member) {
+            case "isPresent" -> isPresent;
+            case "isEmpty" -> !isPresent;
+            case "get" -> getValue();
+            default -> throw UnknownIdentifierException.create(member);
+        };
     }
 
     public boolean isPresent() {
@@ -74,6 +95,12 @@ public final class JolkMatch implements TruffleObject {
         return isPresent ? "Match(" + value + ")" : "Match.empty";
     }
 
+    @Override
+    @TruffleBoundary
+    public String toString() {
+        return toDisplayString(false);
+    }
+
     @ExportMessage
     public boolean hasMembers() {
         return true;
@@ -81,13 +108,13 @@ public final class JolkMatch implements TruffleObject {
 
     @ExportMessage
     public Object getMembers(boolean includeInternal) {
-        return new JolkMemberNames(new String[]{"ifPresent", "isPresent", "isEmpty"});
+        return new JolkMemberNames(new String[]{"ifPresent", "isPresent", "isEmpty", "get"});
     }
 
     @ExportMessage
     public boolean isMemberInvocable(String member) {
         return switch (member) {
-            case "ifPresent", "isPresent", "isEmpty" -> true;
+            case "ifPresent", "isPresent", "isEmpty", "get" -> true;
             default -> false;
         };
     }
@@ -111,6 +138,9 @@ public final class JolkMatch implements TruffleObject {
             case "isEmpty":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return !isPresent;
+            case "get":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return getValue();
             default:
                 throw UnknownIdentifierException.create(member);
         }

@@ -2,7 +2,6 @@ package tolk.runtime;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import java.util.Collections;
@@ -392,11 +391,10 @@ public class JolkObjectTest extends JolcTestBase {
     /**
      * ### testAsProjection
      * 
-     * Verifies the '#as' projection (Safe Casting). 
+     * Verifies the '#as' projection (safe Casting). 
      * It should return a Match identity.
      */
     @Test
-    @Disabled("Pending implemetation of asProjection")
     void testAsProjection() {
         String source = "class TargetType { Long id = 42; }";
         Value meta = eval(source);
@@ -408,6 +406,7 @@ public class JolkObjectTest extends JolcTestBase {
 
         Value noMatch = instance.invokeMember("as", eval("class WrongType {}"));
         assertFalse(noMatch.invokeMember("isPresent").asBoolean());
+        assertTrue(noMatch.invokeMember("get").isNull());
     }
 
     /**

@@ -593,8 +593,8 @@ In Jolk, the use of a meta field *Projection* through the `&` / `using meta` act
 This mechanism allows for a more fluid and less verbose syntax when accessing meta-level constants or methods. For example, instead of repeatedly using `Math #PI`, you can project `PI` into the local scope, allowing direct access as `PI`. The compiler ensures that this syntactic sugar is resolved efficiently, often by inlining the access to the original meta-object. This approach enhances readability and reduces cognitive load, especially in code that frequently references meta-level entities.
 
 	// Symbolic directive for projecting a meta constant
-	// using meta jolk.lang.Math.PI;
-	& jolk.lang.Math.PI;
+	// using meta java.lang.Math.PI;
+	& java.lang.Math.PI;
 
 	// Standard message send
 	x = 2 * r * Math #PI;

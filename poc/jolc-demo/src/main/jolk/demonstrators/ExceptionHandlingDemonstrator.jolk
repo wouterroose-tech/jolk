@@ -1,4 +1,4 @@
-package examples;
+package demonstrators;
 
 using java.lang.RuntimeException;
 using java.lang.IllegalArgumentException;

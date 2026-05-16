@@ -1,4 +1,4 @@
-package examples;
+package demonstrators;
 
 using java.util.concurrent.atomic.AtomicReference;
 using jolk.lang.Array;

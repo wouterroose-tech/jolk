@@ -1,4 +1,4 @@
-package examples;
+package demonstrators;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -14,7 +14,7 @@ public class ArchetypeRecordDemonstratorTest extends JolkTestBase {
     private Value getDemonstrator() {
         getJolkClass("/demo/validation/engine/Level.jolk");
         getJolkClass("/demo/validation/engine/Issue.jolk");
-        Value demonstrator = getJolkClass("/examples/ArchetypeRecordDemonstrator.jolk");
+        Value demonstrator = getJolkClass("/demonstrators/ArchetypeRecordDemonstrator.jolk");
         return demonstrator.invokeMember("new");
     }
 

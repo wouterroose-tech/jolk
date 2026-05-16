@@ -1,4 +1,4 @@
-package examples;
+package demonstrators;
 
 /// Demonstrates Jolk's Ternary (`?` and `?!`) expressions.
 ///

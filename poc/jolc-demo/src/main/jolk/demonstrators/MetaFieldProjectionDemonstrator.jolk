@@ -1,0 +1,20 @@
+ ~ demonstrators;
+
+/// # MetaFieldProjectionDemonstrator
+///
+/// Demonstrates Meta-Level Projection lenses to access host constants directly.
+
+& java.lang.Math.PI;
+& TWO_PI = java.lang.Math.TAU;
+
+final class MetaFieldProjectionDemonstrator {
+
+    Double calculateCircumference(Double radius) {
+        ^ radius * TWO_PI
+    }
+
+    Double calculateArea(Double radius) {
+        ^ PI * (radius ** 2)
+    }
+    
+}

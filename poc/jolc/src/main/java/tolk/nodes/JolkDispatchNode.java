@@ -47,6 +47,7 @@ import tolk.runtime.JolkExceptionExtension;
 import tolk.runtime.JolkArrayExtension;
 import tolk.runtime.JolkDoubleExtension;
 import tolk.runtime.JolkLongExtension;
+import tolk.runtime.JolkMapExtension;
 import tolk.runtime.JolkNumberExtension;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkIntrinsicProtocol;
@@ -984,14 +985,43 @@ public abstract class JolkDispatchNode extends Node {
         throw new RuntimeException("Invalid arguments for #forEach: expected a single closure.");
     }
 
+    /// ### Fast Path for Maps
+    /// Handles java.util.Map instances by routing messages to the Jolk Map extension.
+    @Specialization
+    protected Object doMap(VirtualFrame frame, Map<?, ?> receiver, String selector, Object[] arguments,
+                           @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+        try {
+            // 1. Prototype Lookup: Check for Jolk-defined Map extensions (e.g., #at, #put)
+            Object member = lookupMapMember(selector);
+            if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                Object[] args = prepareArguments(member, receiver, arguments);
+                return JolkNode.lift(interop.execute(member, args));
+            }
+
+            // 2. Host Fallback: Dispatch to standard java.util.Map members
+            return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
+        } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
+            if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+            }
+            try {
+                return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
+            } catch (UnknownIdentifierException ex) {
+                throw new RuntimeException("Message dispatch failed: #" + selector + " on Map", e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error executing #" + selector + " on Map", e);
+        }
+    }
+
     /// ### Fast Path for Array Projection (#map)
     /// 
     /// Implements the Stream Protocol for java.util.List. While this looks like 
     /// it creates an intermediate list, Graal's Partial Escape Analysis (PEA) 
     /// and Loop Fusion will "boil away" the intermediate allocation when 
-    /// messages are chained, resulting in zero-overhead single-pass execution.
+    /// messages are chained, resulting in zero-overhead single-pass execution. 
     @Specialization(guards = "isMap(selector)")
-    protected Object doMap(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
+    protected Object doListMap(VirtualFrame frame, List<?> receiver, String selector, Object[] arguments,
                            @Shared("callNode") @Cached IndirectCallNode callNode) {
         if (arguments.length == 1 && arguments[0] instanceof JolkClosure mapper) {
             List<Object> result = new ArrayList<>(receiver.size());
@@ -1006,6 +1036,11 @@ public abstract class JolkDispatchNode extends Node {
             return result;
         }
         throw new RuntimeException("Invalid arguments for #map: expected a single closure.");
+    }
+
+    @TruffleBoundary
+    protected Object lookupMapMember(String selector) {
+        return JolkMapExtension.MAP_TYPE.lookupInstanceMember(selector);
     }
 
     /// ### Fast Path for Longs
@@ -1509,7 +1544,7 @@ public abstract class JolkDispatchNode extends Node {
         "doNothing", "doShapeRead", "doUserDispatch", "doClosureTry", 
         "doClosureCatch", "doCatchPassThrough", 
         "doControlFlowDirect", "doTernaryDirect", "doControlFlow", "doDecimal",
-        "doTimesDirect", "doTimesIndirect", "doMap", "doFilter", "doAnyMatch", "doFindFirst",
+        "doTimesDirect", "doTimesIndirect", "doListMap", "doFilter", "doAnyMatch", "doFindFirst",
         "doIteratorForEach", "doMapForEach", "doLongClosureDirect", "doLongCached", 
         "doLong", "doBooleanCached", "doBoolean", "doTruffleString", "doJavaString", "doList", "doThrowable", "doDoubleArithmetic",
         "doJolkMetaClass"
@@ -1551,6 +1586,7 @@ public abstract class JolkDispatchNode extends Node {
             else if (unwrappedReceiver instanceof Boolean) meta = JolkBooleanExtension.BOOLEAN_TYPE;
             else if (unwrappedReceiver instanceof String || unwrappedReceiver instanceof TruffleString) meta = JolkStringExtension.STRING_TYPE;
             else if (unwrappedReceiver instanceof List) meta = JolkArrayExtension.ARRAY_TYPE;
+            else if (unwrappedReceiver instanceof Map) meta = JolkMapExtension.MAP_TYPE;
             else if (unwrappedReceiver instanceof Throwable) meta = JolkExceptionExtension.EXCEPTION_TYPE;
 
             // 3. User-Defined Object Lookup (#factorial path)

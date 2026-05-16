@@ -902,6 +902,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             if ("Array".equals(name) || "List".equals(name) || "ArrayList".equals(name)) 
                 return new JolkLiteralNode(tolk.runtime.JolkArrayExtension.ARRAY_TYPE);
 
+            // Support for the Map archetype via common Java collection aliases.
+            if ("Map".equals(name) || "HashMap".equals(name))
+                return new JolkLiteralNode(tolk.runtime.JolkMapExtension.MAP_TYPE);
+
             // Priority 2: Current Class Reference
             if (name.equals(currentClassName)) return new JolkReadTypeNode(language, name, null);
             
@@ -973,8 +977,20 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMap_literal(jolkParser.Map_literalContext ctx) {
-        // TODO: Handle map literal synthesis
-        return new JolkEmptyNode();
+        // Collection Literal Synthesis: #(key1 -> val1, key2 -> val2) -> Map #new(key1, val1, key2, val2)
+        // This converts the parenthesized literal into a standard variadic message
+        // send to the Map meta-object, supporting Unified Messaging.
+        JolkNode receiver = new JolkLiteralNode(tolk.runtime.JolkMapExtension.MAP_TYPE);
+        JolkNode[] args = extractMapList(ctx.map_list());
+        return JolkMessageSendNodeGen.create("new", args, receiver);
+    }
+
+    private JolkNode[] extractMapList(jolkParser.Map_listContext ctx) {
+        if (ctx == null || ctx.map_entry() == null) return new JolkNode[0];
+        return ctx.map_entry().stream()
+                  .flatMap(entry -> Arrays.stream(new JolkNode[]{visit(entry.expression(0)), visit(entry.expression(1))}))
+                  .toArray(JolkNode[]::new);
+
     }
 
     /**
@@ -991,8 +1007,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMap_entry(jolkParser.Map_entryContext ctx) {
-        // TODO: Handle key -> value map entry
-        return super.visitMap_entry(ctx);
+        // Map entries are handled directly in extractMapList by visiting their key and value expressions.
+        // This method should not be called directly for map literal synthesis.
+        throw new UnsupportedOperationException("visitMap_entry should not be called directly for map literal synthesis.");
     }
 
     @Override

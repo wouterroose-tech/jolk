@@ -2,6 +2,7 @@ package tolk.parser;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
@@ -9,9 +10,16 @@ import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
 
-/// 
-/// Verifies the language's behavior when defining classes.
+/// ## JolkClassTest
 ///
+/// Verifies the **Definition Integrity** of Jolk types.
+///
+/// This class focuses on the **Definition Lifecycle**: ensuring the parser handles syntax,
+/// the visitor creates the correct AST nodes, and the `JolkClassDefinitionNode` produces
+/// a hydrated `JolkMetaClass` with the correct protocol surface.
+///
+/// It includes functional smoke tests to verify that the "plumbing" (hydration and binding)
+/// of method bodies—specifically super-dispatches—is valid for execution.
 public class JolkClassTest extends JolcTestBase {
 
     private Value eval(String className, String source) {
@@ -155,6 +163,10 @@ public class JolkClassTest extends JolcTestBase {
         // 4 base meta-members (new, name, superclass, isInstance) + 18 Jolk Object Protocol intrinsics
         assertEquals(25, result.getMemberKeys().size());
         assertTrue(result.hasMember("new"));
+
+        // Verify execution to ensure the SuperMessageSendNode was correctly hydrated
+        Value instance = result.invokeMember("new", "test");
+        assertNotNull(instance);
     }
 
     @Test
@@ -166,6 +178,10 @@ public class JolkClassTest extends JolcTestBase {
         // 4 base meta-members (new, name, superclass, isInstance) + 18 Jolk Object Protocol intrinsics
         assertEquals(25, result.getMemberKeys().size());
         assertTrue(result.hasMember("new"));
+
+        // Verify variadic execution
+        Value instance = result.invokeMember("new", 1, 2, 3);
+        assertNotNull(instance);
     }
     
     @Test

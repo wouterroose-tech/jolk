@@ -118,13 +118,16 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
         String classB = """
             & ClassA.FORTY_TWO;
+            & java.lang.Math.PI;
             class ClassB {
                 Long val() { ^ FORTY_TWO }
+                Double pi() { ^ PI }
             }""";
         eval(classA);
         Value instanceB = eval(classB).invokeMember("new");
         // access projected meta constant 
         assertEquals(42, instanceB.invokeMember("val").asLong());
+        assertEquals(Math.PI, instanceB.invokeMember("pi").asDouble());
     }
 
     /// Verifies that a meta constant can be accessed from another class via the meta-receiver, 
@@ -136,13 +139,16 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
         String classB = """
             & FORTYTWO = ClassA.FORTY_TWO;
+            & MY_PI = java.lang.Math.PI;
             class ClassB {
                 Long val() { ^ FORTYTWO }
+                Double pi() { ^ MY_PI }
             }""";
         eval(classA);
         Value instanceB = eval(classB).invokeMember("new");
         // access projected meta constant 
         assertEquals(42, instanceB.invokeMember("val").asLong());
+        assertEquals(Math.PI, instanceB.invokeMember("pi").asDouble());
     }
 
     /// ### testMetaProtocolIntrospection

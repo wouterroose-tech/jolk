@@ -51,17 +51,17 @@ public class JolkSuperMessageSendNode extends JolkExpressionNode {
         
         // 2. Resolve the starting point for lookup (the superclass of the definition context)
         JolkMetaClass startClass = holderClass.getSuperclass();
-        if (startClass == null) {
-            throw new RuntimeException("Message not understood: #" + selector + " on super of root Object");
-        }
 
-        // 3. Perform Member Lookup bypassing the receiver's class overrides
-        // We distinguish between instance-level super and meta-level super calls.
-        // We allow #new to be looked up in the superclass hierarchy.
-        boolean isMeta = self instanceof JolkMetaClass;
-        Object member = (isMeta) 
-            ? ("new".equals(selector) ? startClass.lookupMetaMember(selector) : (JolkDispatchNode.isObjectIntrinsic(selector) ? null : startClass.lookupMetaMember(selector)))
-            : startClass.lookupInstanceMember(selector);
+        Object member = null;
+        if (startClass != null) {
+            // 3. Perform Member Lookup bypassing the receiver's class overrides
+            // We distinguish between instance-level super and meta-level super calls.
+            // We allow #new to be looked up in the superclass hierarchy.
+            boolean isMeta = self instanceof JolkMetaClass;
+            member = (isMeta) 
+                ? ("new".equals(selector) ? startClass.lookupMetaMember(selector) : (JolkDispatchNode.isObjectIntrinsic(selector) ? null : startClass.lookupMetaMember(selector)))
+                : startClass.lookupInstanceMember(selector);
+        }
 
         Object[] args = new Object[argumentNodes.length];
         for (int i = 0; i < argumentNodes.length; i++) {

@@ -14,11 +14,48 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /// ## JolkObjectTest
 ///
-/// Validates the core protocol defined in `jolk.lang.Object`, which serves as the
-/// root for all objects in the Jolk ecosystem. These tests ensure that fundamental
-/// behaviors like identity, equivalence, and flow control are correctly implemented.
+/// Verifies the **Protocol Behavior** of Jolk objects.
 ///
+/// This class focuses on the **Runtime Lifecycle**: how a `JolkObject` behaves at runtime.
+/// It validates the core protocol defined in `jolk.lang.Object`, which serves as the
+/// root for all objects in the Jolk ecosystem. These tests ensure that fundamental
+/// behaviors like identity, equivalence, and flow control are correctly implemented
+/// according to the Object Creation Protocol.
 public class JolkObjectTest extends JolcTestBase {
+
+    @Test
+    void testIntrinsicNew() {
+        String source = "class Test {}";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertNotNull(instance);
+        assertFalse(instance.isNull());
+    }
+
+    @Test
+    void testNew() {
+        String source = "class Test { meta Self new() { ^ super #new } }";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertNotNull(instance);
+        assertFalse(instance.isNull());
+    }
+
+    @Test
+    void testIntrinsicCanonicalNew() {
+        String source = "class Test { Long val; }";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new", 42);
+        assertEquals(42, instance.invokeMember("val").asLong());
+    }
+
+    @Test
+    void testCanonicalNew() {
+        String source = "class Test { Long val; meta Self new(Long val) { ^ super #new(val) } }";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new", 42);
+        assertEquals(42, instance.invokeMember("val").asLong());
+    }
     
     @Test
     void testIdentityOperators() {

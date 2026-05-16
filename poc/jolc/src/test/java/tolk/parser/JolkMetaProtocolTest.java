@@ -65,7 +65,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
     void testMetaConstantImmutability() {
         String source = """
             class ConstTest {
-                public meta constant Long VERSION = 1;
+                meta constant Long VERSION = 1;
             }""";
         Value meta = eval(source);
         assertThrows(Exception.class, () -> meta.invokeMember("VERSION", 2L));
@@ -73,7 +73,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
 
     @Test
     void testMetaFieldsCrossClass() {
-        String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
+        String classA = "class ClassA { meta constant Long FORTY_TWO = 42; }";
         String classB = "class ClassB { Long val() { ^ ClassA #FORTY_TWO } }";
         eval(classA);
         Value instanceB = eval(classB).invokeMember("new");
@@ -115,7 +115,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
     /// the meta-receiver's fields.
     @Test
     void testMetaFieldProjection() {
-        String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
+        String classA = "class ClassA { meta constant Long FORTY_TWO = 42; }";
         String classB = """
             & ClassA.FORTY_TWO;
             & java.lang.Math.PI;
@@ -136,7 +136,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
     /// directly without needing to reference the meta-receiver explicitly.
     @Test
     void testMetaFieldAlias() {
-        String classA = "class ClassA { public meta constant Long FORTY_TWO = 42; }";
+        String classA = "class ClassA { meta constant Long FORTY_TWO = 42; }";
         String classB = """
             & FORTYTWO = ClassA.FORTY_TWO;
             & MY_PI = java.lang.Math.PI;

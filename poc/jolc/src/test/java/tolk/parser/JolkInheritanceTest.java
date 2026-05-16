@@ -13,7 +13,7 @@ public class JolkInheritanceTest  extends JolcTestBase {
     @Test
     void testInheritAccessors() {
         String classC = "class ClassC extends ClassB { }";
-        String classA = "class ClassA { public Long x; }";
+        String classA = "class ClassA { Long x; }";
         String classB = "class ClassB extends ClassA { }";
         Value instanceA = eval(classA).invokeMember("new");
         assertEquals(0, instanceA.invokeMember("x").asLong());

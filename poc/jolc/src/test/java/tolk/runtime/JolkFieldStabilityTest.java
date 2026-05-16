@@ -19,7 +19,7 @@ public class JolkFieldStabilityTest extends JolcTestBase {
         // In Jolk, 'stable' fields should not generate a setter or allow mutation.
         String source = """
             class StableTest {
-                public stable Long id;
+                stable Long id;
             }
             """;
         Value meta = eval(source);
@@ -37,7 +37,7 @@ public class JolkFieldStabilityTest extends JolcTestBase {
     void testMetaConstantImmutability() {
         String source = """
             class ConstTest {
-                public meta constant Long VERSION = 1;
+                meta constant Long VERSION = 1;
             }
             """;
         Value meta = eval(source);

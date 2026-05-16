@@ -19,9 +19,9 @@ public class DomainTest extends JolcTestBase {
     private Value personClass() {
         String source = """
             class Person {
-                public Long ssn;
-                public String firstName;
-                public String lastName;
+                Long ssn;
+                String firstName;
+                String lastName;
                 String name() {
                     ^ self #firstName + " "+ self #lastName
                 }
@@ -44,9 +44,9 @@ public class DomainTest extends JolcTestBase {
     private Value contactFormClass() {
         String source = """
             final class ContactForm {
-                public Person person;
-                public String description;
-                public Long zipCode;
+                Person person;
+                String description;
+                Long zipCode;
                 String toString() {
                     ^ "ContactForm[person=" + self #person + ", description=" + self #description + ", zipCode=" + self #zipCode + "]"
                 }

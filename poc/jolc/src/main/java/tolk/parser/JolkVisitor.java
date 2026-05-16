@@ -186,22 +186,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // which aligns with the grammar (`meta_id`, not `MetaId`). This prevents a
         // NullPointerException if the parse tree structure is not what's expected.
         if (ctx.type_bound() != null && ctx.type_bound().type() != null) {
-            JolkFinality finality = JolkFinality.OPEN;
-            JolkVisibility visibility = JolkVisibility.PUBLIC; // Jolk types default to PUBLIC
+            ModifierInfo modInfo = resolveModifiers(ctx.modifiers());
+            JolkFinality finality = modInfo.finality;
+            JolkVisibility visibility = modInfo.visibility;
 
-            if (ctx.modifiers() != null) {
-                String modsText = ctx.modifiers().getText();
-                if (modsText.contains("final")) {
-                    finality = JolkFinality.FINAL;
-                } else if (modsText.contains("abstract")) {
-                    finality = JolkFinality.ABSTRACT;
-                }
-
-                if (modsText.contains("private")) visibility = JolkVisibility.PRIVATE;
-                else if (modsText.contains("protected")) visibility = JolkVisibility.PROTECTED;
-                else if (modsText.contains("package")) visibility = JolkVisibility.PACKAGE;
-                else if (modsText.contains("public")) visibility = JolkVisibility.PUBLIC;
-            }
             var typeContext = ctx.type_bound().type();
             if (typeContext.MetaId() != null) {
                 String className = typeContext.MetaId().getText().intern();
@@ -209,14 +197,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 String oldClassName = this.currentClassName;
                 this.currentClassName = className;
 
-                JolkArchetype archetype = switch (ctx.archetype().getText()) {
-                    case "class" -> JolkArchetype.CLASS;
-                    case "value" -> JolkArchetype.VALUE;
-                    case "record" -> JolkArchetype.RECORD;
-                    case "enum" -> JolkArchetype.ENUM;
-                    case "protocol" -> JolkArchetype.PROTOCOL;
-                    default -> JolkArchetype.CLASS;
-                };
+                JolkArchetype archetype = resolveArchetype(ctx.archetype());
 
                 Map<String, List<JolkMethodNode>> instanceMethods = new LinkedHashMap<>(); // Instance methods
                 Map<String, JolkFieldNode> instanceFields = new LinkedHashMap<>(); // Instance fields
@@ -225,14 +206,19 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
-                        boolean isMeta = mbr.member().META() != null;
+                        var memberCtx = mbr.member();
+                        boolean isMeta = memberCtx.META() != null;
                         boolean oldMetaScope = this.isInMetaScope;
                         this.isInMetaScope = isMeta;
                         try {
-                            // TODO: Collect member annotations for the class definition metadata
-                            JolkNode node = visit(mbr.member());
+                            // Determine visibility: synthesized accessors for state default to 
+                            // public (Pareto principle). For methods, resolve from modifiers.
+                            JolkVisibility memberVisibility = resolveModifiers(memberCtx.modifiers()).visibility;
+
+                            JolkNode node = visit(memberCtx);
                             
                             if (node instanceof JolkFieldNode fieldNode) {
+                                // Synthesized accessors will inherit the default public visibility
                                 if (isMeta) {
                                     metaMembers.computeIfAbsent(fieldNode.getName(), k -> new ArrayList<>()).add(fieldNode);
                                 } else {
@@ -240,6 +226,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                                     instanceFields.put(fieldNode.getName(), fieldNode);
                                 }
                             } else if (node instanceof JolkMethodNode methodNode) {
+                                methodNode.setVisibility(memberVisibility);
                                 if (isMeta) {
                                     metaMembers.computeIfAbsent(methodNode.getName(), k -> new ArrayList<>()).add(methodNode);
                                 } else {
@@ -273,34 +260,84 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return new JolkEmptyNode();
     }
 
-    @Override
-    public JolkNode visitModifiers(jolkParser.ModifiersContext ctx) {
-        // TODO: Extract visibility and finality modifiers
-        return super.visitModifiers(ctx);
+    private record ModifierInfo(JolkVisibility visibility, JolkFinality finality) {}
+
+    private ModifierInfo resolveModifiers(jolkParser.ModifiersContext ctx) {
+        if (ctx == null) return new ModifierInfo(JolkVisibility.PUBLIC, JolkFinality.OPEN);
+
+        JolkVisibility vis = JolkVisibility.PUBLIC;
+        JolkFinality fin = JolkFinality.OPEN;
+        String text = ctx.getText();
+
+        if (ctx.visibility() != null) {
+            vis = resolveVisibility(ctx.visibility());
+        } else {
+            // Symbolic visibility check (MODIFIER branch)
+            if (text.contains("~")) vis = JolkVisibility.PACKAGE;
+            else if (text.contains(":")) vis = JolkVisibility.PROTECTED;
+            else if (text.contains(">")) vis = JolkVisibility.PRIVATE;
+        }
+
+        if (ctx.finality() != null) {
+            fin = resolveFinality(ctx.finality());
+        } else {
+            // Symbolic finality check
+            if (text.contains("!")) fin = JolkFinality.FINAL;
+            else if (text.contains("?")) fin = JolkFinality.ABSTRACT;
+        }
+
+        return new ModifierInfo(vis, fin);
+    }
+
+    private JolkVisibility resolveVisibility(jolkParser.VisibilityContext ctx) {
+        if (ctx == null) return JolkVisibility.PUBLIC;
+        return switch (ctx.getText()) {
+            case "private" -> JolkVisibility.PRIVATE;
+            case "protected" -> JolkVisibility.PROTECTED;
+            case "package" -> JolkVisibility.PACKAGE;
+            default -> JolkVisibility.PUBLIC;
+        };
+    }
+
+    private JolkFinality resolveFinality(jolkParser.FinalityContext ctx) {
+        if (ctx == null) return JolkFinality.OPEN;
+        return switch (ctx.getText()) {
+            case "final" -> JolkFinality.FINAL;
+            case "abstract" -> JolkFinality.ABSTRACT;
+            default -> JolkFinality.OPEN;
+        };
+    }
+
+    private JolkArchetype resolveArchetype(jolkParser.ArchetypeContext ctx) {
+        if (ctx == null) return JolkArchetype.CLASS;
+        return switch (ctx.getText()) {
+            case "class" -> JolkArchetype.CLASS;
+            case "value" -> JolkArchetype.VALUE;
+            case "record" -> JolkArchetype.RECORD;
+            case "enum" -> JolkArchetype.ENUM;
+            case "protocol" -> JolkArchetype.PROTOCOL;
+            default -> JolkArchetype.CLASS;
+        };
     }
 
     @Override
-    public JolkNode visitVis_mod(jolkParser.Vis_modContext ctx) {
-        // TODO: Handle symbolic modifiers or keyword visibility
-        return super.visitVis_mod(ctx);
+    public JolkNode visitModifiers(jolkParser.ModifiersContext ctx) {
+        return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitVisibility(jolkParser.VisibilityContext ctx) {
-        // TODO: Map visibility to JolkVisibility enum
-        return super.visitVisibility(ctx);
+        return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitFinality(jolkParser.FinalityContext ctx) {
-        // TODO: Map finality to JolkFinality enum
-        return super.visitFinality(ctx);
+        return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitArchetype(jolkParser.ArchetypeContext ctx) {
-        // TODO: Map keyword to JolkArchetype
-        return super.visitArchetype(ctx);
+        return new JolkEmptyNode();
     }
 
     @Override

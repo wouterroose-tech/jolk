@@ -133,7 +133,7 @@ Jolk integrates C-family structural conventions with Smalltalk’s message-passi
 	type_args       = "<" type_bound { "," type_bound } ">"
 	type_contracts  = [ "extends" type ] [ "implements" type { "&" type } ]
 	type_mbr        = { annotation } ( member | enum )
-	member          = [ visibility ] ( [ "meta" ] state  ";" | [ finality ] [ "meta" ] method )
+	member          = ( [ "meta" ] state ";" | [ visibility ] [ finality ] [ "meta" ] method )	
 	state           = constant | field
 	constant        = "constant" type identifier assignment
 	assignment      = "=" expression
@@ -361,15 +361,16 @@ Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type sy
 
 ### Fields
 
-To maintain rigorous encapsulation, direct field manipulation in Jolk is restricted to initial binding during instance construction. Even when a developer declares a field as `public`, the language does not expose the field. Instead, field interaction—mediated through the lexical terminals (`^ field` for retrieval or `field = value` for assignment)—is restricted to the Archetype's internal implementation logic.
+To maintain rigorous encapsulation, fields are absolutely private and direct field manipulation in Jolk is restricted to initial binding during instance construction. Field interaction—mediated through the lexical terminals (^ `field` for retrieval or `field = value` for assignment)—is restricted to the Archetype's internal implementation logic.
 
-The *Field Entropy*, Value stability (`constant`) and instance-level stability (`stable`) enforce predictable access patterns by ensuring that a field, once bound, remains logically unchanged or non-assignable.
+The *field entropy*, value stability (`constant`) and instance-level stability (`stable`) enforce predictable access patterns by ensuring that a field, once bound, remains logically unchanged or non-assignable.
 
-External state interaction is managed through implicit field encapsulation, a protocol synthesised by the compiler that provides an automatic *Fluent API*. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent stable values within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that state integrity is maintained through a contract of messages, effectively preventing encapsulation leaks.
+External state interaction is managed through implicit field encapsulation, a public protocol synthesised by the compiler that provides an automatic *fluent* API. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent stable values within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that state integrity is maintained through a contract of messages, effectively preventing encapsulation leaks.
 
-	class Point {  
-	    public stable Int x;  
-	    public stable Int y;
+	class Point { 
+		// no modifiers on fields  
+	    stable Int x;  
+	    stable Int y;
 	
 	    // Synthesised default accessors  
 	    // public Int x() { ^x }  

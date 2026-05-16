@@ -17,8 +17,7 @@ alias           : MetaId ASSIGN ;
 namespace       : identifier ('.' identifier)* ;
 
 type_decl       : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
-modifiers       : vis_mod? finality? ;
-vis_mod         : visibility | MODIFIER ;
+modifiers       : visibility? finality? | MODIFIER ;
 visibility      : PUBLIC | PACKAGE | PROTECTED | PRIVATE ;
 finality        : ABSTRACT | FINAL ;
 archetype       : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
@@ -29,7 +28,7 @@ type_contracts  : EXTENDS type (IMPLEMENTS type (AMP type)*)?
                 | IMPLEMENTS type (AMP type)* ;
 
 type_mbr        : annotation* (member | enum_constant) ;
-member          : vis_mod? ( META? state SEMI | finality? META? method ) ;
+member          : META? state SEMI | modifiers META? method ;
 state           : constant | field ;
 constant        : CONSTANT type identifier assignment ;
 field           : (STABLE | LAZY)? type identifier assignment? ;

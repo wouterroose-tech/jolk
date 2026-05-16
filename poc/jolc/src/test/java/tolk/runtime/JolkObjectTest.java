@@ -452,7 +452,7 @@ public class JolkObjectTest extends JolcTestBase {
      */
     @Test
     void testProjectMeta() {
-        String source = "class MetaProject { public meta String config; }";
+        String source = "class MetaProject { meta String config; }";
         Value meta = eval(source);
         
         java.util.Map<String, Object> data = java.util.Map.of("config", "MetaActive");

@@ -1,6 +1,7 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
+import tolk.runtime.JolkVisibility;
 
 /// # JolkMethodNode
 ///
@@ -14,6 +15,7 @@ public class JolkMethodNode extends JolkNode {
     private final boolean isVariadic;
     private final int frameSlots;
     private final boolean hasNL;
+    private JolkVisibility visibility = JolkVisibility.PUBLIC;
 
     public JolkMethodNode(String name, JolkNode body, String[] parameterNames, boolean isVariadic, int frameSlots, boolean hasNL, boolean isLazy) {
         this.name = name;
@@ -68,5 +70,13 @@ public class JolkMethodNode extends JolkNode {
 
     public boolean isVariadic() {
         return isVariadic;
+    }
+
+    public void setVisibility(JolkVisibility visibility) {
+        this.visibility = visibility;
+    }
+
+    public JolkVisibility getVisibility() {
+        return visibility;
     }
 }

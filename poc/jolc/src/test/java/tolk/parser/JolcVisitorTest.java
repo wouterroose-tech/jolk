@@ -159,7 +159,7 @@ public class JolcVisitorTest extends JolcTestBase {
         String source = """
             class StableTest {
                 stable Int id;
-                public stable String name = "Jolk";
+                stable String name = "Jolk";
             }
         """;
         eval(source);

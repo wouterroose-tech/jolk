@@ -1934,7 +1934,7 @@ public abstract class JolkDispatchNode extends Node {
                     return matches ? JolkMatch.with(receiver) : receiver;
                 }
                 case "project" -> {
-                    // DMS API / Identity Projection: Implements mass-assignment or directed projection.
+                    // DMS API / Protocol Projection: Implements mass-assignment or directed projection.
                     if (arguments.length == 1) {
                         Object mapObj = arguments[0];
                         InteropLibrary mapInterop = InteropLibrary.getUncached(mapObj);

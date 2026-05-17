@@ -259,12 +259,13 @@ Syntactic elements act as structural anchors for the parser.
 **Assignment**: Syntactically, the assignment symbol (`=`) acts as a structural anchor by occupying the lowest possible precedence. This ensures that the entire expression chain to the right is evaluated before the result is bound to an identifier. Assignments are viewed as a meta-level change from functions. In this sense, the (`=`) symbol acts as a "fence" that guards the crossing of a boundary from pure functional evaluation to a state-changing operation.
 
 ## Semantics
-
 In Jolk, reserved identifiers are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid structural keywords like class, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
 
 ### Unified Message-Passing
 
 Jolk is built on Unified Message-Passing, where every interaction follows the *receiver \#message* pattern. This enforces strict encapsulation; whether you are instantiating an object (`User #new`), accessing a property (`user #name`), performing math (`1 + 2`) or specify control flow (`#case`), you are sending a message. Parentheses are omitted for unary selectors, and standard operators are treated as binary messages.
+
+Jolk's approach to assignment is a key aspect of its unified message-passing model. While the assignment symbol (`=`) is used for local identifiers and object creation, it also functions as a communicative shorthand for message sends when interacting with object fields. This ensures that every state change, even those appearing as direct assignments, is mediated through the object's formal message protocol, preserving the metaboundary.
 
 ### Keyword-less Control Flow
 
@@ -361,13 +362,11 @@ Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type sy
 
 ### State
 
-To maintain rigorous encapsulation, fields are absolutely private and direct field manipulation in Jolk is restricted to initial binding during instance construction. Jolk discourages direct access to fields using bare identifiers, favoring the message protocol to ensure the Metaboundary is never bypassed.
+To maintain rigorous encapsulation, fields are absolutely private. While jolk supports syntactic field assignment, this is an ergonomic layer; every such interaction is semantically reified as a formal message send. An assignment (e.g., `x = 5`) is semantically identical to the message send `self #x(5)`. By mediating familiar assignment syntax through the object's message protocol, jolk provides an ergonomic transition from industrial languages without compromising its core philosophy of state isolation. This ensures that the metaboundary is never bypassed, as all state transitions—even those appearing as assignments—remain formal communicative acts governed by the object's protocol.
 
-To facilitate a fluid conversation with Self, Jolk supports the implicit Self-receiver. When a message begins directly with a selector hashtag (e.g., `#name`), the receiver is implicitly resolved to `self`. This provides a high-density idiomatic shorthand for internal state management: retrieval remains a unary message (e.g., `^ #name`), and mutation remains a keyword-style message (e.g., `#name(newValue)`). By retaining the `#` anchor even without an explicit receiver, the language preserves the lexical fence—visually distinguishing state interaction from local stack variables—while eliminating the redundant repetition of the `self` keyword in dense logic.
+To facilitate a fluid conversation with self, jolk supports the implicit self-receiver. When a message begins directly with a selector hashtag (e.g., `#name`), the receiver is implicitly resolved to `self`. This provides a high-density idiomatic shorthand for internal state management: retrieval remains a unary message (e.g., `^ #name`), and mutation remains a keyword-style message (e.g., `#name(newValue)`). By retaining the `#` anchor, the language preserves the lexical fence—visually distinguishing state interaction from local stack variables—while eliminating redundant repetition.
 
-The *field entropy*, value stability (`constant`) and instance-level stability (`stable`) enforce predictable access patterns by ensuring that a field, once bound, remains logically unchanged or non-assignable.
-
-External state interaction is managed through implicit field encapsulation, a public protocol synthesised by the compiler that provides an automatic *fluent* API. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent stable values within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that state integrity is maintained through a contract of messages, effectively preventing encapsulation leaks.
+External state interaction is managed through implicit field encapsulation, a public protocol synthesised by the compiler that provides an automatic fluent API. All synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent stable values within the identity, the generation of a setter is suppressed. By automating this fence, jolk ensures that state integrity is maintained through a contract of messages, effectively preventing encapsulation leaks.
 
 	class Point { 
 		// no modifiers on fields 
@@ -383,21 +382,21 @@ External state interaction is managed through implicit field encapsulation, a pu
 	    private x(Int value);
 
 		move(Int dx, Int dy) {  
-			// Implicit self receiver
+			// Implicit self-receiver
 			#x(#x + dx);  
 			#y(#y + dy);
 
-			// Also valid: Explicit receiver
+			// Explicit receiver
 			self #x(self #x + dx);
 
-			// Discouraged: The "Internal Bridge" (assignment-style)
+			// Idiomatic shorthand: The syntactic field assignment
 			x = x + dx;  
 		}
 
 	    // ...  
 	}
 
-The binding protocol establishes a deterministic hierarchy for state management, anchored by a clear distinction between declaration and mutation. By requiring an explicit *Type* for state anchoring, the language ensures that memory slots are architecturally defined, while mandatory initialisation provides a streamlined path toward *Referential Stability*.
+The binding protocol establishes a deterministic hierarchy for state management, anchored by a clear distinction between declaration and mutation. By requiring an explicit type for state anchoring, the language ensures that memory slots are architecturally defined, while mandatory initialisation provides a streamlined path toward referential stability.
 
 	method() {  
 	    constant Int x = 10; // constant - Immutability  
@@ -589,7 +588,7 @@ In Jolk, literal collection creation methods utilize the `#` anchor as a shortha
     // literal anchor shortcut  
     Array<String> colors = #["red", "green", "blue"];
 
-By implementing these as literal anchors, Jolk remains "bracket-light" while upholding the Unified Messaging principle. Because these literals are treated as sugar for underlying messages, the resulting collection is immediately ready to participate in a message chain. This ensures that every interaction remains a formal message send, maintaining the messaging architecture.
+By implementing these as literal anchors, Jolk remains "bracket-light" while upholding the Unified Messaging principle. Because these literals are reified as underlying messages, the resulting collection is immediately ready to participate in a message chain. This ensures that every interaction remains a formal message send, maintaining the messaging architecture.
 
 **Constants**
 
@@ -623,9 +622,9 @@ This mechanism allows for a more fluid and less verbose syntax when accessing me
 
 **Assignment**
 
-In Jolk, the assignment symbol (`=`) demarcates the boundary between internal evaluation and identity definition. By restricting assignment to local identifiers and object creation but mandating message-passing for all other state changes, the meta-layer enforces local retention and encapsulation. This ensures that an identity’s internal state remains shielded, permitting only controlled mutations.
+In jolk, the assignment symbol (`=`) demarcates the boundary between internal evaluation and identity definition. While the language supports syntactic field assignment, semantically the meta-layer restricts true assignment to local identifiers and object creation. By mandating that all other state changes are mediated through messages, jolk enforces local retention and encapsulation, ensuring that an identity’s internal state remains shielded.
 
-In alignment with Alan Kay’s vision to eliminate assignment altogether [9], Jolk daunts the use of assignments and encourages a transition from imperative memory-overwriting to evolutionary projection; under this protocol, the actor is excised and assignments are ideally restricted to object creation. An identity does not have its state changed but instead projects a successor via the “wither” technique [10]. This ensures that objects remain self-contained, rendering procedural mutation technically redundant. This constraint does not apply to collections, as they function as aggregators rather than representing immutable identities.
+In alignment with Alan Kay’s vision to eliminate assignment altogether [9], jolk discourages the use of assignments and encourages a transition from imperative memory-overwriting to evolutionary projection. Under this protocol, assignments are ideally restricted to initial object creation. An identity does not have its state changed but instead projects a successor via the wither technique [10]. This ensures that objects remain self-contained, rendering procedural mutation technically redundant. This preference for immutability is primarily targeted at domain identities; collections remain exempt as they function as aggregators rather than representing fixed identities.
 
 ## Messaging
 

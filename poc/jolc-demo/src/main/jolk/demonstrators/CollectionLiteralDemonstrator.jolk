@@ -19,7 +19,8 @@
 final class CollectionLiteralDemonstrator {
 
     stable ArrayList<String> colors = #["red", "green", "blue"];
-    //stable HashMap<String, String> colorMap = #{"red": "RED", "green": "GREEN", "blue": "BLUE"}};
+    stable HashSet<String> colorSet = #{"red", "green", "blue"};
+    stable HashMap<String, String> colorMap = #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF");
 
     /// Returns a literal array of strings.
     ArrayList<String> runArrayLiteral() {

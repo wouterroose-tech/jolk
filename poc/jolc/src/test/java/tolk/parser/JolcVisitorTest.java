@@ -87,7 +87,7 @@ public class JolcVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitAssignment() {
-        String source = "class MyClass { run() { a = b } }";
+        String source = "class MyClass { run() { Long a = 0; a = 2 } }";
         eval(source);
     }
 
@@ -99,7 +99,7 @@ public class JolcVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitMessageSendChain() {
-        String source = "class MyClass { run() { object #message(arg1) #another } }";
+        String source = "class MyClass { run() { self #message(arg1) #another } }";
         eval(source);
     }
 
@@ -215,11 +215,11 @@ public class JolcVisitorTest extends JolcTestBase {
     @Test
     void testVisitMessage() {
         // Unary
-        eval("class MyClass { run() { obj #selector } }");
+        eval("class MyClass { run() { self #selector } }");
         // With arguments
-        eval("class MyClass { run() { obj #selector(arg1, arg2) } }");
+        eval("class MyClass { run() { self #selector(arg1, arg2) } }");
         // Chained
-        eval("class MyClass { run() { obj #one #two(arg) } }");
+        eval("class MyClass { run() { self #one #two(arg) } }");
     }
 
     @Test
@@ -269,8 +269,8 @@ public class JolcVisitorTest extends JolcTestBase {
         String source = """
             class BlockTest { 
                 Void run() { 
-                    x = 1; 
-                    y = 2; 
+                    Long x = 1; 
+                    Long y = 2; 
                     ^ x + y 
                 } 
             }

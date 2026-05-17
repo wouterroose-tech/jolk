@@ -44,6 +44,14 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     private final Map<String, List<JolkNode>> metaMembers;
     private final List<String> enumConstants;
 
+    /// Stores visibility restrictions for synthesised field getters 
+    /// established via signature-only method declarations.
+    private final Map<String, JolkVisibility> getterOverrides;
+
+    /// Stores visibility restrictions for synthesised field setters 
+    /// established via signature-only method declarations.
+    private final Map<String, JolkVisibility> setterOverrides;
+
     /**
      * ### JolkClassDefinitionNode
      *
@@ -58,6 +66,8 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * @param instanceFields Map of instance fields.
      * @param metaMembers Map of meta-members (static methods/fields).
      * @param enumConstants List of enum constant names (for ENUM archetype).
+     * @param getterOverrides Visibility overrides for synthesised getters.
+     * @param setterOverrides Visibility overrides for synthesised setters.
      */
     public JolkClassDefinitionNode(String className, 
                                    String superclassName, 
@@ -67,7 +77,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                                    Map<String, List<JolkMethodNode>> instanceMethods, 
                                    Map<String, JolkFieldNode> instanceFields, 
                                    Map<String, List<JolkNode>> metaMembers, 
-                                   List<String> enumConstants) {
+                                   List<String> enumConstants,
+                                   Map<String, JolkVisibility> getterOverrides,
+                                   Map<String, JolkVisibility> setterOverrides) {
         this.className = className;
         this.superclassName = superclassName;
         this.finality = finality;
@@ -77,6 +89,8 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         this.instanceFields = instanceFields;
         this.metaMembers = metaMembers;
         this.enumConstants = enumConstants != null ? enumConstants : new ArrayList<>();
+        this.getterOverrides = getterOverrides != null ? getterOverrides : Collections.emptyMap();
+        this.setterOverrides = setterOverrides != null ? setterOverrides : Collections.emptyMap();
     }
 
     /**
@@ -86,7 +100,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * context. The language will be resolved dynamically during execution.
      */
     public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(className, null, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+        this(className, null, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), null, null);
     }
 
     @Override
@@ -159,7 +173,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         }
 
         // Jolk Lifecycle Protocol: Instantiate the Identity now that the field map is stable.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, null); // No direct hostClass for user-defined classes
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, null, getterOverrides, setterOverrides);
 
         // Register enum constants for ENUM archetype
         if (archetype == JolkArchetype.ENUM) {

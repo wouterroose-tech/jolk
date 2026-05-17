@@ -70,6 +70,8 @@ public class JolkMetaClass extends DynamicObject {
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
+    private final Map<String, JolkVisibility> getterOverrides;
+    private final Map<String, JolkVisibility> setterOverrides;
     @CompilationFinal protected final Set<String> stableFields;
 
     private static final Shape ROOT_META_SHAPE = Shape.newBuilder().build();
@@ -85,35 +87,66 @@ public class JolkMetaClass extends DynamicObject {
     private final Map<String, JolkEnumConstant> enumConstants = new HashMap<>();
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(name, null, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null);
+        this(name, null, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null);
+        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
     public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null);
+        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(name, superclass, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null);
+        this(name, superclass, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null);
+        this(name, superclass, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Class<?> hostClass) {
-        this(name, superclass, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), hostClass);
+        this(name, superclass, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), hostClass, null, null);
     }
 
     // Convenience constructor for unit tests providing instance field templates
     public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, new HashMap<>(), Collections.emptySet(), null);
+        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
-    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers, Map<String, Object> metaFields, Set<String> stableFields, Class<?> hostClass) {
+    /**
+     * ### JolkMetaClass
+     * 
+     * The primary constructor for the Meta-Object Descriptor.
+     * 
+     * @param name The nominal identity of the type.
+     * @param superclass The parent identity in the meta-stratum.
+     * @param finality Structural constraints (FINAL, OPEN).
+     * @param visibility Access level of the identity.
+     * @param archetype The structural template (CLASS, RECORD, etc).
+     * @param instanceMembers Consolidated instance-level logic.
+     * @param instanceFields Sovereign coordinate map for instance state.
+     * @param metaMembers Consolidated type-level logic.
+     * @param metaFields Type-level state (constants/statics).
+     * @param stableFields Fields marked for immutability.
+     * @param hostClass The Java substrate class for shim-less integration.
+     * @param getterOverrides Visibility overrides for synthesized getters.
+     * @param setterOverrides Visibility overrides for synthesized setters.
+     */
+    public JolkMetaClass(String name, 
+                        JolkMetaClass superclass, 
+                        JolkFinality finality, 
+                        JolkVisibility visibility, 
+                        JolkArchetype archetype, 
+                        Map<String, Object> instanceMembers, 
+                        Map<String, Object> instanceFields, 
+                        Map<String, Object> metaMembers, 
+                        Map<String, Object> metaFields, 
+                        Set<String> stableFields, 
+                        Class<?> hostClass,
+                        Map<String, JolkVisibility> getterOverrides,
+                        Map<String, JolkVisibility> setterOverrides) {
         super(ROOT_META_SHAPE);
         this.name = name;
         this.superclass = superclass;
@@ -127,6 +160,8 @@ public class JolkMetaClass extends DynamicObject {
         this.hostClass = hostClass;
         this.metaMembers = metaMembers != null ? metaMembers : new HashMap<>();
         this.stableFields = stableFields != null ? Collections.unmodifiableSet(new HashSet<>(stableFields)) : Collections.emptySet();
+        this.getterOverrides = getterOverrides != null ? getterOverrides : Collections.emptyMap();
+        this.setterOverrides = setterOverrides != null ? setterOverrides : Collections.emptyMap();
     }
 
     /// Performs **Late Flattening**.
@@ -218,6 +253,12 @@ public class JolkMetaClass extends DynamicObject {
         if (archetype == JolkArchetype.RECORD) return true;
         if (stableFields != null && stableFields.contains(fieldName)) return true;
         return superclass != null && superclass.isFieldStable(fieldName);
+    }
+
+    public JolkVisibility getAccessorVisibility(String fieldName, boolean isSetter) {
+        JolkVisibility override = isSetter ? setterOverrides.get(fieldName) : getterOverrides.get(fieldName);
+        if (override != null) return override;
+        return superclass != null ? superclass.getAccessorVisibility(fieldName, isSetter) : JolkVisibility.PUBLIC;
     }
 
     /**
@@ -998,7 +1039,7 @@ public class JolkMetaClass extends DynamicObject {
             // Initialize with minimal skeleton state. 
             // Fields and registries will be populated during updatePlaceholder.
             super(name, null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
-                  new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null); // Pass null for hostClass
+                  new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null); // Pass null for hostClass
             this.hydrated = false;
             // Initialize empty registries for defensive access during hydration
             this.instanceRegistry = new HashMap<>();

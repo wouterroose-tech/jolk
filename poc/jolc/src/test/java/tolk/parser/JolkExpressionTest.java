@@ -62,9 +62,8 @@ public class JolkExpressionTest extends JolcTestBase {
     void testControlFlow() {
         String sourceIfPresent = """
             class FlowPresentTest {
-                Long x;
                 Long val() {
-                    x = 1; 
+                    Long x = 1; 
                     null #ifPresent [ x = 2 ];
                     ^x }
             }""";
@@ -74,9 +73,8 @@ public class JolkExpressionTest extends JolcTestBase {
 
         String sourceIfEmpty = """
             class FlowEmptyTest {
-                Long x;
                 Long val() {
-                    x = 1; 
+                    Long x = 1; 
                     null #ifEmpty [ x = 2 ];
                     ^x }
             }""";

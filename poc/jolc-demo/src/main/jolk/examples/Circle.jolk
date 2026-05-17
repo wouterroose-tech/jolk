@@ -17,7 +17,7 @@ final class Circle {
     Double radius;
 
     /// The diameter is computed lazily upon first access and then memoized.
-    public lazy Double diameter = self #radius * 2;
+    lazy Double diameter = self #radius * 2;
 
     /// ### meta new
     ///

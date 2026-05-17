@@ -63,6 +63,20 @@ public class JolkBindingTest extends JolcTestBase {
     }
 
     @Test
+    void testFieldAccessOverride() {
+        String source = """
+            class MyClass {
+                Long x = 42; 
+                private Long x();
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        
+        // field access in method
+        assertEquals(42L, instance.invokeMember("x").asLong());
+    }
+
+    @Test
     void testVariableBinding() {
         String source = """
             class MyClass {
@@ -97,8 +111,8 @@ public class JolkBindingTest extends JolcTestBase {
         String source = """
             class MyClass {
                 meta Long X = 0; 
-                meta Long val() { ^ X }
-                Long val() { ^ X }
+                meta Long val() { ^ self #X }
+                Long val() { ^ self #X }
                 meta Self val(Long x) { ^ self #X(x)}
             }""";
         Value meta = eval(source);
@@ -118,10 +132,10 @@ public class JolkBindingTest extends JolcTestBase {
         String source = """
             class MyClass {
                 Long value = 42; 
-                Long getValue() { ^ value }
+                Long getValue() { ^ self #value }
                 Long getValue(Long x) {
                     Long value = x;
-                    ^ value
+                    ^ self #value
                 }
                 Long run() {
                     ^self #getValue(self #value)

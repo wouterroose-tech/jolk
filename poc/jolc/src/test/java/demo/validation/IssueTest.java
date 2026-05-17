@@ -44,7 +44,7 @@ public class IssueTest extends JolcTestBase {
                     ^ self #hasMatch [i -> i #concerns(subject)]
                 }
                 private Boolean hasMatch(Predicate<Issue> p) {
-                    ^ issues #anyMatch(p)
+                    ^ self #issues #anyMatch(p)
                 }
             }""";  
         return eval(source);

@@ -191,7 +191,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
                 Long val = 0;
                 Long update(Long v) {
                     self #val(v);
-                    ^ val }
+                    ^ self #val }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");

@@ -142,7 +142,7 @@ public class JolkClassTest extends JolcTestBase {
     @Test
     void testClassWithMethodAndField() {
         String className = "MyClass";
-        String source = "final class " + className + " { String name; String myName() { ^ name; } }";
+        String source = "final class " + className + " { String name; String myName() { ^ self #name; } }";
         Value meta = eval(className, source);
         Value instance = meta.invokeMember("new");
         assertTrue(instance.hasMembers());

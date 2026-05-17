@@ -4,10 +4,10 @@ package demo.validation.domain;
 /// @author Wouter Roose
 
 final class ContactForm {
-    public Person person;
-    public String description;
-    public Long zipCode;
-    public String email;
+    Person person;
+    String description;
+    Long zipCode;
+    String email;
 
     /// Returns a string representation of the contact form.
     String toString() {

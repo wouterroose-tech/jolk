@@ -14,13 +14,13 @@ public class EngineTest extends JolcTestBase {
                 Validation<R> validation;
                 @Override
                 accept(T subject, E executionContext) {
-                    self #delegate(supplier #apply(subject), executionContext);
+                    self #delegate(self #supplier #apply(subject), executionContext);
                 }
                 private delegate(List<R> children, E executionContext) {
                     children #isEmpty [^self];
                     [ StructuredTaskScope #open(Joiner #allSuccessfulOrThrow) ]
                         #try [ scope ->
-                            children #forEach [child -> scope #fork [validation #accept(child, executionContext) ] ];
+                            children #forEach [child -> scope #fork [self #validation #accept(child, executionContext) ] ];
                             scope #join ]
                         #catch [ InterruptedException e ->
                             Thread #currentThread #interrupt;
@@ -45,7 +45,7 @@ public class EngineTest extends JolcTestBase {
                 Function<T, R> supplier;
                 final ValidationSuite<T> add(Validation<R> validation) {
                     // Construct the internal node and revert to master
-                    self #master #add(ChildValidation<T, R> #new(supplier, validation))
+                    self #master #add(ChildValidation<T, R> #new(self #supplier, self #validation))
                 }
             }""";
         return eval(source);
@@ -58,7 +58,7 @@ public class EngineTest extends JolcTestBase {
                 Validation<R> validation;
                 @Override
                 accept(T subject, ExecutionContext executionContext) {
-                    self #supplier #apply(subject) #ifPresent [ child -> validation #accept(child, executionContext) ]
+                    self #supplier #apply(subject) #ifPresent [ child -> self #validation #accept(child, executionContext) ]
                 }
             }""";
         return eval(source);
@@ -121,7 +121,7 @@ public class EngineTest extends JolcTestBase {
                     self #nodes #add(suite)
                 }
                 final <R> ChildRequirement<T, R> subject(Function<T, R> supplier) {
-                    ^ ChildRequirementBridge<T, R> #new(this, supplier)
+                    ^ ChildRequirementBridge<T, R> #new(self, self #supplier)
                 }
                 final validate(T subject, ExecutionContext executionContext) {
                     [ self #accept(subject, executionContext) ]

@@ -16,20 +16,22 @@ public class JolkMethodNode extends JolkNode {
     private final int frameSlots;
     private final boolean hasNL;
     private JolkVisibility visibility = JolkVisibility.PUBLIC;
+    private final boolean isSignatureOnly;
 
-    public JolkMethodNode(String name, JolkNode body, String[] parameterNames, boolean isVariadic, int frameSlots, boolean hasNL, boolean isLazy) {
+    public JolkMethodNode(String name, JolkNode body, String[] parameterNames, boolean isVariadic, int frameSlots, boolean hasNL, boolean isLazy, boolean isSignatureOnly) {
         this.name = name;
         this.body = body; // The body of the method
         this.parameters = parameterNames; // Store the parameter names directly
         this.isVariadic = isVariadic;
         this.frameSlots = frameSlots;
         this.hasNL = hasNL;
+        this.isSignatureOnly = isSignatureOnly;
         // unUse the isLazy parameter for now, as we are not implementing lazy evaluation in this version.
         // this.isLazy = isLazy;
     }
 
     public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots, boolean hasNL) {
-        this(name, body, parameters, isVariadic, frameSlots, hasNL, false);
+        this(name, body, parameters, isVariadic, frameSlots, hasNL, false, false);
     }
 
     /**
@@ -37,7 +39,7 @@ public class JolkMethodNode extends JolkNode {
      * defaulting to 0.
      */
     public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
-        this(name, body, parameters, isVariadic, 0, true, false);
+        this(name, body, parameters, isVariadic, 0, true, false, false);
     }
 
     public String getName() {
@@ -50,6 +52,10 @@ public class JolkMethodNode extends JolkNode {
 
     public int getFrameSlots() {
         return frameSlots;
+    }
+
+    public boolean isSignatureOnly() {
+        return isSignatureOnly;
     }
 
     /**

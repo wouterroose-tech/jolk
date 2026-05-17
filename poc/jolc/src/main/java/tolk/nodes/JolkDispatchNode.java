@@ -53,7 +53,7 @@ import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkIntrinsicProtocol;
 import tolk.runtime.JolkLazyValue;
 
-/// # JolkDispatchNode (The Message Gateway)
+/// Jolk dispatch node (the message gateway)
 ///
 /// Responsible for executing the **JoMoo Dispatch** logic. It acts as the
 /// primary gateway between the Jolk AST and object behavior, ensuring every
@@ -61,33 +61,38 @@ import tolk.runtime.JolkLazyValue;
 ///
 /// This node acts as the terminal enforcer of the **metaboundary**. Because it
 /// only resolves messages defined in the **Flattened Registry**, it provides
-/// the mechanical foundation for making **intrusive reflection a semantic 
-/// impossibility** within the guest language environment. 
+/// the mechanical foundation for making intrusive reflection a semantic 
+/// impossibility within the guest language environment. 
 ///
-/// This node implements the engine's **Instructional Projection** by mapping 
+/// This node implements the engine's instructional projection by mapping 
 /// intrinsic selectors directly to optimized machine-code paths during 
 /// GraalVM partial evaluation.
 ///
 /// ### Optimization Strategies
 ///
-/// *   **Monomorphic Fast Path**: Specializes for {@link JolkNothing} to 
+/// *   Monomorphic fast path: Specializes for {@link JolkNothing} to 
 ///     ensure absence checks incur zero overhead.
-/// *   **Polymorphic Inline Caches (PICs)**: Utilizes `limit = "3"` to 
+/// *   Polymorphic inline caches (PICs): Utilizes `limit = "3"` to 
 ///     collapse dispatch for the most frequent receiver types into 
-///     high-density machine code via **Semantic Flattening**.
-/// *   **Protocol Intrinsification**: Directly handles core control flow 
+///     high-density machine code via semantic flattening.
+/// *   Protocol intrinsification: Directly handles core control flow 
 ///     messages (like `#ifPresent` and loops) by executing closures 
 ///     via optimized call nodes. The current implementation of `doMap`, 
 ///     `doFilter`, and `doTimes` is specifically laid out to support this 
 ///     flattening by using `@Shared("callNode") @Cached IndirectCallNode callNode`, 
-///     providing the exact "hooks" Graal needs to inline closures and achieve Kinetic 
-///     **Functional Flow**. Chained Boolean messages (`? :`) are similarly treated 
-///     as **Logical Gate Flattening** candidates, allowing the engine to 
+///     providing the exact "hooks" Graal needs to inline closures and achieve kinetic 
+///     functional flow. Chained Boolean messages (`? :`) are similarly treated 
+///     as logical gate flattening candidates, allowing the engine to 
 ///     collapse ternary logic into raw hardware branches.
 ///
-/// Adhering to the principle of **Industrial Sovereignty**, this node 
+/// Adhering to the principle of industrial sovereignty, this node 
 /// leverages the Truffle DSL to boil away the qualitative overhead of 
 /// dynamic messaging.
+///
+/// ### Modern Java Mapping
+/// This node enables Jolk's 20% syntax to cover 100% of Java features by 
+/// acting as the "Impedance Resolution" layer, mapping high-density 
+/// selectors to optimized machine-code paths.
 @GenerateInline(false)
 @GenerateCached(true)
 public abstract class JolkDispatchNode extends Node {
@@ -222,7 +227,7 @@ public abstract class JolkDispatchNode extends Node {
             return JolkNode.lift(dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop));
         }
         try { 
-            // ### Safe Navigation
+            // Safe navigation
             //
             // Implements the **Safe Navigation** protocol. In Jolk, safe navigation 
             // is an inherent property of the Nothing identity rather than a 
@@ -247,14 +252,14 @@ public abstract class JolkDispatchNode extends Node {
         }
     }
 
-    /// ### Fast Path for Shape-based Property Access (Field Flattening)
+    /// Fast path for shape-based property access (field flattening)
     ///
-    /// This specialization implements the **protocol-driven flow** for object state, 
-    /// enforcing both **Encapsulation** and **Local Retention**. By caching the 
+    /// This specialization implements the protocol-driven flow for object state, 
+    /// enforcing both encapsulation and local retention. By caching the 
     /// {@link Shape} and the specific {@link Property} offset, the engine collapses 
     /// a dynamic message send into a direct machine-level operation.
     /// 
-    /// While getters follow the **Sovereign Fence**, setters are treated as 
+    /// While getters follow the sovereign fence, setters are treated as 
     /// formal protocol requests rather than raw assignments, preserving the 
     /// object's internal authority over its own state.
     ///
@@ -264,13 +269,14 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(guards = {
         "receiver.getShape() == cachedShape",
         "selector == cachedSelector",
-        "property != null"
+        "cachedShape.getProperty(cachedSelector) != null"
     }, limit = "3")
     protected Object doShapeRead(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
                                 @Cached("receiver.getShape()") Shape cachedShape,
                                 @Cached("selector") String cachedSelector,
-                                @Cached("cachedShape.getProperty(selector)") Property property,
+                                @Cached("cachedShape.getProperty(cachedSelector)") Property property,
                                 @Cached("isStable(receiver, selector)") boolean isStable,
+                                @Cached("isSetter(arguments)") boolean isSetter,
                                 @CachedLibrary(limit = "3") DynamicObjectLibrary objLib) {
 
         if (arguments.length == 0) {
@@ -319,6 +325,11 @@ public abstract class JolkDispatchNode extends Node {
     /// @return true if the receiver is null or the JolkNothing instance.
     protected static boolean isNothing(Object receiver) {
         return receiver == null || receiver == JolkNothing.INSTANCE;
+    }
+
+    /// Helper for Truffle DSL to determine if the arguments indicate a setter call.
+    protected static boolean isSetter(Object[] arguments) {
+        return arguments.length == 1;
     }
 
     protected JolkNothing getNothing() {

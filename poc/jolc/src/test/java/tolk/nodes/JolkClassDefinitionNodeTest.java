@@ -63,7 +63,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             Map.of("testMethod", List.of(new JolkMethodNode("testMethod", new JolkLiteralNode("success"), new String[0], false, 1, false))),
             new HashMap<String, JolkFieldNode>(),
             new HashMap<String, List<JolkNode>>(),
-            Collections.emptyList()
+            Collections.emptyList(),
+            null,
+            null
         );
 
         Value result = execute(node);
@@ -95,7 +97,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), instanceFields, new HashMap<String, List<JolkNode>>(),
-            Collections.emptyList()
+            Collections.emptyList(),
+            null,
+            null
         );
 
         Value metaClass = execute(node);
@@ -118,7 +122,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers,
-            Collections.emptyList()
+            Collections.emptyList(),
+            null,
+            null
         );
 
         Value metaClass = execute(node);
@@ -181,7 +187,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             null, 
             JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers,
-            Collections.emptyList()
+            Collections.emptyList(),
+            null,
+            null
         );
 
         Value result = execute(node);
@@ -205,7 +213,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             Map.of("val", methods), new HashMap<>(), new HashMap<>(),
-            Collections.emptyList()
+            Collections.emptyList(),
+            null,
+            null
         );
 
         Value metaClass = execute(node);
@@ -231,7 +241,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             null, 
             JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
             new HashMap<>(), fields, new HashMap<>(),
-            Collections.emptyList()
+            Collections.emptyList(),
+            null,
+            null
         );
 
         Value result = execute(node);

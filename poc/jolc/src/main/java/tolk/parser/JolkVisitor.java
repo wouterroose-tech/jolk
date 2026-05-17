@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.Arrays;
+import java.util.HashMap;
+
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -203,6 +205,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 Map<String, JolkFieldNode> instanceFields = new LinkedHashMap<>(); // Instance fields
                 Map<String, List<JolkNode>> metaMembers = new LinkedHashMap<>(); // Can contain JolkFieldNode or JolkMethodNode
                 List<String> enumConstants = new ArrayList<>(); // Enum constant names for ENUM archetype
+                Map<String, JolkVisibility> getterOverrides = new HashMap<>();
+                Map<String, JolkVisibility> setterOverrides = new HashMap<>();
 
                 for (var mbr : ctx.type_mbr()) {
                     if (mbr.member() != null) {
@@ -220,13 +224,23 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                             if (node instanceof JolkFieldNode fieldNode) {
                                 // Synthesized accessors will inherit the default public visibility
                                 if (isMeta) {
-                                    metaMembers.computeIfAbsent(fieldNode.getName(), k -> new ArrayList<>()).add(fieldNode);
+                                metaMembers.computeIfAbsent(fieldNode.getName(), k -> new ArrayList<>()).add(fieldNode);
                                 } else {
                                     // Instance fields
                                     instanceFields.put(fieldNode.getName(), fieldNode);
                                 }
                             } else if (node instanceof JolkMethodNode methodNode) {
                                 methodNode.setVisibility(memberVisibility);
+                                
+                                // Semicolon Override: private Long x(); changes visibility of synthesized accessor
+                                if (methodNode.isSignatureOnly()) {
+                                    int arity = methodNode.getParameters().length;
+                                    if (arity == 0) getterOverrides.put(methodNode.getName(), memberVisibility);
+                                    else if (arity == 1) setterOverrides.put(methodNode.getName(), memberVisibility);
+                                    // Do not register the node itself as a method
+                                    continue;
+                                }
+
                                 if (isMeta) {
                                     metaMembers.computeIfAbsent(methodNode.getName(), k -> new ArrayList<>()).add(methodNode);
                                 } else {
@@ -254,7 +268,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
                 this.currentClassName = oldClassName;
                 // Support for single inheritance via 'extends'.
-                return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers, enumConstants);
+                return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers, enumConstants, getterOverrides, setterOverrides);
             }
         }
         return new JolkEmptyNode();
@@ -479,6 +493,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     /**
      * Applies guided coercion for literal initializers based on the declared type.
      * This handles cases like `Double x = 3.14;` where `3.14` is initially parsed as BigDecimal.
+     * 
+     * This mechanism ensures that Jolk's minimalist syntax maintains the "Richness" 
+     * of Java's numerical types by handling widening promotions automatically 
+     * while guarding narrowing conversions.
      *
      * @param declaredTypeName The declared type name (e.g., "Double", "Long").
      * @param initializer The initializer expression.
@@ -509,7 +527,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return new JolkWriteLocalVariableNode(info.index, info.depth, expression);
         }
 
-        // Fallback: Jolk treats assignments as message sends to 'self' (synthesized setters)
+        // Syntactic field assignment (implicit messaging)
+        // To reduce the "verbosity tax," Jolk allows bare identifiers to 
+        // appear as the target of an assignment. This is purely syntactic; 
+        // the engine reifies this as a formal message send to 'self'. 
+        // This ensures the metaboundary is preserved, as the "assignment" 
+        // is still mediated through the object's message protocol.
         return JolkMessageSendNodeGen.create(name, new JolkNode[]{expression}, visitReservedSelf());
     }
 
@@ -528,11 +551,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitMethod(jolkParser.MethodContext ctx) {
         String name = ctx.selector_id().getText().intern();
         
-        // Check for the 'lazy' modifier to enable memoization logic
         boolean isLazy = ctx.LAZY() != null;
+        boolean isSignatureOnly = ctx.block() == null;
 
-        // Signature Fence: Identify if this is a Command method (implicit self return).
-        // If the return type is 'Self' or the class name, it follows the Self-Return Contract.
+        /// Signature fence (the self-return contract)
+        //
+        // If the return type is omitted, or explicitly marked as 'Self', 
+        // the method is classified as a "command." The engine enforces an 
+        // implicit return of 'self', sustaining a "fluent by default" 
+        // architecture without the need for an explicit caret (^).
         String returnType = ctx.type() != null ? ctx.type().getText() : null;
         boolean isCommand = returnType == null || "Self".equals(returnType) || returnType.equals(currentClassName);
 
@@ -541,6 +568,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if (ctx.typed_params() != null) {
             ParameterSpec spec = parseTypedParams(ctx.typed_params());
             params = spec.names;
+            for (String p : params) {
+                if ("self".equals(p) || "Self".equals(p) || "super".equals(p))
+                    throw new JolkSemanticException("Reserved identifier '" + p + "' cannot be used as a parameter name.", ctx.getStart().getLine());
+            }
             isVariadic = spec.isVariadic;
         }
 
@@ -569,7 +600,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
             frameSlots = methodScope.size();
             boolean hasNL = nonLocalReturnFound.peek();
-            return new JolkMethodNode(name, body, params, isVariadic, frameSlots, hasNL, isLazy); // Pass isLazy
+            return new JolkMethodNode(name, body, params, isVariadic, frameSlots, hasNL, isLazy, isSignatureOnly); 
         } finally {
             scopes.pop();
             parameterThresholds.pop();
@@ -745,10 +776,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMessage(jolkParser.MessageContext ctx) {
+        /// Conversation with self (the implicit receiver)
+        ///
+        /// To enable "high-density messaging," messages starting directly with a 
+        /// selector hashtag (e.g., #x) default to 'self' as the receiver. This 
+        /// maintains the lexical fence (the # anchor) and the metaboundary 
+        /// while eliminating the redundancy of the 'self' keyword in dense 
+        /// internal logic.
         JolkNode receiver = ctx.primary() != null ? visit(ctx.primary()) : visitReservedSelf();
-        if (receiver == null) {
-            receiver = new JolkEmptyNode();
-        }
+        if (receiver == null) receiver = new JolkEmptyNode();
 
         // Aligned Child Traversal: In ANTLR4, optional children (like payload?) are not padded 
         // in their respective lists. We must traverse the actual child sequence to correctly 
@@ -883,7 +919,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitIdentifier(jolkParser.IdentifierContext ctx) {
-        return createIdentifierNode(ctx.getText().intern());
+        return createIdentifierNode(ctx.getText().intern(), ctx.getStart().getLine());
     }
 
     @Override
@@ -906,7 +942,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         if ("Self".equals(name)) {
             return new JolkReadTypeNode(language, currentClassName, null);
         }
-        return createIdentifierNode(name);
+        return createIdentifierNode(name, ctx.getStart().getLine());
     }
 
     /**
@@ -915,7 +951,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
      * Centralized logic for resolving identifiers into AST nodes based on
      * lexical scope and semantic casing.
      */
-    private JolkNode createIdentifierNode(String name) {
+    private JolkNode createIdentifierNode(String name, int line) {
 
         // 1. Check if it's a Parameter in the current or outer scope (Recursive Search)
         JolkNode argNode = lookupIdentifier(name);
@@ -952,7 +988,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return new JolkReadTypeNode(language, name, metaSelf);
         }
 
-        // 3. Default: Treat as a message send to 'self' (e.g. field access)
+        // Implicit field messaging (syntactic retrieval)
+        // Resolves bare identifiers to message sends on 'self'. This ensures 
+        // that 'x + y' remains a communicative act (self #x + self #y) 
+        // while reducing visual noise in dense logic.
         return JolkMessageSendNodeGen.create(name, new JolkNode[0], visitReservedSelf());
     }
 

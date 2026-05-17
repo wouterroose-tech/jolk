@@ -42,6 +42,6 @@ package final class ChildrenValidation<T, R> extends Node<T> {
                 Thread #currentThread #interrupt;
                 RuntimeException #new("Validation interrupted.", e) #throw ]
         */
-        children #forEach [child -> validation #accept(child, executionContext) ]
+        children #forEach [child -> self #validation #accept(child, executionContext) ]
     }
 }

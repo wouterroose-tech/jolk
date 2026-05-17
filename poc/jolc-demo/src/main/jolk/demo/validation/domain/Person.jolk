@@ -4,24 +4,24 @@ package demo.validation.domain;
 /// @author Wouter Roose
 
 public class Person {
-    public Long ssn;
-    public String firstName;
-    public String lastName;
+    Long ssn;
+    String firstName;
+    String lastName;
 
     String name() {
-        ^ self #firstName + " "+ self #lastName
+        ^ #firstName + " "+ #lastName
     }
 
     String toString() {
-        ^ "Person[ssn=" + self #ssn + ", firstName=" + self #firstName + ", lastName=" + self #lastName + "]"
+        ^ "Person[ssn=" + #ssn + ", firstName=" + #firstName + ", lastName=" + #lastName + "]"
     }
 
     Boolean ~~(Object other) {
         (self == other) ? [ ^true ];
         other #instanceOf(Person) #ifPresent [ p -> 
-            ^ (self #ssn == p #ssn)
-                && (self #firstName ~~ p #firstName)
-                && (self #lastName ~~ p #lastName)
+            ^ (#ssn == p #ssn)
+                && (#firstName ~~ p #firstName)
+                && (#lastName ~~ p #lastName)
             ];
         ^ false
     }

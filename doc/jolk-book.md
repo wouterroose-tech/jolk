@@ -166,7 +166,7 @@ Jolk integrates C-family structural conventions with Smalltalk’s message-passi
 	factor          = unary { ( "*" | "/" | "%" ) unary }
 	unary           = ( "!" | "-" ) unary | power
     power           = message [ "**" unary ] { "??" power }
-	message         = primary { selector [ payload ] }
+	message         = [ primary ] { selector [ payload ] }
 	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
 	closure         = "[" [ stat_params lambdaOp ] [ statements ] "]"
 	method_ref      = ( identifier | reserved ) "##" identifier
@@ -361,27 +361,45 @@ Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type sy
 
 ### State
 
-To maintain rigorous encapsulation, fields are absolutely private and direct field manipulation in Jolk is restricted to initial binding during instance construction. Field interaction—mediated through the lexical terminals (^ `field` for retrieval or `field = value` for assignment)—is restricted to the Archetype's internal implementation logic.
+To maintain rigorous encapsulation, fields are absolutely private and direct field manipulation in Jolk is restricted to initial binding during instance construction. Jolk discourages direct access to fields using bare identifiers, favoring the message protocol to ensure the Metaboundary is never bypassed.
+
+To facilitate a fluid conversation with Self, Jolk supports the implicit Self-receiver. When a message begins directly with a selector hashtag (e.g., `#name`), the receiver is implicitly resolved to `self`. This provides a high-density idiomatic shorthand for internal state management: retrieval remains a unary message (e.g., `^ #name`), and mutation remains a keyword-style message (e.g., `#name(newValue)`). By retaining the `#` anchor even without an explicit receiver, the language preserves the lexical fence—visually distinguishing state interaction from local stack variables—while eliminating the redundant repetition of the `self` keyword in dense logic.
 
 The *field entropy*, value stability (`constant`) and instance-level stability (`stable`) enforce predictable access patterns by ensuring that a field, once bound, remains logically unchanged or non-assignable.
 
 External state interaction is managed through implicit field encapsulation, a public protocol synthesised by the compiler that provides an automatic *fluent* API. Under this model, all synthesised setters inherently return `Self`, ensuring that state mutations remain within the fluid, self-returning control of the message chain. While these accessors are defaulted, they may be explicitly redefined by the developer to implement validation logic, lazy instantiation, or restricted visibility without compromising structural consistency. However, when fields represent stable values within the identity, the generation of a setter is suppressed. By automating this fence, Jolk ensures that state integrity is maintained through a contract of messages, effectively preventing encapsulation leaks.
 
 	class Point { 
-		// no modifiers on fields  
+		// no modifiers on fields 
 	    stable Int x;  
 	    stable Int y;
 	
-	    // Synthesised default accessors  
-	    // public Int x() { ^x }  
-	    // public Int y() { ^y }  
+	    // Synthesised default accessors
+	    // public Int x() { ^ x };
+	    // public x(Int value) { x = value };
 	
+	    // overridden accessors  
+	    protected Int x();  
+	    private x(Int value);
+
+		move(Int dx, Int dy) {  
+			// Implicit self receiver
+			#x(#x + dx);  
+			#y(#y + dy);
+
+			// Also valid: Explicit receiver
+			self #x(self #x + dx);
+
+			// Discouraged: The "Internal Bridge" (assignment-style)
+			x = x + dx;  
+		}
+
 	    // ...  
 	}
 
 The binding protocol establishes a deterministic hierarchy for state management, anchored by a clear distinction between declaration and mutation. By requiring an explicit *Type* for state anchoring, the language ensures that memory slots are architecturally defined, while mandatory initialisation provides a streamlined path toward *Referential Stability*.
 
-	Self method() {  
+	method() {  
 	    constant Int x = 10; // constant - Immutability  
 	    stable Int x;        // stable - Immutability  
 		x = 10;              // stable binding  - value update  
@@ -613,7 +631,9 @@ In alignment with Alan Kay’s vision to eliminate assignment altogether [9], Jo
 
 Jolk achieves syntactic uniformity through a pure object-oriented model where operators, control flow, and error handling are implemented as library-level protocols. By defining mathematical and logical symbols like `+` and `~~` as unified message selectors, Jolk allows custom types to interact with the same fluidity as native primitives.
 
-This architectural choice establishes a "Syntax Minimum" by replacing traditional keywords with polymorphic dispatch. The absence of `if`, `else`, and `while` is compensated by sending selectors like `?`, `:`, and `#while` directly to Boolean singletons or Closures. Similarly, error handling dispenses with try/catch in favour of `#catch` and `#finally` messages sent to closure objects.
+This communicative field is further refined by allowing the omission of the explicit `self` receiver (the implicit Self-receiver) and the `Self` return type (the Self-return contract), Jolk enables high-density messaging. This allows internal logic to be expressed with conciseness—such as `#x(#x + 1)`—without sacrificing the lexical fence or the Metaboundary.
+
+This architectural choice establishes a syntax minimum by replacing traditional keywords with polymorphic dispatch. The absence of `if`, `else`, and `while` is compensated by sending selectors like `?`, `:`, and `#while` directly to Boolean singletons or Closures. Similarly, error handling dispenses with try/catch in favour of `#catch` and `#finally` messages sent to closure objects.
 
 The Unified Messaging Model "opens up" the language by transforming fundamental operations into extensible library features. By adhering to the vision that computation is a dynamic flow of polymorphic dispatch messages between autonomous objects, Jolk shifts the focus to the communication.
 
@@ -769,9 +789,9 @@ Jolk’s return rule is a hybrid architectural model. At its core, the language 
 
 For closures and logic blocks, Jolk adheres to the principle of Implicit Expression Evaluation. The last expression in any block is automatically returned as its result, allowing control-flow structures to function as value-yielding expressions. These closure returns are designed for intuitive flow control through Non-Local Returns, allowing a Jolk closure to "reach out" and command its defining method to finish immediately. This makes functional patterns—such as custom search blocks—feel significantly more natural. Because Jolk uses Message-Oriented Objects, the "Return" is simply a continuation of the message chain and its identity remains congruent throughout its lifecycle.
 
-In Jolk, the *Signature Fence* establishes the lexical boundary for this behaviour: when a method omits a return type, the Tolk Engine classifies it as a command and enforces an implicit return of `self`, sustaining a "Fluent by Default" architecture. Conversely, methods with explicit return types, require the mandatory use of the return operator (`^`). If execution reaches the end of such a block without a return, the semantic analyser raises a type mismatch error.
+In Jolk, the signature fence establishes the lexical boundary for this behaviour. The `Self` return type is essentially optional: when a method omits a return type entirely, or explicitly specifies `Self` (or the name of the defining class), the Tolk Engine classifies it as a command and enforces an implicit return of `self`, sustaining a "Fluent by Default" architecture. Conversely, methods with other explicit return types require the mandatory use of the return operator (`^`). If execution reaches the end of such a block without a return, the semantic analyser raises a type mismatch error.
 
-The Signature Fence also serves as the anchor for *Non-Local Returns*. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing fence as its lexical home, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the *Metaboundary* to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the Signature Fence acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
+The signature fence also serves as the anchor for *Non-Local* returns. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing fence as its lexical home, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the *Metaboundary* to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the Signature Fence acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
 
 By combining these rules—explicit carets, implicit self-returns, the Self alias, and block-level evaluation—Jolk achieves a "Keyword-Lean" flow that remains semantically clear while strictly adhering to its unified messaging model.
 

@@ -65,7 +65,8 @@ term            : factor (addOp factor)* ;
 factor          : unary (mulOp unary)* ;
 unary           : (NOT | negOp) unary | power ;
 power           : message (powOp unary)? (NULL_COALESCE power)? ;
-message         : primary (selector payload?)* ;
+message         : primary (selector payload?)*
+                | (selector payload?)+ ;
 primary         : { _input.LT(2).getType() == HASH_HASH }? method_reference
                 | reserved
                 | { _input.LT(1).getType() == MetaId || (_input.LT(1).getType() == InstanceId && _input.LT(2).getType() == DOT) }? type

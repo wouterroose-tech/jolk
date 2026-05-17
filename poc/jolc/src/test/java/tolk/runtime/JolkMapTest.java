@@ -22,7 +22,7 @@ public class JolkMapTest extends JolcTestBase {
         String source = """ 
             class MyClass {
                 HashMap<Object, Object> emptyMap = HashMap #new;
-                Long size() { ^ emptyMap #size }
+                Long size() { ^ self #emptyMap #size }
             }""";
         Value instance = eval(source).invokeMember("new");
         assertEquals(0L, instance.invokeMember("size").asLong());
@@ -34,7 +34,7 @@ public class JolkMapTest extends JolcTestBase {
         String source = """ 
             class MyClass {
                 HashMap<Object, Object> emptyMap = #();
-                Long size() { ^ emptyMap #size }
+                Long size() { ^ self #emptyMap #size }
             }""";
         Value instance = eval(source).invokeMember("new");
         assertEquals(0L, instance.invokeMember("size").asLong());
@@ -46,7 +46,7 @@ public class JolkMapTest extends JolcTestBase {
         String source = """ 
             class MyClass {
                 stable HashMap<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
-                Long getAge(String name) { ^ ages #at(name) }
+                Long getAge(String name) { ^ self #ages #at(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
         Value ages = instance.invokeMember("ages");
@@ -61,7 +61,7 @@ public class JolkMapTest extends JolcTestBase {
         String source = """ 
             class MyClass {
                 Map<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
-                Long getAge(String name) { ^ ages #at(name) }
+                Long getAge(String name) { ^ self #ages #at(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
         assertEquals(30L, instance.invokeMember("getAge", "Alice").asLong());
@@ -74,8 +74,8 @@ public class JolkMapTest extends JolcTestBase {
         String source = """ 
             class MyClass {
                 Map<String, Long> ages = #("Alice" -> 30);
-                Map<String, Long> setAge(String name, Long age) { ^ ages #put(name, age) }
-                Long getAge(String name) { ^ ages #at(name) }
+                Map<String, Long> setAge(String name, Long age) { ^ self #ages #put(name, age) }
+                Long getAge(String name) { ^ self #ages #at(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
         instance.invokeMember("setAge", "Alice", 40L);
@@ -92,7 +92,7 @@ public class JolkMapTest extends JolcTestBase {
         String source = """ 
             class MyClass {
                 Map<String, Long> ages = #("Alice" -> 30);
-                Boolean hasKey(String name) { ^ ages #containsKey(name) }
+                Boolean hasKey(String name) { ^ self #ages #containsKey(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
         assertTrue(instance.invokeMember("hasKey", "Alice").asBoolean());
@@ -107,7 +107,7 @@ public class JolkMapTest extends JolcTestBase {
                 Map<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
                 String collectEntries() {
                     String result = "";
-                    ages #forEach [ k, v -> result = result + k + ":" + v #toString + ";" ];
+                    self #ages #forEach [ k, v -> result = result + k + ":" + v #toString + ";" ];
                     ^ result
                 }
             }""";
@@ -122,7 +122,7 @@ public class JolkMapTest extends JolcTestBase {
         String source = """
             class MapLongTest {
                 Map<Long, String> names = #(1 -> "one", 2 -> "two");
-                String getName(Long id) { ^ names #at(id) }
+                String getName(Long id) { ^ self #names #at(id) }
             }""";
         Value instance = eval(source).invokeMember("new");
         assertEquals("one", instance.invokeMember("getName", 1L).asString());
@@ -136,7 +136,7 @@ public class JolkMapTest extends JolcTestBase {
         String source = """
             class NestedMapTest {
                 Map<String, Map<String, Long>> data = #( "outer" -> #( "inner" -> 42 ) );
-                Long getInner() { ^ data #at("outer") #at("inner") }
+                Long getInner() { ^ self #data #at("outer") #at("inner") }
             }""";
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("getInner").asLong());

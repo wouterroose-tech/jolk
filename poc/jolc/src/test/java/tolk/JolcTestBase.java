@@ -33,6 +33,11 @@ public abstract class JolcTestBase {
     protected Engine.Builder getEngine() {
         return Engine.newBuilder()
                 .allowExperimentalOptions(true)
+                /// ### Performance Stability
+                /// Forcing a low compilation threshold ensures that the Tolk Engine
+                /// performs **Semantic Flattening** even during short-lived unit tests,
+                /// providing more accurate behavioral verification of optimized paths.
+                .option("engine.SingleTierCompilationThreshold", "10")
                 .out(out)
                 .err(err);
     }

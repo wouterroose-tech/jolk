@@ -54,16 +54,18 @@ import tolk.runtime.JolkNothing;
 /// # JolkVisitor
 ///
 /// Visitor that traverses the ANTLR4 parse tree and produces the Truffle AST.
-/// This class implements the **Dual-Stratum Symbol Table** strategy.
+/// This class implements the dual-stratum symbol table strategy, simultaneously
+/// tracking the lexical stratum (locals/parameters) and the host stratum 
+/// (meta-objects/java identities).
 ///
-/// During the visit pass, it simultaneously tracks:
-/// 1. **The Lexical Stratum**: Managed via `scopes`, resolving local variables 
-///    and parameters to frame slots.
-/// 2. **The Host Stratum**: Resolving Meta-Objects and Java host identities 
-///    based on **Semantic Casing** and intrinsic mappings.
-///
-/// This dual-layer resolution ensures **Identity Projection** remains 
-/// deterministic and performant.
+/// ### conversational symmetry
+/// jolk achieves industrial ergonomics through three synergistic protocols:
+/// 1. implicit self-receiver: `#method` resolves to `self #method`, providing
+///    high-density internal logic while maintaining the lexical fence (#).
+/// 2. self-return contract: methods return `self` by default, sustaining a
+///    fluent architecture without builder boilerplate.
+/// 3. syntactic field assignment: `x = value` is reified as `self #x(value)`,
+///    preserving the metaboundary by ensuring all state transitions are messages.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     private final JolkLanguage language;

@@ -30,18 +30,18 @@ import java.util.Set;
 
 /// # JolkMetaClass (Meta-Object Descriptor)
 /// 
-/// Represents a Jolk Type (a meta-object) at runtime. It acts as the first-class identity 
-/// for Classes, Records, and Enums.
+/// Represents a jolk type (a meta-object) at runtime. It acts as the first-class identity 
+/// for classes, records, and enums.
 /// 
-/// As the primary engine for **Dual-Stratum Resolution**, it manages the **Consolidated
-/// Flattened Registry**. It facilitates **Virtual Static Dispatch**, enabling class-level
+/// As the primary engine for dual-stratum resolution, it manages the consolidated
+/// flattened registry. It facilitates virtual static dispatch, enabling class-level
 /// behaviors to participate in a rigorous inheritance model.
 ///
-/// By enforcing the **Metaboundary** during the **Late Flattening** process, this class
-/// ensures that internal state is shielded by a **Lexical Fence**. This architecture
-/// renders **intrusive reflection a semantic impossibility**; there are no guest-level
+/// By enforcing the metaboundary during the late flattening process, this class
+/// ensures that internal state is shielded by a lexical fence. This architecture
+/// renders intrusive reflection a semantic impossibility; there are no guest-level
 /// primitives capable of bypassing the defined protocol to interrogate the object's 
-/// structural "Black Box."
+/// structural black box.
 ///
 /// Every Type is treated as a live Identity within the **JoMoo** continuum.
 /// 

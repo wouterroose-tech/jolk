@@ -16,16 +16,16 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.nodes.JolkDispatchNode;
 import tolk.nodes.JolkNode;
 
-/// # JolkObject (The JoMoo Kernel)
+/// # jolk object (the jomoo kernel)
 ///
-/// The base class for all identities in the **Jolk Message-Oriented Object (JoMoo)** model. 
-/// It represents a high-density synthesis of Java’s structural discipline and Smalltalk’s 
+/// The base class for all identities in the jolk message-oriented object (jomoo) model. 
+/// It represents a high-density synthesis of java’s structural discipline and smalltalk’s 
 /// dynamic philosophy.
 ///
-/// Adhering to the principle of **Industrial Sovereignty**, this class ensures that every 
-/// interaction is a formal message send. It implements **Identity Restitution**, ensuring 
+/// Adhering to the principle of industrial sovereignty, this class ensures that every 
+/// interaction is a formal message send. It implements identity restitution, ensuring 
 /// that substrate-level `void` and `null` are transformed into valid terminal responses 
-/// within a **Closed-Loop Object Heap**.
+/// within a closed-loop object heap.
 @ExportLibrary(InteropLibrary.class)
 public class JolkObject extends DynamicObject {
 
@@ -185,7 +185,11 @@ public class JolkObject extends DynamicObject {
             throw ArityException.create(0, 1, arguments.length);
         }
 
-        // 3. Identity Projection (DMS API / Mass-Assignment)
+
+        /// ## deterministic identity projection
+        ///
+        /// Handles the dms api for mass-assignment of properties, ensuring that 
+        /// deterministic identity is maintained via a visible handshake.
         if ("project".equals(name)) {
             Object result = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
             if (result != null) return result;

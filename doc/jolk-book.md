@@ -12,15 +12,15 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 
 ---
 
-# Table of Contents
+# Table of contents
 
 *   [Introduction](#introduction)
-    * [Design Philosophy](#design-philosophy)
-    * [The Unified Communicative Engine](#the-unified-communicative-engine)
+    * [Design philosophy](#design-philosophy)
+    * [The unified communicative engine](#the-unified-communicative-engine)
 * [Part One: Syntactic and Semantic Foundations](#part-one)
     * [Grammar](#grammar)
     * [Semantics](#semantics)
-    * [Design Synopsis](#design-synopsis)
+    * [Design synopsis](#design-synopsis)
 * [Part Two: Identity and Type Architecture](#part-two)
     * [Types](#types)
     * [Messaging](#messaging)
@@ -204,7 +204,7 @@ Furthermore, Jolk retains Java-like structures for record and enum to maintain c
 
 Jolk includes explicit modifiers such as `public`, `abstract`, and `final` because they are fundamental for enforcing structural integrity and managing complexity in large-scale software engineering. By combining the structural safety of the C-family with Smalltalk’s message-passing paradigm, Jolk’s syntax provides a bridge between expressiveness and high-performance.
 
-The Jolk syntax is defined by its pure object-oriented minimalism, aiming to reduce the *"Complexity Gap"* of industrial languages by treating every interaction as a message send. Jolk achieves a syntax minimum through a lean keyword palette of structural anchors like class and reserved identifiers like self. By restricting the assignment operator to local identifiers and requiring message-based interaction for all state changes, the messaging overlay replaces procedural noise with high-level intent, ensuring total encapsulation and structural clarity.
+The Jolk specification establishes a pure object-oriented syntax minimum that unifies all interactions under a single message-passing paradigm. This layout relies on a restricted keyword palette containing exclusively structural anchors (such as `class`) and reserved identifiers (such as `self`). By restricting the assignment operator to local identifiers and requiring message-based interaction for all state changes, the messaging overlay enforces absolute encapsulation and structural isolation.
 
 ### Keywords
 
@@ -227,7 +227,7 @@ Jolk distinguishes between *Reserved Object Identifiers* and *Structural Scaffol
 * *State & Behavior Modifiers*: `meta`, `stable`, `constant`, `lazy`
 * *Annotations*: anchored by the at-symbol (`@`).
 
-### Lexical Anchors
+### Lexical anchors
 
 **Operators**: Expressed as mathematical or logical symbols (e.g., `+`, `-`, `==`, `!=`, `~~`, `!~`, `?`).
 
@@ -240,7 +240,7 @@ The **Semantic Casing** is a core lexical rule in Jolk where the first-letter ca
 * Meta-Objects: Types, constants and class selectors start with an Uppercase letter (e.g., `String`, `PI`, `#PI`)  
 * Variables, parameters, properties & instance selectors: start with a lowercase letter (e.g., `name`, `#name`).
 
-### Structural Anchors
+### Structural anchors
 
 Syntactic elements act as structural anchors for the parser.
 
@@ -261,15 +261,18 @@ Syntactic elements act as structural anchors for the parser.
 **Semicolon**: The semicolon is mandatory for structural metadata, such as package and import declarations, as well as instance state declarations like fields and enums. Within method bodies, standard statements including variables, assignments, and expressions are firmly anchored by the semicolon to ensure clarity and structural integrity, but it is optional for the final statement of a block.
 
 ## Semantics
-In Jolk, reserved identifiers are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid structural keywords like class, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
 
-### Unified Message-Passing
+Priority is given to source code clarity over the brevity of general type inference. By mandating explicit type signatures and the use of the caret (`^`) operator for query methods, the model enforces *protocol transparency*. This ensures that the "contract of the message" remains visible at every step of the execution flow, allowing the developer to track the state of the message chain without the need to resolve implicit types.
 
-Jolk is built on Unified Message-Passing, where every interaction follows the *receiver \#message* pattern. This enforces strict encapsulation; whether you are instantiating an object (`User #new`), accessing a property (`user #name`), performing math (`1 + 2`) or specify control flow (`#case`), you are sending a message. Parentheses are omitted for unary selectors, and standard operators are treated as binary messages.
+Reserved identifiers are tokens that occupy a middle ground between the grammar and the object model. While they are not rigid structural keywords like `class`, they are names with pre-defined semantic meaning that the Tolk toolchain protects.
 
-Jolk's approach to assignment is a key aspect of its unified message-passing model. While the assignment symbol (`=`) is used for local identifiers and object creation, it also functions as a communicative shorthand for message sends when interacting with object fields. This ensures that every state change, even those appearing as direct assignments, is mediated through the object's formal message protocol, preserving the metaboundary.
+### Unified message-passing
 
-### Keyword-less Control Flow
+Jolk is built on unified message-passing, where every interaction follows the *receiver \#message* pattern. This enforces strict encapsulation; whether you are instantiating an object (`User #new`), accessing a property (`user #name`), performing math (`1 + 2`) or specify control flow (`#case`), you are sending a message. Parentheses are omitted for unary selectors, and standard operators are treated as binary messages.
+
+While the assignment symbol (`=`) is used for local identifiers and object creation, it also functions as a communicative shorthand for message sends when interacting with object fields. This ensures that every state change, even those appearing as direct assignments, is mediated through the object's formal message protocol, preserving the metaboundary.
+
+### Keyword-less control flow
 
 By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts control flow from a structural language constraint to an emergent property of object interaction. Logic is implemented as a library feature, ensuring that even fundamental branching obeys the same rules of encapsulation as user-defined code.
 
@@ -277,27 +280,25 @@ By replacing rigid keywords with an intrinsic messaging protocol, Jolk shifts co
 **Looping**: Native while and for statements are superseded by messages sent to Closures or Integers, such as `[cond] #while [body]` or `10 #times [n -> ...]`.   
 **Error Handling**: Exception logic is unified with the messaging model, with `#catch` and `#finally` messages sent to closures.
 
-### Mathematical and Equality Operators
+### Mathematical and equality operators
 
-Jolk distinguishes between Identity (`==` and the negation `!=`), which executes a reference parity check, and Equivalence (`~~` and the negation `!~`), which executes a structural state comparison. All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives.
-
-In accordance with the principle of engineered integrity, Jolk prioritises source code clarity over the brevity of general type inference. While operators provide fluidity, the model mandates explicit type signatures and the use of the caret (`^`) operator for query methods. This ensures protocol transparency, preventing "inference fog" by requiring that the "contract of the message" remains visible at every step of the execution flow. This discipline ensures that the developer always understands the state of the message chain without relying on external IDE tooling to resolve implicit types.
+Identity (`==` and the negation `!=`) is distinguished from equivalence (`~~` and the negation `!~`), which execute a reference parity check and a structural state comparison respectively. All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives.
 
 ### Parameter Immutability
 
-In Jolk, all identifiers defined within a parameter\_list are implicitly immutable. Any attempt to use these identifiers as the target of an assignment will result in a compile-time error. This ensures that the initial contract of the method remains transparent and prevents side effects common in languages that allow parameter reassignment.
+All identifiers defined within a parameter\_list are implicitly immutable. Any attempt to use these identifiers as the target of an assignment will result in a compile-time error. This ensures that the initial contract of the method remains transparent and prevents side effects common in languages that allow parameter reassignment.
 
 ### Type System
 
-The Jolk type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the archetypes—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the grammar.
+The type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the archetypes—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the grammar.
 
 Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[7], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
 
-**Identity Congruence** is the foundational architectural mandate of the Jolk framework that ensures a singular logical representation for all entities—including complex objects, primitives, and the absence of value—regardless of their physical storage format. It establishes a mathematical alignment between the abstract identity defined by the programmer in the source code and the physical representation chosen by the machine in the substrate".
+**Identity Congruence** is the foundational architectural mandate that ensures a singular logical representation for all entities—including complex objects, primitives, and the absence of value—regardless of their physical storage format. It establishes a mathematical alignment between the abstract identity defined by the programmer in the source code and the physical representation chosen by the machine in the substrate".
 
 **Intrinsic Primitives** like `Boolean`, `Long` and `String`- are first-class identities that participate in the messaging protocol.
 
-**The Reification of Absence**: The traditional `null` pointer is replaced by a formal identity. In Jolk, the absence of a value—represented by the reserved literal `null`—is a singleton instance of the `Nothing` class. By reifying nothingness as a first-class object, Jolk ensures that every identity remains a valid receiver, shifting failures from opaque runtime crashes to predictable semantic responses.
+**The Reification of Absence**: The traditional `null` pointer is replaced by a formal identity. The absence of a value—represented by the reserved literal `null`—is a singleton instance of the `Nothing` class. By reifying nothingness as a first-class object, Jolk ensures that every identity remains a valid receiver, shifting failures from opaque runtime crashes to predictable semantic responses.
 
 The modifier protocol defines a specification for member management:
 
@@ -318,13 +319,13 @@ A closure's return value is governed by its lexical context, the result is the e
 
 Meta-Directives establish the context that governs the relationship between the source and the platform. *Expansion* via the `+` / `using` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Projection* through the `&` / `using meta` lens, which projects platform facts—whether static constants or functional methods—and as local symbols. *Visibility* (e.g., `private`/ `#>`) and *Finality* (e.g., `final` / `#!`) are structural properties which mandate the state of access and identity.
 
-### Architectural Integrity
+### Architectural integrity
 
 Jolk enforces a semantic model where the metaboundary—the absolute line between an object’s internal state and the communication protocol—remains structurally inviolable. State isolation and finality are deterministic execution properties.
 
 Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "reflection" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Jolk prioritises message-passing interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential metaboundary where the "Ma" or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic protocol. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
 
-## Design Synopsis
+## Design synopsis
 
 The Jolk specification defines a pure object-oriented evolution for the JVM that fuses the message-passing paradigm of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send, Jolk establishes a single semantic paradigm for all operations. The orthogonal design decouples lexical primitives, such as the hash symbol (`#`), from underlying semantic protocols like message dispatches or array literals and achieves a syntax minimum through a lean keyword palette and a semantic casing rule.
 

@@ -60,8 +60,8 @@ import tolk.runtime.JolkNothing;
 ///
 /// ### conversational symmetry
 /// jolk achieves industrial ergonomics through three synergistic protocols:
-/// 1. implicit self-receiver: `#method` resolves to `self #method`, providing
-///    high-density internal logic while maintaining the lexical fence (#).
+/// 1. Implicit self-receiver: `#method` resolves to `self #method`, providing
+///    high-density internal logic while maintaining the lexical fence (`#`).
 /// 2. self-return contract: methods return `self` by default, sustaining a
 ///    fluent architecture without builder boilerplate.
 /// 3. syntactic field assignment: `x = value` is reified as `self #x(value)`,

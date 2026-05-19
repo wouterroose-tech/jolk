@@ -289,7 +289,7 @@ In Jolk, all identifiers defined within a parameter\_list are implicitly immutab
 
 ### Type System
 
-The Jolk type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the archetypes—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the EBNF grammar.
+The Jolk type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the archetypes—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the grammar.
 
 Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[7], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
 
@@ -312,7 +312,7 @@ In Jolk, `Self` (PascalCase) serves as a dynamic reference to the current type d
 
 ### Closure
 
-A closure's return value is governed by its lexical context, the result is the evaluation of its last expression unless an explicit return (`^`) is encountered. **Closures** are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize a bracket-light syntax where parentheses are omitted when the closure is the sole argument. Parameters within a closure are separated from the logic by an arrow `->`.
+A closure's return value is governed by its lexical context, the result is the evaluation of its last expression unless an explicit return (`^`) is encountered. Closures are bracket-delimited `[ ]` and can act as receivers for control-flow messages. They utilize a bracket-light syntax where parentheses are omitted when the closure is the sole argument. Parameters within a closure are separated from the logic by an arrow `->`.
 
 ### Meta-Directives
 
@@ -320,13 +320,13 @@ Meta-Directives establish the context that governs the relationship between the 
 
 ### Architectural Integrity
 
-Jolk enforces a rigorous semantic model designed to protect the metaboundary—the absolute line between an object’s internal state and the external message-passing environment. This shift ensures that system stability and security are inherent properties.
+Jolk enforces a semantic model where the metaboundary—the absolute line between an object’s internal state and the communication protocol—remains structurally inviolable. State isolation and finality are deterministic execution properties.
 
-Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "reflection" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Jolk prioritises message-passing interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential *metaboundary* where the "Ma" or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic emergent protocol. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
+Jolk prohibits intrusive reflection to ensure that an object’s internal structure remains a "Black Box." While traditional dynamic systems often permit "reflection" access to private fields or runtime method overrides, Jolk prioritises system-wide security. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. Jolk prioritises message-passing interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential metaboundary where the "Ma" or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic protocol. By shifting the focus from the objects themselves to the precision of the messages between them, Jolk achieves a level of composition and safety that is resilient to the side effects and unpredictability found in less constrained environments.
 
 ## Design Synopsis
 
-The Jolk specification defines an industrial-grade, pure object-oriented evolution for the JVM that fuses the message-passing paradigm of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send, Jolk fundamentally eliminates the complexity gap inherent in traditional industrial languages. This model is supported by a "DRY" design that decouples lexical primitives from functional layout rules, achieving a syntax minimum through a lean keyword palette and a semantic casing rule.
+The Jolk specification defines a pure object-oriented evolution for the JVM that fuses the message-passing paradigm of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send, Jolk establishes a single semantic paradigm for all operations. The orthogonal design decouples lexical primitives, such as the hash symbol (`#`), from underlying semantic protocols like message dispatches or array literals and achieves a syntax minimum through a lean keyword palette and a semantic casing rule.
 
 Encapsulation is enforced via a metaboundary that separates an object’s internal state from the external environment. To ensure total structural clarity, the model utilizes "lexical fences"—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve zero token ambiguity. This enables deterministic, linear-time parsing and prevents structural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
 
@@ -628,7 +628,7 @@ In alignment with Alan Kay’s vision to eliminate assignment altogether [9], jo
 
 Jolk achieves syntactic uniformity through a pure object-oriented model where operators, control flow, and error handling are implemented as library-level protocols. By defining mathematical and logical symbols like `+` and `~~` as unified message selectors, Jolk allows custom types to interact with the same fluidity as native primitives.
 
-This communicative field is further refined by allowing the omission of the explicit `self` receiver (the implicit Self-receiver) and the `Self` return type (the Self-return contract), Jolk enables high-density messaging. This allows internal logic to be expressed with conciseness—such as `#x(#x + 1)`—without sacrificing the lexical fence or the Metaboundary.
+This communicative field is further refined by allowing the omission of the explicit `self` receiver (the implicit Self-receiver) and the `Self` return type (the Self-return contract), Jolk enables high-density messaging. This allows internal logic to be expressed with conciseness—such as `#x(#x + 1)`—without sacrificing the lexical fence or the metaboundary.
 
 This architectural choice establishes a syntax minimum by replacing traditional keywords with polymorphic dispatch. The absence of `if`, `else`, and `while` is compensated by sending selectors like `?`, `:`, and `#while` directly to Boolean singletons or Closures. Similarly, error handling dispenses with try/catch in favour of `#catch` and `#finally` messages sent to closure objects.
 
@@ -758,7 +758,7 @@ The `#case` selector acts as a logic gate that evaluates a closure only if the r
         #case(404) #do ["Not Found"]       /// Returns if 404, or passes along  
         #default ["Unknown Error"]         /// default
 
-Safe Casting is facilitated through the `#as(Type)` and `#instanceOf(Type)` messages, which bridge the gap between abstract protocols and concrete identities. In Jolk, `#instanceOf` is a projection mechanism. It serves as an instrument for *Type Narrowing* at runtime, ensuring that casting is a communicative act that results in a manageable `Match` container. Unlike a traditional cast, which **imposes a structural assertion** that risks a terminal failure, Safe Casting negotiates a new handshake; if the identity cannot adhere to the proposed protocol, the result resolves to `Nothing`.
+Safe casting is facilitated through the `#as(Type)` and `#instanceOf(Type)` messages, which bridge the gap between abstract protocols and concrete identities. In Jolk, `#instanceOf` is a projection mechanism. It serves as an instrument for *type narrowing* at runtime, ensuring that casting is a communicative act that results in a manageable `Match` container. Unlike a traditional cast, which imposes a *structural assertion* that risks a terminal failure, safe casting negotiates a new handshake; if the identity cannot adhere to the proposed protocol, the result resolves to `Nothing`.
 
 The pattern matching choreography relies on these safe-casting messages. Instead of returning a raw pointer or throwing a cast exception, they perform a type-safe narrowing and return a `Match<T>` container. This enables *Monadic Chaining* through a sequence of `#filter`, `#map`, or `#ifPresent` messages, transforming imperative branching into a declarative data flow.
 
@@ -776,7 +776,7 @@ For closures and logic blocks, Jolk adheres to the principle of Implicit Express
 
 In Jolk, the signature fence establishes the lexical boundary for this behaviour. The `Self` return type is essentially optional: when a method omits a return type entirely, or explicitly specifies `Self` (or the name of the defining class), the Tolk Engine classifies it as a command and enforces an implicit return of `self`, sustaining a "Fluent by Default" architecture. Conversely, methods with other explicit return types require the mandatory use of the return operator (`^`). If execution reaches the end of such a block without a return, the semantic analyser raises a type mismatch error.
 
-The signature fence also serves as the anchor for *Non-Local* returns. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing fence as its lexical home, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the *Metaboundary* to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the Signature Fence acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
+The signature fence also serves as the anchor for *Non-Local* returns. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing fence as its lexical home, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the metaboundary to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the Signature Fence acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
 
 By combining these rules—explicit carets, implicit self-returns, the Self alias, and block-level evaluation—Jolk achieves a "Keyword-Lean" flow that remains semantically clear while strictly adhering to its unified messaging model.
 
@@ -1544,7 +1544,7 @@ To manage the shared prefixes inherent in the specification—where annotations 
 
 ### Semantic Analysis
 
-The semantic phase validates the **Lexical Stratum** and the **Host Stratum** simultaneously. By prioritising a deterministic toolchain over restrictive constraints, Tolk ensures that Jolk’s functional intent, concurrent execution models, and interoperability bridges are mapped with total integrity to the JVM’s runtime. This process is orchestrated via the `JolkVisitor`, which reconciles the parse tree with the target `JolkNode` identities.
+The semantic phase validates the *Lexical Stratum* and the *Host Stratum* simultaneously. By prioritising a deterministic toolchain over restrictive constraints, Tolk ensures that Jolk’s functional intent, concurrent execution models, and interoperability bridges are mapped with total integrity to the JVM’s runtime. This process is orchestrated via the `JolkVisitor`, which reconciles the parse tree with the target `JolkNode` identities.
 
 ### Binary AST Packaging
 

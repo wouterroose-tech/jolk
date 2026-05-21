@@ -358,18 +358,18 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitType_bound(jolkParser.Type_boundContext ctx) {
-        /*
-         * ### Type Bound Resolution (Conjunction vs. List)
-         * 
-         * While semantically similar to Java interfaces, Jolk utilizes the 
-         * ampersand (&) to represent a Type Conjunction. 
-         * 
-         * This shifts the focus from a "procedural list" of traits to the 
-         * composition of behavioral protocols. It reinforces the Jolk mandate 
-         * of Identity Congruence: the implementing type does not just 
-         * "possess" these protocols; it exists as a composition of 
-         * these contracts within the behavioral lattice.
-         */
+        /// ### Type bound resolution (Conjunction vs. list)
+        ///
+        /// Jolk projects the **Strongtalk** principle of conjunction types 
+        /// through the ampersand (`&`) operator. Unlike **Java** interfaces, 
+        /// which often imply an implementation lineage, a `protocol` 
+        /// conjunction represents a purely behavioral contract.
+        ///
+        /// This shifts the focus from a "procedural list" of traits to the 
+        /// composition of behavioral protocols within the type lattice. 
+        /// It reinforces the Jolk mandate of *Identity congruence*: 
+        /// the implementing type exists as a composition of these contracts 
+        /// rather than a consumer of them.
         return super.visitType_bound(ctx);
     }
 

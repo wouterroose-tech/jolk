@@ -556,7 +556,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         boolean isLazy = ctx.LAZY() != null;
         boolean isSignatureOnly = ctx.block() == null;
 
-        /// Signature fence (the self-return contract)
+        /// Method boundary (the self-return contract)
         //
         // If the return type is omitted, or explicitly marked as 'Self', 
         // the method is classified as a "command." The engine enforces an 

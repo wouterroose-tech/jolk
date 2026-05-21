@@ -770,15 +770,15 @@ Pattern Matching results in a `Match<T>` to drive logic flow through a message c
 
 ### Return & Self-return Contract
 
-Jolk’s return rule is a hybrid architectural model. At its core, the language employs the caret symbol (`^`) for explicit returns, ensuring type safety and allowing for early exits. For Self-returning methods, the self-return contract is a structural guarantee: because `Self` (PascalCase) is a dynamic, context-aware reference to the current type definition, the mapping ensures that methods are automatically subclass-safe. The language reinforces its semantic casing rules, where the type identity (`Self`) naturally governs the return of the instance (`self`). 
+Jolk’s return rule is a hybrid architectural model. At its core, the language employs the caret symbol (`^`) for explicit returns, ensuring type safety and allowing for early exits. For self-returning methods, the self-return contract is a structural guarantee: because `Self` (PascalCase) is a dynamic, context-aware reference to the current type definition, the mapping ensures that methods are automatically subclass-safe. The language reinforces its semantic casing rules, where the type identity (`Self`) naturally governs the return of the instance (`self`). 
 
-For closures and logic blocks, Jolk adheres to the principle of Implicit Expression Evaluation. The last expression in any block is automatically returned as its result, allowing control-flow structures to function as value-yielding expressions. These closure returns are designed for intuitive flow control through Non-Local Returns, allowing a Jolk closure to "reach out" and command its defining method to finish immediately. This makes functional patterns—such as custom search blocks—feel significantly more natural. Because Jolk uses Message-Oriented Objects, the "Return" is simply a continuation of the message chain and its identity remains congruent throughout its lifecycle.
+For closures and logic blocks, Jolk adheres to the principle of implicit expression evaluation. The last expression in any block is automatically returned as its result, allowing control-flow structures to function as value-yielding expressions. These closure returns are designed for intuitive flow control through non-local returns, allowing a Jolk closure to "reach out" and command its defining method to finish immediately. This makes functional patterns—such as custom search blocks—feel significantly more natural. Because Jolk uses message-oriented objects, the "return" is simply a continuation of the message chain and its identity remains congruent throughout its lifecycle.
 
-In Jolk, the signature fence establishes the lexical boundary for this behaviour. The `Self` return type is essentially optional: when a method omits a return type entirely, or explicitly specifies `Self` (or the name of the defining class), the Tolk Engine classifies it as a command and enforces an implicit return of `self`, sustaining a "Fluent by Default" architecture. Conversely, methods with other explicit return types require the mandatory use of the return operator (`^`). If execution reaches the end of such a block without a return, the semantic analyser raises a type mismatch error.
+In Jolk, the method boundary establishes the lexical limit for this behavior. The `Self` return type is essentially optional: when a method omits a return type entirely, or explicitly specifies `Self` (or the name of the defining class), the Tolk Engine classifies it as a command and enforces an implicit return of `self`, sustaining a "Fluent by Default" architecture. Conversely, methods with other explicit return types require the mandatory use of the return operator (`^`). If execution reaches the end of such a block without a return, the semantic analyzer raises a type mismatch error.
 
-The signature fence also serves as the anchor for *Non-Local* returns. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing fence as its lexical home, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the metaboundary to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the Signature Fence acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
+The method boundary also serves as the anchor for non-local returns. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing boundary as its *lexical home*, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the metaboundary to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the method boundary acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
 
-By combining these rules—explicit carets, implicit self-returns, the Self alias, and block-level evaluation—Jolk achieves a "Keyword-Lean" flow that remains semantically clear while strictly adhering to its unified messaging model.
+By combining these rules—explicit carets, implicit self-returns, the `Self` alias, and block-level evaluation—Jolk achieves a "Keyword-lean" flow that remains semantically clear while strictly adhering to its unified messaging model.
 
 ### Method References
 
@@ -1088,77 +1088,69 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 ## Architectural highlights
 
-*Deferred Initialisation* The on-demand (`lazy`) creation of the system's configuration through traceable, manual dependency injection.
+*Deferred initialisation* The on-demand (`lazy`) creation of the system's configuration through traceable, manual dependency injection.
 
-*Dual-Stratum Resolution*: A symbol table strategy that simultaneously tracks guest and host metadata to maintain integrity across ecosystem boundaries.
+*Dual-stratum resolution*: A symbol table strategy that simultaneously tracks guest and host metadata to maintain integrity across ecosystem boundaries.
 
-*Extension Protocols*: The ability to "bolt on" new behavioral contracts to existing final types through compiler-level rewriting.
+*Extension protocols*: The ability to "bolt on" new behavioral contracts to existing final types through compiler-level rewriting.
 
-*Guided Coercion*: A mechanism governing numeric transitions between augmented primitives, providing automatic promotion for widening and requiring explicit guidance for narrowing.
+*Guided coercion*: A mechanism governing numeric transitions between augmented primitives, providing automatic promotion for widening and requiring explicit guidance for narrowing.
 
-*Identity Restitution*: A dual-layer protocol at the metaboundary that "lifts" raw JVM nulls into a meta-aware singleton and "lowers" them back for Java interoperability.
+*Identity restitution*: A dual-layer protocol at the metaboundary that "lifts" raw JVM nulls into a meta-aware singleton and "lowers" them back for Java interoperability.
 
-*Local Retention*: A strict encapsulation principle that restricts the assignment operator to local identifiers within an object's internal context.
+*Local retention*: A strict encapsulation principle that restricts the assignment operator to local identifiers within an object's internal context.
 
 *Metaboundary*: The enforcement of receiver-centric interaction, prioritizing communication protocols over internal properties to ensure state isolation.
 
 *Modifiers*: The model distinguishes structural constraints (`final`) from value stability (`constant`) and instance-level stability (`stable`), utilising `public` defaults for types and methods to maximise structural density—reflecting the industrial reality of 80%—while enforcing encapsulation through a `private` default for fields; however, meta constants permit direct access through import lenses.
 
-*Non-Local Returns*: The ability of a closure to command its defining method to finish immediately, even across different stack frames.
+*Non-local returns*: The ability of a closure to command its defining method to finish immediately, even across different stack frames.
 
-*Null Object Pattern*: The reification of "nothingness" as an Atomic Identity (Nothing), ensuring uninitialized states can safely respond to messages.
+*Null object pattern*: The reification of "nothingness" as an atomic identity (Nothing), ensuring uninitialized states can safely respond to messages.
 
-*Predicate Assertion*: A message signifier (`?` / `?!`) that merges a state query with a logical expectation, allowing the compiler to branch execution directly from the message intent without procedural negation.
+*Predicate assertion*: A message signifier (`?` / `?!`) that merges a state query with a logical expectation, allowing the compiler to branch execution directly from the message intent without procedural negation.
 
-*Receiver Retention*: A protocol that ensures self is returned after interacting with host void methods.
+*Receiver retention*: A protocol that ensures self is returned after interacting with host void methods.
 
-*Reified Closures*: Closures are identities that maintain a structural link to their lexical environment through Dual-Stratum projection:
-  - **Inline Projection**: For control-flow structures, the closure boundary is erased, enabling In-place Execution where the logic is merged directly into the calling method.
-  - **Unbounded Projection**: When passed as a parameter or crossing method boundaries, the closure is projected as an opaque Functional Interface, facilitating seamless interop while maintaining Identity Congruence.
+*Reified closures*: Closures are identities that maintain a structural link to their lexical environment through dual-stratum projection:
+  - **Inline projection**: For control-flow structures, the closure boundary is erased, enabling In-place Execution where the logic is merged directly into the calling method.
+  - **Unbounded projection**: When passed as a parameter or crossing method boundaries, the closure is projected as an opaque Functional Interface, facilitating seamless interop while maintaining identity congruence.
 
-*Semantic Casing*: A lexical rule where the first character's casing determines an identifier's role: Uppercase for Meta-Objects (Types) and lowercase for instances (Variables).
+*Self-return contract*: A semantic boundary where the return type determines if a method implicitly returns self or requires an explicit return (`^`).
 
-*Strong Typing*: A static protocol leveraging the Java type system that verifies behavioural protocols via conjunctions (`&`), ensuring that objects are matched based on both syntactic signature and explicit semantic identity.
+*Semantic casing*: A lexical rule where the first character's casing determines an identifier's role: Uppercase for Meta-Objects (Types) and lowercase for instances (Variables).
 
-*Syntactic Fluidity*: A Bracket-Light design that prioritizes fluid syntax to maximise structural density by eliminating redundant delimiters and reducing the cognitive overhead
+*Strong typing*: A static protocol leveraging the Java type system that verifies behavioural protocols via conjunctions (`&`), ensuring that objects are matched based on both syntactic signature and explicit semantic identity.
 
-*The Signature Fence*: A semantic boundary where the return type determines if a method implicitly returns self or requires an explicit return (`^`).
+*Syntactic fluidity*: A Bracket-Light design that prioritizes fluid syntax to maximise structural density by eliminating redundant delimiters and reducing the cognitive overhead
 
-*Unified Message-Passing*: Every interaction—from arithmetic and object instantiation to control flow—is defined as a formal message between a receiver and a selector, thereby collapsing Cyclomatic Complexity. 
+*Unified message-passing*: Every interaction—from arithmetic and object instantiation to control flow—is defined as a formal message between a receiver and a selector, thereby collapsing cyclomatic complexity. 
 
 ## Heritage & foundation
 
 Jolk is a *convergent architecture* where the static safety of Java acts as the gatekeeper for a Smalltalk-inspired runtime. The Java influence provides the structure—nominal typing, curly-brace scoping, and visibility modifiers—utilising Factory Patterns as a core construct to govern object lifecycles strictly. The Smalltalk influence provides the execution via the messaging kernel. Beyond these primary anchors, Jolk’s design is further inspired by the pragmatic ergonomics of Kotlin, the symbolic density of C#, and the pioneering meta-object research of Self and Lisp.
 
-*Smalltalk-80[1] heritage*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic exchange of messages". It utilizes keyword selectors (using a `#` hashtag anchor) and closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately. Unlike Smalltalk, which operates in a closed image, Jolk must respect the JVM stack. Non-local returns are permitted within the guest environment but are strictly forbidden when a closure is projected as an opaque Java Functional Interface.
+*Smalltalk-80[1]*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic exchange of messages". It utilizes keyword selectors (using a `#` hashtag anchor) and closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately. Unlike Smalltalk, which operates in a closed image, Jolk must respect the JVM stack. Non-local returns are permitted within the guest environment but are strictly forbidden when a closure is projected as an opaque Java Functional Interface.
 
-*Strongtalk[5] heritage*: Jolk projects several key principles from Strongtalk onto the Java type system to achieve a more precise behavioral contract. It explicitly separates the behavioral protocol from the class hierarchy through the use of the `protocol` archetype, a concept known as *lattice separation*. Jolk employs Strongtalk-inspired type-checking to statically validate messages, ensuring a receiver can understand a message before execution. While Java focuses on integrity, Jolk leverages Strongtalk to focus on behavioral integrity. This is reinforced by the ampersand (`&`) operator, which reifies *conjunction types* for behavioral composition, and `< >` delimiters for *F-bounded quantification*, ensuring that methods returning `Self` remain type-safe across the inheritance tree.
+*The Self language[14]*: The Tolk Engine’s strategy of semantic flattening is the spiritual successor to the optimization techniques developed for the Self language.
 
-*Java and JVM Integration*: The syntax for Structural Scaffolding—including package, import, and class—is intentionally aligned with Java. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
+*Strongtalk[5]*: Jolk projects several key principles from Strongtalk onto the Java type system to achieve a more precise behavioral contract. It explicitly separates the behavioral protocol from the class hierarchy through the use of the `protocol` archetype, a concept known as *lattice separation*. Jolk employs Strongtalk-inspired type-checking to statically validate messages, ensuring a receiver can understand a message before execution. While Java focuses on integrity, Jolk leverages Strongtalk to focus on behavioral integrity. This is reinforced by the ampersand (`&`) operator, which reifies *conjunction types* for behavioral composition, and `< >` delimiters for *F-bounded quantification*, ensuring that methods returning `Self` remain type-safe across the inheritance tree.
 
-*The Self language*: The Tolk Engine’s strategy of semantic flattening is the spiritual successor to the optimization techniques developed for the Self language[14].
+*Java and JVM*: The syntax for structural scaffolding—including package, import, and class—is intentionally aligned with Java. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
 
-*The Null object pattern* in Jolk is a direct architectural evolution of concepts from both Smalltalk-80 and Kotlin, designed to handle "nothingness" as a first-class participant in the messaging flow. Jolk takes the reified identity of Smalltalk and the type-safe constraints of Kotlin, then applies Identity Restitution to preserve a pure object-oriented "World View" on the high-performant JVM.
+*Kotlin [11]*: Jolk synthesizes Kotlin's pragmatic ergonomics with Smalltalk's foundational principles. Features like null safety, exceptions, and predicates are re-imagined through a dual heritage. Jolk's `Nothing` identity, rooted in Smalltalk's reified absence, aligns with Kotlin's emphasis on preventing `NullPointerException`s. Similarly, the elimination of checked exceptions mirrors Kotlin's approach, while Jolk's message-passing for control flow (using closures as predicates) draws from both Smalltalk's blocks and Kotlin's functional patterns.
 
-*Exceptions*: Following Smalltalk and Kotlin, Jolk eliminates checked exceptions, allowing them to propagate without mandatory try-catch blocks, and adopts a strict form of Trailing Closure Syntax.
+*Scala*: The *Monadic Chaining* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types[20]. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.  While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization.
 
-*Null-coalescing*: Jolk adopts the `??` operator from `C#`[15], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging.
-
-*Guided coercion* is based on the generality principles of the past (Java & Smalltalk-80) but adds a semantic layer of protection to ensure that data transitions are as mathematically sound as they are performant.
+*C#*: The `??` operator for null-coalescing[15], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging. The `using` directive[16] for vocabulary expansion, aliasing and constant projection.
 
 *Extension*: While the syntax borrows from the ergonomics of Dart, the semantics are more Lisp-centric.
 
-*using directive*: Jolk adopts the `C#` `using` directive[16] for vocabulary expansion, aliasing and constant projection.
-
 *Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the visibility and variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[17], Ruby[18] and Perl[19].
 
-*Predicate assertion*: in Jolk is a reconciliatory synthesis that takes the philosophical purity of Smalltalk, the syntactic ergonomics of Kotlin, and the high-performance execution of Java to create a unified messaging protocol for control flow.
+*Guided coercion* is based on the generality principles of the past (Java & Smalltalk-80) but adds a semantic layer of protection to ensure that data transitions are as mathematically sound as they are performant.
 
 *Receiver retention*: while the behavior is identical to Smalltalk's ergonomics, receiver retention is a sanitization layer designed to preserve the message-passing paradigm of the language when operating within the procedural constraints of the Java Virtual Machine
-
-*Scala influence*: The *Monadic Chaining* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types[20]. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.
-
-*Lazy evaluation*: While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization. Deferred computation provides a native mechanism for thread-safe, on-demand initialisation and resource management.
 
 ---
 
@@ -1641,8 +1633,8 @@ Closures in Jolk are reified identities defined as a reified block rather than a
 
 The Tolk Engine performs *Contextual Projection* by evaluating the selector contract to determine the most efficient substrate strategy:
 
-*   **Transparent (Inline) Projection**: For structural selectors like `?` or `#while`, the engine applies semantic flattening. The closure boundary is erased, and the logic is merged directly into the caller's stack frame. This enables *Scope Permeability*, allowing Non-Local returns (`^`)—implemented via `JolkReturnException`—to reach their lexical home.
-*   **Opaque Projection**: When a closure is passed as functional data (e.g., `#map`), the engine applies *Boxing*, wrapping the block in a `JolkClosure`. To resolve the friction between Jolk’s natural mutation and the substrate's requirement for stable references, the engine implements *Identity Promotion* through *Reference Wrapping*—projecting mutable identifiers as single-element final arrays.
+*   **Transparent (inline) projection**: For structural selectors like `?` or `#while`, the engine applies semantic flattening. The closure boundary is erased, and the logic is merged directly into the caller's stack frame. This enables *Scope Permeability*, allowing lon-local returns (`^`)—implemented via `JolkReturnException`—to reach their lexical home.
+*   **Opaque projection**: When a closure is passed as functional data (e.g., `#map`), the engine applies *Boxing*, wrapping the block in a `JolkClosure`. To resolve the friction between Jolk’s natural mutation and the substrate's requirement for stable references, the engine implements *Identity Promotion* through *Reference Wrapping*—projecting mutable identifiers as single-element final arrays.
 
 This transformation follows a rigorous flow in `JolkVisitor` that manages substrate scopes and parameter extraction. During this process, the engine acts as a *Semantic Guard*; if it detects a non-local return (`^`) within a boxed context, it halts the process and issues a `JolkSemanticException`. Optimization is handled in `JolkDispatchNode.doControlFlowDirect`, where specialized call nodes initiate monadic flow flattening to elide container allocations from the compiled execution.
 
@@ -1707,7 +1699,7 @@ Within this `get` method, the Tolk Engine orchestrates the on-demand execution o
 
 [10] Bierman, G. ; Goetz, B. (2023). Derived Record- Creation. ([JEP 468](https://openjdk.org/jeps/468))
 
-[11]: Kotlin. Exceptions. ([https://kotlinlang.org/docs/exceptions.html\#exception-classes](https://kotlinlang.org/docs/exceptions.html#exception-classes)). 
+[11]: Kotlin. Language guide. ([https://kotlinlang.org/docs/home.html](https://kotlinlang.org/docs/home.html)). 
 
 [12]: Würthinger, T., et al. (2013). One VM to Rule Them All. ([Proceedings of the 2013 ACM International Symposium on New Ideas, New Paradigms, and Reflections on Programming & Software (Onward!)](https://lafo.ssw.uni-linz.ac.at/pub/papers/2013_Onward_OneVMToRuleThemAll.pdf))
 

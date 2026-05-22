@@ -141,7 +141,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                     // Resolve the reified identity as a hint for correct default value initialization
                     Object hint = field.isLazy() 
                         ? new JolkLazyValue(field.getInitializer(), field.getName(), lang)
-                        : (field.getInitializer() instanceof JolkEmptyNode) ? context.getOrCreateClass(field.getTypeName()) : JolkNothing.INSTANCE;
+                        : (field.getInitializer() instanceof JolkEmptyNode) ? resolveTypeHint(field.getTypeName(), context) : JolkNothing.INSTANCE;
                     runtimeMetaFields.put(entry.getKey(), hint);
                     if (field.isStable()) {
                         stableFields.add(entry.getKey());
@@ -160,7 +160,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                     stableFields.add(entry.getKey());
                 }
                 // Structural Hint: Resolve the reified identity for the defaulting protocol.
-                runtimeInstanceFields.put(entry.getKey(), context.getOrCreateClass(fieldNode.getTypeName()));
+                runtimeInstanceFields.put(entry.getKey(), resolveTypeHint(fieldNode.getTypeName(), context));
             } else {
                 // Realized Value: Evaluate initializer once at definition time
                 JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
@@ -208,6 +208,11 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                         // Update both the storage slot and the map hint for initializeDefaultValues
                         newMetaClass.setMetaFieldValue(name, initialValue);
                         runtimeMetaFields.put(name, initialValue);
+                    } else {
+                        // Identity initialization for meta-fields without initializers
+                        Object defaultValue = resolveTypeHint(field.getTypeName(), context);
+                        newMetaClass.setMetaFieldValue(name, defaultValue);
+                        runtimeMetaFields.put(name, defaultValue);
                     }
                 }
             }
@@ -229,6 +234,20 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         newMetaClass.initializeDefaultValues();
 
         return newMetaClass;
+    }
+
+    /**
+     * Resolves the type identity for field defaulting hints.
+     * Recognizes intrinsic archetypes that require specific zero-value initialization.
+     */
+    private Object resolveTypeHint(String typeName, JolkContext context) {
+        if ("Long".equals(typeName) || "Int".equals(typeName)) return 0L;
+        if ("Double".equals(typeName)) return 0.0;
+        if ("Boolean".equals(typeName)) return false;
+        if ("String".equals(typeName)) return com.oracle.truffle.api.strings.TruffleString.fromJavaStringUncached("", com.oracle.truffle.api.strings.TruffleString.Encoding.UTF_16);
+        if ("Number".equals(typeName)) return 0L;
+        if ("Decimal".equals(typeName)) return java.math.BigDecimal.ZERO;
+        return context.getOrCreateClass(typeName);
     }
 
     /**

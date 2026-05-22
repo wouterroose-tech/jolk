@@ -141,6 +141,27 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
         return concatNode.execute(fromJavaStringNode.execute(s1, TruffleString.Encoding.UTF_16), s2, TruffleString.Encoding.UTF_16, true);
     }
 
+    @Specialization(guards = "isPlus()")
+    protected TruffleString doObjectString(VirtualFrame frame, Object left, TruffleString right,
+                                          @Cached JolkDispatchNode dispatchNode,
+                                          @Cached TruffleString.ConcatNode concatNode) {
+        // Identity Congruence: String concatenation triggers #toString dispatch on the non-string operand.
+        Object stringified = dispatchNode.execute0(frame, left, "toString");
+        TruffleString s1 = (stringified instanceof TruffleString ts) ? ts : 
+            TruffleString.fromJavaStringUncached(String.valueOf(stringified), TruffleString.Encoding.UTF_16);
+        return concatNode.execute(s1, right, TruffleString.Encoding.UTF_16, true);
+    }
+
+    @Specialization(guards = "isPlus()")
+    protected TruffleString doStringObject(VirtualFrame frame, TruffleString left, Object right,
+                                          @Cached JolkDispatchNode dispatchNode,
+                                          @Cached TruffleString.ConcatNode concatNode) {
+        Object stringified = dispatchNode.execute0(frame, right, "toString");
+        TruffleString s2 = (stringified instanceof TruffleString ts) ? ts : 
+            TruffleString.fromJavaStringUncached(String.valueOf(stringified), TruffleString.Encoding.UTF_16);
+        return concatNode.execute(left, s2, TruffleString.Encoding.UTF_16, true);
+    }
+
     @Idempotent
     protected boolean isPlus() {
         return getOperator() == OP_PLUS;

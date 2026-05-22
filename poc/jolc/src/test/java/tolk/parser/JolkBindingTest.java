@@ -17,7 +17,7 @@ public class JolkBindingTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         
         // access via synthesized accessor
-        assertEquals(42, instance.invokeMember("x").asLong());
+        assertEquals(42L, instance.invokeMember("x").asLong());
     }
     
     @Test
@@ -43,8 +43,8 @@ public class JolkBindingTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         
         // access via synthesized accessor
-        assertEquals(0, instance.invokeMember("x").asLong());
-        assertEquals(0, instance.invokeMember("X").asLong());
+        assertEquals(0L, instance.invokeMember("x").asLong());
+        assertEquals(0L, meta.invokeMember("X").asLong());
     }
 
     @Test
@@ -103,7 +103,7 @@ public class JolkBindingTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         
         // field access in method
-        assertEquals(42L, instance.invokeMember("val").asLong());
+        assertEquals(42, instance.invokeMember("val").asLong());
     }
 
     @Test
@@ -112,7 +112,7 @@ public class JolkBindingTest extends JolcTestBase {
             class MyClass {
                 meta Long X = 0; 
                 meta Long val() { ^ self #X }
-                Long val() { ^ self #X }
+                Long val() { ^ Self #X }
                 meta Self val(Long x) { ^ self #X(x)}
             }""";
         Value meta = eval(source);
@@ -145,7 +145,7 @@ public class JolkBindingTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         assertEquals(42L, instance.invokeMember("value").asLong());
         assertEquals(42L, instance.invokeMember("getValue").asLong());
-        assertEquals(42L, instance.invokeMember("getValue", 42).asLong());
+        assertEquals(42L, instance.invokeMember("getValue", 42L).asLong());
         assertEquals(42L, instance.invokeMember("run").asLong());
     }
 

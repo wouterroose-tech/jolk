@@ -130,7 +130,6 @@
                         -XX:+UseCountedLoopSafepoints
                         -Dpolyglot.engine.WarnInterpreterOnly=true
                         -Dpolyglot.engine.TraceCompilation=true
-                        -Dpolyglot.engine.SingleTierCompilationThreshold=1000
                         --add-opens=java.base/sun.misc=ALL-UNNAMED
                         --add-exports=jdk.internal.vm.ci/jdk.vm.ci.runtime=ALL-UNNAMED
                         --add-exports=jdk.internal.vm.ci/jdk.vm.ci.code=ALL-UNNAMED

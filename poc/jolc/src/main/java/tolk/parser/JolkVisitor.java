@@ -32,6 +32,7 @@ import tolk.nodes.JolkUnaryNodeGen;
 import tolk.nodes.JolkReadTypeNode;
 import tolk.nodes.JolkReturnNode;
 import tolk.nodes.JolkClosureNodeGen;
+import tolk.nodes.JolkMethodReferenceDispatchNode;
 import tolk.nodes.JolkEmptyNode;
 import tolk.nodes.JolkFieldNode;
 import tolk.nodes.JolkIdentityNode;
@@ -194,9 +195,14 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             JolkFinality finality = modInfo.finality;
             JolkVisibility visibility = modInfo.visibility;
 
-            var typeContext = ctx.type_bound().type();
-            if (typeContext.MetaId() != null) {
-                String className = typeContext.MetaId().getText().intern();
+            jolkParser.TypeContext typeContext = ctx.type_bound().type();
+            // Robust Name Resolution: Extract base identifier using a heuristic that supports 
+            // both terminal MetaId and rule-based results (e.g. for namespace-prefixed types).
+            String className = (typeContext.MetaId() != null) 
+                ? typeContext.MetaId().getText().intern() 
+                : typeContext.getText().intern();
+
+            if (className != null && !"Self".equals(className)) {
                 // Track the current class for 'Self' resolution
                 String oldClassName = this.currentClassName;
                 this.currentClassName = className;
@@ -926,8 +932,44 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitMethod_reference(jolkParser.Method_referenceContext ctx) {
-        // TODO: Handle method reference (##)
-        return super.visitMethod_reference(ctx);
+        /// ### visitMethod_reference
+        ///
+        /// Reifies a method reference (##) into a [JolkClosure]. 
+        /// Unbound references (on Types) capture the first closure argument 
+        /// as the receiver. Bound references (on instances) fix the receiver 
+        /// at reification time.
+        
+        // Account for the implicit closure environment in the lexical chain.
+        scopes.push(new java.util.ArrayList<>(java.util.List.of("<env>")));
+        parameterThresholds.push(1);
+        try {
+            JolkNode receiverNode;
+            String methodName;
+
+            if (ctx.reserved() != null) {
+                // Case: self ## doRun, Self ## doRun
+                JolkNode reserved = visit(ctx.reserved());
+                receiverNode = (reserved instanceof JolkSuperNode) ? visitReservedSelf() : reserved;
+                methodName = ctx.identifier(0).getText().intern();
+            } else {
+                // Case: myObj ## doRun or String ## valueOf
+                String firstId = ctx.identifier(0).getText().intern();
+                
+                // The visitor no longer forces Type-level references to be unbound.
+                // We preserve the identity (Type or instance) and delegate the
+                // binding logic to the JolkMethodReferenceDispatchNode which 
+                // performs a runtime heuristic.
+                receiverNode = createIdentifierNode(firstId, ctx.getStart().getLine());
+                methodName = ctx.identifier(ctx.identifier().size() - 1).getText().intern();
+            }
+
+            JolkNode dispatch = new JolkMethodReferenceDispatchNode(methodName, receiverNode);
+            JolkRootNode root = new JolkRootNode(language, dispatch, "methodReference", false);
+            return JolkClosureNodeGen.create(root.getCallTarget());
+        } finally {
+            scopes.pop();
+            parameterThresholds.pop();
+        }
     }
 
     /**

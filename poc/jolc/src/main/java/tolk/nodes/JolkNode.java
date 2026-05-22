@@ -98,8 +98,30 @@ public abstract class JolkNode extends Node {
             if (context != null && context.env.isHostObject(value)) {
                 return context.env.asHostObject(value);
             }
+            // FALLBACK: Manual unwrap for internal Truffle HostObject wrappers
+            // used in unit tests or complex polyglot re-entry scenarios.
+            if (value != null && value.getClass().getName().equals("com.oracle.truffle.polyglot.HostObject")) {
+                var method = value.getClass().getDeclaredMethod("getJavaObject");
+                method.setAccessible(true);
+                return method.invoke(value);
+            }
+            
+            // FALLBACK: Manual unwrap for Guest Object Proxies (PolyglotMap, PolyglotList, etc.)
+            // These wrap guest objects to present them as host collections to Java.
+            if (value != null && value.getClass().getName().startsWith("com.oracle.truffle.polyglot.Polyglot")) {
+                java.lang.reflect.Field field;
+                try {
+                    field = value.getClass().getDeclaredField("guestObject");
+                } catch (NoSuchFieldException e) {
+                    field = value.getClass().getDeclaredField("receiver");
+                }
+                field.setAccessible(true);
+                return field.get(value);
+            }
         } catch (AssertionError | IllegalStateException e) {
             // Handled: Context-less execution path
+        } catch (Exception e) {
+            // Handled: Reflection failure
         }
         return value;
     }

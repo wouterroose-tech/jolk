@@ -251,10 +251,10 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         
         // Access internal instanceFields map via reflection to verify hints
         Map<String, Object> hints = (Map<String, Object>) getInternalField(metaClass, "instanceFields");
-        // Jolk Archetypal Rigidity: Hints are now reified MetaClasses rather than raw Strings.
-        // We verify the identity by checking the name property of the meta-object stored in the coordinate map.
-        assertEquals("Long", ((JolkMetaClass) hints.get("count")).name, "Preamble should contain the reified 'Long' identity.");
-        assertEquals("Boolean", ((JolkMetaClass) hints.get("active")).name, "Preamble should contain the reified 'Boolean' identity.");
+        // Identity Initialization: Hints for intrinsic types are now realized as substrate zero-values (0L, false, etc.)
+        // to ensure deterministic initialization during instance allocation.
+        assertEquals(0L, hints.get("count"), "Preamble should contain the default Long zero-value.");
+        assertEquals(false, hints.get("active"), "Preamble should contain the default Boolean false-value.");
     }
 
     private boolean isMetaObject(Value v) {

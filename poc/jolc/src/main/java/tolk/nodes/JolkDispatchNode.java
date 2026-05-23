@@ -122,26 +122,32 @@ public abstract class JolkDispatchNode extends Node {
     }
 
     // --- Helper methods for @Specialization guards ---
+    @Idempotent
     protected static boolean isTimes(String selector) {
         return "times".equals(selector);
     }
 
+    @Idempotent
     protected static boolean isFilter(String selector) {
         return "filter".equals(selector);
     }
 
+    @Idempotent
     protected static boolean isForEach(String selector) {
         return "forEach".equals(selector);
     }
 
+    @Idempotent
     protected static boolean isMap(String selector) {
         return "map".equals(selector);
     }
 
+    @Idempotent
     protected static boolean isAnyMatch(String selector) {
         return "anyMatch".equals(selector);
     }
 
+    @Idempotent
     protected static boolean isFindFirst(String selector) {
         return "findFirst".equals(selector);
     }
@@ -151,10 +157,12 @@ public abstract class JolkDispatchNode extends Node {
      * 
      * Helper for Truffle DSL guards to identify Double substrate values.
      */
+    @Idempotent
     protected static boolean isDouble(Object receiver) {
         return receiver instanceof Double;
     }
 
+    @Idempotent
     protected static boolean isTernary(String selector) {
         return "? :".equals(selector) || "?! :".equals(selector);
     }
@@ -163,6 +171,7 @@ public abstract class JolkDispatchNode extends Node {
         return expected.equals(selector);
     }
 
+    @Idempotent
     protected static boolean isControlFlow(String selector) {
         return switch (selector) {
             case "ifPresent", "ifEmpty", "??", "?", "?!", "? :", "?! :", "finally", "do", "default" -> true;
@@ -170,14 +179,17 @@ public abstract class JolkDispatchNode extends Node {
         };
     }
 
+    @Idempotent
     protected static boolean isTry(String selector) {
         return "try".equals(selector);
     }
 
+    @Idempotent
     protected static boolean isClosureCatch(String selector) {
         return "catch".equals(selector);
     }
 
+    @Idempotent
     protected static boolean isClosure(Object receiver) {
         return receiver instanceof JolkClosure;
     }
@@ -269,7 +281,7 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(guards = {
         "receiver.getShape() == cachedShape",
         "selector == cachedSelector",
-        "cachedShape.getProperty(cachedSelector) != null"
+        "property != null"
     }, limit = "3")
     protected Object doShapeRead(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
                                 @Cached("receiver.getShape()") Shape cachedShape,
@@ -459,6 +471,7 @@ public abstract class JolkDispatchNode extends Node {
     /// 
     /// @param receiver The object to check.
     /// @return true if the receiver is null or the JolkNothing instance.
+    @Idempotent
     protected static boolean isNothing(Object receiver) {
         return receiver == null || receiver == JolkNothing.INSTANCE;
     }
@@ -2612,6 +2625,7 @@ public abstract class JolkDispatchNode extends Node {
     /// This is used to prevent `JolkObject` instances from being routed to host-collection
     /// fast paths (like `doMap` or `doList`). It performs an unwrap to handle
     /// guest objects returning from the host boundary.
+    @Idempotent
     protected static boolean isNotDynamicObject(Object receiver) {
         // Enforce Guest Sovereignty: reject anything that unwraps to a 
         // native guest identity to prevent host-collection hijacking.

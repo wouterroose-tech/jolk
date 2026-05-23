@@ -143,8 +143,8 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
 
     @Specialization(guards = "isPlus()")
     protected TruffleString doObjectString(VirtualFrame frame, Object left, TruffleString right,
-                                          @Cached JolkDispatchNode dispatchNode,
-                                          @Cached TruffleString.ConcatNode concatNode) {
+                                          @Shared("dispatch") @Cached JolkDispatchNode dispatchNode,
+                                          @Shared("concat") @Cached TruffleString.ConcatNode concatNode) {
         // Identity Congruence: String concatenation triggers #toString dispatch on the non-string operand.
         Object stringified = dispatchNode.execute0(frame, left, "toString");
         TruffleString s1 = (stringified instanceof TruffleString ts) ? ts : 
@@ -154,8 +154,8 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
 
     @Specialization(guards = "isPlus()")
     protected TruffleString doStringObject(VirtualFrame frame, TruffleString left, Object right,
-                                          @Cached JolkDispatchNode dispatchNode,
-                                          @Cached TruffleString.ConcatNode concatNode) {
+                                          @Shared("dispatch") @Cached JolkDispatchNode dispatchNode,
+                                          @Shared("concat") @Cached TruffleString.ConcatNode concatNode) {
         Object stringified = dispatchNode.execute0(frame, right, "toString");
         TruffleString s2 = (stringified instanceof TruffleString ts) ? ts : 
             TruffleString.fromJavaStringUncached(String.valueOf(stringified), TruffleString.Encoding.UTF_16);
@@ -198,7 +198,7 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
      */
     @Fallback
     protected Object doFallback(VirtualFrame frame, Object leftNode, Object rightNode,
-                                @Cached JolkDispatchNode dispatchNode) {
+                                @Shared("dispatch") @Cached JolkDispatchNode dispatchNode) {
         return dispatchNode.execute(frame, leftNode, getOperator(), new Object[]{rightNode});
     }
 }

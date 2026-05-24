@@ -7,107 +7,106 @@ grammar jolk;
 */
 
 // Parser rules
-unit            : package_decl? expansion* projection* annotation* ( type_decl | extension_decl)? EOF;
+unit             : package_decl? expansion* projection* annotation* ( type_decl | extension_decl)? EOF;
 
-package_decl    : (PACKAGE | TILDE) namespace ';' ;
-expansion       : (USING | ADD) inclusion ;
-projection      : (USING META | AMP) inclusion ;
-inclusion       : alias? namespace ('.' MUL)? ';' ;
-alias           : MetaId ASSIGN ;
-namespace       : identifier ('.' identifier)* ;
+package_decl     : (PACKAGE | TILDE) namespace ';' ;
+expansion        : (USING | ADD) inclusion ;
+projection       : (USING META | AMP) inclusion ;
+inclusion        : alias? namespace ('.' MUL)? ';' ;
+alias            : MetaId ASSIGN ;
+namespace        : identifier ('.' identifier)* ;
 
-type_decl       : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
-modifiers       : visibility? finality? | MODIFIER ;
-visibility      : PUBLIC | PACKAGE | PROTECTED | PRIVATE ;
-finality        : ABSTRACT | FINAL ;
-archetype       : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
-type_bound      : type type_contracts? ;
-type            : self_type | (identifier DOT)* MetaId type_args? ;
-type_args       : LT type_bound (COMMA type_bound)* GT ;
-type_contracts  : EXTENDS type (IMPLEMENTS type (AMP type)*)?
-                | IMPLEMENTS type (AMP type)* ;
+type_decl        : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
+modifiers        : visibility? finality? | MODIFIER ;
+visibility       : PUBLIC | PACKAGE | PROTECTED | PRIVATE ;
+finality         : ABSTRACT | FINAL ;
+archetype        : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
+type_bound       : type type_contracts? ;
+type             : self_type | (identifier DOT)* MetaId type_args? ;
+type_args        : LT type_bound (COMMA type_bound)* GT ;
+type_contracts   : EXTENDS type (IMPLEMENTS type (AMP type)*)?
+                 | IMPLEMENTS type (AMP type)* ;
 
-type_mbr        : annotation* (member | enum_constant) ;
-member          : META? state SEMI | modifiers META? method ;
-state           : constant | field ;
-constant        : CONSTANT type identifier assignment ;
-field           : (STABLE | LAZY)? type identifier assignment? ;
-binding         : identifier assignment ;
-assignment      : ASSIGN expression ;
-enum_constant   : MetaId arguments? ';' ;
+type_mbr         : annotation* (member | enum_constant) ;
+member           : META? state SEMI | modifiers META? method ;
+state            : constant | field ;
+constant         : CONSTANT type identifier assignment ;
+field            : (STABLE | LAZY)? type identifier assignment? ;
+binding          : identifier assignment ;
+assignment       : ASSIGN expression ;
+enum_constant    : MetaId arguments? ';' ;
 
-method          : LAZY? type_args? type? selector_id LPAREN typed_params? RPAREN ( block | ';' ) ;
-selector_id     : identifier | operator ;
-typed_params    : annotated_type ( InstanceId (COMMA annotated_type InstanceId)* (COMMA annotated_type vararg_id)? | vararg_id ) ;
-annotated_type  : annotation* type ;
-vararg_id	    : SPREAD InstanceId ;
+method           : LAZY? type_args? type? selector_id LPAREN typed_params? RPAREN ( block | ';' ) ;
+selector_id      : identifier | operator ;
+typed_params     : annotated_type ( InstanceId (COMMA annotated_type InstanceId)* (COMMA annotated_type vararg_id)? | vararg_id ) ;
+annotated_type   : annotation* type ;
+vararg_id	     : SPREAD InstanceId ;
 
-extension_decl  : EXTENSION MetaId ON type LBRACE extension_mbr* RBRACE ;
-extension_mbr   : annotation* modifiers method ;
+extension_decl   : EXTENSION MetaId ON type LBRACE extension_mbr* RBRACE ;
+extension_mbr    : annotation* modifiers method ;
 
-annotation      : AT identifier (LPAREN annotation_args? RPAREN)? ;
-annotation_args : annotation_val | annotation_arg (COMMA annotation_arg)* ;
-annotation_arg  : identifier ASSIGN annotation_val ;
-annotation_val  : literal | annotation | LBRACE (annotation_val (COMMA annotation_val)*)? RBRACE ;
+annotation       : AT identifier (LPAREN annotation_args? RPAREN)? ;
+annotation_args  : annotation_val | annotation_arg (COMMA annotation_arg)* ;
+annotation_arg   : identifier ASSIGN annotation_val ;
+annotation_val   : literal | annotation | LBRACE (annotation_val (COMMA annotation_val)*)? RBRACE ;
 
-block           : LBRACE statements? RBRACE ;
-statements      : statement (';' statement)* ';'?;
-statement       : state | binding | returnOp? expression ;
-expression      : logic_or (condOp expression (COLON expression)?)? ;
-logic_or        : logic_and (OR logic_and)* ;
-logic_and       : inclusive_or (AND inclusive_or)* ;
-inclusive_or    : exclusive_or (BIT_OR exclusive_or)* ;
-exclusive_or    : bitwise_and (BIT_XOR bitwise_and)* ;
-bitwise_and     : equality (AMP equality)* ;
-equality        : comparison (eqOp comparison)* ;
-comparison      : term (relOp term)* ;
-term            : factor (addOp factor)* ;
-factor          : unary (mulOp unary)* ;
-unary           : (NOT | negOp) unary | power ;
-power           : message (powOp unary)? (NULL_COALESCE power)? ;
-message         : primary (selector payload?)*
-                | (selector payload?)+ ;
-primary         : { _input.LT(2).getType() == HASH_HASH }? method_reference
-                | reserved
-                | { _input.LT(1).getType() == MetaId || (_input.LT(1).getType() == InstanceId && _input.LT(2).getType() == DOT) }? type
-                | identifier
-                | literal
-                | list_literal
-                | LPAREN expression RPAREN
-                | closure
-                | method_reference ;
-closure         : LBRACK (stat_params LAMBDA)? statements? RBRACK ;
+block            : LBRACE statements? RBRACE ;
+statements       : statement (';' statement)* ';'?;
+statement        : state | binding | returnOp? expression ;
+expression       : logic_or (condOp expression (COLON expression)?)? ;
+logic_or         : logic_and (OR logic_and)* ;
+logic_and        : inclusive_or (AND inclusive_or)* ;
+inclusive_or     : exclusive_or (BIT_OR exclusive_or)* ;
+exclusive_or     : bitwise_and (BIT_XOR bitwise_and)* ;
+bitwise_and      : equality (AMP equality)* ;
+equality         : comparison (eqOp comparison)* ;
+comparison       : term (relOp term)* ;
+term             : factor (addOp factor)* ;
+factor           : unary (mulOp unary)* ;
+unary            : (NOT | negOp) unary | power ;
+power            : message (powOp unary)? (NULL_COALESCE power)? ;
+message          : primary (selector payload?)*
+                 | (selector payload?)+ ;
+primary          : method_reference
+                 | reserved
+                 | type
+                 | identifier
+                 | literal
+                 | list_literal
+                 | LPAREN expression RPAREN
+                 | closure ;
 method_reference : ( identifier | reserved ) HASH_HASH identifier ;
-payload         : arguments | closure ;
-arguments       : LPAREN (expression (COMMA expression)*)? RPAREN ;
-stat_params     : typed_params | inferred_params ;
-inferred_params : InstanceId (COMMA InstanceId)* ;
+closure          : LBRACK (stat_params LAMBDA)? statements? RBRACK ;
+payload          : arguments | closure ;
+arguments        : LPAREN (expression (COMMA expression)*)? RPAREN ;
+stat_params      : typed_params | inferred_params ;
+inferred_params  : InstanceId (COMMA InstanceId)* ;
 
-reserved        : TRUE | FALSE | NULL | SUPER | self_type | self_instance ;
-self_type       : SELF_TYPE ;
-self_instance   : SELF_INSTANCE ;
-selector        : HASH (identifier | CLASS ) ;
-identifier      : MetaId | InstanceId | VALUE ;
-literal         : NumberLiteral | StringLiteral | CharLiteral ;
-list_literal    : array_literal | set_literal | map_literal ;
-array_literal   : HASH LBRACK literal_list? RBRACK ;
-set_literal     : HASH LBRACE literal_list? RBRACE ;
-map_literal     : HASH LPAREN map_list? RPAREN ;
-literal_list    : expression (COMMA expression)* ;
-map_list        : map_entry (COMMA map_entry)* ;
-map_entry       : expression LAMBDA expression ;
+reserved         : TRUE | FALSE | NULL | SUPER | self_type | self_instance ;
+self_type        : SELF_TYPE ;
+self_instance    : SELF_INSTANCE ;
+selector         : HASH (identifier | CLASS ) ;
+identifier       : MetaId | InstanceId | VALUE ;
+literal          : NumberLiteral | StringLiteral | CharLiteral ;
+list_literal     : array_literal | set_literal | map_literal ;
+array_literal    : HASH LBRACK literal_list? RBRACK ;
+set_literal      : HASH LBRACE literal_list? RBRACE ;
+map_literal      : HASH LPAREN map_list? RPAREN ;
+literal_list     : expression (COMMA expression)* ;
+map_list         : map_entry (COMMA map_entry)* ;
+map_entry        : expression LAMBDA expression ;
 
-returnOp        : CARET ;
-condOp          : QMARK | QMARK_NOT ;
-operator        : addOp | mulOp | eqOp | relOp | NOT | powOp | QMARK | QMARK_NOT | NULL_COALESCE | HASH_HASH ;
+returnOp         : CARET ;
+condOp           : QMARK | QMARK_NOT ;
+operator         : addOp | mulOp | eqOp | relOp | NOT | powOp | QMARK | QMARK_NOT | NULL_COALESCE | HASH_HASH ;
 
-addOp           : ADD | SUB;
-mulOp           : MUL | DIV | MOD;
-negOp           : SUB;
-notOp           : NOT;
-powOp           : POW;
-eqOp            : EQ | NE | EQ_TILDE | NE_TILDE;
-relOp           : GT | GE | LT | LE;
+addOp            : ADD | SUB;
+mulOp            : MUL | DIV | MOD;
+negOp            : SUB;
+notOp            : NOT;
+powOp            : POW;
+eqOp             : EQ | NE | EQ_TILDE | NE_TILDE;
+relOp            : GT | GE | LT | LE;
 
 // Lexer rules
 

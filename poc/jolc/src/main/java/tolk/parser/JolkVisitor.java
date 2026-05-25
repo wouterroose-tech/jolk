@@ -294,6 +294,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         return new JolkEmptyNode();
     }
 
+    /// Helper to resolve a type name from a TypeContext, stripping generics and handling short names.
+    private String resolveTypeName(jolkParser.TypeContext ctx) {
+        String name = (ctx.MetaId() != null)
+            ? ctx.MetaId().getText().intern()
+            : ctx.getText().split("<")[0].trim().intern();
+        // If it's a short name, prepend the current package for resolution
+        return (name.contains(".") || currentPackage.isEmpty()) ? name : currentPackage + "." + name;
+    }
+
     private record ModifierInfo(JolkVisibility visibility, JolkFinality finality) {}
 
     private ModifierInfo resolveModifiers(jolkParser.ModifiersContext ctx) {
@@ -930,7 +939,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             case "null" -> new JolkLiteralNode(JolkNothing.INSTANCE);
             case "self" -> visitReservedSelf();
             case "super" -> new JolkSuperNode();
-            case "Self" -> new JolkReadTypeNode(language, currentClassName, currentPackage, null); // Directly resolve the current class's MetaClass
+            case "Self" -> new JolkReadTypeNode(language, currentClassName, currentPackage, null);
             case "true" -> new JolkLiteralNode(true);
             case "false" -> new JolkLiteralNode(false);
             default -> new JolkEmptyNode();
@@ -1037,8 +1046,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             if ("Map".equals(name) || "HashMap".equals(name))
                 return new JolkLiteralNode(tolk.runtime.JolkMapExtension.MAP_TYPE);
 
-            // Priority 2: Current Class Reference
-            if (name.equals(currentClassName) || name.equals(currentShortName)) return new JolkReadTypeNode(language, currentClassName, currentPackage, null);
+            // Priority 2: Current Class Reference (handled by JolkReadTypeNode's internal logic)
+            // This ensures that 'Self' and short-name references within the current package are resolved correctly.
             
             // Priority 3: User-Defined Meta-Objects (Resolved via dynamic lookup with Meta-fallback)
             // This handles both external class references (ClassA) and internal constants (FORTY_TWO).

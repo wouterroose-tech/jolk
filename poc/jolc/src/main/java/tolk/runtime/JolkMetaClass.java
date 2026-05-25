@@ -743,8 +743,10 @@ public class JolkMetaClass extends DynamicObject {
                 }
                 // Canonical #new logic: Only applies if no explicit meta-method named 'new' exists.
                 // This allows the variadic 'meta Map new(Object...)' to take precedence.
+                // This is the intrinsic allocation for JolkMetaClass.
                 if (arguments.length == 0) return JolkBuiltinMethod.lift(new JolkObject(this));
                 
+                // The arity check for canonical constructor
                 if (arguments.length == totalFieldCount) {
                     return JolkBuiltinMethod.lift(new JolkObject(this, arguments));
                 }

@@ -355,9 +355,6 @@ public abstract class JolkDispatchNode extends Node {
                     // Reifies a string into a communicative identity (Selector)
                     return JolkSelector.create(arguments[0]);
                 }
-                case "new" -> { // Unified Creation Protocol: Prioritize intrinsic allocation over registry
-                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, getContext()));
-                }
                 case "stateProjection" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     java.util.Map<String, Object> state = new java.util.LinkedHashMap<>();
@@ -463,7 +460,11 @@ public abstract class JolkDispatchNode extends Node {
                 Object[] args = prepareArguments(member, receiver, arguments);
                 return JolkNode.lift(memberInterop.execute(member, args));
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {
-                throw new RuntimeException(e);
+                if (e instanceof RuntimeException re) {
+                    throw re; // Re-throw RuntimeExceptions directly
+                } else {
+                    throw new RuntimeException(e); // Wrap other exceptions
+                }
             }
         }
         // If member is null, fall back to generic dispatch (e.g., host members)
@@ -644,7 +645,11 @@ public abstract class JolkDispatchNode extends Node {
                         } catch (JolkReturnException e) {
                             callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
                             throw e;
-                        } catch (Throwable t) {
+                        } catch (RuntimeException | Error e) {
+                            callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
+                            throw e;
+                        } catch (Throwable t) { // Catch other Throwables and re-wrap if necessary
+                            // This is a generic fallback for finally, so a RuntimeException is appropriate.
                             callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
                             throw t;
                         }
@@ -943,7 +948,11 @@ public abstract class JolkDispatchNode extends Node {
             
             return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
         } catch (Exception e) {
-            throw new RuntimeException("Error executing #" + selector + " on Double", e);
+            if (e instanceof RuntimeException re) {
+                throw re; // Re-throw RuntimeExceptions directly
+            } else {
+                throw new RuntimeException("Error executing #" + selector + " on Double", e); // Wrap other exceptions
+            }
         }
     }
 
@@ -974,7 +983,11 @@ public abstract class JolkDispatchNode extends Node {
             
             return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
         } catch (Exception e) {
-            throw new RuntimeException("Error executing #" + selector + " on Decimal: " + e.getMessage(), e);
+            if (e instanceof RuntimeException re) {
+                throw re; // Re-throw RuntimeExceptions directly
+            } else {
+                throw new RuntimeException("Error executing #" + selector + " on Decimal: " + e.getMessage(), e); // Wrap other exceptions
+            }
         }
     }
 
@@ -1365,7 +1378,11 @@ public abstract class JolkDispatchNode extends Node {
                 Object[] args = prepareArguments(cachedMember, receiver, arguments);
                 return JolkNode.lift(memberInterop.execute(cachedMember, args));
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {
-                throw new RuntimeException(e);
+                if (e instanceof RuntimeException re) {
+                    throw re; // Re-throw RuntimeExceptions directly
+                } else {
+                    throw new RuntimeException(e); // Wrap other exceptions
+                }
             }
         }
         return doBoolean(frame, receiver, selector, arguments, interop);
@@ -1494,7 +1511,10 @@ public abstract class JolkDispatchNode extends Node {
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on TruffleString", e);
             }
-        } catch (Exception e) {
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Exception e) { // Catch other exceptions and wrap them
+            // This is a generic fallback for TruffleString, so a RuntimeException is appropriate.
             throw new RuntimeException("Message dispatch failed: #" + selector + " on TruffleString", e);
         }
     }
@@ -1544,7 +1564,10 @@ public abstract class JolkDispatchNode extends Node {
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on List", e);
             }
-        } catch (Exception e) {
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Exception e) { // Catch other exceptions and wrap them
+            // This is a generic fallback for List, so a RuntimeException is appropriate.
             throw new RuntimeException("Error executing #" + selector + " on List", e);
         }
     }
@@ -1587,6 +1610,11 @@ public abstract class JolkDispatchNode extends Node {
             } catch (UnknownIdentifierException ex) {
                 throw new RuntimeException("Message dispatch failed: #" + selector + " on Throwable", e);
             }
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Exception e) { // Catch other exceptions and wrap them
+            // This is a generic fallback for Throwable, so a RuntimeException is appropriate.
+            throw new RuntimeException("Error executing #" + selector + " on Throwable", e);
         }
     }
 
@@ -2136,6 +2164,13 @@ public abstract class JolkDispatchNode extends Node {
                         return context.env.asGuestValue(map);
                     }
 
+                    // Priority 2: Jolk-Native Allocation: Perform raw allocation for guest types.
+                    // This is essential for 'super #new' to function when the parent hierarchy 
+                    // relies on intrinsic allocation.
+                    if (unwrapped instanceof JolkMetaClass meta && meta.getInstanceShape() != null) {
+                        return JolkNode.lift(new JolkObject(meta, arguments));
+                    }
+
                     // Decimal Shim: Route Decimal #new to BigDecimal instantiation.
                     if (unwrapped == BigDecimal.class || unwrapped == JolkDecimalExtension.DECIMAL_TYPE) {
                         if (arguments.length == 2) {
@@ -2146,11 +2181,6 @@ public abstract class JolkDispatchNode extends Node {
                             } catch (UnsupportedMessageException ignored) {}
                         }
                         return context.env.asGuestValue(BigDecimal.ZERO);
-                    }
-
-                    // Priority 2: Jolk-Native Allocation: Perform raw allocation for guest types.
-                    if (unwrapped instanceof JolkMetaClass meta && meta.getInstanceShape() != null) {
-                        return JolkNode.lift(new JolkObject(meta, arguments));
                     }
 
                     // Priority 3: Host Instantiation: Map #new to the Interop 'instantiate' protocol for platform types.
@@ -2176,7 +2206,9 @@ public abstract class JolkDispatchNode extends Node {
         } catch (RuntimeException | Error e) {
             throw e;
         } catch (Throwable t) {
-            throw new RuntimeException("Intrinsic dispatch failed: #" + name, t);
+            if (t instanceof RuntimeException re) throw re; // Re-throw RuntimeExceptions directly
+            if (t instanceof Error err) throw err; // Re-throw Errors directly
+            throw new RuntimeException("Intrinsic dispatch failed: #" + name, t); // Wrap other Throwables
         }
 
         // Sentinel Return: null signals that the selector is not handled by the intrinsic protocol.

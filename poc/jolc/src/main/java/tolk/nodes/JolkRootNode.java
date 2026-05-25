@@ -3,6 +3,7 @@ package tolk.nodes;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import tolk.language.JolkLanguage;
 
 ///
@@ -44,24 +45,33 @@ public final class JolkRootNode extends RootNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        if (canReturnNonLocally) {
-            Object result;
-            try {
-                result = bodyNode.executeGeneric(frame);
-            } catch (JolkReturnException e) {
-                // In Jolk, the return target is the arguments array (lexical environment)
-                // of the 'Home' method. We verify if this activation's environment
-                // matches the target stored in the exception.
-                if (e.getTarget() == frame.getArguments()) {
-                    result = e.getResult();
-                } else {
-                    throw e;
-                }
+        Object result;
+        try {
+            result = bodyNode.executeGeneric(frame);
+        } catch (JolkReturnException e) {
+            // Non-Local Return Protocol: Verify if this activation is the 'Lexical Home'.
+            // The target identity is the arguments array of the home method activation.
+            if (canReturnNonLocally && e.getTarget() == frame.getArguments()) {
+                result = e.getResult();
+            } else if (e.getTarget() == null && e.getResult() instanceof Throwable t) {
+                // Global Exception Protocol: If the target is null, it's a guest error 
+                // (e.g., from Exception #throw). We unwrap and sneaky-throw the 
+                // original cause to ensure it crosses the interop boundary as 
+                // a standard Java exception for host assertions.
+                throw sneakyThrow(t);
+            } else {
+                // Propagate non-local returns to outer scopes or global exceptions 
+                // if this is not a method boundary.
+                throw e;
             }
-            return JolkNode.interopLift(result);
-        } else {
-            return JolkNode.interopLift(bodyNode.executeGeneric(frame));
         }
+        return JolkNode.interopLift(result);
+    }
+
+    @TruffleBoundary
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> RuntimeException sneakyThrow(Throwable t) throws T {
+        throw (T) t;
     }
 
     @Override

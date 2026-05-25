@@ -8,7 +8,6 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
-import java.math.BigDecimal;
 import com.oracle.truffle.api.strings.TruffleString;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;

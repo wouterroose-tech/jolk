@@ -555,7 +555,6 @@ public class JolkObjectTest extends JolcTestBase {
                 meta Self new(Double d) { ^ super #new #x(d) }
             }""";
         Value instance = eval(source).invokeMember("new", 42.0);
-        instance.invokeMember("x");
         assertEquals(42.0, instance.invokeMember("x").asDouble());
     }
 }

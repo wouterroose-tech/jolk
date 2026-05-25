@@ -34,6 +34,7 @@ public class JolkExpressionTest extends JolcTestBase {
             Long val17() { false ?! [^42] : [^0] }
             Long val18() { ^ 1 < 2 ? 42 : 0 }
             Long val19() { ^ 1 > 2 ? 42 : 0 }
+            Long val20() { ^ (! false) ? 42 : 0 }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  
@@ -56,6 +57,7 @@ public class JolkExpressionTest extends JolcTestBase {
         assertEquals(42L, instance.invokeMember("val17").asLong());
         assertEquals(42L, instance.invokeMember("val18").asLong());
         assertEquals(0L, instance.invokeMember("val19").asLong());
+        assertEquals(42L, instance.invokeMember("val20").asLong());
     }
 
     @Test

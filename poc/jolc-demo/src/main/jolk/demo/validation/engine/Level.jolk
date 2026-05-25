@@ -9,10 +9,10 @@ enum Level {
     // basic enum
     ERROR; WARNING; INFO; DEBUG;
 
-    Boolean isError() { ^ this == ERROR }
-    Boolean isWarning() { ^ this == WARNING }
-    Boolean isInfo() { ^ this == INFO }
-    Boolean isDebug() { ^ this == DEBUG }
+    Boolean isError() { ^ self == ERROR }
+    Boolean isWarning() { ^ self == WARNING }
+    Boolean isInfo() { ^ self == INFO }
+    Boolean isDebug() { ^ self == DEBUG }
     
     /// @Intrinsic("name") 
     /// final String name() {  }

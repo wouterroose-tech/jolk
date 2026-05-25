@@ -30,7 +30,7 @@ abstract class ValidationSuite<T> extends Validation<T> {
 
     // The Refinement Pivot: Creates the requirement identity
     final <R> ChildRequirement<T, R> subject(Function<T, R> supplier) {
-        ^ ChildRequirementBridge<T, R> #new(this, supplier)
+        ^ ChildRequirementBridge<T, R> #new(self, supplier)
     }
 
     /// Validates the subject by recursively visiting each element in the ruleset.

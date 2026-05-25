@@ -115,9 +115,20 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         Set<String> stableFields = new HashSet<>();
 
         JolkMetaClass superMetaClass = null;
-        if (superclassName != null) {
-            // Attempt to resolve the superclass identity.
-            superMetaClass = context.getOrCreateClass(superclassName);
+        if (superclassName != null) { // Robust Superclass Resolution
+            String currentPackage = className.contains(".") ? className.substring(0, className.lastIndexOf('.')) : "";
+            
+            // Robust Identity Resolution: Resolve via direct identifier or package-prefixed name.
+            // This delegates wildcard and alias resolution to the JolkContext lookup protocol.
+            Object resolved = resolveClassOrProjection(superclassName, context);
+            if (resolved == null && !superclassName.contains(".") && !currentPackage.isEmpty()) {
+                resolved = resolveClassOrProjection(currentPackage + "." + superclassName, context);
+            }
+            if (resolved instanceof JolkMetaClass jmc) {
+                superMetaClass = jmc;
+            } else {
+                superMetaClass = context.getOrCreateClass(superclassName);
+            }
             
             // Validation Guard: If getOrCreateClass returns null, it means the name
             // resolved to a HostObject (Java Class). We allow this to proceed, 
@@ -132,48 +143,89 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // for the canonical #new message, as well as accurate member visibility.
         for (String key : instanceMethods.keySet()) runtimeMembers.put(key, JolkNothing.INSTANCE);
 
+        // Jolk Structural Preamble: Populate instance fields and hints.
+        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
+            JolkFieldNode fieldNode = entry.getValue();
+            String fieldName = entry.getKey();
+            // Literal Folding: If the initializer is a literal, evaluate it early to stabilize the defaults.
+            Object hint = (fieldNode.getInitializer() instanceof JolkLiteralNode literal) 
+                ? lift(literal.executeGeneric(null)) 
+                : resolveTypeHint(fieldNode.getTypeName(), context);
+            runtimeInstanceFields.put(fieldName, hint);
+            if (fieldNode.isStable()) {
+                stableFields.add(fieldName);
+            }
+        }
+
+        // Jolk Structural Preamble: Populate meta-members to establish the handshake surface.
         for (Map.Entry<String, List<JolkNode>> entry : metaMembers.entrySet()) {
             for (JolkNode node : entry.getValue()) {
                 if (node instanceof JolkMethodNode) {
                     runtimeMetaMembers.put(entry.getKey(), JolkNothing.INSTANCE);
-                } else if (node instanceof JolkFieldNode) {
-                    JolkFieldNode field = (JolkFieldNode) node;
-                    // Resolve the reified identity as a hint for correct default value initialization
-                    Object hint = field.isLazy() 
-                        ? new JolkLazyValue(field.getInitializer(), field.getName(), lang)
-                        : (field.getInitializer() instanceof JolkEmptyNode) ? resolveTypeHint(field.getTypeName(), context) : JolkNothing.INSTANCE;
-                    runtimeMetaFields.put(entry.getKey(), hint);
-                    if (field.isStable()) {
-                        stableFields.add(entry.getKey());
+                } else if (node instanceof JolkFieldNode metaField) {
+                    Object hint;
+                    if (metaField.isLazy()) {
+                        hint = new JolkLazyValue(metaField.getInitializer(), metaField.getName(), lang);
+                    } else if (metaField.getInitializer() instanceof JolkLiteralNode literal) {
+                        // Literal Folding for constants
+                        hint = lift(literal.executeGeneric(null));
+                    } else if (!(metaField.getInitializer() instanceof JolkEmptyNode)) {
+                        hint = JolkNothing.INSTANCE; // Eager complex initializer, evaluated later
+                    } else {
+                        hint = resolveTypeHint(metaField.getTypeName(), context);
                     }
-                }
-            }
-        }
-
-        // Jolk Initialization Protocol: All field initializers must be evaluated 
-        // and integrated into the map BEFORE the MetaClass takes its structural snapshot.
-        // This ensures the "Ma" (interstitial state) is fully reified for the template.
-        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
-            JolkFieldNode fieldNode = entry.getValue();
-            if (fieldNode.getInitializer() instanceof JolkEmptyNode) {
-                if (fieldNode.isStable()) {
+                    runtimeMetaFields.put(entry.getKey(), hint);
+                if (metaField.isStable()) {
                     stableFields.add(entry.getKey());
                 }
-                // Structural Hint: Resolve the reified identity for the defaulting protocol.
-                runtimeInstanceFields.put(entry.getKey(), resolveTypeHint(fieldNode.getTypeName(), context));
-            } else {
-                // Realized Value: Evaluate initializer once at definition time
-                JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
-                Object initialValue = lift(root.getCallTarget().call());
-                runtimeInstanceFields.put(entry.getKey(), initialValue);
-                if (fieldNode.isStable()) {
-                    stableFields.add(entry.getKey());
                 }
             }
         }
 
         // Jolk Lifecycle Protocol: Instantiate the Identity now that the field map is stable.
+        // We pass null for the hostClass substrate identity, as this is a guest-defined type.
+        // Enum constants are registered post-instantiation to support circular identity resolution 
+        // within the meta-registry.
         JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, null, getterOverrides, setterOverrides);
+
+        // Jolk Lifecycle Protocol: Register ALL methods (instance and meta) before evaluating 
+        // any field initializers. This ensures that circular references or self-instantiation 
+        // (#new) during bootstrapping can resolve the behavioral protocol correctly.
+        for (Map.Entry<String, List<JolkMethodNode>> entry : instanceMethods.entrySet()) {
+            JolkClosure closure = createMethodClosure(lang, entry.getValue());
+            for (JolkMethodNode m : entry.getValue()) bindSuperNodes(m.getBody(), newMetaClass);
+            newMetaClass.registerInstanceMethod(entry.getKey(), closure);
+        }
+
+        for (Map.Entry<String, List<JolkNode>> entry : metaMembers.entrySet()) {
+            List<JolkMethodNode> methods = new ArrayList<>();
+            for (JolkNode node : entry.getValue()) if (node instanceof JolkMethodNode m) methods.add(m);
+            if (!methods.isEmpty()) {
+                JolkClosure closure = createMethodClosure(lang, methods);
+                for (JolkMethodNode m : methods) bindSuperNodes(m.getBody(), newMetaClass);
+                newMetaClass.registerMetaMethod(entry.getKey(), closure);
+            }
+        }
+
+        // Jolk Lifecycle Protocol: Publish the identity to the context so it can be resolved 
+        // by the JolkRootNodes evaluating the initializers below.
+        context.registerClass(newMetaClass);
+
+        // Jolk Evaluation Protocol: Now evaluate initializers.
+        for (Map.Entry<String, JolkFieldNode> entry : instanceFields.entrySet()) {
+            JolkFieldNode fieldNode = entry.getValue();
+            if (!(fieldNode.getInitializer() instanceof JolkEmptyNode)) {
+                JolkRootNode root = new JolkRootNode(lang, fieldNode.getInitializer(), fieldNode.getName());
+                // Evaluation Protocol: We unwrap the evaluated result to ensure the MetaClass 
+                // defaults array stores substrate identities (Long, ArrayList) rather than 
+                // guest proxies, preventing Identity Inversion during instantiation.
+                // We use the explicit context to perform the identity preparation to 
+                // stabilize the metaboundary during the bootstrapping phase.
+                Object evaluatedValue = unwrap(context.env.asGuestValue(lift(root.getCallTarget().call())));
+                String fieldName = entry.getKey();
+                runtimeInstanceFields.put(fieldName, evaluatedValue);
+            }
+        }
 
         // Register enum constants for ENUM archetype
         if (archetype == JolkArchetype.ENUM) {
@@ -182,29 +234,19 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             }
         }
 
-        for (Map.Entry<String, List<JolkMethodNode>> entry : instanceMethods.entrySet()) {
-            List<JolkMethodNode> methods = entry.getValue();
-            JolkClosure closure = createMethodClosure(lang, methods);
-            // BINDING PROTOCOL: Associate super calls with the class identity
-            for (JolkMethodNode m : methods) bindSuperNodes(m.getBody(), newMetaClass);
-            newMetaClass.registerInstanceMethod(entry.getKey(), closure);
-        }
-
         for (Map.Entry<String, List<JolkNode>> entry : metaMembers.entrySet()) {
             String name = entry.getKey();
             List<JolkNode> nodes = entry.getValue();
-            List<JolkMethodNode> methods = new ArrayList<>();
             
             for (JolkNode node : nodes) {
-                if (node instanceof JolkMethodNode m) methods.add(m);
-                else if (node instanceof JolkFieldNode field) {
+                if (node instanceof JolkFieldNode field) {
                     if (field.isLazy()) {
                         JolkLazyValue lazyVal = new JolkLazyValue(field.getInitializer(), name, lang);
                         newMetaClass.setMetaFieldValue(name, lazyVal);
                         runtimeMetaFields.put(name, lazyVal);
                     } else if (!(field.getInitializer() instanceof JolkEmptyNode)) {
                         JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
-                        Object initialValue = lift(root.getCallTarget().call());
+                        Object initialValue = unwrap(context.env.asGuestValue(lift(root.getCallTarget().call())));
                         // Update both the storage slot and the map hint for initializeDefaultValues
                         newMetaClass.setMetaFieldValue(name, initialValue);
                         runtimeMetaFields.put(name, initialValue);
@@ -216,19 +258,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                     }
                 }
             }
-            
-            if (!methods.isEmpty()) {
-                JolkClosure closure = createMethodClosure(lang, methods);
-                for (JolkMethodNode m : methods) bindSuperNodes(m.getBody(), newMetaClass);
-                newMetaClass.registerMetaMethod(name, closure);
-            }
         }
-
-        // Jolk Lifecycle Protocol: Publish the identity to the context only after
-        // all methods and meta-members are bound. This ensures that any hydration
-        // triggered by forward-references (placeholders) sees the actual closures.
-        context.registerClass(newMetaClass);
-        // redundant evaluation pass removed.
 
         // Synchronize defaults one last time to capture evaluated field initializers.
         newMetaClass.initializeDefaultValues();
@@ -247,7 +277,33 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         if ("String".equals(typeName)) return com.oracle.truffle.api.strings.TruffleString.fromJavaStringUncached("", com.oracle.truffle.api.strings.TruffleString.Encoding.UTF_16);
         if ("Number".equals(typeName)) return 0L;
         if ("Decimal".equals(typeName)) return java.math.BigDecimal.ZERO;
-        return context.getOrCreateClass(typeName);
+
+        // Collection Archetypes: Return host identities to maintain Shim-less Integration.
+        // We strip generic parameters to resolve the base archetype identity.
+        String baseType = typeName.contains("<") ? typeName.substring(0, typeName.indexOf("<")).trim() : typeName;
+        if ("Array".equals(baseType) || "List".equals(baseType) || "ArrayList".equals(baseType)) return new java.util.ArrayList<>();
+        if ("Map".equals(baseType) || "HashMap".equals(baseType)) return new java.util.LinkedHashMap<>();
+
+        String currentPackage = className.contains(".") ? className.substring(0, className.lastIndexOf('.')) : "";
+        Object resolved = resolveClassOrProjection(baseType, context);
+        if (resolved == null && !baseType.contains(".") && !currentPackage.isEmpty()) {
+            resolved = resolveClassOrProjection(currentPackage + "." + baseType, context);
+        }
+
+        if (resolved instanceof JolkMetaClass jmc) {
+            return jmc;
+        }
+        
+        // Impedance Resolution: Ensure that placeholders for unresolved types 
+        // are retrieved through the context to maintain Identity Congruence.
+        return context.getOrCreateClass(baseType);
+    }
+
+    /// Helper method to resolve a type name (short or FQN) against defined classes and projections.
+    private Object resolveClassOrProjection(String typeName, JolkContext context) {
+        Object resolved = context.getDefinedClass(typeName);
+        if (resolved == null) resolved = context.lookupProjection(typeName);
+        return resolved;
     }
 
     /**

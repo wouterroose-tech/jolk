@@ -80,12 +80,12 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
             BigDecimal d1 = (n1 instanceof BigDecimal) ? (BigDecimal) n1 : new BigDecimal(n1.toString());
             BigDecimal d2 = (n2 instanceof BigDecimal) ? (BigDecimal) n2 : new BigDecimal(n2.toString());
             String op = getOperator();
-            if (op == OP_PLUS) return d1.add(d2);
-            if (op == OP_MINUS) return d1.subtract(d2);
-            if (op == OP_MUL) return d1.multiply(d2);
-            if (op == OP_DIV) return d1.divide(d2, MathContext.DECIMAL128);
-            if (op == OP_MOD) return d1.remainder(d2);
-            if (op == OP_POW) return d1.pow(n2.intValue()); 
+            if (op == OP_PLUS) return JolkNode.lift(d1.add(d2));
+            if (op == OP_MINUS) return JolkNode.lift(d1.subtract(d2));
+            if (op == OP_MUL) return JolkNode.lift(d1.multiply(d2));
+            if (op == OP_DIV) return JolkNode.lift(d1.divide(d2, MathContext.DECIMAL128));
+            if (op == OP_MOD) return JolkNode.lift(d1.remainder(d2));
+            if (op == OP_POW) return JolkNode.lift(d1.pow(n2.intValue())); 
             throw new RuntimeException("Unsupported decimal operator: " + op);
         }
 
@@ -94,24 +94,24 @@ public abstract class JolkArithmeticNode extends JolkExpressionNode {
             double d1 = n1.doubleValue();
             double d2 = n2.doubleValue();
             String op = getOperator();
-            if (op == OP_PLUS) return d1 + d2;
-            if (op == OP_MINUS) return d1 - d2;
-            if (op == OP_MUL) return d1 * d2;
-            if (op == OP_DIV) return d1 / d2;
-            if (op == OP_MOD) return d1 % d2;
-            if (op == OP_POW) return Math.pow(d1, d2);
+            if (op == OP_PLUS) return JolkNode.lift(d1 + d2);
+            if (op == OP_MINUS) return JolkNode.lift(d1 - d2);
+            if (op == OP_MUL) return JolkNode.lift(d1 * d2);
+            if (op == OP_DIV) return JolkNode.lift(d1 / d2);
+            if (op == OP_MOD) return JolkNode.lift(d1 % d2);
+            if (op == OP_POW) return JolkNode.lift(Math.pow(d1, d2));
             throw new RuntimeException("Unsupported floating-point operator: " + op);
         }
         // Otherwise, both are Longs (or can be treated as Longs)
         long r = n1.longValue();
         long o = n2.longValue();
         String op = getOperator();
-        if (op == OP_PLUS) return r + o;
-        if (op == OP_MINUS) return r - o;
-        if (op == OP_MUL) return r * o;
-        if (op == OP_DIV) return r / o;
-        if (op == OP_MOD) return r % o;
-        if (op == OP_POW) return (long) Math.pow(r, o);
+        if (op == OP_PLUS) return JolkNode.lift(r + o);
+        if (op == OP_MINUS) return JolkNode.lift(r - o);
+        if (op == OP_MUL) return JolkNode.lift(r * o);
+        if (op == OP_DIV) return JolkNode.lift(r / o);
+        if (op == OP_MOD) return JolkNode.lift(r % o);
+        if (op == OP_POW) return JolkNode.lift((long) Math.pow(r, o));
 
         throw new RuntimeException("Unsupported integer operator: " + op);
     }

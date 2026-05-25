@@ -72,6 +72,19 @@ public class JolkMetaProtocolTest extends JolcTestBase {
     }
 
     @Test
+    void testMetaConstant() {
+        String sourceTest = "class Test { }";
+        eval(sourceTest);
+        String source = """
+            class ConstTest {
+                meta constant Test VALUE = Test #new;
+            }
+            """;
+        Value meta = eval(source);
+        assertEquals("instance of Test", meta.invokeMember("VALUE").toString());
+    }
+
+    @Test
     void testMetaFieldsCrossClass() {
         String classA = "class ClassA { meta constant Long FORTY_TWO = 42; }";
         String classB = "class ClassB { Long val() { ^ ClassA #FORTY_TWO } }";

@@ -75,6 +75,8 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     private final Stack<Integer> methodDepths = new Stack<>();
     private final Stack<Boolean> nonLocalReturnFound = new Stack<>();
     private String currentClassName;
+    private String currentShortName;
+    private String currentPackage = "";
     private boolean isInMetaScope = false;
 
     public JolkVisitor(JolkLanguage language) {
@@ -90,6 +92,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     @Override
     public JolkNode visitUnit(jolkParser.UnitContext ctx) {
         // Visit preamble directives for their side-effects (context registration)
+        this.currentPackage = "";
         if (ctx.package_decl() != null) {
             visit(ctx.package_decl());
         }
@@ -116,18 +119,16 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitPackage_decl(jolkParser.Package_declContext ctx) {
-        // TODO: Handle package declaration (namespace and alias)
-        return super.visitPackage_decl(ctx);
+        this.currentPackage = ctx.namespace().getText().intern();
+        return new JolkEmptyNode();
     }
 
     @Override
     public JolkNode visitExpansion(jolkParser.ExpansionContext ctx) {
-        // Resolves the namespace path (e.g. java.lang.RuntimeException) 
-        // and registers it as a Host Class in the current context.
-        String path = ctx.inclusion().namespace().getText();
-        language.getContextReference().get(null).registerHostClass(path);
-        // Currently, we return an empty node as the expansion itself does not produce executable code.
-        return new JolkEmptyNode();
+        // Jolk Expansion Protocol (+ / using): Incorporates external archetypes (Java or Jolk) 
+        // into the local vocabulary. This adds the class identity to the unit's namespace,
+        // ensuring that cross-unit inheritance correctly resolves superclass identities.
+        return visit(ctx.inclusion());
     }
 
     @Override
@@ -196,16 +197,22 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             JolkVisibility visibility = modInfo.visibility;
 
             jolkParser.TypeContext typeContext = ctx.type_bound().type();
-            // Robust Name Resolution: Extract base identifier using a heuristic that supports 
-            // both terminal MetaId and rule-based results (e.g. for namespace-prefixed types).
-            String className = (typeContext.MetaId() != null) 
+            // Robust Name Resolution: Resolve the base identifier (stripping generics).
+            // We check for namespace presence via text inspection to avoid dependency on 
+            // potentially undefined child-rule methods in the generated parser.
+            String shortName = (typeContext.MetaId() != null && !typeContext.getText().contains(".")) 
                 ? typeContext.MetaId().getText().intern() 
-                : typeContext.getText().intern();
+                : typeContext.getText().split("<")[0].trim().intern();
 
-            if (className != null && !"Self".equals(className)) {
-                // Track the current class for 'Self' resolution
+            if (shortName != null && !"Self".equals(shortName)) {
+                // Prepend package for global registration to support cross-unit resolution
+                String fullName = (currentPackage.isEmpty() || shortName.contains(".")) ? shortName : currentPackage + "." + shortName;
+
+                // Track the current class for 'Self' and short-name resolution
                 String oldClassName = this.currentClassName;
-                this.currentClassName = className;
+                this.currentClassName = fullName;
+                String oldShortName = this.currentShortName;
+                this.currentShortName = shortName;
 
                 JolkArchetype archetype = resolveArchetype(ctx.archetype());
 
@@ -270,13 +277,18 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 if (ctx.type_bound().type_contracts() != null) {
                     jolkParser.Type_contractsContext contracts = ctx.type_bound().type_contracts();
                     if (contracts.EXTENDS() != null) {
-                        superclassName = contracts.type(0).getText().intern();
+                        jolkParser.TypeContext superTypeCtx = contracts.type(0);
+                        // Robust Name Resolution: Extract base identifier (erasing generics).
+                        superclassName = (superTypeCtx.MetaId() != null && !superTypeCtx.getText().contains(".")) 
+                            ? superTypeCtx.MetaId().getText().intern() 
+                            : superTypeCtx.getText().split("<")[0].trim().intern();
                     }
                 }
 
                 this.currentClassName = oldClassName;
+                this.currentShortName = oldShortName;
                 // Support for single inheritance via 'extends'.
-                return new JolkClassDefinitionNode(className, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers, enumConstants, getterOverrides, setterOverrides);
+                return new JolkClassDefinitionNode(fullName, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers, enumConstants, getterOverrides, setterOverrides);
             }
         }
         return new JolkEmptyNode();
@@ -569,7 +581,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // implicit return of 'self', sustaining a "fluent by default" 
         // architecture without the need for an explicit caret (^).
         String returnType = ctx.type() != null ? ctx.type().getText() : null;
-        boolean isCommand = returnType == null || "Self".equals(returnType) || returnType.equals(currentClassName);
+        boolean isCommand = returnType == null || "Self".equals(returnType) || returnType.equals(currentClassName) || returnType.equals(currentShortName);
 
         String[] params = new String[0];
         boolean isVariadic = false;
@@ -981,7 +993,9 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     public JolkNode visitType(jolkParser.TypeContext ctx) {
         // We extract the base identifier (MetaId), as generics are erased at runtime in the PoC.
         // This ensures that 'ArrayList<Long>' is resolved as 'ArrayList'.
-        String name = (ctx.MetaId() != null) ? ctx.MetaId().getText().intern() : ctx.getText().intern();
+        String name = (ctx.MetaId() != null) 
+            ? ctx.MetaId().getText().intern() 
+            : ctx.getText().split("<")[0].trim().intern();
 
         if ("Self".equals(name)) {
             return new JolkReadTypeNode(language, currentClassName, null);
@@ -1024,7 +1038,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 return new JolkLiteralNode(tolk.runtime.JolkMapExtension.MAP_TYPE);
 
             // Priority 2: Current Class Reference
-            if (name.equals(currentClassName)) return new JolkReadTypeNode(language, name, null);
+            if (name.equals(currentClassName) || name.equals(currentShortName)) return new JolkReadTypeNode(language, currentClassName, null);
             
             // Priority 3: User-Defined Meta-Objects (Resolved via dynamic lookup with Meta-fallback)
             // This handles both external class references (ClassA) and internal constants (FORTY_TWO).

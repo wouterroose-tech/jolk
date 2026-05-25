@@ -65,7 +65,7 @@ public class JolkReturnNodeTest {
         CallTarget methodCallTarget = methodRootNode.getCallTarget();
 
         Object result = methodCallTarget.call();
-        assertEquals(99, result, "Non-local return from closure should return to the parent method.");
+        assertEquals(99L, result, "Non-local return from closure should return to the parent method.");
     }
 
     /**
@@ -106,7 +106,7 @@ public class JolkReturnNodeTest {
         CallTarget methodCallTarget = methodRootNode.getCallTarget();
 
         Object result = methodCallTarget.call();
-        assertEquals(123, result, "Non-local return should skip intermediate closure frames.");
+        assertEquals(123L, result, "Non-local return should skip intermediate closure frames.");
     }
 
     @Test

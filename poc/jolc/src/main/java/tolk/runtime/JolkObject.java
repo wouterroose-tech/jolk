@@ -136,11 +136,11 @@ public class JolkObject extends DynamicObject {
             if (value instanceof JolkLazyValue lazyValue) {
                 return lazyValue.get(this);
             }
-            return value;
+            return JolkNode.lift(value);
         }
         InteropLibrary metaInterop = InteropLibrary.getUncached(metaClass);
         if (metaInterop.isMemberReadable(metaClass, member)) {
-            return JolkNode.lift(metaInterop.readMember(metaClass, member));
+            return metaInterop.readMember(metaClass, member);
         }
         throw UnknownIdentifierException.create(member);
     }
@@ -172,14 +172,14 @@ public class JolkObject extends DynamicObject {
                 if (value instanceof JolkLazyValue lazyValue) {
                     return lazyValue.get(this);
                 }
-                return value;
+                return JolkNode.lift(value);
             } else if (arguments.length == 1) {
                 // Immutability Enforcement: Respect stable fields and Record archetypes.
                 if (metaClass.isFieldStable(name)) {
                     throw UnsupportedMessageException.create();
                 }
                 // Setter Pattern: #field(val) -> Returns Self (Fluent Contract)
-                objLib.put(this, name, arguments[0]);
+                objLib.put(this, name, JolkNode.lift(arguments[0]));
                 return this;
             }
             throw ArityException.create(0, 1, arguments.length);
@@ -191,14 +191,14 @@ public class JolkObject extends DynamicObject {
         /// Handles the dms api for mass-assignment of properties, ensuring that 
         /// deterministic identity is maintained via a visible handshake.
         if ("project".equals(name)) {
-            Object result = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
-            if (result != null) return result;
+            Object result = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop, tolk.language.JolkLanguage.getContext());
+            if (result != null) return JolkNode.lift(result);
         }
 
         // 3. Handle standard intrinsic protocol via the central dispatcher (ObjectExtension).
-        Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop);
-        if (intrinsicResult != null) {
-            return intrinsicResult;
+        Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, name, arguments, interop, tolk.language.JolkLanguage.getContext());
+        if (intrinsicResult != null) { // sentinel check
+            return JolkNode.lift(intrinsicResult);
         }
 
         // 4. Meta-Stratum Delegation (Dual-Stratum Resolution)

@@ -270,7 +270,6 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         String source = """
             class AnyMatchTest {
                 ArrayList<Long> elements = #[1, 2, 3];
-                ArrayList<Long> elements = #[1, 2, 3];
                 Boolean run(Long x) { ^ self #elements #anyMatch [s -> s ~~ x] }          
             }""";
         Value meta = eval(source);
@@ -289,7 +288,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         assertEquals(2, instance.invokeMember("run", 2).asLong()); 
-        assertTrue(instance.invokeMember("run", 0).isNull(), "Should return Nothing when match is not found"); 
+        assertEquals("null", instance.invokeMember("run", 0).toString(), "Should return Nothing when match is not found"); 
     }     
 
 }

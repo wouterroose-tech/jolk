@@ -1,6 +1,7 @@
 ~ demo.validation.rules;
 
-+ demo.validation.engine.*;
++ demo.validation.engine.ExecutionContext;
++ demo.validation.engine.Interrupt;
 + demo.validation.domain.ContactForm;
 + demo.validation.services.GeoGraphicalService;
 

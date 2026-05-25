@@ -8,9 +8,11 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import java.math.BigDecimal;
 import com.oracle.truffle.api.strings.TruffleString;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;
+import tolk.runtime.JolkObject;
 
 /// # JolkNode (The AST Substrate)
 ///
@@ -57,13 +59,22 @@ public abstract class JolkNode extends Node {
         if (value == null) return JolkNothing.INSTANCE;
 
         // IDENTITY RESTITUTION: Ensure host types match Jolk guest currency.
-        // Integer to Long (common in interop) and String to TruffleString.
-        if (value instanceof Long || value instanceof Double || 
-                value instanceof Boolean || value instanceof TruffleString || 
-                value instanceof JolkNothing) {
+        // We exclude generic TruffleObjects from the early-out because foreign nulls 
+        // (e.g. HostObject wrapping null) must be intercepted and lifted to Nothing 
+        // to support Jolk's message-passing protocol on the host side.
+        if (value instanceof Long || value instanceof Double ||
+            value instanceof Boolean || value instanceof TruffleString || 
+            value instanceof JolkNothing || value instanceof JolkObject ||
+            value instanceof tolk.runtime.JolkMetaClass ||
+            value instanceof tolk.runtime.JolkClosure ||
+            value instanceof tolk.runtime.JolkMatch ||
+            value instanceof tolk.runtime.JolkSelector) {
             return value;
         }
         if (value instanceof Integer i) return i.longValue();
+        if (value instanceof Short s) return (long) s;
+        if (value instanceof Byte b) return (long) b;
+        if (value instanceof Float f) return f.doubleValue();
         if (value instanceof String s) {
             return TruffleString.fromJavaStringUncached(s, TruffleString.Encoding.UTF_16);
         }
@@ -71,14 +82,45 @@ public abstract class JolkNode extends Node {
         return liftSlow(value);
     }
 
+    /**
+     * ### interopLift
+     * 
+     * Ensures that a guest identity is compatible with the Truffle Interop 
+     * boundary. This method wraps naked host objects (like BigDecimal) 
+     * while preserving guest identities. Guest-native identities that 
+     * already implement TruffleObject are returned as-is to prevent 
+     * the Proxy Storm.
+     */
+    @TruffleBoundary
+    public static Object interopLift(Object value) {
+        Object lifted = lift(value);
+        if (lifted instanceof com.oracle.truffle.api.interop.TruffleObject || 
+            lifted instanceof Long || lifted instanceof Double ||
+            lifted instanceof Boolean || lifted instanceof String ||
+            lifted instanceof TruffleString) {
+            return lifted;
+        }
+        try {
+            var context = tolk.language.JolkLanguage.getContext();
+            return (context != null) ? context.env.asGuestValue(lifted) : lifted;
+        } catch (AssertionError | IllegalStateException e) {
+            return lifted;
+        }
+    }
+
     @TruffleBoundary
     private static Object liftSlow(Object value) {
+        if (value == null) return JolkNothing.INSTANCE;
         try {
             if (InteropLibrary.getUncached().isNull(value)) {
                 return JolkNothing.INSTANCE;
             }
-            // Identity Restitution: Ensure host objects are wrapped for Interop consistency.
-            return tolk.language.JolkLanguage.getContext().env.asGuestValue(value);
+            // Identity Restitution: Wrap host objects to maintain guest identity congruence.
+            var context = tolk.language.JolkLanguage.getContext();
+            if (context != null) {
+                return context.env.asGuestValue(value);
+            }
+            return value; // Context-less fallback
         } catch (AssertionError | IllegalStateException e) {
             // Handled: Context-less execution path (e.g. low-level runtime unit tests)
             return value;

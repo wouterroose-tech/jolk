@@ -25,7 +25,7 @@ public class JolkRootNodeTest {
         CallTarget callTarget = rootNode.getCallTarget();
 
         Object result = callTarget.call();
-        assertEquals(42, result, "The root node should execute its body and return the result.");
+        assertEquals(42L, result, "The root node should execute its body and return the result.");
     }
 
     /**
@@ -49,7 +49,7 @@ public class JolkRootNodeTest {
         CallTarget callTarget = methodRootNode.getCallTarget();
 
         Object result = callTarget.call();
-        assertEquals(42, result, "A method root node should catch JolkReturnException and return its value.");
+        assertEquals(42L, result, "A method root node should catch JolkReturnException and return its value.");
     }
 
     /**
@@ -96,7 +96,7 @@ public class JolkRootNodeTest {
             }
         };
         JolkRootNode root = new JolkRootNode(null, body, "test", true);
-        assertEquals("success", root.getCallTarget().call());
+        assertEquals("success", root.getCallTarget().call().toString());
     }
 
     @Test

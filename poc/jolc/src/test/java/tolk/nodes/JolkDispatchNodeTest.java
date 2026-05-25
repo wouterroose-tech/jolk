@@ -245,10 +245,10 @@ public class JolkDispatchNodeTest extends JolcTestBase {
             // ?? (Null-coalesce)
             JolkClosure fallback = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode("fallback"), "test", false).getCallTarget());
             Object res1 = dispatchNode.execute(null, JolkNothing.INSTANCE, "??", new Object[]{fallback});
-            assertEquals("fallback", res1);
+            assertEquals("fallback", res1.toString());
 
             Object res2 = dispatchNode.execute(null, "present", "??", new Object[]{fallback});
-            assertEquals("present", res2);
+            assertEquals("present", res2.toString());
 
             // ? : (Ternary)
             JolkClosure thenBranch = new JolkClosure(new JolkRootNode(null, new JolkLiteralNode(1L), "test", false).getCallTarget());

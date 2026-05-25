@@ -1,5 +1,6 @@
 package demo.validation.engine;
 
+using java.util.ArrayList;
 using java.util.function.Predicate;
 
 /// # ExecutionContext
@@ -10,7 +11,7 @@ using java.util.function.Predicate;
 
 class ExecutionContext {
 
-    constant Array<Issue> issues = Array #new;
+    stable ArrayList<Issue> issues = #[];
 
     /// Adds an issue for the given subject.
     Self add(Object subject, Issue issue) {
@@ -24,12 +25,17 @@ class ExecutionContext {
     
     /// Returns true if any error has been reported.
     Boolean hasError() {
-        ^ self #hasMatch(Issue ##isError)
+        ^ self #hasMatch [ i -> i #level #isError ]
+    }
+
+    /// Returns true if any warning has been reported.
+    Boolean hasWarning() {
+        ^ self #hasMatch [ i -> i #match(WARNING) ]
     }
 
     /// Returns true if any issue was reported for the given subject.
     Boolean hasIssue(Object subject) {
-        ^ self #hasMatch [i -> i #concerns(subject)]
+        ^ self #hasMatch [ i -> i #concerns(subject)]
     }
 
     private Boolean hasMatch(Predicate<Issue> p) {

@@ -44,7 +44,7 @@ public abstract class JolkBuiltinMethod implements TruffleObject {
      * and ensures raw host objects are wrapped for Truffle Interop safety.
      */
     public static Object lift(Object value) {
-        return JolkNode.lift(value);
+        return JolkNode.interopLift(value);
     }
 
     /**

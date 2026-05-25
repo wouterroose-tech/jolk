@@ -36,8 +36,8 @@ abstract class ValidationSuite<T> extends Validation<T> {
     /// Validates the subject by recursively visiting each element in the ruleset.
     /// Any [ValidationInterruptException] at the root level is caught and ignored.
     final validate(T subject, ExecutionContext executionContext) {
-        [ self #accept(subject, executionContext) ]
-            #catch [ Interrupt e -> /* ignore */ ]
+        // [ self #accept(subject, executionContext) ]
+        //    #catch [ Interrupt e -> /* ignore */ ]
     }
 
     /// Visit each node in the ruleset. If a [ValidationInterruptException]

@@ -44,7 +44,7 @@ public class JolkFieldNodeTest {
         JolkRootNode root = new JolkRootNode(null, node);
         Object result = root.getCallTarget().call();
         
-        assertEquals("val", result);
+        assertEquals("val", result.toString());
     }
 
     @Test

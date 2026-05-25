@@ -62,7 +62,7 @@ public class JolkDecimalExtension {
             long sig = JolkLongExtension.asLong(arguments[1]);
             int scale = (int) JolkLongExtension.asLong(arguments[2]);
             BigInteger unscaled = BigInteger.valueOf(sig);
-            return JolkNode.lift(new BigDecimal(unscaled, scale));
+            return JolkNode.interopLift(new BigDecimal(unscaled, scale));
         }
     }
 
@@ -72,7 +72,7 @@ public class JolkDecimalExtension {
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
             BigDecimal d = (BigDecimal) JolkNode.unwrap(arguments[0]);
-            return JolkNode.lift(d.unscaledValue().longValue());
+            return JolkNode.interopLift(d.unscaledValue().longValue());
         }
     }
 
@@ -82,7 +82,7 @@ public class JolkDecimalExtension {
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
             BigDecimal d = (BigDecimal) JolkNode.unwrap(arguments[0]);
-            return JolkNode.lift((long) d.scale()); // Return as Jolk Long (Integer in Jolk is Long in Java)
+            return JolkNode.interopLift((long) d.scale()); // Return as Jolk Long (Integer in Jolk is Long in Java)
         }
     }
 
@@ -95,7 +95,7 @@ public class JolkDecimalExtension {
             // To ensure consistency with Double #round (which uses Math.round) and satisfy 
             // the Identity Congruence principle, we round .5 towards positive infinity.
             RoundingMode mode = (d.signum() >= 0) ? RoundingMode.HALF_UP : RoundingMode.HALF_DOWN;
-            return JolkNode.lift(d.setScale(0, mode).longValue());
+            return JolkNode.interopLift(d.setScale(0, mode).longValue());
         }
     }
 
@@ -104,7 +104,7 @@ public class JolkDecimalExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-            return JolkNode.lift(((BigDecimal) JolkNode.unwrap(arguments[0])).longValue());
+            return JolkNode.interopLift(((BigDecimal) JolkNode.unwrap(arguments[0])).longValue());
         }
     }
 
@@ -115,7 +115,7 @@ public class JolkDecimalExtension {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
             BigDecimal bd = (BigDecimal) JolkNode.unwrap(arguments[0]);
             BigDecimal fraction = bd.remainder(BigDecimal.ONE); // Correctly operate on BigDecimal
-            return JolkNode.lift(fraction);
+            return JolkNode.interopLift(fraction);
         }
     }
 
@@ -124,7 +124,7 @@ public class JolkDecimalExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-            return JolkNode.lift(((BigDecimal) JolkNode.unwrap(arguments[0])).doubleValue());
+            return JolkNode.interopLift(((BigDecimal) JolkNode.unwrap(arguments[0])).doubleValue());
         }
     }
 
@@ -133,7 +133,7 @@ public class JolkDecimalExtension {
         @ExportMessage public boolean isExecutable() { return true; }
         @ExportMessage public Object execute(Object[] arguments) throws ArityException {
             if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-            return JolkNode.lift(((BigDecimal) JolkNode.unwrap(arguments[0])).longValue());
+            return JolkNode.interopLift(((BigDecimal) JolkNode.unwrap(arguments[0])).longValue());
         }
     }
 }

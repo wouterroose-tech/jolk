@@ -1,5 +1,7 @@
 package demo.validation;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 
@@ -152,8 +154,38 @@ public class EngineTest extends JolcTestBase {
         return eval(source);
     }
 
+    private Value executionContext() {
+        String source = """
+            ~ demo.validation.engine;
+            & java.util.function.Predicate;
+            & java.util.ArrayList;
+            & demo.validation.engine.Level.WARNING;
+            class ExecutionContext {
+                stable ArrayList<Issue> issues = #[];
+                Self add(Object subject, Issue issue) {
+                    self #issues #add(issue)
+                }
+                Boolean hasIssue() {
+                    ^ !self #issues #isEmpty
+                }
+                Boolean hasError() {
+                    ^ self #hasMatch [i -> i #level #isError ]
+                }
+                Boolean hasWarning() {
+                    ^ self #hasMatch [i -> i #match(WARNING) ]
+                }
+                Boolean hasIssue(Object subject) {
+                    ^ self #hasMatch [i -> i #concerns(subject)]
+                }
+                private Boolean hasMatch(Predicate<Issue> p) {
+                    ^ self #issues #anyMatch(p)
+                }
+            }""";  
+        return eval(source);
+    }
+
     @Test
-    void testParsing() {
+    void test() {
         this.interrupt();
         this.childrenValidation();
         this.childRequirement();
@@ -162,7 +194,11 @@ public class EngineTest extends JolcTestBase {
         this.constraint();
         this.node();
         this.validation();
-        this.validationSuite();
+        Value ruleSuiteClass = this.validationSuite();
+        Value ruleSuite = ruleSuiteClass.invokeMember("new");
+        Value context = this.executionContext().invokeMember("new");
+        ruleSuite.invokeMember("validate" , null, context);
+        assertFalse(context.invokeMember("hasIssue").asBoolean());
     }
 
 }

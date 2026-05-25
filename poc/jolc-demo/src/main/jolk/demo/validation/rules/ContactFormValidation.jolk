@@ -1,6 +1,7 @@
 ~ demo.validation.rules;
 
-+ demo.validation.engine.*;
++ demo.validation.engine.Interrupt;
++ demo.validation.engine.ValidationSuite;
 + demo.validation.domain.ContactForm;
 
 ///

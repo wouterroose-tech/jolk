@@ -34,6 +34,9 @@ import tolk.language.JolkMessageNotUnderstoodException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.library.CachedLibrary;
 
+import tolk.language.JolkContext;
+import tolk.language.JolkLanguage;
+
 import tolk.runtime.JolkArchetype;
 import tolk.runtime.JolkClosure;
 import tolk.runtime.JolkDecimalExtension;
@@ -236,7 +239,7 @@ public abstract class JolkDispatchNode extends Node {
         /// safe navigation as a polymorphic property of the identity.
         if (JolkIntrinsicProtocol.isObjectIntrinsic(selector)) {
         // Handle core protocol for Nothing (e.g., #class, #toString) explicitly.
-            return JolkNode.lift(JolkDispatchNode.dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop));
+            return JolkNode.lift(JolkDispatchNode.dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop, getContext()));
         }
         try { 
             // Safe navigation
@@ -307,7 +310,7 @@ public abstract class JolkDispatchNode extends Node {
                 throw new RuntimeException("Immutable field mutation prohibited: " + selector);
             }
             // Setter Pattern: #field(val)
-            objLib.put(receiver, cachedSelector, arguments[0]);
+            objLib.put(receiver, cachedSelector, JolkNode.lift(arguments[0]));
             // Self-Return Contract: Setters return the receiver for fluent chaining
             return receiver;
         }
@@ -352,6 +355,9 @@ public abstract class JolkDispatchNode extends Node {
                     // Reifies a string into a communicative identity (Selector)
                     return JolkSelector.create(arguments[0]);
                 }
+                case "new" -> { // Unified Creation Protocol: Prioritize intrinsic allocation over registry
+                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, getContext()));
+                }
                 case "stateProjection" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     java.util.Map<String, Object> state = new java.util.LinkedHashMap<>();
@@ -361,7 +367,7 @@ public abstract class JolkDispatchNode extends Node {
                             state.put(s, lib.getOrDefault(receiver, s, JolkNothing.INSTANCE));
                         }
                     }
-                    return state;
+                    return JolkNode.lift(state);
                 }
                 default -> {
                     // 1. Try to find a custom meta-member (user-defined meta-method or meta-field)
@@ -372,7 +378,7 @@ public abstract class JolkDispatchNode extends Node {
                     }
                     // 2. If not a custom meta-member, try intrinsic object protocol (e.g., #hash, #toString)
                     if (isObjectIntrinsic(selector)) {
-                        return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                        return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, getContext()));
                     }
                     // 3. Impedance Resolution: Fallback to host member heuristic (Static Methods / Constants)
                     try {
@@ -485,6 +491,9 @@ public abstract class JolkDispatchNode extends Node {
         return JolkNothing.INSTANCE;
     }
 
+    /// Interned constant for the "new" selector to avoid parsing issues in guards.
+    protected static final String NEW_SELECTOR = "new".intern();
+
     /// ### Fast Path for Closure-based Control Flow
     /// 
     /// Handles #ifPresent and #ifEmpty by directly executing the JolkClosure via 
@@ -507,7 +516,7 @@ public abstract class JolkDispatchNode extends Node {
                                         @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
         JolkClosure closure = asClosure(arguments[0]);
-        boolean isAbsent = (unwrappedReceiver == null || unwrappedReceiver == JolkNothing.INSTANCE || interop.isNull(unwrappedReceiver));
+        boolean isAbsent = isNothing(unwrappedReceiver) || interop.isNull(unwrappedReceiver);
         if (unwrappedReceiver instanceof JolkMatch match) isAbsent = !match.isPresent();
 
         Object env = closure.getEnvironment();
@@ -515,21 +524,21 @@ public abstract class JolkDispatchNode extends Node {
             case "ifPresent" -> {
                 if (!isAbsent) {
                     Object val = (receiver instanceof JolkMatch match) ? match.getValue() : receiver;
-                    return callNode.call(env, val);
+                    return JolkNode.lift(callNode.call(env, val));
                 }
                 return JolkNothing.INSTANCE;
             }
             case "ifEmpty", "??" -> {
-                if (isAbsent) return callNode.call(env);
-                return receiver;
+                if (isAbsent) return JolkNode.lift(callNode.call(env));
+                return JolkNode.lift(receiver);
             }
             case "?" -> {
-                if (receiver instanceof Boolean b && b) return callNode.call(env);
-                return receiver;
+                if (receiver instanceof Boolean b && b) return JolkNode.lift(callNode.call(env));
+                return JolkNode.lift(receiver);
             }
             case "?!" -> {
-                if (receiver instanceof Boolean b && !b) return callNode.call(env);
-                return receiver;
+                if (receiver instanceof Boolean b && !b) return JolkNode.lift(callNode.call(env));
+                return JolkNode.lift(receiver);
             }
         }
         return doControlFlow(frame, receiver, selector, arguments, IndirectCallNode.getUncached(), interop);
@@ -551,7 +560,9 @@ public abstract class JolkDispatchNode extends Node {
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
         if (unwrappedReceiver instanceof Boolean b) {
             boolean condition = isTernarySelector(selector, "? :") ? b : !b;
-            return condition ? thenNode.call(thenC.getEnvironment()) : elseNode.call(elseC.getEnvironment());
+            return condition 
+                ? JolkNode.lift(thenNode.call(thenC.getEnvironment())) 
+                : JolkNode.lift(elseNode.call(elseC.getEnvironment()));
         }
         return JolkNothing.INSTANCE;
     }
@@ -575,9 +586,7 @@ public abstract class JolkDispatchNode extends Node {
         // it to hoist constant calculations out of loops (like in runNumerical).
         boolean condition = isTernarySelector(selector, "? :") ? receiver : !receiver;
         Object result = condition ? arguments[0] : arguments[1];
-
-        // Identity Restitution: Ensure null is lifted to Nothing
-        return (result == null) ? JolkNothing.INSTANCE : result;
+        return JolkNode.lift(result);
     }
 
 
@@ -585,10 +594,10 @@ public abstract class JolkDispatchNode extends Node {
     protected Object doControlFlow(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode,
                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
-        
+
         Object unwrappedReceiver = JolkNode.unwrap(receiver);
         // Shared Absence Logic: Handles Nothing, null, and empty Matches 
-        boolean isAbsent = (unwrappedReceiver == null || unwrappedReceiver == JolkNothing.INSTANCE || interop.isNull(unwrappedReceiver));
+        boolean isAbsent = isNothing(unwrappedReceiver) || interop.isNull(unwrappedReceiver);
         if (unwrappedReceiver instanceof JolkMatch match) {
             isAbsent = !match.isPresent();
         }
@@ -606,32 +615,32 @@ public abstract class JolkDispatchNode extends Node {
                     if (isAbsent) {
                         return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "??" -> {
                     if (isAbsent) {
                         return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "?" -> {
                     if (receiver instanceof Boolean b && b) {
                         return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "?!" -> {
                     if (receiver instanceof Boolean b && !b) {
                         return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "finally" -> {
                     if (unwrappedReceiver instanceof JolkClosure protectedClosure) {
                         // Case 1: Chained directly to a closure [ risky ] #finally [ cleanup ]
                         Object result = JolkNothing.INSTANCE;
                         try {
-                            result = callNode.call(protectedClosure.getCallTarget(), new Object[]{protectedClosure.getEnvironment()});
+                            result = JolkNode.lift(callNode.call(protectedClosure.getCallTarget(), new Object[]{protectedClosure.getEnvironment()}));
                         } catch (JolkReturnException e) {
                             callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
                             throw e;
@@ -640,11 +649,11 @@ public abstract class JolkDispatchNode extends Node {
                             throw t;
                         }
                         callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
-                        return result;
+                        return JolkNode.lift(result);
                     } else {
                         // Case 2: Side-effect on a realized value (e.g., after #catch)
                         callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()});
-                        return receiver;
+                        return JolkNode.lift(receiver);
                     }
                 }
                 case "do" -> {
@@ -656,7 +665,7 @@ public abstract class JolkDispatchNode extends Node {
                 }
                 case "default" -> {
                     if (receiver instanceof JolkMatch match && match.isPresent()) {
-                        return match.getValue();
+                        return JolkNode.lift(match.getValue());
                     }
                     return JolkNode.lift(callNode.call(closure.getCallTarget(), new Object[]{closure.getEnvironment()}));
                 }
@@ -675,7 +684,8 @@ public abstract class JolkDispatchNode extends Node {
             }
         }
         // Fallback to boundary for non-closure arguments or unhandled control flow
-        return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+        JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+        return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, context));
     }
 
     /// ### Fast Path for Closure Try-With-Resources
@@ -697,7 +707,7 @@ public abstract class JolkDispatchNode extends Node {
 
         Throwable thrown = null;
         try {
-            return callNode.call(logic.getCallTarget(), new Object[]{logic.getEnvironment(), liftedResource});
+            return JolkNode.lift(callNode.call(logic.getCallTarget(), new Object[]{logic.getEnvironment(), liftedResource}));
         } catch (JolkReturnException e) {
             thrown = e;
             throw e;
@@ -898,7 +908,8 @@ public abstract class JolkDispatchNode extends Node {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (isObjectIntrinsic(selector)) {
-                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, context));
             }
             try {
                 // Fallback to host member heuristic
@@ -984,9 +995,9 @@ public abstract class JolkDispatchNode extends Node {
             if (closure.getEnvironment() == null) {
                 // Reified Method: Prepend only receiver (Self at 0)
                 Object[] args = new Object[arguments.length + 1];
-                args[0] = JolkNode.lift(receiver); // Lift the receiver
+                args[0] = JolkNode.interopLift(receiver); // Ensure Interop boundary
                 for (int i = 0; i < arguments.length; i++) { // Lift all arguments
-                    args[i + 1] = JolkNode.lift(arguments[i]);
+                    args[i + 1] = JolkNode.interopLift(arguments[i]);
                 }
                 return args;
             } else {
@@ -994,16 +1005,16 @@ public abstract class JolkDispatchNode extends Node {
                 Object[] args = new Object[arguments.length + 1];
                 args[0] = closure.getEnvironment();
                 for (int i = 0; i < arguments.length; i++) { // Lift all arguments
-                    args[i + 1] = JolkNode.lift(arguments[i]);
+                    args[i + 1] = JolkNode.interopLift(arguments[i]);
                 }
                 return args;
             }
         } else {
             // Built-in or Host Member: Prepend receiver (Self at 0)
             Object[] args = new Object[arguments.length + 1];
-            args[0] = JolkNode.lift(receiver); // Lift the receiver
+            args[0] = JolkNode.interopLift(receiver); // Ensure Interop boundary
             for (int i = 0; i < arguments.length; i++) { // Lift all arguments
-                args[i + 1] = JolkNode.lift(arguments[i]);
+                args[i + 1] = JolkNode.interopLift(arguments[i]);
             }
             return args;
         }
@@ -1140,7 +1151,7 @@ public abstract class JolkDispatchNode extends Node {
                 args[2] = entry.getValue();
                 callNode.call(target, args);
             }
-            return receiver;
+            return JolkNode.lift(receiver);
         }
         throw new RuntimeException("Invalid arguments for #forEach: expected a single closure.");
     }
@@ -1162,7 +1173,8 @@ public abstract class JolkDispatchNode extends Node {
             return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (isObjectIntrinsic(selector)) {
-                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop)); // Corrected: Pass the List, not TruffleString
+                JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, context)); 
             }
             try {
                 return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
@@ -1191,9 +1203,9 @@ public abstract class JolkDispatchNode extends Node {
             for (Object item : receiver) {
                 args[1] = item;
                 Object projected = callNode.call(target, args);
-                result.add(projected);
+                result.add(JolkNode.lift(projected));
             }
-            return result;
+            return JolkNode.lift(result);
         }
         throw new RuntimeException("Invalid arguments for #map: expected a single closure.");
     }
@@ -1214,12 +1226,12 @@ public abstract class JolkDispatchNode extends Node {
                                          @Cached("lookupNumberMember(cachedSelector)") Object numberMember,
                                          @Cached("getClosureTarget(selectReifiedMethod(longMember, numberMember))") CallTarget target,
                                          @Cached("create(target)") DirectCallNode callNode) {
-        if (arguments.length == 0) return callNode.call(receiver);
-        if (arguments.length == 1) return callNode.call(receiver, arguments[0]);
+        if (arguments.length == 0) return JolkNode.lift(callNode.call(receiver));
+        if (arguments.length == 1) return JolkNode.lift(callNode.call(receiver, arguments[0]));
         Object[] args = new Object[arguments.length + 1];
         args[0] = receiver;
         System.arraycopy(arguments, 0, args, 1, arguments.length);
-        return callNode.call(args);
+        return JolkNode.lift(callNode.call(args));
     }
 
     // This specialization handles direct arithmetic and comparison operations for Long receivers.
@@ -1321,7 +1333,8 @@ public abstract class JolkDispatchNode extends Node {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (isObjectIntrinsic(selector)) {
-                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, context));
             }
             try {
                 return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
@@ -1385,7 +1398,8 @@ public abstract class JolkDispatchNode extends Node {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (isObjectIntrinsic(selector)) {
-                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, context));
             }
             try {
                 return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
@@ -1449,7 +1463,7 @@ public abstract class JolkDispatchNode extends Node {
 
             // 0. Intrinsic Lookup: Handle core protocol (like #class or #hash) before materialization.
             if (isObjectIntrinsic(selector)) {
-                return JolkNode.lift(JolkDispatchNode.dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                return JolkNode.lift(JolkDispatchNode.dispatchObjectIntrinsic(receiver, selector, arguments, interop, getContext()));
             }
 
             if (arguments.length == 0) {
@@ -1522,7 +1536,8 @@ public abstract class JolkDispatchNode extends Node {
             return JolkNode.lift(interop.invokeMember(receiver, selector, arguments));
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (isObjectIntrinsic(selector)) {
-                return JolkNode.lift(JolkDispatchNode.dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, context)); 
             }
             try {
                 return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
@@ -1564,7 +1579,8 @@ public abstract class JolkDispatchNode extends Node {
             throw e;
         } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
             if (isObjectIntrinsic(selector)) {
-                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop)); // Corrected: Pass the Throwable, not TruffleString
+                JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, context)); 
             }
             try {
                 return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
@@ -1594,9 +1610,9 @@ public abstract class JolkDispatchNode extends Node {
             // 1. Receiver Restitution: Handle raw Java null or Interop null as Jolk Nothing identity.
             // We explicitly check for JolkNothing.INSTANCE to support the identity even 
             // if it no longer exports isNull() to the substrate.
-            if (isNothing(unwrappedReceiver) || interop.isNull(receiver)) {
+            if (isNothing(unwrappedReceiver)) {
                 if (isObjectIntrinsic(selector)) {
-                    return JolkNode.lift(dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop));
+                    return JolkNode.lift(dispatchObjectIntrinsic(JolkNothing.INSTANCE, selector, arguments, interop, getContext()));
                 }
                 
                 // Re-use logic for Nothing lookup to ensure Graal can inline it.
@@ -1613,6 +1629,11 @@ public abstract class JolkDispatchNode extends Node {
                     // SAFE NAVIGATION: Gracefully collapse the message chain.
                     return JolkNothing.INSTANCE;
                 }
+            }
+
+            // 2. Unified Creation Protocol: Prioritize intrinsic instantiation for Meta-Objects.
+            if (NEW_SELECTOR.equals(selector) && (unwrappedReceiver instanceof Class || unwrappedReceiver instanceof JolkMetaClass || interop.isMetaObject(receiver) || interop.isInstantiable(receiver))) {
+                return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, getContext()));
             }
 
             // 2. Jolk Prototype Lookup (Megamorphic / Generic Path)
@@ -1634,7 +1655,7 @@ public abstract class JolkDispatchNode extends Node {
             else if (unwrappedReceiver instanceof Map) meta = JolkMapExtension.MAP_TYPE;
             else if (unwrappedReceiver instanceof Throwable) meta = JolkExceptionExtension.EXCEPTION_TYPE;
             
-            // 3b. Proxy/Wrapped Resolution: Use Interop to find the Meta-Object for proxied receivers.
+            // 3. Proxy/Wrapped Resolution: Use Interop to find the Meta-Object for proxied receivers.
             if (meta == null && interop.hasMetaObject(receiver)) {
                 Object metaObj = interop.getMetaObject(receiver);
                 if (metaObj instanceof JolkMetaClass jmc) meta = jmc;
@@ -1649,43 +1670,12 @@ public abstract class JolkDispatchNode extends Node {
                 }
             }
 
-            // 3b. Meta-Method Lookup: If the receiver is a Jolk MetaClass, check its custom meta-registry.
-            if (meta == null && unwrappedReceiver instanceof tolk.runtime.JolkMetaClass jmc) {
+            if (meta == null && unwrappedReceiver instanceof JolkMetaClass jmc) {
                 Object member = lookupMetaMember(jmc, selector);
-                if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+                if (member != null && !isNothing(member) && !"new".equals(selector) && interop.isExecutable(member)) {
                     InteropLibrary memberInterop = InteropLibrary.getUncached(member); // Get interop for the member
                     Object[] args = prepareArguments(member, receiver, arguments);
                     return JolkNode.lift(memberInterop.execute(member, args));
-                }
-            }
-
-            /// ### Meta-Object Interceptor (#new)
-            /// 
-            /// Implements the **Unified Messaging** rule for object creation. If the receiver 
-            /// is a host [Class] (MetaObject) and the selector is `#new`, we map it 
-            /// directly to the Interop `instantiate` protocol.
-            if ("new".equals(selector) && (receiver instanceof Class || interop.isMetaObject(receiver) || interop.isInstantiable(receiver))) {
-                // Shim-less Interceptor: Route List.class, ArrayList.class, or the Jolk Array MetaClass 
-                // to the specialized Array factory logic.
-                if (receiver == List.class || receiver == ArrayList.class || receiver == JolkArrayExtension.ARRAY_TYPE) {
-                    try {
-                        return JolkArrayExtension.ARRAY_TYPE.callMetaMember("new", arguments);
-                    } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException e) {
-                        throw new RuntimeException("Failed to instantiate Jolk Array from host class: " + receiver, e);
-                    }
-                }
-                
-                try {
-                    // Truffle DSL can sometimes generate ambiguous specializations if two methods
-                    // have the same guard and receiver type. Adding explicit 'replaces'
-                    // annotations helps the DSL resolve this ambiguity, ensuring that
-                    // only one specialization is chosen for a given receiver/selector combination.
-                    if (interop.isInstantiable(receiver)) {
-                        return JolkNode.lift(interop.instantiate(receiver, arguments));
-                    }
-                    return JolkNode.lift(dispatchHostMember(receiver, selector, arguments));
-                } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | UnknownIdentifierException | RuntimeException e) {
-                    throw new RuntimeException("Failed to instantiate host object: " + receiver + " with arguments.", e);
                 }
             }
 
@@ -1695,7 +1685,7 @@ public abstract class JolkDispatchNode extends Node {
                 // Identity Restitution Protocol: Intrinsic messages act as a fallback 
                 // for all objects that do not explicitly override them.
                 if (isObjectIntrinsic(selector)) {
-                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, getContext()));
                 }
                 // Impedance Resolution: Fallback to host member heuristic
                 try {
@@ -1707,7 +1697,7 @@ public abstract class JolkDispatchNode extends Node {
                 // Identity Restitution Protocol: Intrinsic messages act as a fallback 
                 // for all objects that do not explicitly override them.
                 if (isObjectIntrinsic(selector)) {
-                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop));
+                    return JolkNode.lift(dispatchObjectIntrinsic(receiver, selector, arguments, interop, getContext()));
                 }
                 // Impedance Resolution: Fallback to host member heuristic
                 try {
@@ -1747,7 +1737,13 @@ public abstract class JolkDispatchNode extends Node {
 
     @TruffleBoundary
     protected Object lookupMetaMember(JolkMetaClass meta, String selector) {
-        return meta.lookupMetaMember(selector);
+        try {
+            // BOOTSTRAPPING GUARD: Handle cases where the metaRegistry is not yet 
+            // initialized during the JolkClassDefinitionNode execution phase.
+            return meta.lookupMetaMember(selector);
+        } catch (NullPointerException e) {
+            return null;
+        }
     }
 
     /// ### isObjectIntrinsic
@@ -1761,12 +1757,13 @@ public abstract class JolkDispatchNode extends Node {
     public static boolean isObjectIntrinsic(String member) {
         return "case".equals(member) || "project".equals(member) || "respondsTo".equals(member) || 
                "metaProtocol".equals(member) || "instanceProtocol".equals(member) || "message".equals(member) ||
+               "new".equals(member) ||
                "stateProjection".equals(member) || "get".equals(member) || "value".equals(member) || 
                JolkIntrinsicProtocol.isObjectIntrinsic(member);
     }
 
     @TruffleBoundary
-    public static Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop) {
+    public static Object dispatchObjectIntrinsic(Object receiver, String name, Object[] arguments, InteropLibrary interop, tolk.language.JolkContext context) {
         InteropLibrary genericInterop = InteropLibrary.getUncached();
         // Impedance Resolution: Unwrap host objects to access the underlying 
         // Jolk identity (JolkMatch, JolkObject) before performing protocol checks.
@@ -1882,26 +1879,31 @@ public abstract class JolkDispatchNode extends Node {
                 case "??" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     // Identity-Based Flow Control: execute fallback only if receiver is Nothing.
-                    if (receiver == null || receiver == JolkNothing.INSTANCE || interop.isNull(receiver)) {
+                    if (isNothing(receiver)) {
                         Object arg = arguments[0];
                         // Support both direct values (null ?? 42) and closures (null ?? [ ^42 ])
                         Object result = genericInterop.isExecutable(arg) ? genericInterop.execute(arg) : arg;
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "hash" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (isNothing(receiver)) return 0L;
+                    if (isNothing(receiver)) return 0L; // Use the helper method
                     return (long) receiver.hashCode();
                 }
                 case "toString" -> { 
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    if (isNothing(unwrapped)) return "null";
+                    if (isNothing(unwrapped)) return "null"; // Use the helper method
                     if (unwrapped instanceof JolkObject jo) {
                         JolkArchetype archetype = jo.getJolkMetaClass().getArchetype();
-                        if (archetype == JolkArchetype.RECORD) return JolkNode.lift(formatRecord(jo));
+                        if (archetype == JolkArchetype.RECORD) return JolkNode.lift(formatRecord(jo, context));
                         if (archetype == JolkArchetype.ENUM) return JolkNode.lift(getEnumName(jo));
+                        // Identity Congruence: Use the simple name for standard objects to maintain 
+                        // instructional density and align with the record archetype's diagnostics.
+                        String fqn = (String) jo.getJolkMetaClass().getMetaQualifiedName();
+                        String simpleName = fqn.contains(".") ? fqn.substring(fqn.lastIndexOf('.') + 1) : fqn;
+                        return JolkNode.lift("instance of " + simpleName);
                     }
                     // Identity Restitution: Ensure host strings are lifted to guest identities.
                     return JolkNode.lift(unwrapped.toString());
@@ -1909,12 +1911,12 @@ public abstract class JolkDispatchNode extends Node {
                 case "isPresent" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (unwrapped instanceof JolkMatch match) return match.isPresent();
-                    return !isNothing(unwrapped) && !genericInterop.isNull(unwrapped);
+                    return !isNothing(unwrapped);
                 }
                 case "isEmpty" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (unwrapped instanceof JolkMatch match) return !match.isPresent();
-                    return isNothing(unwrapped) || genericInterop.isNull(unwrapped);
+                    return isNothing(unwrapped);
                 }
                 case "get", "value" -> {
                     /// ### Impedance Resolution: The Constant Supplier Pattern
@@ -1930,41 +1932,41 @@ public abstract class JolkDispatchNode extends Node {
                     /// without defensive branching.
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (unwrapped instanceof JolkMatch match) {
-                        return match.isPresent() ? match.getValue() : JolkNothing.INSTANCE;
+                        return match.isPresent() ? JolkNode.lift(match.getValue()) : JolkNothing.INSTANCE;
                     }
                     if (unwrapped instanceof JolkClosure closure) {
                         return JolkNode.lift(closure.execute(new Object[0]));
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "ifPresent" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (isNothing(unwrapped) || genericInterop.isNull(unwrapped)) return JolkNothing.INSTANCE;
+                    if (isNothing(unwrapped)) return JolkNothing.INSTANCE;
                     if (unwrapped instanceof JolkMatch match) {
                         if (match.isPresent()) {
                             Object val = match.getValue();
                             Object result = genericInterop.execute(arguments[0], (val == null || genericInterop.isNull(val)) ? JolkNothing.INSTANCE : val);
-                            return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                            return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                         }
                         return JolkNothing.INSTANCE;
                     }
                     Object result = genericInterop.execute(arguments[0], receiver);
-                    return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                    return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                 }
                 case "ifEmpty" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
-                    if (isNothing(unwrapped) || genericInterop.isNull(unwrapped)) {
+                    if (isNothing(unwrapped)) {
                         Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                     }
                     if (unwrapped instanceof JolkMatch match) {
                         if (!match.isPresent()) {
                             Object result = genericInterop.execute(arguments[0]);
-                            return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                            return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                         }
-                        return receiver;
+                        return JolkNode.lift(receiver);
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "class" -> {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -1989,10 +1991,10 @@ public abstract class JolkDispatchNode extends Node {
                 case "case" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     if (unwrapped instanceof JolkMatch match && match.isPresent()) {
-                        return receiver;
+                        return JolkNode.lift(receiver);
                     }
-                    boolean matches = (Boolean) dispatchObjectIntrinsic(receiver, "~~", arguments, interop);
-                    return matches ? JolkMatch.with(receiver) : receiver;
+                    boolean matches = (Boolean) dispatchObjectIntrinsic(receiver, "~~", arguments, interop, context);
+                    return matches ? JolkMatch.with(receiver) : JolkNode.lift(receiver);
                 }
                 case "project" -> {
                     // DMS API / Protocol Projection: Implements mass-assignment or directed projection.
@@ -2017,7 +2019,7 @@ public abstract class JolkDispatchNode extends Node {
                                         dispatchHostMember(receiver, key, new Object[]{value});
                                     }
                                 }
-                                return receiver;
+                                return JolkNode.lift(receiver);
                             } catch (UnsupportedMessageException | UnknownIdentifierException | StopIterationException e) {
                                 // Fall through to standard selector projection if hash access fails
                             }
@@ -2076,7 +2078,7 @@ public abstract class JolkDispatchNode extends Node {
                                 state.put(s, lib.getOrDefault(dobj, s, JolkNothing.INSTANCE));
                             }
                         }
-                        return state;
+                        return JolkNode.lift(state);
                     }
                     return JolkNothing.INSTANCE;
                 }
@@ -2084,23 +2086,23 @@ public abstract class JolkDispatchNode extends Node {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     if (receiver instanceof Boolean b && b) {
                         Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                     }
-                    return receiver; // Binary branching returns receiver
+                    return JolkNode.lift(receiver); // Binary branching returns receiver
                 }
                 case "?!" -> {
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                     if (receiver instanceof Boolean b && !b) {
                         Object result = genericInterop.execute(arguments[0]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                     }
-                    return receiver;
+                    return JolkNode.lift(receiver);
                 }
                 case "? :" -> {
                     if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
                     if (receiver instanceof Boolean b) {
                         Object result = b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                     }
                     return JolkNothing.INSTANCE;
                 }
@@ -2108,28 +2110,53 @@ public abstract class JolkDispatchNode extends Node {
                     if (arguments.length != 2) throw ArityException.create(2, 2, arguments.length);
                     if (receiver instanceof Boolean b) {
                         Object result = !b ? genericInterop.execute(arguments[0]) : genericInterop.execute(arguments[1]);
-                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : result;
+                        return (result == null || genericInterop.isNull(result)) ? JolkNothing.INSTANCE : JolkNode.lift(result);
                     }
                     return JolkNothing.INSTANCE;
                 }
                 case "new" -> {
-                    if (receiver instanceof JolkMetaClass meta) {
-                        // Identity Restitution: Perform raw allocation. Exceptions should propagate 
-                        // to signal structural errors rather than returning Nothing.
+                    // Priority 1: Shims for Intrinsic Archetypes (Host Identities)
+                    // These must be handled before Jolk-native allocation to ensure shim-less integration.
+
+                    // Collection Literal Synthesis: Route List.class or ArrayList.class to host instantiation.
+                    if (unwrapped == List.class || unwrapped == ArrayList.class || unwrapped == JolkArrayExtension.ARRAY_TYPE) {
+                        // Breakdown Recursion: Directly instantiate and populate the host collection.
+                        ArrayList<Object> list = new ArrayList<>(arguments.length);
+                        for (Object arg : arguments) list.add(JolkNode.unwrap(arg));
+                        return context.env.asGuestValue(list);
+                    }
+
+                    if (unwrapped == Map.class || unwrapped == java.util.HashMap.class || unwrapped == JolkMapExtension.MAP_TYPE) {
+                        java.util.LinkedHashMap<Object, Object> map = new java.util.LinkedHashMap<>();
+                        for (int i = 0; i < arguments.length; i += 2) {
+                            if (i + 1 < arguments.length) {
+                                map.put(JolkNode.unwrap(arguments[i]), JolkNode.unwrap(arguments[i + 1]));
+                            }
+                        }
+                        return context.env.asGuestValue(map);
+                    }
+
+                    // Decimal Shim: Route Decimal #new to BigDecimal instantiation.
+                    if (unwrapped == BigDecimal.class || unwrapped == JolkDecimalExtension.DECIMAL_TYPE) {
+                        if (arguments.length == 2) {
+                            try {
+                                long sig = interop.asLong(arguments[0]);
+                                int scale = (int) interop.asLong(arguments[1]);
+                                return JolkNode.lift(new java.math.BigDecimal(java.math.BigInteger.valueOf(sig), scale));
+                            } catch (UnsupportedMessageException ignored) {}
+                        }
+                        return context.env.asGuestValue(BigDecimal.ZERO);
+                    }
+
+                    // Priority 2: Jolk-Native Allocation: Perform raw allocation for guest types.
+                    if (unwrapped instanceof JolkMetaClass meta && meta.getInstanceShape() != null) {
                         return JolkNode.lift(new JolkObject(meta, arguments));
                     }
 
-                    // Shim-less Interceptor: Route List.class or ArrayList.class to the specialized Array factory logic.
-                    if (receiver == List.class || receiver == java.util.ArrayList.class) {
-                        try {
-                            return JolkArrayExtension.ARRAY_TYPE.callMetaMember("new", arguments);
-                        } catch (UnknownIdentifierException | UnsupportedMessageException | ArityException | UnsupportedTypeException ignored) {}
-                    }
-                    // Unified Instantiation: If the receiver is instantiable (like a JolkMetaClass), 
-                    // we perform the creation protocol directly.
+                    // Priority 3: Host Instantiation: Map #new to the Interop 'instantiate' protocol for platform types.
                     if (interop.isInstantiable(receiver)) {
                         try {
-                            return JolkNode.lift(interop.instantiate(receiver, arguments));
+                            return context.env.asGuestValue(interop.instantiate(receiver, arguments));
                         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException ignored) {}
                     }
                     // Identity Restitution: Final attempt to instantiate via reflection if interop failed
@@ -2152,21 +2179,24 @@ public abstract class JolkDispatchNode extends Node {
             throw new RuntimeException("Intrinsic dispatch failed: #" + name, t);
         }
 
-        return JolkNothing.INSTANCE;
+        // Sentinel Return: null signals that the selector is not handled by the intrinsic protocol.
+        return null;
     }
 
     @TruffleBoundary
-    private static String formatRecord(JolkObject jo) {
+    private static String formatRecord(JolkObject jo, tolk.language.JolkContext context) {
         JolkMetaClass meta = jo.getJolkMetaClass();
         StringBuilder sb = new StringBuilder();
-        sb.append(meta.name).append("[");
+        // Robust Simple Name Resolution: Ensure the package is stripped for the display string.
+        String name = (String) meta.getMetaQualifiedName();
+        sb.append(name.contains(".") ? name.substring(name.lastIndexOf('.') + 1) : name).append("[");
         DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
         Object[] keys = lib.getKeyArray(jo);
         for (int i = 0; i < keys.length; i++) {
             String key = (String) keys[i];
             Object val = lib.getOrDefault(jo, key, JolkNothing.INSTANCE);
             // Recurse into #toString dispatch to handle nested records or enums correctly.
-            Object stringified = dispatchObjectIntrinsic(val, "toString", new Object[0], InteropLibrary.getUncached());
+            Object stringified = dispatchObjectIntrinsic(val, "toString", new Object[0], InteropLibrary.getUncached(), context);
             String valStr = (stringified instanceof TruffleString ts) ? ts.toString() : String.valueOf(stringified);
             
             sb.append(key).append("=").append(valStr);
@@ -2632,5 +2662,9 @@ public abstract class JolkDispatchNode extends Node {
         Object unwrapped = JolkNode.unwrap(receiver);
         return !(unwrapped instanceof com.oracle.truffle.api.object.DynamicObject || 
                  unwrapped instanceof tolk.runtime.JolkMetaClass);
+    }
+
+    private JolkContext getContext() {
+        return JolkLanguage.getLanguage(this).getContextReference().get(this);
     }
 }

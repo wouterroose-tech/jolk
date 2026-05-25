@@ -2,6 +2,9 @@ package tolk.runtime;
 
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InteropLibrary;
+
+import tolk.nodes.JolkNode;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -42,7 +45,7 @@ public class JolkArrayExtension {
                 if (args.length != 2) throw ArityException.create(1, 1, args.length - 1);
                 List<?> list = (List<?>) unwrap(args[0]);
                 int index = ((Number) args[1]).intValue();
-                return lift(list.get(index));
+                return JolkNode.interopLift(list.get(index));
             }
         });
 
@@ -112,14 +115,14 @@ public class JolkArrayExtension {
                         if (predicate instanceof JolkClosure closure) {
                             Object result = closure.execute(new Object[]{guestElement});
                             if (result instanceof Boolean && (Boolean) result) {
-                                return guestElement;
+                                return JolkNode.interopLift(guestElement);
                             }
                         } else {
                             // Fallback to interop
                             Object result = InteropLibrary.getUncached()
                                 .invokeMember(predicate, "apply", guestElement);
                             if (result instanceof Boolean && (Boolean) result) {
-                                return guestElement;
+                                return JolkNode.interopLift(guestElement);
                             }
                         }
                     } catch (Exception e) {
@@ -141,7 +144,7 @@ public class JolkArrayExtension {
             public Object execute(Object[] args) {
                 // args[0] is the MetaClass; trailing args are the elements.
                 Object[] elements = Arrays.copyOfRange(args, 1, args.length);
-                return lift(new ArrayList<>(Arrays.asList(elements)));
+                return JolkNode.interopLift(new ArrayList<>(Arrays.asList(elements)));
             }
         });
     }

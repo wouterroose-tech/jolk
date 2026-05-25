@@ -65,7 +65,7 @@ public class JolkMapTest extends JolcTestBase {
             }""";
         Value instance = eval(source).invokeMember("new");
         assertEquals(30L, instance.invokeMember("getAge", "Alice").asLong());
-        assertTrue(instance.invokeMember("getAge", "Charlie").isNull()); // Should return JolkNothing
+        assertEquals("null", instance.invokeMember("getAge", "Charlie").toString(), "Should return JolkNothing");
     }
 
     @Test
@@ -127,7 +127,7 @@ public class JolkMapTest extends JolcTestBase {
         Value instance = eval(source).invokeMember("new");
         assertEquals("one", instance.invokeMember("getName", 1L).asString());
         assertEquals("two", instance.invokeMember("getName", 2L).asString());
-        assertTrue(instance.invokeMember("getName", 3L).isNull());
+        assertEquals("null", instance.invokeMember("getName", 3L).toString());
     }
 
     @Test

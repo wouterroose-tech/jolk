@@ -22,7 +22,6 @@ import tolk.nodes.JolkReturnException;
 import java.util.HashSet;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import java.util.Collections;
@@ -154,7 +153,7 @@ public class JolkMetaClass extends DynamicObject {
         this.visibility = visibility;
         this.archetype = archetype;
         this.instanceMembers = instanceMembers != null ? instanceMembers : new HashMap<>();
-        this.instanceFields = new LinkedHashMap<>(instanceFields); // Preserve declaration order
+        this.instanceFields = instanceFields; // Reference retention for definition protocol
         this.fieldIndices = new HashMap<>();
         this.metaFields = metaFields != null ? metaFields : new HashMap<>();
         this.hostClass = hostClass;
@@ -351,6 +350,7 @@ public class JolkMetaClass extends DynamicObject {
     /// to ensure indices and registries are prepared for use.
     public void initializeDefaultValues() {
         ensureHydrated();
+        syncDefaultValues();
     }
 
     private void syncDefaultValues() {
@@ -592,7 +592,7 @@ public class JolkMetaClass extends DynamicObject {
         if (val == null) {
             throw UnknownIdentifierException.create(member);
         }
-        return val;
+        return JolkNode.lift(val);
     }
 
     @ExportMessage
@@ -721,14 +721,14 @@ public class JolkMetaClass extends DynamicObject {
                 if (value instanceof JolkLazyValue lazyValue) {
                     return lazyValue.get(this); // Trigger lazy evaluation with the MetaClass as receiver
                 }
-                return value;
+                return JolkNode.lift(value);
             } else if (arguments.length == 1) {
                 // Immutability Enforcement: Meta constants are non-assignable.
                 if (isFieldStable(member)) {
                     throw UnsupportedMessageException.create();
                 }
                 // Setter Pattern: Type #field(val) -> Returns Self (Fluent Contract)
-                objLib.put(this, member, arguments[0]);
+                objLib.put(this, member, JolkNode.lift(arguments[0]));
                 return this;
             }
             throw ArityException.create(0, 1, arguments.length);
@@ -765,10 +765,10 @@ public class JolkMetaClass extends DynamicObject {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return JolkNode.lift(getInstanceMemberNames());
             case "project":
-                return JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop);
+                return JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop, tolk.language.JolkLanguage.getContext());
         }
         // 2. Jolk Object Protocol: Classes are polite JoMoos
-        Object intrinsicResult = JolkIntrinsicProtocol.dispatchObjectIntrinsic(this, member, arguments, interop);
+        Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop, tolk.language.JolkLanguage.getContext());
         if (intrinsicResult != null) {
             return intrinsicResult;
         }
@@ -977,6 +977,8 @@ public class JolkMetaClass extends DynamicObject {
         metaKeys.add("name");
         metaKeys.add("superclass");
         metaKeys.add("isInstance");
+        metaKeys.add("metaProtocol");
+        metaKeys.add("instanceProtocol");
         metaKeys.addAll(JolkIntrinsicProtocol.INTRINSIC_MEMBERS);
         this.cachedMetaMemberNames = new JolkMemberNames(metaKeys.toArray(new String[0]));
     }
@@ -1156,7 +1158,9 @@ public class JolkMetaClass extends DynamicObject {
 
         @Override
         protected synchronized void ensureHydrated() {
-            // No-op: The placeholder's state is strictly managed via updatePlaceholder.
+            if (actualClass != null) {
+                actualClass.ensureHydrated();
+            }
         }
 
         @Override

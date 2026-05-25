@@ -58,7 +58,7 @@ public class JolkMethodNodeTest {
 
         Object result = execute(node);
 
-        assertEquals("hello", result, "Method execution should return the result of its body evaluation.");
+        assertEquals("hello", result.toString(), "Method execution should return the result of its body evaluation.");
     }
 
     ///

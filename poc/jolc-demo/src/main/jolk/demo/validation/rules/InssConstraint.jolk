@@ -1,6 +1,7 @@
 ~ demo.validation.rules;
 
-+ demo.validation.engine.*;
++ demo.validation.engine.ExecutionContext;
++ demo.validation.engine.Interrupt;
 + demo.validation.domain.Person;
 
 ///
@@ -17,7 +18,7 @@
     }
 
     #> Boolean isValid(Long ssn) {
-        ^ (ssn / 97) != (ssn % 97)
+        ^ (ssn /100 / 97) != (ssn % 97)
     }
 
     #: Issue getIssue(Person person,  ExecutionContext executionContext) {

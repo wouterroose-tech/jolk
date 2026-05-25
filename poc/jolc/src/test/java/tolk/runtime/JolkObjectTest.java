@@ -2,6 +2,7 @@ package tolk.runtime;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import java.util.Collections;
@@ -152,6 +153,17 @@ public class JolkObjectTest extends JolcTestBase {
         
         assertTrue(str.isString(), "toString should return a string.");
         assertEquals("instance of StringTest", str.asString());
+    }
+    
+    @Test
+    void testToString_Package() {
+        /// Verifies the creation of an empty map literal.
+        String source = """
+            ~ test.a;
+            class StringTest {
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals("instance of StringTest", instance.invokeMember("toString").asString());
     }
 
     @Test
@@ -406,7 +418,7 @@ public class JolkObjectTest extends JolcTestBase {
 
         Value noMatch = instance.invokeMember("as", eval("class WrongType {}"));
         assertFalse(noMatch.invokeMember("isPresent").asBoolean());
-        assertTrue(noMatch.invokeMember("get").isNull());
+        assertEquals("null", noMatch.invokeMember("get").toString());
     }
 
     /**
@@ -467,5 +479,83 @@ public class JolkObjectTest extends JolcTestBase {
         assertEquals("null", nothing.invokeMember("toString").asString());
         assertTrue(nothing.invokeMember("hash").isNumber());
         assertTrue(nothing.invokeMember("isEmpty").asBoolean());
+    }
+    
+    @Test
+    void testInheritance() {
+        /// Verifies the creation of an empty map literal.
+        String source = "class ClassA { Long x() { ^ 42 } }";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(42L, instance.invokeMember("x").asLong());
+        source = "class ClassB extends ClassA { Long y() { ^ 42 } }";
+        instance = eval(source).invokeMember("new");
+        assertEquals(42L, instance.invokeMember("x").asLong());
+        assertEquals(42L, instance.invokeMember("y").asLong());
+    }
+    
+    @Test
+    void testInheritancsGenerics() {
+        /// Verifies the creation of an empty map literal.
+        String source = "class ClassA<T> { Long x() { ^ 42 } }";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(42L, instance.invokeMember("x").asLong());
+        source = "class ClassB extends ClassA<Long> { Long y() { ^ 42 } }";
+        instance = eval(source).invokeMember("new");
+        assertEquals(42L, instance.invokeMember("x").asLong());
+        assertEquals(42L, instance.invokeMember("y").asLong());
+    }
+    
+    @Test
+    void testInheritanceDifferentPackage() {
+        /// Verifies the creation of an empty map literal.
+        String source = """
+            ~ test.a;
+            class ClassA {
+                Long x() { ^ 42 }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        instance.invokeMember("x");
+        source = """
+            ~ test.b;
+            + test.a.ClassA;
+            class ClassB extends ClassA {
+            }""";
+        Value instanceB = eval(source).invokeMember("new");
+        assertEquals(42L, instanceB.invokeMember("x").asLong());
+        assertThrows(Exception.class, () -> instanceB.invokeMember("z"));
+    }
+    
+    @Test
+    @Disabled("wildcart imports not supported yet") 
+    void testInheritanceDifferentPackageWildcard() {
+        /// Verifies the creation of an empty map literal.
+        String source = """
+            ~ test.a;
+            class ClassA {}
+                Long x() { ^ 42 }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        instance.invokeMember("x");
+        source = """
+            ~ test.b;
+            + test.a.*;
+            class ClassB extends ClassA {
+            }""";
+        Value instanceB = eval(source).invokeMember("new");
+        assertEquals(42L, instanceB.invokeMember("x").asLong());
+        assertThrows(Exception.class, () -> instanceB.invokeMember("z"));
+    }
+    
+    @Test
+    void testDouble() {
+        /// Verifies the creation of an empty map literal.
+        String source = """
+            class ClassA {
+                Double x;
+                meta Self new(Double d) { ^ super #new #x(d) }
+            }""";
+        Value instance = eval(source).invokeMember("new", 42.0);
+        instance.invokeMember("x");
+        assertEquals(42.0, instance.invokeMember("x").asDouble());
     }
 }

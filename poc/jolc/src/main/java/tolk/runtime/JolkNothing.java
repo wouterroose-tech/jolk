@@ -60,12 +60,12 @@ public final class JolkNothing implements TruffleObject {
      */
     @ExportMessage
     public boolean isNull() {
-        return true;
+        return false; // Reified Identity: Jolk Nothing is an object that represents null.
     }
 
     @ExportMessage
     public boolean hasMembers() {
-        return true;
+        return true; // Jolk Nothing participates in the messaging protocol via Silent Absorption.
     }
 
     @ExportMessage
@@ -110,7 +110,8 @@ public final class JolkNothing implements TruffleObject {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 // Identity Restitution: The result of the fallback must be lifted 
                 // to ensure no raw Java nulls return to the host.
-                return JolkNode.lift(InteropLibrary.getUncached().execute(arguments[0]));
+                Object emptyResult = InteropLibrary.getUncached().execute(arguments[0]);
+                return JolkNode.lift(emptyResult);
             case "instanceOf":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);                
                 Object type = arguments[0];

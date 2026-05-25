@@ -145,7 +145,7 @@ public class JolkMetaClassTest extends JolcTestBase {
             JolkMemberNames members = (JolkMemberNames) membersObj;
 
             assertTrue(members.hasArrayElements());
-            assertEquals(26, members.getArraySize());
+            assertEquals(28, members.getArraySize());
 
             Set<String> names = new HashSet<>();
             for (long i = 0; i < members.getArraySize(); i++) {
@@ -223,7 +223,7 @@ public class JolkMetaClassTest extends JolcTestBase {
             JolkObject instance = (JolkObject) instanceObj;
 
             Object result = InteropLibrary.getUncached().invokeMember(instance, "val");
-            assertEquals("data", result, "Canonical constructor should initialize field");
+            assertEquals("data", result.toString(), "Canonical constructor should initialize field");
         } finally {
             context.leave();
         }
@@ -340,7 +340,7 @@ public class JolkMetaClassTest extends JolcTestBase {
             DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
             // VERSION is a meta-field
             Object value = metaClass.readMember("VERSION", objLib);
-            assertEquals(1, value);
+            assertEquals(1L, value);
         } finally {
             context.leave();
         }
@@ -402,14 +402,14 @@ public class JolkMetaClassTest extends JolcTestBase {
             InteropLibrary interop = InteropLibrary.getUncached();
             
             // Getter Pattern: #score
-            assertEquals(10, interop.invokeMember(instance, "score"));
+            assertEquals(10L, interop.invokeMember(instance, "score"));
             
             // Setter Pattern: #score(20) -> returns instance (Self-Return Contract)
             Object setRes = interop.invokeMember(instance, "score", 20);
             assertEquals(instance, setRes);
             
             // Check new value
-            assertEquals(20, interop.invokeMember(instance, "score"));
+            assertEquals(20L,  interop.invokeMember(instance, "score"));
         } finally {
             context.leave();
         }

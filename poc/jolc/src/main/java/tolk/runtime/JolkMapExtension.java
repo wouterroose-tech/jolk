@@ -5,6 +5,8 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
+import tolk.nodes.JolkNode;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -41,7 +43,7 @@ public class JolkMapExtension {
             public Object execute(Object[] args) throws ArityException {
                 if (args.length != 1) throw ArityException.create(0, 0, args.length - 1);
                 Map<?, ?> map = (Map<?, ?>) unwrap(args[0]);
-                return lift((long) map.size()); // Lift int to Long
+                return JolkNode.interopLift((long) map.size()); // Interop-safe lifting
             }
         });
 
@@ -51,8 +53,8 @@ public class JolkMapExtension {
             public Object execute(Object[] args) throws ArityException {
                 if (args.length != 2) throw ArityException.create(1, 1, args.length - 1);
                 Map<?, ?> map = (Map<?, ?>) unwrap(args[0]);
-                Object key = lift(args[1]); // Ensure key matches Jolk identity conventions
-                return lift(map.get(key));
+                Object key = lift(args[1]); 
+                return JolkNode.interopLift(map.get(key));
             }
         });
 
@@ -77,7 +79,7 @@ public class JolkMapExtension {
                 if (args.length != 2) throw ArityException.create(1, 1, args.length - 1);
                 Map<?, ?> map = (Map<?, ?>) unwrap(args[0]);
                 Object key = lift(args[1]);
-                return lift(map.containsKey(key));
+                return JolkNode.interopLift(map.containsKey(key));
             }
         });
 
@@ -127,7 +129,7 @@ public class JolkMapExtension {
                 for (int i = 1; i < args.length; i += 2) {
                     newMap.put(lift(args[i]), lift(args[i + 1]));
                 }
-                return lift(newMap);
+                return JolkNode.interopLift(newMap);
             }
         });
     }

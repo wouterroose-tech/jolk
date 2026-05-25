@@ -168,7 +168,7 @@ The grammar integrates C-family structural layout with Smalltalk’s message-pas
 	message         = [ primary ] { selector [ payload ] }
 	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
 	closure         = "[" [ stat_params lambdaOp ] [ statements ] "]"
-	method_ref      = ( identifier | reserved ) "##" identifier
+	method_ref      = [ identifier | reserved ] "##" identifier
 	payload         = arguments | closure
 	arguments       = "(" [ expression { "," expression } ] ")"
 	stat_params     = typed_params | inferred_params

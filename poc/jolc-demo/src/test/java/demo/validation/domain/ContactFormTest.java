@@ -68,4 +68,29 @@ public class ContactFormTest extends JolkTestBase {
     private Value getPersonClass() {
         return getJolkClass("/demo/validation/domain/Person.jolk");
     }
+    
+    @Test
+    public void testNewContactForm() {
+        getContactFormClass();
+        getPersonClass();
+        Value test = getContactFormTestClass().invokeMember("new");
+
+        Value form = test.invokeMember("test_ValidateContactForm");
+
+    }
+    
+    @Test
+    public void testValidateContactForm() {
+        getContactFormClass();
+        getPersonClass();
+        Value test = getContactFormTestClass().invokeMember("new");
+
+        Value form = test.invokeMember("test_ValidateContactForm");
+
+        assertEquals("john.doe@example.com", form.invokeMember("email").asString());
+    }
+
+    private Value getContactFormTestClass() {
+        return getJolkClass("/examples/ContactFormTest.jolk");
+    }
 }

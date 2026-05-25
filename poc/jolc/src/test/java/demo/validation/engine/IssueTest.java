@@ -1,4 +1,4 @@
-package demo.validation;
+package demo.validation.engine;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,35 +26,10 @@ public class IssueTest extends JolcTestBase {
         return eval(source);
     }
 
-    private Value executionContext() {
-        String source = """
-	        & demo.validation.Issue.ERROR;
-            class ExecutionContext {
-                constant Array<Issue> issues = Array #new;
-                Self add(Object subject, Issue issue) {
-                    self #issues #add(issue)
-                }
-                Boolean hasIssue() {
-                    ^ !self #issues #isEmpty
-                }
-                Boolean hasError() {
-                    ^ self #hasMatch [i -> i #match(ERROR) ]
-                }
-                Boolean hasIssue(Object subject) {
-                    ^ self #hasMatch [i -> i #concerns(subject)]
-                }
-                private Boolean hasMatch(Predicate<Issue> p) {
-                    ^ self #issues #anyMatch(p)
-                }
-            }""";  
-        return eval(source);
-    }
-
     @Test
     void testParsing() {
         this.issueType();
         this.levelEnum();
-        this.executionContext();
     }
 
     @Test

@@ -139,8 +139,22 @@ public class EngineTest extends JolcTestBase {
         return eval(source);
     }
 
+    private Value interrupt() {
+        String source = """
+            final class Interrupt extends RuntimeException {
+                meta constant Interrupt HALT = Interrupt #new;
+                meta Interrupt new() {
+                    // Removes the overhead; the identity is now a lightweight flow-control signal.
+                    // Disable stack trace (writableStackTrace' = false) for performance.
+                    ^super #new("Validation Halt", null, false, false)
+                }
+            }""";
+        return eval(source);
+    }
+
     @Test
     void testParsing() {
+        this.interrupt();
         this.childrenValidation();
         this.childRequirement();
         this.childRequirementBridge();

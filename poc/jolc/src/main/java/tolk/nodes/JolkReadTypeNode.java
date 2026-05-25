@@ -19,24 +19,33 @@ import tolk.runtime.JolkNothing;
  */
 public final class JolkReadTypeNode extends JolkExpressionNode {
     private final String typeName;
+    private final String packageName;
     @Child private JolkNode metaReceiver;
 
     public JolkReadTypeNode(String typeName) {
-        this(null, typeName, null);
+        this(null, typeName, "", null);
     }
 
     public JolkReadTypeNode(String typeName, JolkNode metaReceiver) {
-        this(null, typeName, metaReceiver);
+        this(null, typeName, "", metaReceiver);
     }
 
-    public JolkReadTypeNode(JolkLanguage language, String typeName, JolkNode metaReceiver) {
+    public JolkReadTypeNode(JolkLanguage language, String typeName, String packageName, JolkNode metaReceiver) {
         this.typeName = typeName;
+        this.packageName = packageName;
         this.metaReceiver = metaReceiver;
     }
 
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         JolkContext context = JolkLanguage.getLanguage(this).getContextReference().get(this);
+
+        // Priority 0: Package-Local Resolution
+        // Enables classes within the same package to refer to each other by their short names.
+        if (!packageName.isEmpty() && !typeName.contains(".")) {
+            Object localType = context.getDefinedClass(packageName + "." + typeName);
+            if (localType != null) return localType;
+        }
 
         // Priority 1: Global Type Resolution
         Object type = context.getDefinedClass(typeName);

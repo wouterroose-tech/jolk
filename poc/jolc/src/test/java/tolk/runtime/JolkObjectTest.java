@@ -483,7 +483,6 @@ public class JolkObjectTest extends JolcTestBase {
     
     @Test
     void testInheritance() {
-        /// Verifies the creation of an empty map literal.
         String source = "class ClassA { Long x() { ^ 42 } }";
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
@@ -495,7 +494,6 @@ public class JolkObjectTest extends JolcTestBase {
     
     @Test
     void testInheritancsGenerics() {
-        /// Verifies the creation of an empty map literal.
         String source = "class ClassA<T> { Long x() { ^ 42 } }";
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
@@ -507,7 +505,6 @@ public class JolkObjectTest extends JolcTestBase {
     
     @Test
     void testInheritanceDifferentPackage() {
-        /// Verifies the creation of an empty map literal.
         String source = """
             ~ test.a;
             class ClassA {
@@ -528,10 +525,9 @@ public class JolkObjectTest extends JolcTestBase {
     @Test
     @Disabled("wildcart imports not supported yet") 
     void testInheritanceDifferentPackageWildcard() {
-        /// Verifies the creation of an empty map literal.
         String source = """
             ~ test.a;
-            class ClassA {}
+            class ClassA {
                 Long x() { ^ 42 }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -548,7 +544,6 @@ public class JolkObjectTest extends JolcTestBase {
     
     @Test
     void testDouble() {
-        /// Verifies the creation of an empty map literal.
         String source = """
             class ClassA {
                 Double x;
@@ -556,5 +551,40 @@ public class JolkObjectTest extends JolcTestBase {
             }""";
         Value instance = eval(source).invokeMember("new", 42.0);
         assertEquals(42.0, instance.invokeMember("x").asDouble());
+    }
+    
+    @Test
+    void testSamePackage() {
+        String source = """
+            ~ test.a;
+            class ClassA {
+                Long x() { ^ 42 }
+            }""";
+        eval(source);
+        source = """
+            ~ test.a;
+            class ClassB {
+                Long x() { ^ ClassA #new #x() }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(42L, instance.invokeMember("x").asLong());
+    }
+    
+    @Test
+    void testDifferentPackage() {
+        String source = """
+            ~ test.a;
+            class ClassA {
+                Long x() { ^ 42 }
+            }""";
+        eval(source);
+        source = """
+            ~ test.b;
+            + test.a.ClassA;
+            class ClassB {
+                Long x() { ^ ClassA #new #x() }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(42L, instance.invokeMember("x").asLong());
     }
 }

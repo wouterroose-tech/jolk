@@ -1,6 +1,5 @@
 ~ examples;
 
-
 & java.lang.Math.PI;
 & TWO_PI = java.lang.Math.TAU;
 

@@ -592,7 +592,7 @@ public class JolkMetaClass extends DynamicObject {
         if (val == null) {
             throw UnknownIdentifierException.create(member);
         }
-        return JolkNode.lift(val);
+        return JolkNode.interopLift(val);
     }
 
     @ExportMessage
@@ -671,7 +671,7 @@ public class JolkMetaClass extends DynamicObject {
             metaArguments[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
             try {
-                return JolkBuiltinMethod.lift(InteropLibrary.getUncached(memberObj).execute(memberObj, metaArguments));
+                return JolkNode.interopLift(InteropLibrary.getUncached(memberObj).execute(memberObj, metaArguments));
             } catch (JolkReturnException e) {
                 throw e; // Preserve signal for non-local returns
             }
@@ -692,7 +692,7 @@ public class JolkMetaClass extends DynamicObject {
             metaArguments[0] = this;
             if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
             try {
-                return JolkBuiltinMethod.lift(InteropLibrary.getUncached(memberObj).execute(memberObj, metaArguments));
+                return JolkNode.interopLift(InteropLibrary.getUncached(memberObj).execute(memberObj, metaArguments));
             } catch (JolkReturnException e) {
                 throw e;
             }
@@ -721,14 +721,14 @@ public class JolkMetaClass extends DynamicObject {
                 if (value instanceof JolkLazyValue lazyValue) {
                     return lazyValue.get(this); // Trigger lazy evaluation with the MetaClass as receiver
                 }
-                return JolkNode.lift(value);
+                return JolkNode.interopLift(value);
             } else if (arguments.length == 1) {
                 // Immutability Enforcement: Meta constants are non-assignable.
                 if (isFieldStable(member)) {
                     throw UnsupportedMessageException.create();
                 }
                 // Setter Pattern: Type #field(val) -> Returns Self (Fluent Contract)
-                objLib.put(this, member, JolkNode.lift(arguments[0]));
+                objLib.put(this, member, JolkNode.unwrap(arguments[0]));
                 return this;
             }
             throw ArityException.create(0, 1, arguments.length);
@@ -762,17 +762,17 @@ public class JolkMetaClass extends DynamicObject {
                 return isMetaInstance(arguments[0]);
             case "metaProtocol":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return JolkNode.lift(getMembers(true));
+                return JolkNode.interopLift(getMembers(true));
             case "instanceProtocol":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                return JolkNode.lift(getInstanceMemberNames());
+                return JolkNode.interopLift(getInstanceMemberNames());
             case "project":
-                return JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop, tolk.language.JolkLanguage.getContext());
+                return JolkNode.interopLift(JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop, tolk.language.JolkLanguage.getContext()));
         }
         // 2. Jolk Object Protocol: Classes are polite JoMoos
         Object intrinsicResult = JolkDispatchNode.dispatchObjectIntrinsic(this, member, arguments, interop, tolk.language.JolkLanguage.getContext());
         if (intrinsicResult != null) {
-            return intrinsicResult;
+            return JolkNode.interopLift(intrinsicResult);
         }
 
         throw UnknownIdentifierException.create(member);

@@ -6,47 +6,55 @@
 /// for validation and demonstration purposes.
 class CircleExample {
 
-    /// ### runBasicNew
+    /// ### runNew
     ///
     /// Instantiates a new Circle with a fixed radius of 5.0.
     /// lower the Decimal to Double coercion barrier by directly anchoring the radius as a Double.
-    Circle runBasicNew() {
+    Circle runNew() {
         ^ Circle #new(5.0 #asDouble)
+    }
+
+    /// ### runBNew
+    ///
+    /// Instantiates a new Circle with a fixed radius of 5.0.
+    /// lower the Decimal to Double coercion barrier by directly anchoring the radius as a Double.
+    Circle runNew(Double radius) {
+        ^ Circle #new(radius)
     }
 
     /// ### runArea
     ///
     /// Calculates the area of the circle instance.
     Double runArea() {
-        ^ self #runBasicNew #area
+        ^ self #runNew #area
     }
 
     /// ### runCircumference
     ///
     /// Calculates the circumference of the circle instance.
     Double runCircumference() {
-        ^ self #runBasicNew #circumference
+        ^ self #runNew #circumference
     }
 
     /// ### runToString
     ///
     /// Returns the string representation of the circle.
     String runToString() {
-        ^ self #runBasicNew #toString
+        ^ self #runNew #toString
     }
 
     /// ### runScaling
     ///
     /// Demonstrates scaling a circle by a factor.
     Circle runScaling() {
-        ^ self #runBasicNew * 2.0 #asDouble
+        ^ self #runNew * 2.0 #asDouble
     }
 
     /// ### runEquivalence
     ///
     /// Demonstrates equivalence between two circles with the same radius.
     Boolean runEquivalence() {
-        Circle c1 = self #runBasicNew;
+        Circle c1 = self #runNew;
         Circle c2 = Circle #new(5.0 #asDouble);
         ^ c1 ~~ c2
     }

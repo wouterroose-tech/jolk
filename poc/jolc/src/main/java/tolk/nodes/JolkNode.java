@@ -8,6 +8,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
+import java.math.BigDecimal;
 import com.oracle.truffle.api.strings.TruffleString;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import tolk.runtime.JolkNothing;
@@ -62,7 +63,7 @@ public abstract class JolkNode extends Node {
         // (e.g. HostObject wrapping null) must be intercepted and lifted to Nothing 
         // to support Jolk's message-passing protocol on the host side.
         if (value instanceof Long || value instanceof Double ||
-            value instanceof Boolean || value instanceof TruffleString || 
+            value instanceof Boolean || value instanceof TruffleString || value instanceof BigDecimal ||
             value instanceof JolkNothing || value instanceof JolkObject ||
             value instanceof tolk.runtime.JolkMetaClass ||
             value instanceof tolk.runtime.JolkClosure ||

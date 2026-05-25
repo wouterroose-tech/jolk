@@ -62,24 +62,21 @@ public class CircleTest  extends JolcTestBase {
 
     private Value getCircleClass() {
         String source = """
+        ~ examples;
         & java.lang.Math.PI;
         final class Circle {
             Double radius;
             lazy Double diameter = self #radius * 2;
-
             meta Circle new(Double r) {
                 (r < 0) ? [ Exception #throw("Radius cannot be negative") ];
                 ^ super #new #radius(r)
             }
-
             Double area() {
                 ^ PI * self #radius ** 2
             }
-
             Double circumference() {
                 ^ 2 * PI * self #radius
             }
-
             String toString() {
                 ^ "Circle[radius=" + self #radius #toString + "]"
             }

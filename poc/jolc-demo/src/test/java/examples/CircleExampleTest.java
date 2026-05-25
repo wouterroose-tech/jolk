@@ -22,8 +22,7 @@ public class CircleExampleTest  extends JolkTestBase {
     private Value getDemonstrator() {
         // Ensure the domain class is registered before running the demonstrator
         getJolkClass("/examples/Circle.jolk");
-        Value demonstrator = getJolkClass("/examples/CircleExample.jolk");
-        return demonstrator.invokeMember("new");
+        return getJolkClass("/examples/CircleExample.jolk").invokeMember("new");
     }
 
     /// ### testRunBasicNew
@@ -31,7 +30,18 @@ public class CircleExampleTest  extends JolkTestBase {
     /// Verifies the basic instantiation of a `Circle`.
     @Test
     void testRunBasicNew() {
-        Value circle = getDemonstrator().invokeMember("runBasicNew");
+        Value circle = getDemonstrator().invokeMember("runNew");
+        assertNotNull(circle);
+        assertFalse(circle.isNull());
+        assertEquals(5.0, circle.invokeMember("radius").asDouble());
+    }
+
+    /// ### testRunNew
+    /// 
+    /// Verifies the instantiation of a `Circle` with a specific radius.
+    @Test
+    void testRunNew() {
+        Value circle = getDemonstrator().invokeMember("runNew", 5.0);
         assertNotNull(circle);
         assertFalse(circle.isNull());
         assertEquals(5.0, circle.invokeMember("radius").asDouble());
@@ -84,8 +94,6 @@ public class CircleExampleTest  extends JolkTestBase {
     /// Verifies that the construction guard throws an exception for negative radii.
     @Test
     void testRunInvalidConstruction() {
-        assertThrows(Exception.class, () -> {
-            getDemonstrator().invokeMember("runInvalidConstruction");
-        });
+        assertThrows(Exception.class, () -> getDemonstrator().invokeMember("runInvalidConstruction"));
     }
 }

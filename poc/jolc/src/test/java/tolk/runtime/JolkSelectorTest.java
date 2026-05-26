@@ -3,7 +3,6 @@ package tolk.runtime;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import tolk.JolcTestBase;
-import tolk.runtime.JolkSelector;
 
 import org.junit.jupiter.api.Test;
 

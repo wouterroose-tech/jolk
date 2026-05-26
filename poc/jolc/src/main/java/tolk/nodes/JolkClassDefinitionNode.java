@@ -117,13 +117,18 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         JolkMetaClass superMetaClass = null;
         if (superclassName != null) { // Robust Superclass Resolution
             String currentPackage = className.contains(".") ? className.substring(0, className.lastIndexOf('.')) : "";
-            
-            // Robust Identity Resolution: Resolve via direct identifier or package-prefixed name.
-            // This delegates wildcard and alias resolution to the JolkContext lookup protocol.
-            Object resolved = resolveClassOrProjection(superclassName, context);
-            if (resolved == null && !superclassName.contains(".") && !currentPackage.isEmpty()) {
+
+            Object resolved = null;
+
+            // Jolk Resolution Priority: Package-Local shadows Global/Host
+            if (!superclassName.contains(".") && !currentPackage.isEmpty()) {
                 resolved = resolveClassOrProjection(currentPackage + "." + superclassName, context);
             }
+            
+            if (resolved == null) {
+                resolved = resolveClassOrProjection(superclassName, context);
+            }
+            
             if (resolved instanceof JolkMetaClass jmc) {
                 superMetaClass = jmc;
             } else {

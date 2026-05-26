@@ -587,4 +587,43 @@ public class JolkObjectTest extends JolcTestBase {
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
     }
+    
+    // Test that Overloading Thread  isn't mixed up with java.lang.Thread
+    // This was a bug where the Jolk resolution logic would resolve to the host class instead of the package-local class.
+    @Test
+    void testOverloadingJavaClassName() {
+        String source = """
+            ~ test;
+            + java.lang.Thread;
+            class Test {
+                Thread v;
+            }""";
+        eval(source);
+        source = """
+            ~ test;
+            class Thread  {
+                Long x() { ^ 42 }
+            }""";
+        eval(source);
+        source = """
+            ~ test;
+            class ClassB extends Thread  {
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(42L, instance.invokeMember("x").asLong());
+    }
+    
+    @Test
+    void testOverloading() {
+        String source = """
+            ~ test.a;
+            class ClassA {
+                Long x() { ^ 0 }
+                Long x(Long x) { ^ x }
+            }""";
+        eval(source);
+        Value instance = eval(source).invokeMember("new");
+        assertEquals(0L, instance.invokeMember("x").asLong());
+        assertEquals(42L, instance.invokeMember("x", 42L).asLong());
+    }
 }

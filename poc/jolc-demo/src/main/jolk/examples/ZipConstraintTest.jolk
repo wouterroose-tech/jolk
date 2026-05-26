@@ -1,0 +1,20 @@
+~ demo.validation.domain;
+
++ demo.validation.domain.Person;
++ demo.validation.domain.ContactForm;
+
+///
+/// @author Wouter Roose
+
+class ZipConstraintTest {
+
+    Boolean test_ZipConstraint_success() {
+        ^ false
+    }
+
+    /// Test that validation fails when ...
+    Boolean test_ZipConstraint_failure() {
+        ^ false
+    }
+
+}

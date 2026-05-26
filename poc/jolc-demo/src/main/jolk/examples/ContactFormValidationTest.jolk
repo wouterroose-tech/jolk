@@ -1,0 +1,63 @@
+~ demo.validation.rules;
+
++ demo.validation.domain.Person;
++ demo.validation.domain.ContactForm;
++ demo.validation.engine.ExecutionContext;
++ demo.validation.engine.ValidationSuite;
++ demo.validation.rules.ContactFormValidation;
+
++ java.lang.System; 
+
+///
+/// @author Wouter Roose
+
+class ContactFormValidationTest {
+
+    /// Test case for validating a contact form with valid data
+    Boolean test_ValidateContactForm_success() {
+        
+        // Create a valid contact form
+        Person person = Person #new
+            #ssn(12345678939)
+            #firstName("John")
+            #lastName("Doe");
+        ContactForm form = ContactForm #new
+            #person(person)
+            #email("john.doe@example.com")
+            #zipCode("12345")
+            #description("Test description");
+        
+        // Create validation context
+        ExecutionContext context = ExecutionContext #new;
+        
+        // Perform validation
+        System #out #println("### validate");
+        ContactFormValidation #new #validate(form, context);
+        System #out #println("### verify");
+        ^ ! context #hasIssue()
+    }
+
+    /// Test that validation fails when ...
+    Boolean test_ValidateContactForm_failure() {
+        
+        // Create an invalid contact form
+        Person person = Person #new
+            // invaluid SSN that fails the INSS constraint
+            #ssn(12345678937)
+            #firstName("John")
+            #lastName("Doe");
+        ContactForm form = ContactForm #new
+            #person(person)
+            #email("john.doe@example.com")
+            #zipCode("12345")
+            #description("Test description");
+        
+        // Create validation context
+        ExecutionContext context = ExecutionContext #new;
+        
+        // Perform validation
+        ContactFormValidation #new #validate(form, context);
+        ^ context #hasIssue()
+    }
+
+}

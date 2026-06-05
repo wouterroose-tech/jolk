@@ -12,15 +12,14 @@ class ContactFormValidation extends ValidationSuite<ContactForm> {
     meta constant Interrupt FORM_INTERRUPT = Interrupt #new;
 
     // singleton in DI configuration
-    meta lazy ContactFormValidation new() {
+    meta ContactFormValidation new() {
         ^ super #new
             //#add basic constraint
             #add(ZipConstraint #new)
             //#add ChildValidation via method reference
             #add(InssConstraint #new, ContactForm ##person)
-
             // TODO
-            // #add nested ruleset 
+            // #add children ruleset 
     }
-
+    
 }

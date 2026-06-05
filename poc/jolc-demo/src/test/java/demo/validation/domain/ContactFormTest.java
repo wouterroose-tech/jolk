@@ -91,6 +91,6 @@ public class ContactFormTest extends JolkTestBase {
     }
 
     private Value getContactFormTestClass() {
-        return getJolkClass("/examples/ContactFormTest.jolk");
+        return getJolkClass("/test/validation/rules/ContactFormTest.jolk");
     }
 }

@@ -15,17 +15,58 @@ public class ZipConstraintTest extends ValidationTestBase {
     public void setUp() {
         super.setUp();
         // Create the Jolk test instance
-        Value testclass = getJolkClass("/examples/ZipConstraintTest.jolk");
+        Value testclass = getJolkClass("/test/validation/rules/ZipConstraintTest.jolk");
         testInstance = testclass.invokeMember("new");
     }
+    
     @Test
-    public void test_ZipConstraint_success() {
-        assertTrue(testInstance.invokeMember("test_ZipConstraint_success").asBoolean());
+    public void test_accept_success() {
+        assertTrue(testInstance.invokeMember("test_accept_success").asBoolean());
     }
 
     @Test
-    public void test_ZipConstraint_failure() {
-        assertTrue(testInstance.invokeMember("test_ZipConstraint_failure").asBoolean());
+    public void test_accept_failure() {
+        assertTrue(testInstance.invokeMember("test_accept_failure").asBoolean());
+    }
+
+    @Test
+    public void test_satisfiesPreCondition_success() {
+        assertTrue(testInstance.invokeMember("test_satisfiesPreCondition_success").asBoolean());
+    }
+
+    @Test
+    public void test_satisfiesPreCondition_failure() {
+        assertTrue(testInstance.invokeMember("test_satisfiesPreCondition_failure").asBoolean());
+    }
+
+    @Test
+    public void test_isMalinesArea_success() {
+        assertTrue(testInstance.invokeMember("test_isMalinesArea_success").asBoolean());
+    }
+
+    @Test
+    public void test_isMalinesArea_failure() {
+        assertTrue(testInstance.invokeMember("test_isMalinesArea_failure").asBoolean());
+    }
+
+    @Test
+    public void test_isValid_success() {
+        assertTrue(testInstance.invokeMember("test_isValid_success").asBoolean());
+    }
+
+    @Test
+    public void test_isValid_failure() {
+        assertTrue(testInstance.invokeMember("test_isValid_failure").asBoolean());
+    }
+
+    @Test
+    public void test_getIssue() {
+        assertTrue(testInstance.invokeMember("test_getIssue").asBoolean());
+    }
+
+    @Test
+    public void test_interrupt() {
+        assertTrue(testInstance.invokeMember("test_interrupt").asBoolean());
     }
 
 }

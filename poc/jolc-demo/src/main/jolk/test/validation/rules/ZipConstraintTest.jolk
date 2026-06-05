@@ -1,0 +1,92 @@
+~ test.validation.rules;
+
++ demo.validation.domain.ContactForm;
++ demo.validation.engine.ExecutionContext;
++ demo.validation.rules.ZipConstraint;
++ demo.validation.rules.ContactFormValidation;
++ demo.validation.engine.Issue;
++ demo.validation.engine.Interrupt;
+
+/// # ZipConstraintTest
+///
+/// Test suite for verifying the logic within [ZipConstraint].
+///
+/// @author Wouter Roose
+class ZipConstraintTest {
+
+    /// Verifies that the #accept protocol succeeds for a valid Malines zip code.
+    Boolean test_accept_success() {
+        ExecutionContext context = ExecutionContext #new;
+        // Create a ContactForm with a valid Malines zip code
+        ContactForm form = ContactForm #new #zipCode(2800);
+        ZipConstraint #new #accept(form, context);
+        ^ !context #hasIssue
+    }
+
+    /// Verifies that the #accept protocol generates an issue and interrupts for invalid data.
+    Boolean test_accept_failure() {
+        ExecutionContext context = ExecutionContext #new;
+        // Create a ContactForm with an invalid zip code
+        ContactForm form = ContactForm #new #zipCode(9999);
+        
+        // Wrap in catch because ZipConstraint #interrupt returns a signal 
+        // thrown by Constraint #doAccept upon violation.
+        Boolean interrupted = false;
+        [ ZipConstraint #new #accept(form, context) ]
+            #catch [ Interrupt e -> interrupted = true ];
+        
+        ^ interrupted && context #hasIssue
+    }
+
+    /// Verifies satisfiesPreCondition when a zip code is present.
+    Boolean test_satisfiesPreCondition_success() {
+        ExecutionContext context = ExecutionContext #new;
+        ContactForm form = ContactForm #new #zipCode(2800);
+        ^ ZipConstraint #new #satisfiesPreCondition(form, context)
+    }
+
+    /// Verifies satisfiesPreCondition when the zip code is absent.
+    Boolean test_satisfiesPreCondition_failure() {
+        ExecutionContext context = ExecutionContext #new;
+        ContactForm form = ContactForm #new; // zipCode defaults to 0
+        ^ !ZipConstraint #new #satisfiesPreCondition(form, context)
+    }
+
+    /// Verifies isMalinesArea for a code within the defined Mechelen scope.
+    Boolean test_isMalinesArea_success() {
+        ^ ZipConstraint #new #isMalinesArea(2800)
+    }
+
+    /// Verifies isMalinesArea for a code outside the defined scope.
+    Boolean test_isMalinesArea_failure() {
+        ^ !ZipConstraint #new #isMalinesArea(9999)
+    }
+
+    /// Verifies the protected isValid predicate for valid data.
+    Boolean test_isValid_success() {
+        ContactForm form = ContactForm #new #zipCode(2800);
+        ^ ZipConstraint #new #isValid(form)
+    }
+
+    /// Verifies the protected isValid predicate for invalid data.
+    Boolean test_isValid_failure() {
+        ContactForm form = ContactForm #new #zipCode(9999);
+        ^ !ZipConstraint #new #isValid(form)
+    }
+
+    /// Verifies that `getIssue` returns a valid issue template.
+    Boolean test_getIssue() {
+        ExecutionContext context = ExecutionContext #new;
+        ContactForm form = ContactForm #new #zipCode(2800);
+
+        Issue issue = ZipConstraint #new #getIssue(form, context);
+        ^ issue #isPresent  && issue #message == "ZIP_INVALID"  && issue #level #isError
+    }
+
+    /// Verifies that the `interrupt` signal is correctly resolved via lens projection.
+    /// Note: This depends on the fix for the `NullPointerException` in `JolkMetaClass`.
+    Boolean test_interrupt() {
+        Interrupt signal = ZipConstraint #new #interrupt;
+        ^ signal #isPresent && signal == ContactFormValidation #FORM_INTERRUPT
+    }
+}

@@ -117,20 +117,14 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         JolkMetaClass superMetaClass = null;
         if (superclassName != null) { // Robust Superclass Resolution
             String currentPackage = className.contains(".") ? className.substring(0, className.lastIndexOf('.')) : "";
-
-            Object resolved = null;
-
-            // Jolk Resolution Priority: Package-Local shadows Global/Host
-            if (!superclassName.contains(".") && !currentPackage.isEmpty()) {
-                resolved = resolveClassOrProjection(currentPackage + "." + superclassName, context);
-            }
-            
-            if (resolved == null) {
-                resolved = resolveClassOrProjection(superclassName, context);
-            }
+            Object resolved = resolveClassOrProjection(superclassName, currentPackage, context);
             
             if (resolved instanceof JolkMetaClass jmc) {
+                // Identity Linkage: The guest meta-object is already hydrated.
                 superMetaClass = jmc;
+            } else if (resolved instanceof String fqn) {
+                // Path Linkage: Use the resolved FQN string to prevent short-name collision.
+                superMetaClass = context.getOrCreateClass(fqn);
             } else {
                 superMetaClass = context.getOrCreateClass(superclassName);
             }
@@ -290,13 +284,14 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         if ("Map".equals(baseType) || "HashMap".equals(baseType)) return new java.util.LinkedHashMap<>();
 
         String currentPackage = className.contains(".") ? className.substring(0, className.lastIndexOf('.')) : "";
-        Object resolved = resolveClassOrProjection(baseType, context);
-        if (resolved == null && !baseType.contains(".") && !currentPackage.isEmpty()) {
-            resolved = resolveClassOrProjection(currentPackage + "." + baseType, context);
-        }
+        Object resolved = resolveClassOrProjection(baseType, currentPackage, context);
 
         if (resolved instanceof JolkMetaClass jmc) {
+            // Identity Resolution: Found an existing guest meta-object.
             return jmc;
+        } else if (resolved instanceof String fqn) {
+            // Impedance Resolution: Use the FQN to stabilize the type hint.
+            return context.getOrCreateClass(fqn);
         }
         
         // Impedance Resolution: Ensure that placeholders for unresolved types 
@@ -305,10 +300,25 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     }
 
     /// Helper method to resolve a type name (short or FQN) against defined classes and projections.
-    private Object resolveClassOrProjection(String typeName, JolkContext context) {
-        Object resolved = context.getDefinedClass(typeName);
-        if (resolved == null) resolved = context.lookupProjection(typeName);
-        return resolved;
+    private Object resolveClassOrProjection(String typeName, String currentPackage, JolkContext context) {
+        // Priority 1: Qualified Identifier
+        if (typeName.contains(".")) {
+            Object type = context.getDefinedClass(typeName);
+            if (type != null) return type;
+        }
+
+        // Priority 2: Package-Local Sibling
+        if (!currentPackage.isEmpty()) {
+            Object local = context.getDefinedClass(currentPackage + "." + typeName);
+            if (local != null) return local;
+        }
+
+        // Priority 3: Meta-Projection (Expansion/Using)
+        Object projected = context.lookupProjection(typeName);
+        if (projected != null) return projected;
+
+        // Priority 4: Global Registry / Host Fallback
+        return context.getDefinedClass(typeName);
     }
 
     /**

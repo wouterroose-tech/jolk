@@ -22,7 +22,26 @@ public class IssueTest extends JolcTestBase {
     }
 
     private Value levelEnum() {
-        String source = "enum Level { ERROR; WARNING; INFO; DEBUG; }";  
+        String source = """
+            enum Level {
+                ERROR; WARNING; INFO; DEBUG; 
+
+                Boolean isError() { ^ self == ERROR }
+                Boolean isWarning() { ^ self == WARNING }
+                Boolean isInfo() { ^ self == INFO }
+                Boolean isDebug() { ^ self == DEBUG }
+            }""";  
+        return eval(source);
+    }
+
+    private Value issueTest() {
+        String source = """
+            class IssueTest {
+                Boolean test_getIssue() {
+                    Issue issue = Issue #new(null, "INVALID",  Level #ERROR);
+                    ^ issue #message == "INVALID"  && issue #level #isError
+                }
+            }""";  
         return eval(source);
     }
 
@@ -30,6 +49,7 @@ public class IssueTest extends JolcTestBase {
     void testParsing() {
         this.issueType();
         this.levelEnum();
+        this.issueTest();
     }
 
     @Test
@@ -37,6 +57,14 @@ public class IssueTest extends JolcTestBase {
         Value level = this.levelEnum().getMember("ERROR");
         Value issue = this.issueType().invokeMember("new", null, "Test message", level);
         assertTrue(issue.invokeMember("match", level).asBoolean());
+    }
+
+    @Test
+    public void test_getIssue() {
+        this.issueType();
+        this.levelEnum();
+        Value testInstance = this.issueTest().invokeMember("new");
+        assertTrue(testInstance.invokeMember("test_getIssue").asBoolean());
     }
 
 }

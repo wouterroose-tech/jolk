@@ -115,6 +115,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         Set<String> stableFields = new HashSet<>();
 
         JolkMetaClass superMetaClass = null;
+        Class<?> hostClass = null;
         if (superclassName != null) { // Robust Superclass Resolution
             String currentPackage = className.contains(".") ? className.substring(0, className.lastIndexOf('.')) : "";
             Object resolved = resolveClassOrProjection(superclassName, currentPackage, context);
@@ -122,11 +123,19 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             if (resolved instanceof JolkMetaClass jmc) {
                 // Identity Linkage: The guest meta-object is already hydrated.
                 superMetaClass = jmc;
+                hostClass = jmc.getHostClass(); // Propagate host extension through guest hierarchy
+            } else if (resolved instanceof Class<?> clazz) {
+                // Host Extension: Direct linkage to a Java class identity.
+                hostClass = clazz;
             } else if (resolved instanceof String fqn) {
                 // Path Linkage: Use the resolved FQN string to prevent short-name collision.
-                superMetaClass = context.getOrCreateClass(fqn);
+                Object real = context.getOrCreateClass(fqn);
+                if (real instanceof JolkMetaClass jmc) superMetaClass = jmc;
+                else if (real instanceof Class<?> clazz) hostClass = clazz;
             } else {
-                superMetaClass = context.getOrCreateClass(superclassName);
+                Object real = context.getOrCreateClass(superclassName);
+                if (real instanceof JolkMetaClass jmc) superMetaClass = jmc;
+                else if (real instanceof Class<?> clazz) hostClass = clazz;
             }
             
             // Validation Guard: If getOrCreateClass returns null, it means the name
@@ -185,7 +194,15 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // We pass null for the hostClass substrate identity, as this is a guest-defined type.
         // Enum constants are registered post-instantiation to support circular identity resolution 
         // within the meta-registry.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, null, getterOverrides, setterOverrides);
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, hostClass, getterOverrides, setterOverrides);
+
+        // Identity Synchronization: Anchor meta-field hints as properties immediately.
+        // This ensures that getters work correctly even before the evaluation protocol
+        // for complex initializers completes, preventing "Stub Poisoning".
+        com.oracle.truffle.api.object.DynamicObjectLibrary objLib = com.oracle.truffle.api.object.DynamicObjectLibrary.getUncached();
+        for (Map.Entry<String, Object> entry : runtimeMetaFields.entrySet()) {
+            objLib.put(newMetaClass, entry.getKey(), entry.getValue());
+        }
 
         // Jolk Lifecycle Protocol: Register ALL methods (instance and meta) before evaluating 
         // any field initializers. This ensures that circular references or self-instantiation 
@@ -197,11 +214,16 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         }
 
         for (Map.Entry<String, List<JolkNode>> entry : metaMembers.entrySet()) {
+            String name = entry.getKey();
             List<JolkMethodNode> methods = new ArrayList<>();
-            for (JolkNode node : entry.getValue()) if (node instanceof JolkMethodNode m) methods.add(m);
+            for (JolkNode node : entry.getValue()) {
+                if (node instanceof JolkMethodNode m) {
+                    methods.add(m);
+                }
+            }
             if (!methods.isEmpty()) {
                 JolkClosure closure = createMethodClosure(lang, methods);
-                for (JolkMethodNode m : methods) bindSuperNodes(m.getBody(), newMetaClass);
+                for (JolkMethodNode m : methods) if (m.getBody() != null) bindSuperNodes(m.getBody(), newMetaClass);
                 newMetaClass.registerMetaMethod(entry.getKey(), closure);
             }
         }
@@ -247,11 +269,22 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                         JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
                         Object initialValue = unwrap(context.env.asGuestValue(lift(root.getCallTarget().call())));
                         // Update both the storage slot and the map hint for initializeDefaultValues
+                        
+                        // Identity Synchronization: Ensure the evaluated constant is visible 
+                        // to the DynamicObject property lookup in JolkDispatchNode.
+                        com.oracle.truffle.api.object.DynamicObjectLibrary.getUncached()
+                            .put(newMetaClass, name, initialValue);
+                            
                         newMetaClass.setMetaFieldValue(name, initialValue);
                         runtimeMetaFields.put(name, initialValue);
                     } else {
                         // Identity initialization for meta-fields without initializers
                         Object defaultValue = resolveTypeHint(field.getTypeName(), context);
+                        
+                        // Identity Synchronization: Ensure the evaluated constant is visible 
+                        // to the DynamicObject property lookup in JolkDispatchNode.
+                        com.oracle.truffle.api.object.DynamicObjectLibrary.getUncached()
+                            .put(newMetaClass, name, defaultValue);
                         newMetaClass.setMetaFieldValue(name, defaultValue);
                         runtimeMetaFields.put(name, defaultValue);
                     }

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -367,6 +368,12 @@ public abstract class JolkDispatchNode extends Node {
                     return JolkNode.lift(state);
                 }
                 default -> {
+                    // 0. Identity Property Lookup: Check for meta-fields/constants.
+                    DynamicObjectLibrary objLib = DynamicObjectLibrary.getUncached();
+                    if (arguments.length == 0 && objLib.containsKey(receiver, selector)) {
+                        return JolkNode.lift(objLib.getOrDefault(receiver, selector, JolkNothing.INSTANCE));
+                    }
+
                     // 1. Try to find a custom meta-member (user-defined meta-method or meta-field)
                     Object member = lookupMetaMember(receiver, selector);
                     if (member != null && !isNothing(member) && interop.isExecutable(member)) {
@@ -1929,9 +1936,7 @@ public abstract class JolkDispatchNode extends Node {
                         if (archetype == JolkArchetype.ENUM) return JolkNode.lift(getEnumName(jo));
                         // Identity Congruence: Use the simple name for standard objects to maintain 
                         // instructional density and align with the record archetype's diagnostics.
-                        String fqn = (String) jo.getJolkMetaClass().getMetaQualifiedName();
-                        String simpleName = fqn.contains(".") ? fqn.substring(fqn.lastIndexOf('.') + 1) : fqn;
-                        return JolkNode.lift("instance of " + simpleName);
+                        return JolkNode.lift("instance of " + jo.getJolkMetaClass().getMetaSimpleName());
                     }
                     // Identity Restitution: Ensure host strings are lifted to guest identities.
                     return JolkNode.lift(unwrapped.toString());
@@ -2167,8 +2172,23 @@ public abstract class JolkDispatchNode extends Node {
                     // Priority 2: Jolk-Native Allocation: Perform raw allocation for guest types.
                     // This is essential for 'super #new' to function when the parent hierarchy 
                     // relies on intrinsic allocation.
-                    if (unwrapped instanceof JolkMetaClass meta && meta.getInstanceShape() != null) {
-                        return JolkNode.lift(new JolkObject(meta, arguments));
+                    if (unwrapped instanceof JolkMetaClass meta) {
+                        // Host Substrate Enforcement: If the meta-object mandates a host class 
+                        // (e.g. Interrupt extending RuntimeException), we MUST instantiate 
+                        // the host identity. A silent fallback to JolkObject is prohibited.
+                        if (meta.getHostClass() != null) {
+                            Object result = tryInvokeViaReflection(meta.getHostClass(), "new", arguments);
+                            if (result != null) return result;
+                            
+                            throw new RuntimeException("Failed to instantiate host substrate for: " + meta.name + 
+                                ". Ensure a constructor matching the arguments " + Arrays.toString(arguments) + " is accessible.");
+                        }
+                        
+                        // Guest-Native Allocation: Standard Jolk objects are created only 
+                        // if no host substrate requirement exists.
+                        if (meta.getInstanceShape() != null) {
+                            return JolkNode.lift(new JolkObject(meta, arguments));
+                        }
                     }
 
                     // Decimal Shim: Route Decimal #new to BigDecimal instantiation.
@@ -2220,8 +2240,7 @@ public abstract class JolkDispatchNode extends Node {
         JolkMetaClass meta = jo.getJolkMetaClass();
         StringBuilder sb = new StringBuilder();
         // Robust Simple Name Resolution: Ensure the package is stripped for the display string.
-        String name = (String) meta.getMetaQualifiedName();
-        sb.append(name.contains(".") ? name.substring(name.lastIndexOf('.') + 1) : name).append("[");
+        sb.append(meta.getMetaSimpleName()).append("[");
         DynamicObjectLibrary lib = DynamicObjectLibrary.getUncached();
         Object[] keys = lib.getKeyArray(jo);
         for (int i = 0; i < keys.length; i++) {
@@ -2338,26 +2357,30 @@ public abstract class JolkDispatchNode extends Node {
         Object[] unboxed = new Object[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             Object arg = arguments[i];
-            if (arg == null || arg == JolkNothing.INSTANCE) unboxed[i] = null;
-            else {
-                try {
-                    // Attempt to convert to long
-                    unboxed[i] = JolkLongExtension.asLong(arg);
-                } catch (UnsupportedTypeException e) {
-                    try {
-                        // If not a long, try to convert to boolean
-                        unboxed[i] = JolkBooleanExtension.asBoolean(arg);
-                    } catch (UnsupportedTypeException e2) {
-                        // If Jolk-specific conversions fail, try interop conversions
-                        if (interop.isString(arg)) {
-                            try { unboxed[i] = interop.asString(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = arg; }
-                        } else if (interop.isNumber(arg)) {
-                            try { unboxed[i] = interop.asLong(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = arg; }
-                        } else {
-                            unboxed[i] = arg; // If neither, keep original arg
-                        }
-                    }
-                }
+            // Identity Lowering: Explicitly convert Nothing to null before unwrap 
+            // to ensure constructor signatures match correctly.
+            Object unwrappedArg = (arg == JolkNothing.INSTANCE) ? null : JolkNode.unwrap(arg);
+
+            if (isNothing(unwrappedArg)) {
+                unboxed[i] = null;
+            } else if (unwrappedArg instanceof Long l) {
+                unboxed[i] = l;
+            } else if (unwrappedArg instanceof Double d) {
+                unboxed[i] = d;
+            } else if (unwrappedArg instanceof Boolean b) {
+                unboxed[i] = b;
+            } else if (unwrappedArg instanceof TruffleString ts) {
+                unboxed[i] = ts.toJavaStringUncached();
+            } else if (unwrappedArg instanceof String s) {
+                unboxed[i] = s;
+            } else if (interop.isString(arg)) { // Handle polyglot strings
+                try { unboxed[i] = interop.asString(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = unwrappedArg; }
+            } else if (interop.isNumber(arg)) { // Handle polyglot numbers
+                try { unboxed[i] = interop.asLong(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = unwrappedArg; }
+            } else if (interop.isBoolean(arg)) { // Handle polyglot booleans
+                try { unboxed[i] = interop.asBoolean(arg); } catch (UnsupportedMessageException ex) { unboxed[i] = unwrappedArg; }
+            } else {
+                unboxed[i] = unwrappedArg; // Keep original unwrapped arg if no specific conversion
             }
         }
 
@@ -2368,7 +2391,10 @@ public abstract class JolkDispatchNode extends Node {
         } else if (unwrapped instanceof JolkMetaClass mc) {
             // Impedance Resolution: Map the guest MetaClass shim to its host substrate class 
             // to enable static method and constant lookup (e.g. String #valueOf).
-            lookupClass = switch (mc.name) {
+            // For #new, if the JolkMetaClass has an associated hostClass, use that for constructor lookup.
+            if ("new".equals(methodName) && mc.getHostClass() != null) {
+                lookupClass = mc.getHostClass();
+            } else lookupClass = switch (mc.name) {
                 case "String" -> String.class;
                 case "Long", "Number", "Int" -> Long.class;
                 case "Double" -> Double.class;
@@ -2382,17 +2408,22 @@ public abstract class JolkDispatchNode extends Node {
         }
 
         try {
-            // 1. Meta-Object Instantiation: If selector is #new and receiver is a Class, 
-            // map directly to constructors to support Jolk's object creation protocol.
-            if ("new".equals(methodName) && unwrapped instanceof Class<?> clazz) {
-                for (java.lang.reflect.Constructor<?> c : clazz.getConstructors()) {
+            // 1. Unified Creation Protocol: Map #new to Java constructors.
+            // We check if the lookupClass is a valid host substrate for instantiation.
+            // This allows guest types that extend host classes (e.g. Interrupt -> RuntimeException)
+            // to be correctly instantiated as host identities.
+            if ("new".equals(methodName) && lookupClass != null && 
+                (unwrapped instanceof Class<?> || (unwrapped instanceof JolkMetaClass mc && mc.getHostClass() != null))) {
+                
+                for (java.lang.reflect.Constructor<?> c : lookupClass.getDeclaredConstructors()) {
                     Object[] matched = matchArguments(c.getParameterTypes(), c.isVarArgs(), unboxed);
                     if (matched != null) {
                         Object[] coerced = coerceArguments(c.getParameterTypes(), matched);
                         try {
+                            c.setAccessible(true);
                             return JolkNode.lift(c.newInstance(coerced));
                         } catch (Exception e) {
-                            // continue to next candidate
+                            throw new RuntimeException("Host constructor invocation failed for " + lookupClass.getName() + " with args " + Arrays.toString(coerced), e);
                         }
                     }
                 }
@@ -2482,6 +2513,12 @@ public abstract class JolkDispatchNode extends Node {
         for (int i = 0; i < args.length; i++) {
             Object arg = args[i];
             Class<?> target = types[i];
+
+            // Identity Lowering: Convert Nothing to raw Java null.
+            if (arg == JolkNothing.INSTANCE || isNothing(arg)) {
+                coerced[i] = null;
+                continue;
+            }
             
             // TODO: Closure to Functional Interface Conversion
             if (arg instanceof JolkClosure closure) {
@@ -2502,6 +2539,9 @@ public abstract class JolkDispatchNode extends Node {
                 else if (target == byte.class || target == Byte.class) coerced[i] = l.byteValue();
                 else if (target == double.class || target == Double.class) coerced[i] = l.doubleValue();
                 else if (target == float.class || target == Float.class) coerced[i] = l.floatValue();
+                else coerced[i] = arg;
+            } else if (arg instanceof Boolean b) {
+                if (target == boolean.class || target == Boolean.class) coerced[i] = b.booleanValue();
                 else coerced[i] = arg;
             } else {
                 coerced[i] = arg;

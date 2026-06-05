@@ -65,7 +65,7 @@ public class JolkMetaClass extends DynamicObject {
     // Total number of fields including hierarchy
     protected int totalFieldCount;
     // Default field values
-    protected Object[] defaultFieldValues;
+    protected Object[] defaultFieldValues; // Initialized in syncDefaultValues
     // Meta members (methods and field accessors).
     private final Map<String, Object> metaMembers;
     private final Map<String, Object> metaFields;
@@ -152,6 +152,7 @@ public class JolkMetaClass extends DynamicObject {
         this.finality = finality;
         this.visibility = visibility;
         this.archetype = archetype;
+        this.instanceShape = Shape.newBuilder().build(); // Bootstrap anchor to prevent NPE in JolkObject
         this.instanceMembers = instanceMembers != null ? instanceMembers : new HashMap<>();
         this.instanceFields = instanceFields; // Reference retention for definition protocol
         this.fieldIndices = new HashMap<>();
@@ -159,8 +160,14 @@ public class JolkMetaClass extends DynamicObject {
         this.hostClass = hostClass;
         this.metaMembers = metaMembers != null ? metaMembers : new HashMap<>();
         this.stableFields = stableFields != null ? Collections.unmodifiableSet(new HashSet<>(stableFields)) : Collections.emptySet();
+        this.instanceRegistry = new HashMap<>(); // Prevents NPE during circular bootstrapping
+        this.metaRegistry = new HashMap<>();     // Prevents NPE during circular bootstrapping
         this.getterOverrides = getterOverrides != null ? getterOverrides : Collections.emptyMap();
         this.setterOverrides = setterOverrides != null ? setterOverrides : Collections.emptyMap();
+    }
+
+    public Class<?> getHostClass() {
+        return hostClass;
     }
 
     /// Performs **Late Flattening**.
@@ -186,8 +193,12 @@ public class JolkMetaClass extends DynamicObject {
         // 1. Calculate Instance Field Layout
         int superCount = (superclass != null) ? superclass.getFieldCount() : 0;
         this.flattenedFieldNames = new String[superCount + instanceFields.size()];
-        if (this.instanceShape == null) {
-            this.instanceShape = (superclass != null) ? superclass.instanceShape : Shape.newBuilder().build();
+        
+        // Structural Continuity: inherit the shape from the superclass if available.
+        if (superclass != null && superclass.instanceShape != null) {
+            this.instanceShape = superclass.instanceShape;
+        } else if (this.instanceShape == null) {
+            this.instanceShape = Shape.newBuilder().build();
         }
         
         if (superclass != null) {
@@ -482,8 +493,10 @@ public class JolkMetaClass extends DynamicObject {
     }
 
     @ExportMessage
+    @TruffleBoundary
     public Object getMetaSimpleName() {
-        return name;
+        int lastDot = name.lastIndexOf('.');
+        return lastDot == -1 ? name : name.substring(lastDot + 1);
     }
 
     @ExportMessage
@@ -554,8 +567,16 @@ public class JolkMetaClass extends DynamicObject {
     public boolean isMemberReadable(String member,
                                     @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) {
         ensureHydrated();
-        if (metaRegistry.containsKey(member)) return true;
+        // 1. Check DynamicObject properties (for meta fields directly stored there)
         if (objLib.containsKey(this, member)) return true;
+        
+        // 2. Check metaRegistry for non-executable members (constants/fields)
+        if (metaRegistry != null && metaRegistry.containsKey(member)) {
+            Object memberObj = metaRegistry.get(member);
+            // A member is readable if it's not a method (executable) or if it's an enum constant
+            return !InteropLibrary.getUncached().isExecutable(memberObj) || memberObj instanceof JolkEnumConstant;
+        }
+
         // For ENUM types, check enumConstants directly as a fallback
         if (archetype == JolkArchetype.ENUM && enumConstants.containsKey(member)) return true;
 
@@ -574,7 +595,7 @@ public class JolkMetaClass extends DynamicObject {
     public Object readMember(String member,
                              @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException {
         ensureHydrated();
-        Object val = metaRegistry.get(member);
+        Object val = (metaRegistry != null) ? metaRegistry.get(member) : null;
         if (val == null) {
             val = objLib.getOrDefault(this, member, null);
         }
@@ -611,20 +632,29 @@ public class JolkMetaClass extends DynamicObject {
     public boolean isMemberInvocable(String member,
                                      @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) {
         ensureHydrated();
-        // 1. Consolidated Meta-Members (Methods and Field Accessors)
-        if (metaRegistry.containsKey(member)) return true;
-        if (objLib.containsKey(this, member)) return true;
+        // 1. Check metaRegistry for executable members (methods)
+        if (metaRegistry != null && metaRegistry.containsKey(member)) {
+            Object memberObj = metaRegistry.get(member);
+            if (InteropLibrary.getUncached().isExecutable(memberObj)) {
+                return true;
+            }
+        }
+        // 2. Check DynamicObject properties (meta fields are not invocable directly)
+        // if (objLib.containsKey(this, member)) return true; // Removed, fields are not invocable
         
-        // 2. Local Meta-Intrinsics (Identity properties should not delegate)
+        // 3. Local Meta-Intrinsics (Identity properties should not delegate)
         if (switch (member) {
-            case "new", "name", "superclass", "isInstance" -> true;
+            case "new", "name", "qualifiedName", "superclass", "isInstance" -> true;
             default -> false;
         }) return true;
 
+        // 4. Object Intrinsic Protocol (e.g., "toString", "hash")
         if (isObjectIntrinsic(member)) return true;
 
-        if (hostClass != null) {
-            return lookupMetaMember(member) != null;
+        // 5. Host Class Static Methods
+        if (hostClass != null) { // This path is for static methods on the host class.
+            Object meta = lookupMetaMember(member);
+            return meta != null && InteropLibrary.getUncached().isExecutable(meta);
         }
 
         return false;
@@ -678,7 +708,7 @@ public class JolkMetaClass extends DynamicObject {
         }
 
         // Fallback for non-cached members
-        if (metaRegistry.containsKey(member)) {
+        if (metaRegistry != null && metaRegistry.containsKey(member)) {
             Object memberObj = metaRegistry.get(member);
             if (memberObj instanceof JolkEnumConstant) {
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -737,6 +767,11 @@ public class JolkMetaClass extends DynamicObject {
         // 2. Local Meta-Intrinsics: Identity properties specific to this class
         switch (member) {
             case "new":
+                // If this class extends a Host Class, we MUST use host instantiation 
+                // to ensure the identity contains the substrate state (e.g. for Exceptions).
+                if (hostClass != null) {
+                    return JolkNode.interopLift(JolkDispatchNode.dispatchObjectIntrinsic(this, "new", arguments, interop, tolk.language.JolkLanguage.getContext()));
+                }
                 // For enums, new is not allowed - enum constants are accessed directly
                 if (archetype == JolkArchetype.ENUM) {
                     throw UnsupportedMessageException.create();
@@ -744,14 +779,17 @@ public class JolkMetaClass extends DynamicObject {
                 // Canonical #new logic: Only applies if no explicit meta-method named 'new' exists.
                 // This allows the variadic 'meta Map new(Object...)' to take precedence.
                 // This is the intrinsic allocation for JolkMetaClass.
-                if (arguments.length == 0) return JolkBuiltinMethod.lift(new JolkObject(this));
+                if (arguments.length == 0) return JolkNode.lift(new JolkObject(this));
                 
                 // The arity check for canonical constructor
                 if (arguments.length == totalFieldCount) {
-                    return JolkBuiltinMethod.lift(new JolkObject(this, arguments));
+                    return JolkNode.lift(new JolkObject(this, arguments));
                 }
                 throw ArityException.create(totalFieldCount, totalFieldCount, arguments.length);
             case "name":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return getMetaSimpleName();
+            case "qualifiedName":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return name;
             case "superclass":
@@ -813,6 +851,9 @@ public class JolkMetaClass extends DynamicObject {
                 throw ArityException.create(0, receiver.totalFieldCount, arguments.length);
             case "name":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
+                return receiver.getMetaSimpleName();
+            case "qualifiedName":
+                if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                 return receiver.name;
             case "superclass":
                 if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
@@ -853,7 +894,7 @@ public class JolkMetaClass extends DynamicObject {
      */
     public boolean hasInstanceMember(String name) {
         ensureHydrated();
-        return instanceRegistry.containsKey(name);
+        return instanceRegistry != null && instanceRegistry.containsKey(name);
     }
 
     /**
@@ -867,10 +908,10 @@ public class JolkMetaClass extends DynamicObject {
      */
     public boolean hasMetaMember(String name) {
         ensureHydrated();
-        if (metaRegistry.containsKey(name)) return true;
+        if (metaRegistry != null && metaRegistry.containsKey(name)) return true;
         if (DynamicObjectLibrary.getUncached().containsKey(this, name)) return true;
         if (switch (name) {
-            case "new", "name", "superclass", "isInstance" -> true;
+            case "new", "name", "qualifiedName", "superclass", "isInstance" -> true;
             default -> false;
         }) return true;
         if (isObjectIntrinsic(name)) return true;
@@ -885,7 +926,7 @@ public class JolkMetaClass extends DynamicObject {
      */
     public Object lookupInstanceMember(String name) {
         ensureHydrated();
-        return instanceRegistry.get(name);
+        return (instanceRegistry != null) ? instanceRegistry.get(name) : null;
     }
 
     /**
@@ -900,7 +941,7 @@ public class JolkMetaClass extends DynamicObject {
      */
     public Object lookupMetaMember(String name) {
         ensureHydrated();
-        Object member = metaRegistry.get(name);
+        Object member = (metaRegistry != null) ? metaRegistry.get(name) : null;
         if (member != null) {
             return member;
         }
@@ -977,6 +1018,7 @@ public class JolkMetaClass extends DynamicObject {
         // Standard Meta-Object Protocol members
         metaKeys.add("new");
         metaKeys.add("name");
+        metaKeys.add("qualifiedName");
         metaKeys.add("superclass");
         metaKeys.add("isInstance");
         metaKeys.add("metaProtocol");

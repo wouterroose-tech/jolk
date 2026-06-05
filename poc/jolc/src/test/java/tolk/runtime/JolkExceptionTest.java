@@ -51,6 +51,27 @@ public class JolkExceptionTest extends JolcTestBase {
     }
 
     @Test
+    void testInterrupt() {
+        String source = """
+            + java.lang.RuntimeException;
+            class Interrupt extends RuntimeException {
+
+                meta Interrupt new() {
+                    ^super #new("Validation Halt", null, false, false)
+                }   
+            }""";
+        Value interruptClass = eval(source);
+        Value instance = interruptClass.invokeMember("new");
+
+        // Behavioral Verification: Verify identity via the Jolk Object Protocol (#instanceOf).
+        Value match = instance.invokeMember("instanceOf", interruptClass);
+        assertTrue(match.invokeMember("isPresent").asBoolean(), "Instance should be recognized as Interrupt within the Jolk protocol.");
+
+        // Protocol Verification: Verify name resolution via the Meta-Object Protocol.
+        assertEquals("Interrupt", instance.invokeMember("class").invokeMember("name").asString());
+    }
+
+    @Test
     void testCatch() {
         String myClass = """
             + java.lang.RuntimeException;

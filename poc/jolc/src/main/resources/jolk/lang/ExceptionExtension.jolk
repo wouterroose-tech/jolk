@@ -19,7 +19,7 @@ extension ExceptionExtension on java.lang.Throwable {
     Self throw() { 
         // Implementation provided by the JolkDispatchNode intrinsic.
     }
-}
+
     Self throw() { 
         // Implementation provided by the JolkDispatchNode intrinsic.
     }

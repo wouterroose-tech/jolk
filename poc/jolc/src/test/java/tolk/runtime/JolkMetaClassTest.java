@@ -145,7 +145,7 @@ public class JolkMetaClassTest extends JolcTestBase {
             JolkMemberNames members = (JolkMemberNames) membersObj;
 
             assertTrue(members.hasArrayElements());
-            assertEquals(28, members.getArraySize());
+            assertEquals(29, members.getArraySize());
 
             Set<String> names = new HashSet<>();
             for (long i = 0; i < members.getArraySize(); i++) {

@@ -2,6 +2,7 @@ package tolk.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,25 @@ public class JolkMetaProjectionTest extends JolcTestBase {
         eval(source);
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
+    } 
+
+    @Test
+    void testMetaConstantAccess_differentPackages() {
+        String source = """
+            ~ test.a;
+            class Origin {
+                meta constant Long X = 42;
+            }""";
+        eval(source);
+        source = """
+            ~ test.b;
+            + test.a.Origin;
+            class Target  {
+                Boolean isFourtyTwo() { ^ Origin #X == 42 }
+            }""";
+        eval(source);
+        Value instance = eval(source).invokeMember("new");
+        assertTrue(instance.invokeMember("isFourtyTwo").asBoolean());
     } 
 
     /**

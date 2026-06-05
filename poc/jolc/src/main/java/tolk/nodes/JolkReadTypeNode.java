@@ -58,6 +58,25 @@ public final class JolkReadTypeNode extends JolkExpressionNode {
         Object projected = context.lookupProjection(typeName);
         if (projected != null) {
             if (projected instanceof String path) {
+                // Lens Projection: If the path contains a member reference (e.g., Class.CONSTANT),
+                // resolve the class identity and then read the member value.
+                if (path.contains(".")) {
+                    int lastDot = path.lastIndexOf('.');
+                    String classNamePart = path.substring(0, lastDot);
+                    String memberName = path.substring(lastDot + 1);
+
+                    Object metaObj = context.getOrCreateClass(classNamePart);
+                    if (metaObj != null && metaObj != JolkNothing.INSTANCE) {
+                        try {
+                            InteropLibrary interop = InteropLibrary.getUncached(metaObj);
+                            if (interop.isMemberReadable(metaObj, memberName)) {
+                                return JolkNode.lift(interop.readMember(metaObj, memberName));
+                            } else if (interop.isMemberInvocable(metaObj, memberName)) {
+                                return JolkNode.lift(interop.invokeMember(metaObj, memberName));
+                            }
+                        } catch (UnsupportedMessageException | UnknownIdentifierException | ArityException | UnsupportedTypeException e) { /* fallback */ }
+                    }
+                }
                 // Resolve the FQN path into a Solid meta-object to prevent Sending #new to a String.
                 return JolkNode.lift(context.getOrCreateClass(path));
             }

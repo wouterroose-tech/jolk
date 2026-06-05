@@ -58,10 +58,7 @@ public abstract class JolkNode extends Node {
     public static Object lift(Object value) {
         if (value == null) return JolkNothing.INSTANCE;
 
-        // IDENTITY RESTITUTION: Ensure host types match Jolk guest currency.
-        // We exclude generic TruffleObjects from the early-out because foreign nulls 
-        // (e.g. HostObject wrapping null) must be intercepted and lifted to Nothing 
-        // to support Jolk's message-passing protocol on the host side.
+        // Identity Restitution: Avoid re-wrapping if the value is already a guest identity.
         if (value instanceof Long || value instanceof Double ||
             value instanceof Boolean || value instanceof TruffleString || value instanceof BigDecimal ||
             value instanceof JolkNothing || value instanceof JolkObject ||
@@ -71,12 +68,20 @@ public abstract class JolkNode extends Node {
             value instanceof tolk.runtime.JolkSelector) {
             return value;
         }
-        if (value instanceof Integer i) return i.longValue();
+
+        // Narrowing identities to Jolk substrate types
+        if (value instanceof Integer i) return (long) i;
         if (value instanceof Short s) return (long) s;
         if (value instanceof Byte b) return (long) b;
         if (value instanceof Float f) return f.doubleValue();
+        
         if (value instanceof String s) {
             return TruffleString.fromJavaStringUncached(s, TruffleString.Encoding.UTF_16);
+        }
+
+        // If the value is already a TruffleObject (like a host proxy), return as-is.
+        if (value instanceof com.oracle.truffle.api.interop.TruffleObject) {
+            return value;
         }
 
         return liftSlow(value);

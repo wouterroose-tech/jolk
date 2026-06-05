@@ -47,7 +47,8 @@ public final class JolkRootNode extends RootNode {
     public Object execute(VirtualFrame frame) {
         Object result;
         try {
-            result = bodyNode.executeGeneric(frame);
+            // Safety Guard: Return Nothing if the body is null (synthesized stubs)
+            result = (bodyNode != null) ? bodyNode.executeGeneric(frame) : tolk.runtime.JolkNothing.INSTANCE;
         } catch (JolkReturnException e) {
             // Non-Local Return Protocol: Verify if this activation is the 'Lexical Home'.
             // The target identity is the arguments array of the home method activation.

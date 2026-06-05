@@ -18,7 +18,7 @@ public class IssueTest extends ValidationTestBase {
     public void setUp() {
         super.setUp();
         // Create the Jolk test instance
-        Value testclass = getJolkClass("/test/validation/rules/IssueTest.jolk");
+        Value testclass = getJolkClass("/test/validation/engine/IssueTest.jolk");
         testInstance = testclass.invokeMember("new");
     }
 

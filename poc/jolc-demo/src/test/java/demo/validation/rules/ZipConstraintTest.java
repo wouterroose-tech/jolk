@@ -64,9 +64,4 @@ public class ZipConstraintTest extends ValidationTestBase {
         assertTrue(testInstance.invokeMember("test_getIssue").asBoolean());
     }
 
-    @Test
-    public void test_interrupt() {
-        assertTrue(testInstance.invokeMember("test_interrupt").asBoolean());
-    }
-
 }

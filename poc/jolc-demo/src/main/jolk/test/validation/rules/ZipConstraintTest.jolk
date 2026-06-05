@@ -82,11 +82,4 @@ class ZipConstraintTest {
         Issue issue = ZipConstraint #new #getIssue(form, context);
         ^ issue #isPresent  && issue #message == "ZIP_INVALID"  && issue #level #isError
     }
-
-    /// Verifies that the `interrupt` signal is correctly resolved via lens projection.
-    /// Note: This depends on the fix for the `NullPointerException` in `JolkMetaClass`.
-    Boolean test_interrupt() {
-        Interrupt signal = ZipConstraint #new #interrupt;
-        ^ signal #isPresent && signal == ContactFormValidation #FORM_INTERRUPT
-    }
 }

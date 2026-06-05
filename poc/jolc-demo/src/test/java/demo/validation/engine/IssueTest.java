@@ -1,10 +1,12 @@
-package demo.validation.rules;
+package demo.validation.engine;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import demo.validation.rules.ValidationTestBase;
 
 
 public class IssueTest extends ValidationTestBase {

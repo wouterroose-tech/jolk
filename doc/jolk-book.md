@@ -111,7 +111,7 @@ The foundations of this work derive from industrial observation within enterpris
 
 ## Grammar
 
-The grammar integrates C-family structural layout with Smalltalk’s message-passing semantics. It defines a deterministic syntax that enforces encapsulation through lexical anchors while maintaining standard mathematical precedence for expression evaluation.
+The grammar synthesizes the structural layout of the Java ecosystem with the dynamic fluidity of Smalltalk's message passing. It utilizes lexical anchors to guard the metaboundary and enforce encapsulation. This design allows to maintain deterministic mathematical precedence within a unified communicative field, ensuring that algebraic expressions are resolved as a sequence of optimized message dispatches.
 
     (* Jolk Grammar *)
     (* ============ *)
@@ -136,7 +136,7 @@ The grammar integrates C-family structural layout with Smalltalk’s message-pas
 	member          = ( [ "meta" ] state ";" | [ visibility ] [ finality ] [ "meta" ] method )	
 	state           = constant | field
 	constant        = "constant" type identifier assignment
-	assignment      = "=" expression
+	assignment      = "=" message
 	field           = [ "stable" | "lazy" ] type identifier [ assignment ]
 	enum            = meta_id [ arguments ] ";"
 	method          = [ "lazy" ] [ type_args ] [ type ] selector_id "(" [ typed_params ] ")" ( block | ";" )
@@ -150,17 +150,15 @@ The grammar integrates C-family structural layout with Smalltalk’s message-pas
 
 	block           = "{" [ statements ] "}"
 	statements      = statement { ";" statement } [ ";" ]
-	statement       = state | binding | [ "^" ] expression
+	statement       = state | binding | [ "^" ] message
 	binding         = identifier assignment
-	expression      = binary [ ("?" | "?!") expression [ ":" expression ] ]
-	binary          = unary  { operator unary }
-	unary           = ( "!" | "-" ) unary | message
-	message         = [ primary ] { selector [ payload ] }
-	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
+	message         = ( primary | ( "!" | "-" ) message ) { selector [ payload ] }
+	selector        = "#" identifier | operator
+	primary         = reserved | identifier | literal | list_literal | "(" message ")" | closure | method_ref
 	closure         = "[" [ stat_params lambdaOp ] [ statements ] "]"
 	method_ref      = [ identifier | reserved ] "##" identifier
-	payload         = arguments | closure
-	arguments       = "(" [ expression { "," expression } ] ")"
+	payload         = arguments | closure | message
+	arguments       = "(" [ message { "," message } ] ")"
 	stat_params     = typed_params | inferred_params
 	inferred_params = instance_id { "," instance_id }
 
@@ -174,21 +172,18 @@ The grammar integrates C-family structural layout with Smalltalk’s message-pas
 	array_literal   = "#[" [ literal_list ] "]"
 	set_literal     = "#{" [ literal_list ] "}"
 	map_literal     = "#(" [ map_list ] ")"
-	literal_list    = expression { "," expression }
+	literal_list    = message { "," message }
 	map_list        = map_entry { "," map_entry }
-	map_entry       = expression "->" expression
+	map_entry       = message "->" message
 	number_literal  = digit { digit } [ "." digit { digit } ]
 	string_literal  = "\"" { char } "\""
 	char_literal    = "'" char "'"
 
-	operator        = "||" | "&&" | "|" | "|!" | "&" | "==" | "!=" | "~~" | "!~" |
-	                  ">" | ">=" | "<" | "<=" | "<<" | ">>" | ">>>" |
-	                  "+" | "-" | "*" | "/" | "%" | "**" | "??"
 	modifier        = "#" (visibility_ops)? (finality_ops)?
 	visibility_ops  = "<" | "~" | ":" | ">"
 	finality_ops    = "?" | "!"
 
-The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like `selector` (prefixed with `#` for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures. Within the `binary` rule, Jolk treats all operators as unified message selectors, where the traditional mathematical and logical precedence is enforced as a *semantic rule*.
+The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like `selector` (anchored by symbols or `#`) and `[ ]` for blocks, the specification enforces strict syntactic signatures. Jolk treats all interactions—unary, binary, and ternary—as unified message sends. Traditional mathematical and logical precedence is enforced as a *semantic rule* within the engine, ensuring that algebraic expectations are preserved within a flattened syntactic field.
 
 While symbolic anchors (`#<`, `#>`, and related) represent the idiomatic syntax, the grammar provides keyword aliases for `public` and `private`, and explicitly supports archetype denotations such as `class`, `extends`, and associated keywords to maintain structural familiarity with the Java ecosystem.
 
@@ -319,7 +314,7 @@ While traditional dynamic systems often permit reflection access to private fiel
 
 ## Design synopsis
 
-The specification defines a pure object-oriented evolution for the JVM that fuses the message-passing paradigm of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send, Jolk establishes a single semantic paradigm for all operations. The orthogonal design decouples lexical primitives, such as the hash symbol (`#`), from underlying semantic protocols like message dispatches or array literals and achieves a syntax minimum through a lean keyword palette and a semantic casing rule.
+The specification defines a pure object-oriented evolution for the JVM that fuses the *message passing* paradigm of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send while enforcing standard mathematical precedence as a *semantic rule*, Jolk establishes a single semantic paradigm for all operations without discarding existing industrial conventions. The orthogonal design decouples lexical primitives from underlying semantic protocols like message dispatches or array literals and achieves a syntax minimum through a lean keyword palette and a semantic casing rule.
 
 Encapsulation is enforced via a metaboundary that separates an object’s internal state from the external environment. To ensure total structural clarity, the model utilizes "lexical fences"—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve zero token ambiguity. This enables deterministic, linear-time parsing and prevents structural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
 
@@ -649,9 +644,9 @@ Unary operators sit above arithmetic terms (addition) and factors (multiplicatio
 
 ### Mathematical and logical rules for operator order
 
-Jolk’s adoption of Java’s mathematical and logical precedence rules is a deliberate design choice to enforce compliance with algebraic conventions and established industry standards while preserving a pure object-oriented model. Unlike Smalltalk, which evaluates all binary messages strictly from left to right, Jolk enforces standard mathematical precedence. This aligns with the concept of "message in motion" because, regardless of the grammatical order of evaluation, Jolk defines operators as selectors, meaning every mathematical or logical operation is executed as a unified message send. Consequently, an expression like `a + b * c` follows standard precedence for the developer's benefit, but is resolved by the Tolk engine as a series of message sends where `b` receives the `*` message before `a` receives the `+` message. By embedding these rules into a deterministic grammar while maintaining a keyword-lean experience, Jolk ensures that the fluidity of messaging remains the foundational engine of the language, even when the syntax adheres to familiar imperative conventions.
+Jolk’s adoption of Java’s mathematical and logical precedence rules is a deliberate design choice to enforce compliance with algebraic conventions and established industry standards while preserving a pure object-oriented model. Unlike Smalltalk, which evaluates all binary messages strictly from left to right, Jolk enforces standard mathematical precedence. This aligns with the concept of "Message in motion" because, regardless of the grammatical order of evaluation, Jolk defines operators as selectors, meaning every mathematical or logical operation is executed as a unified message send. Consequently, an expression like `a + b * c` follows standard precedence for the developer's benefit, but is resolved by the Tolk Engine as a series of message sends where b receives the `*` message before a receives the `+` message. By embedding these rules into a deterministic grammar while maintaining a keyword-lean experience, Jolk ensures that the fluidity of messaging remains the foundational engine of the language, even when the syntax adheres to familiar imperative conventions.
 
-### Numerical Operation Evaluation
+### Numerical operation evaluation
 
 Jolk governs numeric transitions through *Guided Coercion*. This mechanism is architected to preserve the semantic integrity while guaranteeing execution performance. "Obvious" improvements to precision are applied automatically to keep the logic mathematically sound, while guidance is required for any operation that might discard data or truncate the original intent.
 
@@ -1527,6 +1522,11 @@ The Tolk Project implements the Jolk grammar by harmonising its human-centric de
 
 To manage the shared prefixes inherent in the specification—where annotations and modifiers may initiate both types and members—the project utilizes an LL(k) strategy with a lookahead of $k > 1$. This approach facilitates the resolution of overlapping structural paths without compromising the original design, while enhancing the precision of syntax diagnostics by deferring decisions until sufficient context is established. Within the construction of the Abstract Syntax Tree (AST), the implementation mandates right-associativity for the power operator and the flattening of deeply nested expression hierarchies into N-ary nodes to optimise memory efficiency and traversal velocity.
 
+While Jolk philosophy posits that "everything is a message," the implementation in `jolk.g4`[22] utilizes a *stratified grammar*. This technical refinement—visible in the tiered expression productions—is the mechanism used to enforce standard mathematical precedence. 
+
+The `JolkVisitor` is responsible for bridging this technical necessity with the semantic core. It visits these hierarchical tiers and reifies them into `JolkMessageSendNode` instances. This process, referred to as *semantic flattening*, ensures that while the parser understands the "layers" of an expression, the Tolk engine executes them as a singular, fluid communicative flow.
+
+
 ### Semantic Analysis
 
 The semantic phase validates the *Lexical Stratum* and the *Host Stratum* simultaneously. By prioritising a deterministic toolchain over restrictive constraints, Tolk ensures that Jolk’s functional intent, concurrent execution models, and interoperability bridges are mapped with total integrity to the JVM’s runtime. This process is orchestrated via the `JolkVisitor`, which reconciles the parse tree with the target `JolkNode` identities.
@@ -1714,6 +1714,7 @@ Within this `get` method, the Tolk Engine orchestrates the on-demand execution o
 
 [21]: Oracle. Truffle Language Implementation Framework. GraalVM Documentation. ([https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework](https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework))
 
+[22]: Roose, W. (2026). The Jolk ANTLR4 Grammar (`jolk.g4`). (https://github.com/wouterroose-tech/jolk/blob/main/poc/grammar/src/main/antlr4/tolk/grammar/jolk.g4)
 ---
 
 # Glossary of terms

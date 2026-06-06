@@ -152,19 +152,9 @@ The grammar integrates C-family structural layout with Smalltalk’s message-pas
 	statements      = statement { ";" statement } [ ";" ]
 	statement       = state | binding | [ "^" ] expression
 	binding         = identifier assignment
-	expression      = logic_or [ ("?" | "?!") expression [ ":" expression ] ]
-	logic_or        = logic_and { "||" logic_and }
-	logic_and       = inclusive_or { "&&" inclusive_or }
-	inclusive_or    = exclusive_or { "|" exclusive_or }
-	exclusive_or    = bitwise_and { "|!" bitwise_and }
-	bitwise_and     = equality { "&" equality }
-	equality        = comparison { ( "==" | "!=" | "~~" | "!~" ) comparison }
-	comparison      = bitshift { ( ">" | ">=" | "<" | "<=" ) bitshift }
-	bitshift        = term { ( "<<" | ">>" | ">>>" ) term }
-	term            = factor { ( "+" | "-" ) factor }
-	factor          = unary { ( "*" | "/" | "%" ) unary }
-	unary           = ( "!" | "-" ) unary | power
-    power           = message [ "**" unary ] { "??" power }
+	expression      = binary [ ("?" | "?!") expression [ ":" expression ] ]
+	binary          = unary  { operator unary }
+	unary           = ( "!" | "-" ) unary | message
 	message         = [ primary ] { selector [ payload ] }
 	primary         = reserved | identifier | literal | list_literal | "(" expression ")" | closure | method_ref
 	closure         = "[" [ stat_params lambdaOp ] [ statements ] "]"
@@ -191,11 +181,14 @@ The grammar integrates C-family structural layout with Smalltalk’s message-pas
 	string_literal  = "\"" { char } "\""
 	char_literal    = "'" char "'"
 
+	operator        = "||" | "&&" | "|" | "|!" | "&" | "==" | "!=" | "~~" | "!~" |
+	                  ">" | ">=" | "<" | "<=" | "<<" | ">>" | ">>>" |
+	                  "+" | "-" | "*" | "/" | "%" | "**" | "??"
 	modifier        = "#" (visibility_ops)? (finality_ops)?
 	visibility_ops  = "<" | "~" | ":" | ">"
 	finality_ops    = "?" | "!"
 
-The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like selector (prefixed with `#` for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures while maintaining implicit flexibility elsewhere. This technical separation ensures a robust, hierarchical structure that optimizes both parser performance and human readability.
+The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like `selector` (prefixed with `#` for message sends) and `[ ]` for blocks, the specification enforces strict syntactic signatures. Within the `binary` rule, Jolk treats all operators as unified message selectors, where the traditional mathematical and logical precedence is enforced as a *semantic rule*.
 
 While symbolic anchors (`#<`, `#>`, and related) represent the idiomatic syntax, the grammar provides keyword aliases for `public` and `private`, and explicitly supports archetype denotations such as `class`, `extends`, and associated keywords to maintain structural familiarity with the Java ecosystem.
 
@@ -281,7 +274,7 @@ Implemented as an intrinsic messaging protocol, control flow shifts from a synta
 
 ### Mathematical and equality operators
 
-Identity (`==` and the negation `!=`) is distinguished from equivalence (`~~` and the negation `!~`), which execute a reference parity check and a structural state comparison respectively. All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives.
+Identity (`==` and the negation `!=`) is distinguished from equivalence (`~~` and the negation `!~`), which execute a reference parity check and a structural state comparison respectively. All mathematical symbols are treated as overloaded selectors, allowing custom types to interact like native primitives. The engine evaluates these message chains according to a priority list—ranging from exponential powers to logical disjunctions—ensuring that algebraic and logical expectations are preserved within the fluid communicative field.
 
 ### Parameter immutability
 
@@ -648,15 +641,15 @@ For class-level state, Jolk favours Expression-Based Initialisation. Complex set
 
 The creation method serves as the exclusive Guarded Block for initialisation. This architectural clarity enables a "Solid" guarantee of Definite Assignment. Because authority over a variable is never fragmented, the system can verify that once the block closes, the object’s identity is fully and safely established.
 
-### Unary operators \- \! \++ –
+### Unary operators
 
-Unary operators like `!` (Logical NOT) and `-` (Arithmetic Negation) are integrated into the Unified Messaging system as overloaded selectors. While this syntax mirrors standard imperative conventions, it functions as a deterministic layer within the expression hierarchy that maintains Jolk's message-passing integrity.
+Unary operators like `!` (logical NOT) and `-` (arithmetic negation) are integrated into the unified messaging system as overloaded selectors. While this syntax mirrors standard imperative conventions, it functions as a deterministic layer within the expression hierarchy that maintains Jolk's message-passing integrity.
 
-Unary operators sit above arithmetic terms (addition) and factors (multiplication) but are evaluated after primary messages. The grammar supports right-associativity, allowing for nested logic like `!!true`. Crucially, Jolk distinguishes these unary operators from unary selectors; the latter are keyword-less messages that take no arguments (e.g., `user #name`) and are primarily used for property access.
+Unary operators sit above arithmetic terms (addition) and factors (multiplication) but are evaluated after primary messages. The grammar supports right-associativity, allowing for nested logic like `!!true`. While logically redundant for booleans, this recursive structure ensures that every operator remains a discrete message send. Crucially, Jolk distinguishes these unary operators from unary selectors; the latter are keyword-less messages that take no arguments (e.g., `user #name`) and are primarily used for property access.
 
-### Mathematical & Logical rules for operator order
+### Mathematical and logical rules for operator order
 
-Jolk’s adoption of Java’s mathematical and logical precedence rules is a deliberate design choice to enforce compliance with algebraic conventions and established industry standards while preserving a pure object-oriented model. Unlike Smalltalk, which evaluates all binary messages strictly from left to right, Jolk enforces standard mathematical precedence. This aligns with the concept of "Message in motion" because, regardless of the grammatical order of evaluation, Jolk defines operators as selectors, meaning every mathematical or logical operation is executed as a unified message send. Consequently, an expression like `a + b * c` follows standard precedence for the developer's benefit, but is resolved by the Tolk Engine as a series of message sends where b receives the `*` message before a receives the `+` message. By embedding these rules into a deterministic EBNF grammar while maintaining a keyword-lean experience, Jolk ensures that the fluidity of messaging remains the foundational engine of the language, even when the syntax adheres to familiar imperative conventions.
+Jolk’s adoption of Java’s mathematical and logical precedence rules is a deliberate design choice to enforce compliance with algebraic conventions and established industry standards while preserving a pure object-oriented model. Unlike Smalltalk, which evaluates all binary messages strictly from left to right, Jolk enforces standard mathematical precedence. This aligns with the concept of "message in motion" because, regardless of the grammatical order of evaluation, Jolk defines operators as selectors, meaning every mathematical or logical operation is executed as a unified message send. Consequently, an expression like `a + b * c` follows standard precedence for the developer's benefit, but is resolved by the Tolk engine as a series of message sends where `b` receives the `*` message before `a` receives the `+` message. By embedding these rules into a deterministic grammar while maintaining a keyword-lean experience, Jolk ensures that the fluidity of messaging remains the foundational engine of the language, even when the syntax adheres to familiar imperative conventions.
 
 ### Numerical Operation Evaluation
 

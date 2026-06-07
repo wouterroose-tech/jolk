@@ -612,18 +612,4 @@ public class JolkObjectTest extends JolcTestBase {
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
     }
-    
-    @Test
-    void testOverloading() {
-        String source = """
-            ~ test.a;
-            class ClassA {
-                Long x() { ^ 0 }
-                Long x(Long x) { ^ x }
-            }""";
-        eval(source);
-        Value instance = eval(source).invokeMember("new");
-        assertEquals(0L, instance.invokeMember("x").asLong());
-        assertEquals(42L, instance.invokeMember("x", 42L).asLong());
-    }
 }

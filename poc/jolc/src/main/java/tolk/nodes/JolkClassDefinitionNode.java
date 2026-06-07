@@ -4,6 +4,8 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -208,13 +210,12 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // any field initializers. This ensures that circular references or self-instantiation 
         // (#new) during bootstrapping can resolve the behavioral protocol correctly.
         for (Map.Entry<String, List<JolkMethodNode>> entry : instanceMethods.entrySet()) {
-            JolkClosure closure = createMethodClosure(lang, entry.getValue());
+            JolkClosure closure = createMethodClosure(lang, context, entry.getValue());
             for (JolkMethodNode m : entry.getValue()) bindSuperNodes(m.getBody(), newMetaClass);
             newMetaClass.registerInstanceMethod(entry.getKey(), closure);
         }
 
         for (Map.Entry<String, List<JolkNode>> entry : metaMembers.entrySet()) {
-            String name = entry.getKey();
             List<JolkMethodNode> methods = new ArrayList<>();
             for (JolkNode node : entry.getValue()) {
                 if (node instanceof JolkMethodNode m) {
@@ -222,7 +223,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 }
             }
             if (!methods.isEmpty()) {
-                JolkClosure closure = createMethodClosure(lang, methods);
+                JolkClosure closure = createMethodClosure(lang, context, methods);
                 for (JolkMethodNode m : methods) if (m.getBody() != null) bindSuperNodes(m.getBody(), newMetaClass);
                 newMetaClass.registerMetaMethod(entry.getKey(), closure);
             }
@@ -369,7 +370,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         }
     }
 
-    private JolkClosure createMethodClosure(JolkLanguage lang, List<JolkMethodNode> methods) {
+    private JolkClosure createMethodClosure(JolkLanguage lang, JolkContext context, List<JolkMethodNode> methods) {
         if (methods.size() == 1) {
             JolkMethodNode method = methods.get(0); 
             FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
@@ -397,22 +398,96 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
         builder.addSlots(maxSlots, FrameSlotKind.Object);
         
-        JolkNode dispatcherBody = new JolkArityDispatchNode(methods);
+        JolkNode dispatcherBody = new JolkArityDispatchNode(methods, context);
         JolkRootNode root = new JolkRootNode(lang, builder.build(), dispatcherBody, methods.get(0).getName(), hasAnyNL);
         return new JolkClosure(root.getCallTarget());
+    }
+
+    private static Object resolveIntrinsicType(String typeName) {
+        if (typeName == null) return null;
+        String shortName = typeName.contains(".") ? typeName.substring(typeName.lastIndexOf('.') + 1) : typeName;
+        return switch (shortName) {
+            case "Number" -> tolk.runtime.JolkNumberExtension.NUMBER_TYPE;
+            case "Long", "Int", "Integer" -> tolk.runtime.JolkLongExtension.LONG_TYPE;
+            case "Double" -> tolk.runtime.JolkDoubleExtension.DOUBLE_TYPE;
+            case "Decimal" -> tolk.runtime.JolkDecimalExtension.DECIMAL_TYPE;
+            case "Boolean" -> tolk.runtime.JolkBooleanExtension.BOOLEAN_TYPE;
+            case "String" -> tolk.runtime.JolkStringExtension.STRING_TYPE;
+            case "Nothing" -> tolk.runtime.JolkNothing.NOTHING_TYPE;
+            case "Exception" -> tolk.runtime.JolkExceptionExtension.EXCEPTION_TYPE;
+            case "Array", "List", "ArrayList" -> tolk.runtime.JolkArrayExtension.ARRAY_TYPE;
+            case "Map", "HashMap" -> tolk.runtime.JolkMapExtension.MAP_TYPE;
+            default -> null;
+        };
     }
 
     private static final class JolkArityDispatchNode extends JolkNode {
         @Children private final JolkNode[] methodBodies;
         private final int[] arities;
+        private final Object[][] resolvedParameterTypes;
 
-        JolkArityDispatchNode(List<JolkMethodNode> methods) {
+        JolkArityDispatchNode(List<JolkMethodNode> methods, JolkContext context) {
             this.methodBodies = new JolkNode[methods.size()];
             this.arities = new int[methods.size()];
+            this.resolvedParameterTypes = new Object[methods.size()][];
+
             for (int i = 0; i < methods.size(); i++) {
-                methodBodies[i] = methods.get(i).getBody();
-                arities[i] = methods.get(i).getParameters().length;
+                JolkMethodNode m = methods.get(i);
+                methodBodies[i] = m.getBody();
+                arities[i] = m.getParameters().length;
+                
+                String[] typeNames = m.getParameterTypes();
+                resolvedParameterTypes[i] = new Object[typeNames.length];
+                for (int j = 0; j < typeNames.length; j++) {
+                    String typeName = typeNames[j];
+                    if (typeName != null && !"Object".equals(typeName)) {
+                        // Identity Resolution: Prioritize intrinsic archetypes to ensure
+                        // parameter signatures match substrate types (Decimal, Long).
+                        Object intrinsic = resolveIntrinsicType(typeName);
+                        resolvedParameterTypes[i][j] = (intrinsic != null) 
+                            ? intrinsic 
+                            : context.getOrCreateClass(typeName);
+                    }
+                }
             }
+        }
+
+        private boolean matchesSignature(int index, Object[] args) {
+            Object[] types = resolvedParameterTypes[index];
+            for (int i = 0; i < types.length; i++) {
+                Object type = types[i];
+                if (type == null || type == JolkNothing.INSTANCE) continue;
+                
+                Object rawArg = unwrap(args[i + 1]);
+
+                // Identity-Aware Matching: For Jolk guest meta-objects, we bypass the
+                // Interop protocol for intrinsic substrate identities. This ensures
+                // that raw identities like BigDecimal are correctly identified
+                // without triggering Truffle contract violations or match failures
+                // caused by HostObject proxying.
+                if (type instanceof JolkMetaClass jmc) {
+                    String metaName = (String) jmc.getMetaSimpleName();
+                    boolean match = switch (metaName) {
+                        case "Decimal" -> rawArg instanceof java.math.BigDecimal;
+                        case "Long", "Int", "Integer" -> rawArg instanceof Long || rawArg instanceof Integer;
+                        case "Double" -> rawArg instanceof Double || rawArg instanceof Float;
+                        case "Boolean" -> rawArg instanceof Boolean;
+                        case "String" -> rawArg instanceof String || rawArg instanceof com.oracle.truffle.api.strings.TruffleString;
+                        case "Nothing" -> isNothing(rawArg);
+                        default -> jmc.isMetaInstance(rawArg);
+                    };
+                    if (!match) return false;
+                } else {
+                    // Impedance Resolution: Use the Interop protocol for platform types.
+                    Object arg = interopLift(rawArg);
+                    try {
+                        if (!InteropLibrary.getUncached().isMetaInstance(type, arg)) return false;
+                    } catch (UnsupportedMessageException e) {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         @Override
@@ -421,7 +496,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             // Aligned Jolk Method Layout: [Self, ...Args]
             int callArity = frame.getArguments().length - 1; 
             for (int i = 0; i < arities.length; i++) {
-                if (arities[i] == callArity) {
+                if (arities[i] == callArity && matchesSignature(i, frame.getArguments())) {
                     return methodBodies[i].executeGeneric(frame);
                 }
             }

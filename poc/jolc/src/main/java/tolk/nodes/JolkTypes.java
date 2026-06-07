@@ -100,4 +100,16 @@ public abstract class JolkTypes {
     public static boolean castBoolean(Boolean value) {
         return value;
     }
+
+    /**
+     * ### castBigDecimal
+     * 
+     * Performs **Impedance Resolution** to recover the raw BigDecimal substrate 
+     * from interop wrappers.
+     */
+    @ImplicitCast
+    @TruffleBoundary
+    public static BigDecimal castBigDecimal(Object value) {
+        return (BigDecimal) JolkNode.unwrap(value);
+    }
 }

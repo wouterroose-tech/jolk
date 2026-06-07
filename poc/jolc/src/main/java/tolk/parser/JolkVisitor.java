@@ -59,14 +59,24 @@ import tolk.runtime.JolkNothing;
 /// tracking the lexical stratum (locals/parameters) and the host stratum 
 /// (meta-objects/java identities).
 ///
-/// ### conversational symmetry
-/// jolk achieves industrial ergonomics through three synergistic protocols:
+/// ### Conversational symmetry
+/// Jolk achieves industrial ergonomics through three synergistic protocols:
 /// 1. Implicit self-receiver: `#method` resolves to `self #method`, providing
 ///    high-density internal logic while maintaining the lexical fence (`#`).
-/// 2. self-return contract: methods return `self` by default, sustaining a
+/// 2. Self-return contract: methods return `self` by default, sustaining a
 ///    fluent architecture without builder boilerplate.
-/// 3. syntactic field assignment: `x = value` is reified as `self #x(value)`,
+/// 3. Syntactic field assignment: `x = value` is reified as `self #x(value)`,
 ///    preserving the metaboundary by ensuring all state transitions are messages.
+///
+/// ### The familiarity bridge
+/// This visitor preserves mathematical precedence as a semantic rule.
+///
+/// ### Message supremacy
+/// While the ANTLR grammar utilizes a hierarchical structure for parsing efficiency, 
+/// the visitor reifies every operation—unary, binary, and ternary—as a unified 
+/// message send to maintain the **Jolk** design philosophy. For a **Java** developer,
+/// this means that what appears to be a field access or a keyword-based branch
+/// is always a `JolkMessageSendNode`.
 public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     private final JolkLanguage language;
@@ -593,10 +603,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         boolean isCommand = returnType == null || "Self".equals(returnType) || returnType.equals(currentClassName) || returnType.equals(currentShortName);
 
         String[] params = new String[0];
+        String[] paramTypes = new String[0];
         boolean isVariadic = false;
         if (ctx.typed_params() != null) {
             ParameterSpec spec = parseTypedParams(ctx.typed_params());
             params = spec.names;
+            paramTypes = spec.types;
             for (String p : params) {
                 if ("self".equals(p) || "Self".equals(p) || "super".equals(p))
                     throw new JolkSemanticException("Reserved identifier '" + p + "' cannot be used as a parameter name.", ctx.getStart().getLine());
@@ -629,7 +641,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             }
             frameSlots = methodScope.size();
             boolean hasNL = nonLocalReturnFound.peek();
-            return new JolkMethodNode(name, body, params, isVariadic, frameSlots, hasNL, isLazy, isSignatureOnly); 
+            return new JolkMethodNode(name, body, params, paramTypes, isVariadic, frameSlots, hasNL, isLazy, isSignatureOnly); 
         } finally {
             scopes.pop();
             parameterThresholds.pop();
@@ -729,7 +741,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitEquality(jolkParser.EqualityContext ctx) {
-        // Visit the first term
+        /// ### Equality vs. identity
+        ///
+        /// Following the **Unified Messaging** model, identity (`==`) and 
+        /// equivalence (`~~`) are resolved as formal messages. While the 
+        /// grammar enforces precedence, the engine treats these as 
+        /// communicative handshakes between objects.
         JolkNode left = visit(ctx.comparison(0));
 
         // Iterate over the rest of the terms (if any)
@@ -748,6 +765,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitComparison(jolkParser.ComparisonContext ctx) {
+        /// ### Relational handshakes
+        ///
+        /// Comparison operators (`>`, `<`, etc.) are reified as messages 
+        /// sent to a receiver. This method handles the binary dispatch, 
+        /// contributing to the **Semantic Precedence** by evaluating 
+        /// relational messages before equality or logical messages.
         JolkNode left = visit(ctx.term(0));
         for (int i = 1; i < ctx.term().size(); i++) {
             String op = ctx.getChild(2 * i - 1).getText().intern();
@@ -1229,21 +1252,24 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     // --- Parameter Parsing Helpers ---
 
-    private record ParameterSpec(String[] names, boolean isVariadic) {}
+    private record ParameterSpec(String[] names, String[] types, boolean isVariadic) {}
 
     private ParameterSpec parseTypedParams(jolkParser.Typed_paramsContext ctx) {
         List<String> names = new ArrayList<>();
+        List<String> types = new ArrayList<>();
         boolean isVariadic = false;
         if (ctx.InstanceId() != null) {
-            for (var id : ctx.InstanceId()) {
-                names.add(id.getText());
+            for (int i = 0; i < ctx.InstanceId().size(); i++) {
+                names.add(ctx.InstanceId(i).getText());
+                types.add(resolveTypeName(ctx.annotated_type(i).type()));
             }
         }
         if (ctx.vararg_id() != null) {
             names.add(ctx.vararg_id().InstanceId().getText());
+            types.add("Object"); // Default type for variadic tail
             isVariadic = true;
         }
-        return new ParameterSpec(names.toArray(new String[0]), isVariadic);
+        return new ParameterSpec(names.toArray(new String[0]), types.toArray(new String[0]), isVariadic);
     }
 
     private String[] parseInferredParams(jolkParser.Inferred_paramsContext ctx) {

@@ -11,6 +11,7 @@ public class JolkMethodNode extends JolkNode {
 
     private final String name;
     private final String[] parameters;
+    private final String[] parameterTypes;
     @Child private JolkNode body;
     private final boolean isVariadic;
     private final int frameSlots;
@@ -18,10 +19,11 @@ public class JolkMethodNode extends JolkNode {
     private JolkVisibility visibility = JolkVisibility.PUBLIC;
     private final boolean isSignatureOnly;
 
-    public JolkMethodNode(String name, JolkNode body, String[] parameterNames, boolean isVariadic, int frameSlots, boolean hasNL, boolean isLazy, boolean isSignatureOnly) {
+    public JolkMethodNode(String name, JolkNode body, String[] parameterNames, String[] parameterTypes, boolean isVariadic, int frameSlots, boolean hasNL, boolean isLazy, boolean isSignatureOnly) {
         this.name = name;
         this.body = body; // The body of the method
         this.parameters = parameterNames; // Store the parameter names directly
+        this.parameterTypes = parameterTypes;
         this.isVariadic = isVariadic;
         this.frameSlots = frameSlots;
         this.hasNL = hasNL;
@@ -30,8 +32,8 @@ public class JolkMethodNode extends JolkNode {
         // this.isLazy = isLazy;
     }
 
-    public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic, int frameSlots, boolean hasNL) {
-        this(name, body, parameters, isVariadic, frameSlots, hasNL, false, false);
+    public JolkMethodNode(String name, JolkNode body, String[] parameters, String[] parameterTypes, boolean isVariadic, int frameSlots, boolean hasNL) {
+        this(name, body, parameters, parameterTypes, isVariadic, frameSlots, hasNL, false, false);
     }
 
     /**
@@ -39,7 +41,7 @@ public class JolkMethodNode extends JolkNode {
      * defaulting to 0.
      */
     public JolkMethodNode(String name, JolkNode body, String[] parameters, boolean isVariadic) {
-        this(name, body, parameters, isVariadic, 0, true, false, false);
+        this(name, body, parameters, new String[parameters.length], isVariadic, 0, true, false, false);
     }
 
     public String getName() {
@@ -68,6 +70,10 @@ public class JolkMethodNode extends JolkNode {
     @Override
     public Object executeGeneric(VirtualFrame frame) {
         return body.executeGeneric(frame);
+    }
+
+    public String[] getParameterTypes() {
+        return parameterTypes;
     }
 
     public String[] getParameters() {

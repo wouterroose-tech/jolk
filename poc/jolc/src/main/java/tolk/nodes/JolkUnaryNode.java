@@ -9,11 +9,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.dsl.NodeField;
 import com.oracle.truffle.api.nodes.NodeInfo;
 
-/**
- * ### JolkUnaryNode
- * 
- * Implements optimized unary operations (! and -) via **Semantic Flattening**.
- */
+/// ### JolkUnaryNode
+///
+/// Implements optimized unary operations (`!` and `-`) via **semantic flattening**.
 @NodeInfo(shortName = "unary")
 @NodeChild(value = "valueNode", type = JolkNode.class)
 @NodeField(name = "operator", type = String.class)

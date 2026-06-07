@@ -60,7 +60,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             JolkFinality.FINAL,
             JolkVisibility.PUBLIC,
             JolkArchetype.CLASS,
-            Map.of("testMethod", List.of(new JolkMethodNode("testMethod", new JolkLiteralNode("success"), new String[0], false, 1, false))),
+            Map.of("testMethod", List.of(new JolkMethodNode("testMethod", new JolkLiteralNode("success"), new String[0], new String[0], false, 1, false))),
             new HashMap<String, JolkFieldNode>(),
             new HashMap<String, List<JolkNode>>(),
             Collections.emptyList(),
@@ -204,9 +204,9 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
     void testArityOverloading() throws UnsupportedMessageException, ArityException, UnknownIdentifierException, UnsupportedTypeException {
         List<JolkMethodNode> methods = new ArrayList<>();
         // val() -> returns 0
-        methods.add(new JolkMethodNode("val", new JolkLiteralNode(0L), new String[0], false, 1, false));
+        methods.add(new JolkMethodNode("val", new JolkLiteralNode(0L), new String[0], new String[0], false, 1, false));
         // val(x) -> returns x
-        methods.add(new JolkMethodNode("val", new JolkReadArgumentNode(1, 0), new String[]{"x"}, false, 2, false));
+        methods.add(new JolkMethodNode("val", new JolkReadArgumentNode(1, 0), new String[]{"x"}, new String[1], false, 2, false));
 
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "OverloadTest", 

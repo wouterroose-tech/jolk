@@ -1,6 +1,5 @@
 package demo.validation.rules;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
@@ -109,6 +108,7 @@ public class InssConstraintTest  extends JolcTestBase {
 
     private Value inssConstraint() {
         String source = """
+            + demo.validation.domain.Person;
             #! class InssConstraint extends Constraint<Person> {
                 #: Boolean isValid(Person person) {
                     ^ self #isValid(person #ssn)
@@ -128,6 +128,7 @@ public class InssConstraintTest  extends JolcTestBase {
 
     private Value person() {
         String source = """
+            ~ demo.validation.domain;
             public class Person {
                 Long ssn;
             }""";
@@ -136,6 +137,7 @@ public class InssConstraintTest  extends JolcTestBase {
 
     private Value testInssConstraint() {
         String source = """
+            + demo.validation.domain.Person;
             public class Test {
                 Boolean test() {
                     ExecutionContext context = ExecutionContext #new;

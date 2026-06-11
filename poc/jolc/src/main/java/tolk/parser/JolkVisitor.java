@@ -14,6 +14,7 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.strings.TruffleString;
 import tolk.grammar.jolkBaseVisitor;
+import tolk.language.JolkContext;
 import tolk.language.JolkLanguage;
 import tolk.language.JolkSemanticException;
 
@@ -322,8 +323,22 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         String name = (ctx.MetaId() != null)
             ? ctx.MetaId().getText().intern()
             : ctx.getText().split("<")[0].trim().intern();
-        // If it's a short name, prepend the current package for resolution
-        return (name.contains(".") || currentPackage.isEmpty()) ? name : currentPackage + "." + name;
+        if (name.contains(".") || currentPackage.isEmpty()) return name;
+        // Prefer previously-registered host/guest projections or simple-name registrations
+        JolkContext ctxObj = language.getContextReference().get(null);
+        try {
+            Object defined = ctxObj.getDefinedClass(name);
+            if (defined instanceof tolk.runtime.JolkMetaClass jm) return jm.name;
+            if (defined instanceof Class<?> c) return c.getName();
+
+            Object projected = ctxObj.lookupProjection(name);
+            if (projected instanceof tolk.runtime.JolkMetaClass jm2) return jm2.name;
+            if (projected instanceof Class<?> c2) return c2.getName();
+            if (projected instanceof String s) return s;
+        } catch (Exception e) {
+            // defensive: ignore and fall back
+        }
+        return currentPackage + "." + name;
     }
 
     private record ModifierInfo(JolkVisibility visibility, JolkFinality finality) {}

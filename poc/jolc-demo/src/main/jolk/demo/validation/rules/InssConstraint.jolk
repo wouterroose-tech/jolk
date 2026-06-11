@@ -1,8 +1,13 @@
 ~ demo.validation.rules;
 
++ demo.validation.engine.Constraint;
 + demo.validation.engine.ExecutionContext;
 + demo.validation.engine.Interrupt;
++ demo.validation.engine.Issue;
++ demo.validation.engine.Level;
 + demo.validation.domain.Person;
+
+& demo.validation.rules.ContactFormValidation.FORM_INTERRUPT;
 
 ///
 /// @author Wouter Roose
@@ -10,7 +15,7 @@
 #! class InssConstraint extends Constraint<Person> {
 
     Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
-        ^ person #ssn #isPresent
+        ^ person #ssn != 0
     }
 
     #: Boolean isValid(Person person) {
@@ -18,7 +23,7 @@
     }
 
     #> Boolean isValid(Long ssn) {
-        ^ (ssn /100 / 97) != (ssn % 97)
+        ^ 97 - ((ssn / 100) % 97) == (ssn % 100)
     }
 
     #: Issue getIssue(Person person,  ExecutionContext executionContext) {
@@ -26,6 +31,6 @@
     }
 
     #: Interrupt interrupt() {
-        ^ ContactFormValidation #FORM_INTERRUPT
+        ^ FORM_INTERRUPT
     }
 }

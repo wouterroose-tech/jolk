@@ -1,6 +1,7 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -397,8 +398,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         
         FrameDescriptor.Builder builder = FrameDescriptor.newBuilder();
         builder.addSlots(maxSlots, FrameSlotKind.Object);
-        
-        JolkNode dispatcherBody = new JolkArityDispatchNode(methods, context);
+
+        String currentPackage = className.contains(".") ? className.substring(0, className.lastIndexOf('.')) : "";
+        JolkNode dispatcherBody = new JolkArityDispatchNode(methods, context, currentPackage);
         JolkRootNode root = new JolkRootNode(lang, builder.build(), dispatcherBody, methods.get(0).getName(), hasAnyNL);
         return new JolkClosure(root.getCallTarget());
     }
@@ -425,28 +427,49 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         @Children private final JolkNode[] methodBodies;
         private final int[] arities;
         private final Object[][] resolvedParameterTypes;
+        private final String methodName;
 
-        JolkArityDispatchNode(List<JolkMethodNode> methods, JolkContext context) {
+        JolkArityDispatchNode(List<JolkMethodNode> methods, JolkContext context, String currentPackage) {
             this.methodBodies = new JolkNode[methods.size()];
             this.arities = new int[methods.size()];
             this.resolvedParameterTypes = new Object[methods.size()][];
+            this.methodName = methods.isEmpty() ? "<unknown>" : methods.get(0).getName();
 
             for (int i = 0; i < methods.size(); i++) {
                 JolkMethodNode m = methods.get(i);
                 methodBodies[i] = m.getBody();
                 arities[i] = m.getParameters().length;
-                
+
                 String[] typeNames = m.getParameterTypes();
                 resolvedParameterTypes[i] = new Object[typeNames.length];
                 for (int j = 0; j < typeNames.length; j++) {
                     String typeName = typeNames[j];
                     if (typeName != null && !"Object".equals(typeName)) {
-                        // Identity Resolution: Prioritize intrinsic archetypes to ensure
-                        // parameter signatures match substrate types (Decimal, Long).
                         Object intrinsic = resolveIntrinsicType(typeName);
-                        resolvedParameterTypes[i][j] = (intrinsic != null) 
-                            ? intrinsic 
-                            : context.getOrCreateClass(typeName);
+                        if (intrinsic != null) {
+                            resolvedParameterTypes[i][j] = intrinsic;
+                        } else {
+                            // Qualified name
+                            if (typeName.contains(".")) {
+                                Object t = context.getDefinedClass(typeName);
+                                resolvedParameterTypes[i][j] = (t != null) ? t : context.getOrCreateClass(typeName);
+                            } else {
+                                // Check projections first
+                                Object projected = context.lookupProjection(typeName);
+                                if (projected != null) {
+                                    resolvedParameterTypes[i][j] = projected;
+                                } else {
+                                    // Package-local sibling
+                                    if (!currentPackage.isEmpty()) {
+                                        Object local = context.getDefinedClass(currentPackage + "." + typeName);
+                                        if (local != null) resolvedParameterTypes[i][j] = local;
+                                        else resolvedParameterTypes[i][j] = context.getOrCreateClass(typeName);
+                                    } else {
+                                        resolvedParameterTypes[i][j] = context.getOrCreateClass(typeName);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -457,7 +480,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             for (int i = 0; i < types.length; i++) {
                 Object type = types[i];
                 if (type == null || type == JolkNothing.INSTANCE) continue;
-                
+
                 Object rawArg = unwrap(args[i + 1]);
 
                 // Identity-Aware Matching: For Jolk guest meta-objects, we bypass the
@@ -500,7 +523,51 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                     return methodBodies[i].executeGeneric(frame);
                 }
             }
-            throw new RuntimeException("No method found for arity " + callArity);
+
+            // Diagnostics: throw detailed message to aid debugging
+            throw new RuntimeException(formatNoMethodFound(callArity, frame.getArguments()));
+        }
+
+        @TruffleBoundary
+        private String formatNoMethodFound(int callArity, Object[] rawArgs) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("No method found for selector '").append(methodName).append("' with arity ").append(callArity).append("\n");
+            sb.append("Available overloads:\n");
+            for (int i = 0; i < arities.length; i++) {
+                sb.append("  overload[").append(i).append("] arity=").append(arities[i]).append(" params=[");
+                Object[] types = resolvedParameterTypes[i];
+                for (int j = 0; j < types.length; j++) {
+                    if (j > 0) sb.append(", ");
+                    sb.append(describeType(types[j]));
+                }
+                sb.append("]\n");
+            }
+            sb.append("Call-site argument info:\n");
+            for (int k = 1; k < rawArgs.length; k++) {
+                Object a = rawArgs[k];
+                Object un = unwrap(a);
+                sb.append("  arg[").append(k - 1).append("] raw=").append(describeObject(a)).append(" unwrapped=").append(describeObject(un)).append("\n");
+            }
+            return sb.toString();
+        }
+
+        @TruffleBoundary
+        private static String describeType(Object t) {
+            if (t == null) return "Object";
+            if (t == JolkNothing.INSTANCE) return "Nothing";
+            if (t instanceof JolkMetaClass jmc) return "Jolk:" + jmc.name;
+            if (t instanceof Class<?>) return "Host:" + ((Class<?>) t).getName();
+            return t.toString();
+        }
+
+        @TruffleBoundary
+        private static String describeObject(Object o) {
+            if (o == null) return "null";
+            try {
+                return o.getClass().getName() + "(" + String.valueOf(o) + ")";
+            } catch (Throwable ex) {
+                return o.getClass().getName();
+            }
         }
     }
 }

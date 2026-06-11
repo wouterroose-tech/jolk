@@ -36,7 +36,7 @@ public abstract class JolkTestBase {
     protected Engine.Builder getEngine() {
         return Engine.newBuilder()
                 .allowExperimentalOptions(true)
-                //.out(out)
+                .out(out)
                 .err(err);
     }
 

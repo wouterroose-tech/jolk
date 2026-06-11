@@ -1,0 +1,87 @@
+~ test.validation.rules;
+
++ demo.validation.domain.ContactForm;
++ demo.validation.domain.Person;
++ demo.validation.engine.ExecutionContext;
++ demo.validation.rules.InssConstraint;
++ demo.validation.rules.ContactFormValidation;
++ demo.validation.engine.Issue;
++ demo.validation.engine.Interrupt;
+
+/// # InssConstraintTest
+///
+/// Test suite for verifying the logic within [InssConstraint].
+///
+/// @author Wouter Roose
+class InssConstraintTest {
+
+    /// Verifies that the `#accept` protocol succeeds for a valid `Person` ssn.
+    Boolean test_accept_success() {
+        ExecutionContext context = ExecutionContext #new;
+        // Use a valid SSN logic: 800101035 -> 97 - (8001010 % 97) = 35
+        Person person = Person #new #ssn(800101035);
+        InssConstraint #new #accept(person, context);
+        ^ !context #hasIssue
+    }
+
+    /// Verifies that the `#accept` protocol generates an issue and interrupts for invalid data.
+    Boolean test_accept_failure() {
+        ExecutionContext context = ExecutionContext #new;
+        Person person = Person #new #ssn(800101099);
+        
+        Boolean interrupted = false;
+        [ InssConstraint #new #accept(person, context) ]
+            #catch [ Interrupt e -> interrupted = true ];
+        
+        ^ interrupted && context #hasIssue
+    }
+
+    /// Verifies `satisfiesPreCondition` when an ssn is present (not 0).
+    Boolean test_satisfiesPreCondition_success() {
+        ExecutionContext context = ExecutionContext #new;
+        Person person = Person #new #ssn(800101035);
+        ^ InssConstraint #new #satisfiesPreCondition(person, context)
+    }
+
+    /// Verifies `satisfiesPreCondition` when the ssn is 0.
+    Boolean test_satisfiesPreCondition_failure() {
+        ExecutionContext context = ExecutionContext #new;
+        Person person = Person #new #ssn(0);
+        ^ !InssConstraint #new #satisfiesPreCondition(person, context)
+    }
+
+    /// Verifies the protected `isValid` predicate for valid data.
+    Boolean test_isValid_success() {
+        Person person = Person #new #ssn(800101035);
+        ^ InssConstraint #new #isValid(person)
+    }
+
+    /// Verifies the protected `isValid` predicate for invalid data.
+    Boolean test_isValid_failure() {
+        Person person = Person #new #ssn(800101099);
+        ^ !InssConstraint #new #isValid(person)
+    }
+
+    /// Verifies the internal logic of the SSN calculation.
+    Boolean test_isValid_logic() {
+        // 800101035: (8001010 % 97) is 62. 97 - 62 is 35.
+        ^ InssConstraint #new #isValid(800101035)
+    }
+
+    /// Verifies that `getIssue` returns the correct issue identity.
+    Boolean test_getIssue() {
+        ExecutionContext context = ExecutionContext #new;
+        Person person = Person #new #ssn(800101035);
+
+        Issue issue = InssConstraint #new #getIssue(person, context);
+        ^ issue #isPresent 
+            && issue #message == "INSS_INVALID" 
+            && issue #level #isError
+    }
+
+    /// Verifies that the `interrupt` signal is correctly resolved via lens projection.
+    Boolean test_interrupt() {
+        Interrupt signal = InssConstraint #new #interrupt;
+        ^ signal #isPresent && signal == ContactFormValidation #FORM_INTERRUPT
+    }
+}

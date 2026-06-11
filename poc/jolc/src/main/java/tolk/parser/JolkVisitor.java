@@ -138,7 +138,20 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // Jolk Expansion Protocol (+ / using): Incorporates external archetypes (Java or Jolk) 
         // into the local vocabulary. This adds the class identity to the unit's namespace,
         // ensuring that cross-unit inheritance correctly resolves superclass identities.
-        return visit(ctx.inclusion());
+        // Jolk Expansion Protocol (+ / using): Incorporates external archetypes (Java or Jolk)
+        // into the local vocabulary. When the expansion is an ADD ('+') we must register
+        // the referenced host class so that host static members and constructors are
+        // discoverable at runtime.
+        JolkNode node = visit(ctx.inclusion());
+        try {
+            if (ctx.ADD() != null) {
+                String path = ctx.inclusion().namespace().getText();
+                language.getContextReference().get(null).registerHostClass(path);
+            }
+        } catch (Exception e) {
+            // Defensive: do not break parsing on registration failures
+        }
+        return node;
     }
 
     @Override

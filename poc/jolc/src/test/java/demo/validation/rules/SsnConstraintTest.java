@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
 
-public class InssConstraintTest  extends JolcTestBase {
+public class SsnConstraintTest  extends JolcTestBase {
 
     private Value issueType() {
         String source = """
@@ -106,10 +106,10 @@ public class InssConstraintTest  extends JolcTestBase {
         return eval(source);
     }
 
-    private Value inssConstraint() {
+    private Value SsnConstraint() {
         String source = """
             + demo.validation.domain.Person;
-            #! class InssConstraint extends Constraint<Person> {
+            #! class SsnConstraint extends Constraint<Person> {
                 #: Boolean isValid(Person person) {
                     ^ self #isValid(person #ssn)
                 }
@@ -117,7 +117,7 @@ public class InssConstraintTest  extends JolcTestBase {
                     ^ 97 - ((ssn / 100) % 97) == (ssn % 100)
                 }
                 #: Issue getIssue(Person person,  ExecutionContext executionContext) {
-                    ^ Issue #new(person, "INSS_INVALID",  Level #ERROR)
+                    ^ Issue #new(person, "SSN_INVALID",  Level #ERROR)
                 }
                 #: Interrupt interrupt() {
                     ^ FORM_INTERRUPT
@@ -135,7 +135,7 @@ public class InssConstraintTest  extends JolcTestBase {
         return eval(source);
     }
 
-    private Value testInssConstraint() {
+    private Value testSsnConstraint() {
         String source = """
             + demo.validation.domain.Person;
             public class Test {
@@ -143,7 +143,7 @@ public class InssConstraintTest  extends JolcTestBase {
                     ExecutionContext context = ExecutionContext #new;
                     // Use a valid SSN logic: 800101035 -> 97 - (8001010 % 97) = 35
                     Person person = Person #new #ssn(800101035);
-                    InssConstraint #new #accept(person, context);
+                    SsnConstraint #new #accept(person, context);
                     ^ !context #hasIssue
                 }
             }""";
@@ -157,9 +157,10 @@ public class InssConstraintTest  extends JolcTestBase {
         this.levelEnum();
         this.person();
         this.interrupt();
+        this.validation();
         this.constraint();
-        this.inssConstraint();
-        this.testInssConstraint();
+        this.SsnConstraint();
+        this.testSsnConstraint();
     }
 
     @Test
@@ -171,8 +172,8 @@ public class InssConstraintTest  extends JolcTestBase {
         this.interrupt();
         this.validation();
         this.constraint();
-        this.inssConstraint();
-        Value test = this.testInssConstraint().invokeMember("new");
+        this.SsnConstraint();
+        Value test = this.testSsnConstraint().invokeMember("new");
         assertTrue(test.invokeMember("test").asBoolean());
     }
 

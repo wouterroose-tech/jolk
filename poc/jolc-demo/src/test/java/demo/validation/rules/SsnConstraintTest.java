@@ -2,21 +2,14 @@ package demo.validation.rules;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class InssConstraintTest  extends ValidationTestBase {
-
-
-    Value testInstance;
+public class SsnConstraintTest  extends ValidationTestBase {
 
     @BeforeEach
     public void setUp() {
-        super.setUp();
-        // Create the Jolk test instance
-        Value testclass = getJolkClass("/demo/validation/rules/InssConstraintTest.jolk");
-        testInstance = testclass.invokeMember("new");
+        setUp("/demo/validation/rules/SsnConstraintTest.jolk");
     }
     
     @Test

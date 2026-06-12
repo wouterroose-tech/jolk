@@ -1,7 +1,6 @@
 package demo.validation.rules;
 
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.BeforeEach;
 
 import util.JolkTestBase;
 
@@ -10,15 +9,16 @@ public class ValidationTestBase extends JolkTestBase {
     protected Value contactFormClass;
     Value personClass;
     Value validationSuiteClass;
+    protected Value testInstance;
 
-    @BeforeEach
-    public void setUp() {
+    public void setUp(String path) {
         super.setUp();
         // Load all necessary classes for the tests
         loadValidationEngine();
         contactFormClass = loadContactFormClass();
         personClass = loadPersonClass();
         validationSuiteClass = loadValidationSuite();
+        testInstance = getJolkClass(path).invokeMember("new");
     }
 
     private void loadValidationEngine() {
@@ -48,7 +48,7 @@ public class ValidationTestBase extends JolkTestBase {
         getJolkClass("/demo/validation/services/City.jolk");
         getJolkClass("/demo/validation/services/GeoGraphicalService.jolk");
         // load rules
-        getJolkClass("/demo/validation/rules/InssConstraint.jolk");
+        getJolkClass("/demo/validation/rules/SsnConstraint.jolk");
         getJolkClass("/demo/validation/rules/ZipConstraint.jolk");
         return getJolkClass("/demo/validation/rules/ContactFormValidation.jolk");
     }

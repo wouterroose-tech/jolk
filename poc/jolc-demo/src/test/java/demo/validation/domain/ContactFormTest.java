@@ -11,15 +11,9 @@ import org.graalvm.polyglot.Value;
 
 public class ContactFormTest extends ValidationTestBase {
 
-    
-    Value testInstance;
-
     @BeforeEach
     public void setUp() {
-        super.setUp();
-        // Create the Jolk test instance
-        Value testclass = getJolkClass("demo/validation/domain/ContactFormTest.jolk");
-        testInstance = testclass.invokeMember("new");
+        setUp("demo/validation/domain/ContactFormTest.jolk");
     }
 
     @Test

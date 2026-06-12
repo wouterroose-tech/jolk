@@ -27,8 +27,8 @@ public class RulesTest extends JolcTestBase {
 
                 meta lazy ContactFormValidation new() {
                     ^ super #new
-                        //#add(ZipConstraint #new)
-                        //#add(InssConstraint #new, ContactForm ##person)
+                        #add(ZipConstraint #new)
+                        #add(SsnConstraint #new, ContactForm ##person)
                 }
             }""";
         return eval(source);
@@ -56,9 +56,9 @@ public class RulesTest extends JolcTestBase {
         return eval(source);
     }
 
-    private Value inssConstraint() {
+    private Value ssnConstraint() {
         String source = """
-            #! class InssConstraint extends Constraint<Person> {
+            #! class SsnConstraint extends Constraint<Person> {
                 Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
                     ^ person #ssn #isPresent
                 }
@@ -69,7 +69,7 @@ public class RulesTest extends JolcTestBase {
                     ^ (ssn / 100 / 97) != (ssn % 97)
                 }
                 #: Issue getIssue(Person person,  ExecutionContext executionContext) {
-                    ^ Issue #new(person, "INSS_INVALID",  Level #ERROR)
+                    ^ Issue #new(person, "SSN_INVALID",  Level #ERROR)
                 }
                 #: Interrupt interrupt() {
                     ^ ContactFormValidation #FORM_INTERRUPT
@@ -82,7 +82,7 @@ public class RulesTest extends JolcTestBase {
     void testParsing() {
         this.interrupt();
         this.zipConstraint();
-        this.inssConstraint();
+        this.ssnConstraint();
         this.contactFormValidation();
     }
 

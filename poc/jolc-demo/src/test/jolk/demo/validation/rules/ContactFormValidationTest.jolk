@@ -35,7 +35,6 @@ class ContactFormValidationTest {
         
         // Create an invalid contact form
         Person person = Person #new
-            // invaluid SSN that fails the INSS constraint
             #ssn(800101035)
             #firstName("John")
             #lastName("Doe");
@@ -50,11 +49,11 @@ class ContactFormValidationTest {
     }
 
     /// Test that validation fails when ...
-    Boolean test_ValidateContactForm_InssConstraintIssue() {
+    Boolean test_ValidateContactForm_SsnConstraintIssue() {
         
         // Create an invalid contact form
         Person person = Person #new
-            // invaluid SSN that fails the INSS constraint
+            // invaluid SSN that fails the SSN constraint
             #ssn(123456789)
             #firstName("John")
             #lastName("Doe");
@@ -65,7 +64,7 @@ class ContactFormValidationTest {
             #description("Test description");
         
         ExecutionContext context = #validate(form);
-        // InssConstraint is an interrupting issue and will stop further validation, so only one issue is registered
+        // SsnConstraint is an interrupting issue and will stop further validation, so only one issue is registered
         ^ context #hasIssue && context #issues #size == 1
     }
 

@@ -12,7 +12,7 @@
 ///
 /// @author Wouter Roose
 
-#! class InssConstraint extends Constraint<Person> {
+#! class SsnConstraint extends Constraint<Person> {
 
     Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
         ^ person #ssn != 0
@@ -27,7 +27,7 @@
     }
 
     #: Issue getIssue(Person person,  ExecutionContext executionContext) {
-        ^ Issue #new(person, "INSS_INVALID",  Level #ERROR)
+        ^ Issue #new(person, "SSN_INVALID",  Level #ERROR)
     }
 
     #: Interrupt interrupt() {

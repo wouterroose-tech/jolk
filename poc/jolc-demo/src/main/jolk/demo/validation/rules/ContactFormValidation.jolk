@@ -17,7 +17,7 @@ class ContactFormValidation extends ValidationSuite<ContactForm> {
             //#add basic constraint
             #add(ZipConstraint #new)
             //#add ChildValidation via method reference
-            #add(InssConstraint #new, ContactForm ##person)
+            #add(SsnConstraint #new, ContactForm ##person)
             // TODO
             // #add children ruleset 
     }

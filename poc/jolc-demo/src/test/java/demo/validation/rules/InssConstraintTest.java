@@ -15,7 +15,7 @@ public class InssConstraintTest  extends ValidationTestBase {
     public void setUp() {
         super.setUp();
         // Create the Jolk test instance
-        Value testclass = getJolkClass("/test/validation/rules/InssConstraintTest.jolk");
+        Value testclass = getJolkClass("/demo/validation/rules/InssConstraintTest.jolk");
         testInstance = testclass.invokeMember("new");
     }
     

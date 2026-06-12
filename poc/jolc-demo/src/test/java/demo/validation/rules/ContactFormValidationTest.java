@@ -15,7 +15,7 @@ public class ContactFormValidationTest extends ValidationTestBase {
     public void setUp() {
         super.setUp();
         // Create the Jolk test instance
-        Value testclass = getJolkClass("/test/validation/rules/ContactFormValidationTest.jolk");
+        Value testclass = getJolkClass("/demo/validation/rules/ContactFormValidationTest.jolk");
         testInstance = testclass.invokeMember("new");
     }
 
@@ -25,8 +25,13 @@ public class ContactFormValidationTest extends ValidationTestBase {
     }
 
     @Test
-    public void test_ValidateContactForm_failure() {
-        assertTrue(testInstance.invokeMember("test_ValidateContactForm_failure").asBoolean());
+    public void test_ValidateContactForm_ZipConstraintIssue() {
+        assertTrue(testInstance.invokeMember("test_ValidateContactForm_ZipConstraintIssue").asBoolean());
+    }
+
+    @Test
+    public void test_ValidateContactForm_InssConstraintIssue() {
+        assertTrue(testInstance.invokeMember("test_ValidateContactForm_InssConstraintIssue").asBoolean());
     }
 
     @Test

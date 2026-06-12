@@ -7,7 +7,7 @@ import util.JolkTestBase;
 
 public class ValidationTestBase extends JolkTestBase {
 
-    Value contactFormClass;
+    protected Value contactFormClass;
     Value personClass;
     Value validationSuiteClass;
 
@@ -45,8 +45,8 @@ public class ValidationTestBase extends JolkTestBase {
 
     private Value loadValidationSuite() {
         // load services
-         getJolkClass("/demo/validation/services/City.jolk");
-         getJolkClass("/demo/validation/services/GeoGraphicalService.jolk");
+        getJolkClass("/demo/validation/services/City.jolk");
+        getJolkClass("/demo/validation/services/GeoGraphicalService.jolk");
         // load rules
         getJolkClass("/demo/validation/rules/InssConstraint.jolk");
         getJolkClass("/demo/validation/rules/ZipConstraint.jolk");

@@ -79,8 +79,7 @@ public abstract class JolkTestBase {
         }
 
         if (is == null) {
-            throw new RuntimeException("Resource not found on classpath: " + path + 
-                ". Verify that the file is located at 'src/test/resources" + (path.startsWith("/") ? "" : "/") + path + "'");
+            throw new RuntimeException("Resource not found on classpath: " + path );
         }
 
         try (InputStream stream = is) {

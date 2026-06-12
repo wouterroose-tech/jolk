@@ -43,6 +43,9 @@
             <resource>
                 <directory>src/main/jolk</directory>
             </resource>
+            <resource>
+                <directory>src/test/jolk</directory>
+            </resource>
         </resources>
     </build>
 

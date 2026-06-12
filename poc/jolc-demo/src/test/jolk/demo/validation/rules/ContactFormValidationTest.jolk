@@ -7,8 +7,6 @@
 + demo.validation.engine.ValidationSuite;
 + demo.validation.rules.ContactFormValidation;
 
-+ java.lang.System; 
-
 ///
 /// @author Wouter Roose
 
@@ -19,7 +17,7 @@ class ContactFormValidationTest {
         
         // Create a valid contact form
         Person person = Person #new
-            #ssn(12345678939)
+            #ssn(800101035)
             #firstName("John")
             #lastName("Doe");
         ContactForm form = ContactForm #new
@@ -28,35 +26,53 @@ class ContactFormValidationTest {
             #zipCode(2800)
             #description("Test description");
         
-        // Create validation context
-        ExecutionContext context = ExecutionContext #new;
-        
-        // Perform validation
-        ContactFormValidation #new #validate(form, context);
+        ExecutionContext context = #validate(form);
         ^ ! context #hasIssue
     }
 
     /// Test that validation fails when ...
-    Boolean test_ValidateContactForm_failure() {
+    Boolean test_ValidateContactForm_ZipConstraintIssue() {
         
         // Create an invalid contact form
         Person person = Person #new
             // invaluid SSN that fails the INSS constraint
-            #ssn(12345678937)
+            #ssn(800101035)
             #firstName("John")
             #lastName("Doe");
         ContactForm form = ContactForm #new
             #person(person)
             #email("john.doe@example.com")
-            #zipCode(12345)
+            #zipCode(12346)
             #description("Test description");
         
-        // Create validation context
-        ExecutionContext context = ExecutionContext #new;
+        ExecutionContext context = #validate(form);
+        ^ context #hasIssue && context #issues #size == 1
+    }
+
+    /// Test that validation fails when ...
+    Boolean test_ValidateContactForm_InssConstraintIssue() {
         
-        // Perform validation
+        // Create an invalid contact form
+        Person person = Person #new
+            // invaluid SSN that fails the INSS constraint
+            #ssn(123456789)
+            #firstName("John")
+            #lastName("Doe");
+        ContactForm form = ContactForm #new
+            #person(person)
+            #email("john.doe@example.com")
+            #zipCode(1234)
+            #description("Test description");
+        
+        ExecutionContext context = #validate(form);
+        // InssConstraint is an interrupting issue and will stop further validation, so only one issue is registered
+        ^ context #hasIssue && context #issues #size == 1
+    }
+
+    #> ExecutionContext validate(ContactForm form) {
+        ExecutionContext context = ExecutionContext #new;
         ContactFormValidation #new #validate(form, context);
-        ^ context #hasIssue && context #issues #size == 2
+        ^context
     }
 
     Boolean test_interrupt() {

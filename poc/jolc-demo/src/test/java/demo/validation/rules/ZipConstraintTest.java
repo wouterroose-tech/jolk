@@ -15,7 +15,7 @@ public class ZipConstraintTest extends ValidationTestBase {
     public void setUp() {
         super.setUp();
         // Create the Jolk test instance
-        Value testclass = getJolkClass("/test/validation/rules/ZipConstraintTest.jolk");
+        Value testclass = getJolkClass("/demo/validation/rules/ZipConstraintTest.jolk");
         testInstance = testclass.invokeMember("new");
     }
     

@@ -18,7 +18,6 @@ class InssConstraintTest {
     /// Verifies that the `#accept` protocol succeeds for a valid `Person` ssn.
     Boolean test_accept_success() {
         ExecutionContext context = ExecutionContext #new;
-        // Use a valid SSN logic: 800101035 -> 97 - (8001010 % 97) = 35
         Person person = Person #new #ssn(800101035);
         InssConstraint #new #accept(person, context);
         ^ !context #hasIssue

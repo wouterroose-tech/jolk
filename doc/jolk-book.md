@@ -1271,9 +1271,9 @@ The domain types are a set of data objects and validation classes implementing a
 		Boolean ~~(Object other) {
 			(self == other) ? [ ^true ];
 			other #instanceOf(Person) #ifPresent [ p ->
-				^ (self #ssn == p #ssn)
-					&& (self #firstName ~~ p #firstName)
-					&& (self #lastName ~~ p #lastName)
+				^ (#ssn == p #ssn)
+					&& (#firstName ~~ p #firstName)
+					&& (#lastName ~~ p #lastName)
 			];
 			^ false
 		}
@@ -1293,7 +1293,7 @@ Demonstrated language concepts: creation methods, message chaining, closure, DI,
 		meta lazy ContactFormValidation new() {  
 			^ super #new  
 				#add(ZipConstraint #new)
-				#subject [ f -> f #person ] #add(InssConstraint #new)
+				#add(InssConstraint #new, ContactForm ##person)
 		}
 
 		Interrupt interrupt() { ^ INTERRUPT }  
@@ -1647,6 +1647,8 @@ Ternary Expression Projection reifies conditional branching as a formal message 
 By transforming branching into a reified projection, Jolk ensures that control flow remains an extensible property of the object model while achieving the execution density of native JVM control structures.
 
 ### Null-Coalescing
+
+
 
 ### Deferred Computation
 

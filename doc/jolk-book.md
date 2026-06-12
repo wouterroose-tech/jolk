@@ -1648,7 +1648,7 @@ By transforming branching into a reified projection, Jolk ensures that control f
 
 ### Null-Coalescing
 
-
+The Null-Coalescing Operator (`??`) is reified at the engine level by the `JolkDispatchNode.doNullCoalescing` specialization. This optimization leverages the core principle of *Identity Restitution* by ensuring that if the left-hand operand (`receiver`) evaluates to the `Nothing` identity, execution is immediately redirected to the right-hand operand (`fallback`). If the `receiver` is not `Nothing`, the engine applies *Monadic Flow Flattening* to elide the `fallback` evaluation entirely, collapsing the operation into a single, high-performance identity check and direct return. This ensures that Jolk's safe navigation operates with zero-overhead, achieving execution parity with native JVM null-checks.
 
 ### Deferred Computation
 

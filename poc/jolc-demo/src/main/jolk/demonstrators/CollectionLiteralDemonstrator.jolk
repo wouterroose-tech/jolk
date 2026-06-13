@@ -1,6 +1,8 @@
 ~ demonstrators;
 
 + java.util.ArrayList;
++ java.util.HashSet;
++ java.util.HashMap;
 
 /// # CollectionLiteralDemonstrator
 ///
@@ -38,7 +40,7 @@ final class CollectionLiteralDemonstrator {
     }
 
     /// Checks if the colors array contains a specific color.
-    Boolean runContains(String color) {
+    Boolean runArrayContains(String color) {
         ^ colors #anyMatch [ c -> c ~~ color ]
     }
 
@@ -46,4 +48,33 @@ final class CollectionLiteralDemonstrator {
     ArrayList<ArrayList<Long>> runNestedArray() {
         ^ #[ #[1, 2], #[3, 4] ]
     }
+
+    HashMap<String, String> runMapLiteral() {
+        ^ #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF")
+    }
+
+    HashMap<String, String> runMapLiteralField() {
+        ^ colorMap
+    }
+
+    /// Returns an empty array literal.
+    HashMap<String, String> runEmptyMap() {
+        ^ #()
+    }
+
+    /// Returns the value for a given key:
+    String runMapGet(String key) {
+        ^ colorMap #at(key)
+    }
+
+    /// Checks whether the key exists:
+    Boolean runMapContainsKey(String key) {
+        ^ colorMap #containsKey(key)
+    }
+
+    /// Returns the map size:
+    Long runMapSize() {
+        ^ colorMap #size()
+    }
+
 }

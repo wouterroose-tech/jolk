@@ -16,43 +16,43 @@ using jolk.lang.Array;
 
 final class CoreCollectionDemonstrator {
 
-    Array<String> runNew() {
+    Array<String> runArrayNew() {
         ^ Array #new("red", "green", "blue")
     }
 
-    Array<String> runLiteral() {
+    Array<String> runArrayLiteral() {
         ^ #["red", "green", "blue"]
     }
 
-    String runAt() {
+    String runArrayAt() {
         constant Array<String> colors = Array #new("red", "green", "blue");
         ^ colors #at(1)
     }
 
-    Array<String> runPut() {
+    Array<String> runArrayPut() {
         Array<String> colors = Array #new("red", "green", "blue");
         colors #put(1, "yellow");
         ^ colors
     }
 
-    Int runSize() {
+    Int runArraySize() {
         constant Array<String> colors = Array #new("red", "green", "blue");
         ^ colors #size
     }
 
-    String runToString() {
+    String runArrayToString() {
         constant Array<String> colors = Array #new("red", "green", "blue");
         ^ colors #toString
     }
     
-    String runFor() {
+    String runArrayFor() {
         constant Array<String> colors = Array #new("red", "green", "blue");
         StringBuffer result = StringBuffer #new;
         colors #forEach[color -> result #append(color) ];
         ^ result #toString
     }
 
-    String runForEach() {
+    String runArrayForEach() {
         constant Array<String> colors = Array #new("red", "green", "blue");
         constant AtomicReference<String> result = AtomicReference #new("");
         colors #forEach[color -> result #set(result #get + color)];

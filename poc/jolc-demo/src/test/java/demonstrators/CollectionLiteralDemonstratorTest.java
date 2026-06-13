@@ -5,13 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 
 import util.JolkTestBase;
 
-public class CollectionLiteralDemonstratorTest  extends JolkTestBase {
+public class CollectionLiteralDemonstratorTest extends JolkTestBase {
 
     private Value getDemonstrator() {
         Value demonstrator = getJolkClass("/demonstrators/CollectionLiteralDemonstrator.jolk");
@@ -37,10 +38,10 @@ public class CollectionLiteralDemonstratorTest  extends JolkTestBase {
     }
 
     @Test
-    void testRunContains() {
+    void testRunArrayContains() {
         Value demonstrator = getDemonstrator();
-        assertTrue(demonstrator.invokeMember("runContains", "red").asBoolean());
-        assertFalse(demonstrator.invokeMember("runContains", "yellow").asBoolean());
+        assertTrue(demonstrator.invokeMember("runArrayContains", "red").asBoolean());
+        assertFalse(demonstrator.invokeMember("runArrayContains", "yellow").asBoolean());
     }
 
     @Test
@@ -50,6 +51,41 @@ public class CollectionLiteralDemonstratorTest  extends JolkTestBase {
         assertEquals(2, nested.length);
         assertEquals(List.of(1L, 2L), List.of(nested[0]));
         assertEquals(List.of(3L, 4L), List.of(nested[1]));
+    }
+        
+    @Test
+    void testRunMapLiteralField() {
+        Value result = getDemonstrator().invokeMember("runMapLiteralField");
+        assertEquals(3L, result.invokeMember("size").asLong());
+        @SuppressWarnings("unchecked")
+        java.util.Map<Object,Object> raw = result.as(java.util.Map.class);
+        java.util.Map<String,String> map = raw.entrySet().stream()
+            .collect(Collectors.toMap(e -> e.getKey().toString(), e -> e.getValue().toString()));
+        assertEquals("#FF0000", map.get("red"));
+    }
+
+    @Test
+    void testRunMapGet() {
+        Value demonstrator = getDemonstrator();
+        assertEquals("#FF0000", demonstrator.invokeMember("runMapGet", "red").asString());
+        assertEquals("#00FF00", demonstrator.invokeMember("runMapGet", "green").asString());
+    }
+
+    @Test
+    void testRunMapContainsKey() {
+        Value demonstrator = getDemonstrator();
+        assertTrue(demonstrator.invokeMember("runMapContainsKey", "red").asBoolean());
+        assertFalse(demonstrator.invokeMember("runMapContainsKey", "purple").asBoolean());
+    }
+
+    @Test
+    void testRunMapSizeAndEmpty() {
+        Value demonstrator = getDemonstrator();
+        assertEquals(3L, demonstrator.invokeMember("runMapSize").asLong());
+        Value empty = demonstrator.invokeMember("runEmptyMap");
+        @SuppressWarnings("unchecked")
+        java.util.Map<?,?> emptyMap = empty.as(java.util.Map.class);
+        assertEquals(0, emptyMap.size());
     }
 
 }

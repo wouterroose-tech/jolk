@@ -5,51 +5,36 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
+import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 
-public class CoreCollectionDemonstratorTest {
+import util.JolkTestBase;
 
-    /*
-    private final CoreCollectionDemonstrator demonstrator = new CoreCollectionDemonstrator();
+public class CoreCollectionDemonstratorTest extends JolkTestBase {
+
+    private Value getDemonstrator() {
+        Value demonstrator = getJolkClass("/demonstrators/CoreCollectionDemonstrator.jolk");
+        return demonstrator.invokeMember("new");
+    }
 
     @Test
-    void testRunNew() {
-        jolk.lang.Array<String> result = demonstrator.runNew();
+    void testRunArrayNew() {
+        Value result = getDemonstrator().invokeMember("runArrayNew");
         assertNotNull(result);
-        assertEquals(3, result.size());
-        assertEquals(List.of("red", "green", "blue"), result);
+        assertEquals(3L, result.invokeMember("size").asLong());
     }
 
     @Test
-    void testRunLiteral() {
-        jolk.lang.Array<String> result = demonstrator.runLiteral();
-        assertEquals(List.of("red", "green", "blue"), result);
+    void testRunArrayNewLiteral() {
+        Value result = getDemonstrator().invokeMember("runArrayLiteral");
+        assertNotNull(result);
+        assertEquals(3L, result.invokeMember("size").asLong());
     }
 
     @Test
-    void testRunAt() {
-        assertEquals("green", demonstrator.runAt());
+    void testRunArrayAt() {
+        Value result = getDemonstrator().invokeMember("runArrayAt");
+        assertNotNull(result);
+        assertEquals("green", result.asString());
     }
-
-    @Test
-    void testRunPut() {
-        jolk.lang.Array<String> result = demonstrator.runPut();
-        assertEquals(List.of("red", "yellow", "blue"), result);
-    }
-
-    @Test
-    void testRunSize() {
-        assertEquals(3, demonstrator.runSize());
-    }
-
-    @Test
-    void testRunToString() {
-        assertEquals("[red, green, blue]", demonstrator.runToString());
-    }
-
-    @Test
-    void testRunForEach() {
-        assertEquals("redgreenblue", demonstrator.runForEach());
-    }
-    */
 }

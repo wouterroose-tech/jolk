@@ -95,4 +95,27 @@ public class JolkMethodReferenceTest extends JolcTestBase {
         assertEquals("instance of Test from call", instance.invokeMember("run").toString()); 
     }  
 
+    /// ## testJolkMethodReference_interop
+    /// 
+    /// verifies host/guest interop for unbound Jolk method references
+    /// Specifically ensures a type-level method reference (e.g. Test ##reduce) used as a host BinaryOperator
+    /// is bound to the correct receiver (lexical self) so host call-shape (accumulator, element) doesn't
+    /// become misinterpreted as the guest receiver, avoiding dispatch-on-TruffleString errors.
+    @Test
+    void testJolkMethodReference_interop() {
+        String source = """
+            + java.util.ArrayList;
+            class Test {
+                String run() {
+                    ArrayList<String> colors = Array #new("red", "green", "blue");
+                    ^ colors #stream #reduce("", Test ##reduce)
+                }
+                String reduce(String reduced, String reducing) {
+                    ^ reduced + reducing
+                }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        assertEquals("redgreenblue", instance.invokeMember("run").toString());
+    }
+
 }

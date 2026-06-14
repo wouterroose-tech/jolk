@@ -250,7 +250,8 @@ public class JolkArrayExtensionTest extends JolcTestBase {
                 ArrayList<Long> longList = #[1, 2, 3];
                 ArrayList<String> colors = #["red", "green", "blue"];
                 Long run(Int key) { ^ self #longList #at(key) }  
-                Long run() { ^ self #longList #put(1, 42) #at(1) }          
+                Long run() { ^ self #longList #put(1, 42) #at(1) } 
+                String run(Int key, String color) { ^ self #colors #put(key, color) #at(key) }                
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -263,6 +264,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         Value colors = instance.invokeMember("colors");
         assertEquals(3, ((List<?>) colors.asHostObject()).size());
         assertEquals("red", ((List<?>) colors.asHostObject()).get(0).toString());
+        assertEquals("RED", instance.invokeMember("run", 0, "RED").toString()); 
     } 
 
     @Test
@@ -289,6 +291,24 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         Value instance = meta.invokeMember("new");
         assertEquals(2, instance.invokeMember("run", 2).asLong()); 
         assertEquals("null", instance.invokeMember("run", 0).toString(), "Should return Nothing when match is not found"); 
-    }     
+    }   
+
+    @Test
+    void testStream() {
+        String source = """
+            + java.util.ArrayList;
+            class Test {
+                String run() {
+                    ArrayList<String> colors = Array #new("red", "green", "blue");
+                    ^ colors #stream #reduce("", [ reduced, reducing -> reduced + reducing ])
+                }
+                String reduce(String reduced, String reducing) {
+                    ^ reduced + reducing
+                }          
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertEquals("redgreenblue", instance.invokeMember("run").toString()); 
+    }  
 
 }

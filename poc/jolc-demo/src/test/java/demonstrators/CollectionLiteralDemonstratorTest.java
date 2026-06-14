@@ -83,7 +83,6 @@ public class CollectionLiteralDemonstratorTest extends JolkTestBase {
         Value demonstrator = getDemonstrator();
         assertEquals(3L, demonstrator.invokeMember("runMapSize").asLong());
         Value empty = demonstrator.invokeMember("runEmptyMap");
-        @SuppressWarnings("unchecked")
         java.util.Map<?,?> emptyMap = empty.as(java.util.Map.class);
         assertEquals(0, emptyMap.size());
     }

@@ -99,7 +99,7 @@ public final class JolkLanguage extends TruffleLanguage<JolkContext> {
     @Override
     protected JolkContext createContext(Env env) {
         JolkContext context = new JolkContext(this, env);
-        env.exportSymbol("jolkContext", env.asGuestValue(context));
+        env.exportSymbol("jolkContext", JolkNode.exportGuestValue(env, context));
         return context;
     }
 

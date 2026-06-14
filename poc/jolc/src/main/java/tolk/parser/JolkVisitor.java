@@ -39,6 +39,7 @@ import tolk.nodes.JolkFieldNode;
 import tolk.nodes.JolkIdentityNode;
 import tolk.nodes.JolkLiteralNode;
 import tolk.nodes.JolkMethodNode;
+import tolk.nodes.JolkMethodRefClosureNode;
 import tolk.nodes.JolkSelfNode;
 import tolk.nodes.JolkSuperNode;
 import tolk.nodes.JolkSuperMessageSendNode;
@@ -1026,18 +1027,23 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             } else {
                 // Case: myObj ## doRun or String ## valueOf
                 String firstId = ctx.identifier(0).getText().intern();
-                
-                // The visitor no longer forces Type-level references to be unbound.
-                // We preserve the identity (Type or instance) and delegate the
-                // binding logic to the JolkMethodReferenceDispatchNode which 
-                // performs a runtime heuristic.
+
+                // By default resolve the identifier (could be a Type or instance).
                 receiverNode = createIdentifierNode(firstId, ctx.getStart().getLine());
+
+                // If this is a Type-level reference inside an instance method,
+                // bind it to the lexical `self` so the resulting method-reference
+                // closure behaves like an instance-bound reference when used
+                // within method bodies (fixes Stream.reduce accumulator receiver mismatch).
+                if (!scopes.isEmpty() && receiverNode instanceof tolk.nodes.JolkReadTypeNode) {
+                    receiverNode = visitReservedSelf();
+                }
                 methodName = ctx.identifier(ctx.identifier().size() - 1).getText().intern();
             }
 
             JolkNode dispatch = new JolkMethodReferenceDispatchNode(methodName, receiverNode);
             JolkRootNode root = new JolkRootNode(language, dispatch, "methodReference", false);
-            return JolkClosureNodeGen.create(root.getCallTarget());
+            return new JolkMethodRefClosureNode(root.getCallTarget(), methodName, receiverNode);
         } finally {
             scopes.pop();
             parameterThresholds.pop();

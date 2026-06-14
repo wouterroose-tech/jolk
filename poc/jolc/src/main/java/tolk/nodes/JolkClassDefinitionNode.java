@@ -244,7 +244,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                 // guest proxies, preventing Identity Inversion during instantiation.
                 // We use the explicit context to perform the identity preparation to 
                 // stabilize the metaboundary during the bootstrapping phase.
-                Object evaluatedValue = unwrap(context.env.asGuestValue(lift(root.getCallTarget().call())));
+                Object raw = lift(root.getCallTarget().call());
+                Object exported = JolkNode.exportGuestValue(context.env, raw);
+                Object evaluatedValue = unwrap(exported);
                 String fieldName = entry.getKey();
                 runtimeInstanceFields.put(fieldName, evaluatedValue);
             }
@@ -269,7 +271,9 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                         runtimeMetaFields.put(name, lazyVal);
                     } else if (!(field.getInitializer() instanceof JolkEmptyNode)) {
                         JolkRootNode root = new JolkRootNode(lang, field.getInitializer(), field.getName());
-                        Object initialValue = unwrap(context.env.asGuestValue(lift(root.getCallTarget().call())));
+                        Object rawInit = lift(root.getCallTarget().call());
+                        Object exportedInit = JolkNode.exportGuestValue(context.env, rawInit);
+                        Object initialValue = unwrap(exportedInit);
                         // Update both the storage slot and the map hint for initializeDefaultValues
                         
                         // Identity Synchronization: Ensure the evaluated constant is visible 

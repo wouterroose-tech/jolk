@@ -5,6 +5,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkNothing;
 
@@ -54,6 +55,17 @@ public final class JolkMethodReferenceDispatchNode extends JolkNode {
             } else {
                 callArgs = new Object[count];
                 System.arraycopy(closureArgs, 2, callArgs, 0, count);
+            }
+        } else if (captured != null && !(captured instanceof JolkMetaClass)
+         && !isGuestClosure(closureArgs[0]) && isHostAdapterFrame(closureArgs[0])) {
+            // Host adapter invoking a bound method-reference: keep captured as receiver
+            receiver = captured;
+            int count = Math.max(0, closureArgs.length - 1);
+            if (count == 0) {
+                callArgs = new Object[0];
+            } else {
+                callArgs = new Object[count];
+                System.arraycopy(closureArgs, 1, callArgs, 0, count);
             }
         } else {
             // Bound Mode: Use the captured receiver (instance or static type).
@@ -146,4 +158,27 @@ public final class JolkMethodReferenceDispatchNode extends JolkNode {
         }
         return false;
     }
+
+    @TruffleBoundary
+    private boolean isHostAdapter(Object[] closureArgs) {
+        if (closureArgs == null || closureArgs.length < 3) return false;
+        Object maybe = closureArgs[0];
+        if (maybe == null) return false;
+        String cn = maybe.getClass().getName();
+        return cn.startsWith("com.oracle.truffle") || cn.startsWith("jdk.proxy") || cn.startsWith("com.sun.proxy");
+    }
+
+    @TruffleBoundary
+    private boolean isGuestClosure(Object maybe) {
+        return maybe instanceof tolk.runtime.JolkClosure;
+    }
+
+    @TruffleBoundary
+    private boolean isHostAdapterFrame(Object maybe) {
+        if (maybe == null) return false;
+        String cn = maybe.getClass().getName();
+        return cn.startsWith("com.oracle.truffle") || cn.startsWith("jdk.proxy") || cn.startsWith("com.sun.proxy");
+    }
+
+    
 }

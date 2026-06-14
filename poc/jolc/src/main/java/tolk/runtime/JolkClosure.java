@@ -1,5 +1,9 @@
 package tolk.runtime;
 
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ArityException;
@@ -33,16 +37,38 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 @ExportLibrary(InteropLibrary.class)
 public class JolkClosure implements TruffleObject {
     private final CallTarget callTarget;
-    private final MaterializedFrame environment;
+    private MaterializedFrame environment;
+
+    private String methodReferenceSelector;
+    private Object methodReferenceCapturedReceiver;
+    private int methodReferenceExpectedArity;
 
     public JolkClosure(CallTarget callTarget) {
-        this.callTarget = callTarget;
-        this.environment = null;
+        this(callTarget, null, false, null, null, 0);
     }
 
     public JolkClosure(CallTarget callTarget, MaterializedFrame environment) {
+        this(callTarget, environment, false, null, null, 0);
+    }
+
+    public JolkClosure(CallTarget callTarget, MaterializedFrame environment,
+                   boolean isMethodReference, Object methodCapturedReceiver,
+                   String methodSelector, int methodExpectedArity) {
         this.callTarget = callTarget;
         this.environment = environment;
+        // Normalize into the canonical methodReference* fields
+        if (isMethodReference) {
+            this.methodReferenceCapturedReceiver = methodCapturedReceiver;
+            this.methodReferenceSelector = methodSelector;
+            this.methodReferenceExpectedArity = methodExpectedArity;
+        }
+    }
+
+    public JolkClosure(CallTarget callTarget, String methodReferenceSelector, Object methodReferenceCapturedReceiver, int methodReferenceExpectedArity) {
+        this.callTarget = callTarget;
+        this.methodReferenceSelector = methodReferenceSelector;
+        this.methodReferenceCapturedReceiver = methodReferenceCapturedReceiver;
+        this.methodReferenceExpectedArity = methodReferenceExpectedArity;
     }
 
     /**
@@ -192,5 +218,81 @@ public class JolkClosure implements TruffleObject {
     @TruffleBoundary
     private static Object unwrap(Object value) {
         return JolkNode.unwrap(value);
+    }
+
+    @TruffleBoundary
+    public Object asHostAdapterForMethodReference(Object capturedReceiver, String selector, int expectedArity) {
+        // Bound instance: return precise host functional interface for expected arity
+        if (capturedReceiver != null) {
+            if (expectedArity == 2) {
+                return (BinaryOperator<Object>) (a,b) -> {
+                    return callWithReceiver(capturedReceiver, selector, new Object[]{a, b});
+                };
+            } else if (expectedArity == 1) {
+                return (Function<Object, Object>) (a) -> {
+                    return callWithReceiver(capturedReceiver, selector, new Object[]{a});
+                };
+            } else if (expectedArity == 0) {
+                return (Supplier<Object>) () -> {
+                    return callWithReceiver(capturedReceiver, selector, new Object[0]);
+                };
+            }
+        } else {
+            // Unbound: host adapter expects receiver as first parameter
+            if (expectedArity == 2) {
+                return (BinaryOperator<Object>) (rcv,a) -> {
+                    return callWithReceiver(rcv, selector, new Object[]{a});
+                };
+            } else if (expectedArity == 1) {
+                return (Function<Object, Object>) (rcv) -> {
+                    return callWithReceiver(rcv, selector, new Object[0]);
+                };
+            }
+        }
+        return this; // fallback: return the closure itself
+    }
+
+    @TruffleBoundary
+    private Object callWithReceiver(Object receiver, String selector, Object[] arguments) {
+        if (receiver == null) {
+            throw new IllegalArgumentException("Receiver is null");
+        }
+        if (arguments == null) {
+            throw new IllegalArgumentException("Arguments is null");
+        }
+        // Build call args according to closure convention:
+        // If the closure captured an environment, the call target expects [env, receiver, ...args]
+        // Otherwise the call target expects [receiver, ...args]
+        if (environment != null) {
+            Object[] callArgs = new Object[arguments.length + 2];
+            callArgs[0] = environment;
+            callArgs[1] = receiver;
+            System.arraycopy(arguments, 0, callArgs, 2, arguments.length);
+            return lift(callTarget.call(callArgs));
+        } else {
+            Object[] callArgs = new Object[arguments.length + 1];
+            callArgs[0] = receiver;
+            System.arraycopy(arguments, 0, callArgs, 1, arguments.length);
+            return lift(callTarget.call(callArgs));
+        }
+    }
+
+    public boolean isMethodReference() {
+        return methodReferenceSelector != null;
+    }
+    public Object getMethodCapturedReceiver() {
+        return methodReferenceCapturedReceiver;
+    }
+    public String getMethodSelector() {
+        return methodReferenceSelector;
+    }
+    public int getMethodExpectedArity() {
+        return methodReferenceExpectedArity;
+    }
+
+    public void setMethodReferenceMetadata(Object capturedReceiver, String selector, int expectedArity) {
+        this.methodReferenceCapturedReceiver = capturedReceiver;
+        this.methodReferenceSelector = selector;
+        this.methodReferenceExpectedArity = expectedArity;
     }
 }

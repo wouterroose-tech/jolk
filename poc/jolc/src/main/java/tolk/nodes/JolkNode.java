@@ -107,10 +107,13 @@ public abstract class JolkNode extends Node {
         }
         try {
             var context = tolk.language.JolkLanguage.getContext();
-            return (context != null) ? context.env.asGuestValue(lifted) : lifted;
+            if (context != null) {
+                return JolkNode.exportGuestValue(context.env, lifted);
+            }
         } catch (AssertionError | IllegalStateException e) {
-            return lifted;
+            // context not available in this execution
         }
+        return lifted;
     }
 
     @TruffleBoundary
@@ -123,7 +126,7 @@ public abstract class JolkNode extends Node {
             // Identity Restitution: Wrap host objects to maintain guest identity congruence.
             var context = tolk.language.JolkLanguage.getContext();
             if (context != null) {
-                return context.env.asGuestValue(value);
+                return JolkNode.exportGuestValue(context.env, value);
             }
             return value; // Context-less fallback
         } catch (AssertionError | IllegalStateException e) {
@@ -171,6 +174,29 @@ public abstract class JolkNode extends Node {
             // Handled: Reflection failure
         }
         return value;
+    }
+
+    // exportGuestValue helper is implemented using Truffle `Env` below.
+
+    @TruffleBoundary
+    public static Object exportGuestValue(com.oracle.truffle.api.TruffleLanguage.Env env, Object value) {
+        Object exported = value;
+        if (value instanceof tolk.runtime.JolkClosure jc && jc.isMethodReference()) {
+            Object adapter = jc.asHostAdapterForMethodReference(
+                jc.getMethodCapturedReceiver(),
+                jc.getMethodSelector(),
+                jc.getMethodExpectedArity()
+            );
+            if (adapter != null) {
+                exported = adapter;
+            }
+        }
+        try {
+            return env.asGuestValue(exported);
+        } catch (IllegalStateException e) {
+            // Context-less tests: fall back to returning the raw exported object
+            return exported;
+        }
     }
 
     /**

@@ -1058,7 +1058,10 @@ public abstract class JolkDispatchNode extends Node {
         }
         try {
             var context = tolk.language.JolkLanguage.getContext();
-            return (context != null) ? context.env.asGuestValue(lifted) : lifted;
+            if (context == null) {
+                return lifted;
+            }
+            return JolkNode.exportGuestValue(context.env, lifted);
         } catch (AssertionError | IllegalStateException e) {
             return lifted;
         }
@@ -1364,7 +1367,7 @@ public abstract class JolkDispatchNode extends Node {
             Object member = lookupLongMember(selector);
             if (member == null) member = lookupNumberMember(selector); // Check NumberExtension as well
 
-            if (member != null && !isNothing(member) && interop.isExecutable(member)) {
+            if (member != null && !isNothing(member)) {
                 InteropLibrary memberInterop = InteropLibrary.getUncached(member);
                 Object[] args = prepareArguments(member, receiver, arguments);
                 return JolkNode.lift(JolkNode.unwrap(memberInterop.execute(member, args)));
@@ -2186,7 +2189,7 @@ public abstract class JolkDispatchNode extends Node {
                         // Breakdown Recursion: Directly instantiate and populate the host collection.
                         ArrayList<Object> list = new ArrayList<>(arguments.length);
                         for (Object arg : arguments) list.add(JolkNode.unwrap(arg));
-                        return context.env.asGuestValue(list);
+                        return JolkNode.exportGuestValue(context.env, list);
                     }
 
                     if (unwrapped == Map.class || unwrapped == java.util.HashMap.class || unwrapped == JolkMapExtension.MAP_TYPE) {
@@ -2196,7 +2199,7 @@ public abstract class JolkDispatchNode extends Node {
                                 map.put(JolkNode.unwrap(arguments[i]), JolkNode.unwrap(arguments[i + 1]));
                             }
                         }
-                        return context.env.asGuestValue(map);
+                        return JolkNode.exportGuestValue(context.env, map);
                     }
 
                     // Priority 2: Jolk-Native Allocation: Perform raw allocation for guest types.
@@ -2230,13 +2233,13 @@ public abstract class JolkDispatchNode extends Node {
                                 return JolkNode.lift(new java.math.BigDecimal(java.math.BigInteger.valueOf(sig), scale));
                             } catch (UnsupportedMessageException ignored) {}
                         }
-                        return context.env.asGuestValue(BigDecimal.ZERO);
+                        return JolkNode.exportGuestValue(context.env, BigDecimal.ZERO);
                     }
 
                     // Priority 3: Host Instantiation: Map #new to the Interop 'instantiate' protocol for platform types.
                     if (interop.isInstantiable(receiver)) {
                         try {
-                            return context.env.asGuestValue(interop.instantiate(receiver, arguments));
+                            return JolkNode.exportGuestValue(context.env, interop.instantiate(receiver, arguments));
                         } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException ignored) {}
                     }
                     // Identity Restitution: Final attempt to instantiate via reflection if interop failed

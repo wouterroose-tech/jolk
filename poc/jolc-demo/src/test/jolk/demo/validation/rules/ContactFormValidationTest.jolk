@@ -7,13 +7,16 @@
 + demo.validation.engine.ValidationSuite;
 + demo.validation.rules.ContactFormValidation;
 
++ jolk.test.api.Test;
++ jolk.test.api.Assert;
+
 ///
 /// @author Wouter Roose
 
 class ContactFormValidationTest {
 
     /// Test case for validating a contact form with valid data
-    Boolean test_ValidateContactForm_success() {
+    Test test_ValidateContactForm_success() {
         
         // Create a valid contact form
         Person person = Person #new
@@ -27,11 +30,11 @@ class ContactFormValidationTest {
             #description("Test description");
         
         ExecutionContext context = #validate(form);
-        ^ ! context #hasIssue
+        ^ Assert #that(!context #hasIssue)
     }
 
     /// Test that validation fails when ...
-    Boolean test_ValidateContactForm_ZipConstraintIssue() {
+    Test test_ValidateContactForm_ZipConstraintIssue() {
         
         // Create an invalid contact form
         Person person = Person #new
@@ -45,11 +48,11 @@ class ContactFormValidationTest {
             #description("Test description");
         
         ExecutionContext context = #validate(form);
-        ^ context #hasIssue && context #issues #size == 1
+        ^ Assert #that(context #hasIssue && context #issues #size == 1)
     }
 
     /// Test that validation fails when ...
-    Boolean test_ValidateContactForm_SsnConstraintIssue() {
+    Test test_ValidateContactForm_SsnConstraintIssue() {
         
         // Create an invalid contact form
         Person person = Person #new
@@ -65,7 +68,7 @@ class ContactFormValidationTest {
         
         ExecutionContext context = #validate(form);
         // SsnConstraint is an interrupting issue and will stop further validation, so only one issue is registered
-        ^ context #hasIssue && context #issues #size == 1
+        ^ Assert #that(context #hasIssue && context #issues #size == 1)
     }
 
     #> ExecutionContext validate(ContactForm form) {

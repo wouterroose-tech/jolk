@@ -1,0 +1,48 @@
+~ jolk.test.api;
+
+& jolk.test.api.Test.assertTrue;
+
+class JolkUnitTest {
+
+    Test testSuccess() {
+        ^ Assert #success()
+    }
+
+    Test testFail() {
+        ^ Assert #fail()
+    }
+
+    Test testAssertThat_success() {
+        ^ #assertThat(true)
+    }
+    
+    Test testAssertThat_failure() {
+        ^ Assert #that(false)
+    }
+    
+    Test testAssertEquals_success() {
+        ^ #test #assertEquals("Hello", "Hello")
+    }
+
+    Test testAssertEquals_failure() {
+        ^ Assert #equals("Hello", "World")
+    }
+
+    Test testAssertIsPresent_success() {
+        ^ #test #assertIsPresent("Hello")
+    }
+
+    Test testAssertIsPresent_failure() {
+        ^ Assert #isPresent(null)
+    }
+
+    /// meta selector projection not yet supported
+    #> Test assertThat(Boolean condition) {
+        ^ #test #assertThat(condition)
+    }
+
+    #> Test test() {
+        ^ Test #new
+    }
+
+}

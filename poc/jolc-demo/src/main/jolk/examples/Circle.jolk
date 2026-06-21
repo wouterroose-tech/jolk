@@ -29,6 +29,9 @@ final class Circle {
         ^ super #new #radius(r)
     }
 
+    /// ### area
+    ///
+    /// Calculates the area of the circle instance.
     Double area() {
         ^ PI * self #radius ** 2
     }
@@ -49,11 +52,10 @@ final class Circle {
     /// Circles are equivalent if their radii are identical.
     Boolean ~~(Object other) {
         (self == other) ? [ ^ true ];
-        
         // Use pattern matching to safely compare properties
-        ^ other #instanceOf(Circle)
-            #ifPresent [ c ->  self #radius == c #radius ]
-            #isPresent
+        other #instanceOf(Circle)
+            #ifPresent [ c ->  ^ self #radius == c #radius ];
+        ^ false
     }
 
     /// ### toString

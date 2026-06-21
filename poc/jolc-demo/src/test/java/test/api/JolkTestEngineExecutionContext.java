@@ -1,52 +1,36 @@
-package util;
+package test.api;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.platform.engine.support.hierarchical.EngineExecutionContext;
 
 import tolk.language.JolkLanguage;
 
-import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
-///
-/// Base class for Jolk tests that sets up a Truffle context and engine for evaluating Jolk code.
-/// This class provides common setup and teardown logic, as well as a helper method for evaluating 
-/// source code within the context of the tests.
-///
-public abstract class JolkTestBase {
+public class JolkTestEngineExecutionContext implements EngineExecutionContext {
 
     protected Engine engine;
     protected Context context;
     protected ByteArrayOutputStream out;
     protected ByteArrayOutputStream err;
-    protected Value testInstance;
 
-    @BeforeEach
-    public void setUp() {
+    public JolkTestEngineExecutionContext() {
         out = new ByteArrayOutputStream();
         err = new ByteArrayOutputStream();
         engine = getEngine().build();
         context = getContext().build();
-        getJolkClass("/test/api/Test.jolk");
-        getJolkClass("/test/api/Assert.jolk");
-        getJolkClass("/test/api/AssertionException.jolk");
-    }
-
-    public void setUp(String path) {
-        testInstance = getJolkClass(path).invokeMember("new");
     }
 
     protected Engine.Builder getEngine() {
         return Engine.newBuilder()
                 .allowExperimentalOptions(true)
-                // allow System #out #println
-                //.out(out)
+                .out(out)
                 .err(err);
     }
 
@@ -58,17 +42,6 @@ public abstract class JolkTestBase {
                 .allowHostAccess(HostAccess.ALL) 
                  // Allow Jolk to look up any Java class;
                 .allowHostClassLookup(className -> true);
-    }
-
-
-    @AfterEach
-    public void tearDown() {
-        if (context != null) { // context can be null if setUp fails
-            context.close();
-        }
-        if (engine != null) { // engine can be null if setUp fails
-            engine.close();
-        }
     }
 
     protected Value eval(String source) {
@@ -107,7 +80,4 @@ public abstract class JolkTestBase {
         return eval(source);
     }
 
-    protected Value test(String testCase) {
-        return testInstance.invokeMember(testCase);
-    }
 }

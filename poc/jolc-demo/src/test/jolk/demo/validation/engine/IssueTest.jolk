@@ -3,18 +3,20 @@
 + demo.validation.engine.Issue;
 + demo.validation.engine.Level;
 
++ jolk.test.api.Test;
++ jolk.test.api.Assert;
+
 /// # IssueTest
 ///
 /// Test suite for verifying the logic within [Issue].
 ///
 /// @author Wouter Roose
 class IssueTest {
-
     
     /// Verifies that `getIssue` returns a valid issue template.
-    Boolean test_getIssue() {
+    Test test_getIssue() {
         Issue issue = Issue #new(null, "ZIP_INVALID",  Level #ERROR);
-        ^ issue #message == "ZIP_INVALID"  && issue #level #isError
+        ^ Test #new #assertThat(issue #message == "ZIP_INVALID"  && issue #level #isError)
     }
 
 }

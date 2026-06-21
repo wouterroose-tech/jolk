@@ -4,21 +4,19 @@ import org.graalvm.polyglot.Value;
 
 import util.JolkTestBase;
 
-public class ValidationTestBase extends JolkTestBase {
+public abstract class ValidationTestBase extends JolkTestBase {
 
     protected Value contactFormClass;
     Value personClass;
     Value validationSuiteClass;
-    protected Value testInstance;
 
-    public void setUp(String path) {
+    public void setUp() {
         super.setUp();
         // Load all necessary classes for the tests
         loadValidationEngine();
         contactFormClass = loadContactFormClass();
         personClass = loadPersonClass();
         validationSuiteClass = loadValidationSuite();
-        testInstance = getJolkClass(path).invokeMember("new");
     }
 
     private void loadValidationEngine() {

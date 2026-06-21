@@ -1,0 +1,73 @@
+~ jolk.test.api;
+
++ java.lang.System;
+
+/// # Test
+///
+/// Represents the primary execution token and state container within the Jolk 
+/// specification framework. This class manages the evaluation of test invariants 
+/// and encapsulates the outcome context required by the host discovery runtime.
+///
+/// ## Architectural Role
+/// Following the Kayan model of object autonomy, this instance acts as a self-contained 
+/// validation unit. It intercepts message dispatches, executes short-circuiting 
+/// condition verifications, and acts as the explicit return payload (`^`) that 
+/// signals a successful specification frame completion to the execution engine.
+///
+/// ## Design Invariants
+/// - **Zero-Annotation Compliance:** Eliminates the requirement for declarative metadata 
+///   markers (`@Test`). Discovery is driven entirely by object layout and slot signatures.
+/// - **Exception Propagation Boundary:** Invariant failures cause an immediate, typed 
+///   guest exception execution halt, which maps as a clean failure node on the JVM host platform.
+/// - **Monadic Composition:** Assertion messages return `self` to enable fluent, single-line 
+///   sequential evaluation pipelines.
+///
+/// ## Idiomatic Usage Example
+/// ```jolk
+/// #test_operational_invariant {
+///     Account account = AccountFactory #createEmpty
+///     account #deposit(100)
+///     ^ Test #new #assertEquals(account #balance, 100)
+/// }
+/// ```
+///
+/// @see jolk.test.api.Assert
+/// @see org.jolk.engine.junit.JolkTestEngine
+class Test {
+
+    String name;
+
+    success() {}
+
+    fail() {
+        #throw("Test Failure: Invariant did not hold")
+    }
+
+    assertThat(Boolean condition) {
+        condition ?! [ #throw("Assertion Mismatch: Expected True") ]
+    }
+
+    assertEquals(Object actual, Object expected) {
+        actual !~ expected ? [ #throw("Assertion Mismatch: Values do not align, Expected: " + expected + ", Actual: " + actual) ]
+    }
+
+    assertIsPresent(Object target) {
+        target #isPresent ?! [ #throw("Assertion Mismatch: Instance is Nothing") ]
+    }
+
+    assertThrows(Function throwingFunction, Throwable expectedException) {
+        Boolean threwExpected = false;
+        [
+            throwingFunction #get
+        ] #catch [t -> 
+            (t #instanceOf(expectedException))
+                ? [ threwExpected = true]
+                : [ #throw("Assertion Mismatch: Threw unexpected exception type")]
+            ];
+        threwExpected ?! [ #throw("Assertion Mismatch: Expected exception was not thrown") ]
+    }
+
+    #> throw(String message) {
+        AssertionException #throw(message)
+    }
+}

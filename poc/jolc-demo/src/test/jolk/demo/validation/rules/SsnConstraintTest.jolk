@@ -8,6 +8,9 @@
 + demo.validation.engine.Issue;
 + demo.validation.engine.Interrupt;
 
++ jolk.test.api.Test;
++ jolk.test.api.Assert;
+
 /// # SsnConstraintTest
 ///
 /// Test suite for verifying the logic within [SsnConstraint].
@@ -15,16 +18,21 @@
 /// @author Wouter Roose
 class SsnConstraintTest {
 
+    /// meta selector projection not yet supported
+    #> Test assertThat(Boolean condition) {
+        ^ Test #new #assertThat(condition)
+    }
+
     /// Verifies that the `#accept` protocol succeeds for a valid `Person` ssn.
-    Boolean test_accept_success() {
+    Test test_accept_success() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101035);
         SsnConstraint #new #accept(person, context);
-        ^ !context #hasIssue
+        ^ #assertThat(!context #hasIssue)
     }
 
     /// Verifies that the `#accept` protocol generates an issue and interrupts for invalid data.
-    Boolean test_accept_failure() {
+    Test test_accept_failure() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101099);
         
@@ -32,55 +40,55 @@ class SsnConstraintTest {
         [ SsnConstraint #new #accept(person, context) ]
             #catch [ Interrupt e -> interrupted = true ];
         
-        ^ interrupted && context #hasIssue
+        ^ #assertThat(interrupted && context #hasIssue)
     }
 
     /// Verifies `satisfiesPreCondition` when an ssn is present (not 0).
-    Boolean test_satisfiesPreCondition_success() {
+    Test test_satisfiesPreCondition_success() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101035);
-        ^ SsnConstraint #new #satisfiesPreCondition(person, context)
+        ^ #assertThat(SsnConstraint #new #satisfiesPreCondition(person, context))
     }
 
     /// Verifies `satisfiesPreCondition` when the ssn is 0.
-    Boolean test_satisfiesPreCondition_failure() {
+    Test test_satisfiesPreCondition_failure() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(0);
-        ^ !SsnConstraint #new #satisfiesPreCondition(person, context)
+        ^ #assertThat(!SsnConstraint #new #satisfiesPreCondition(person, context))
     }
 
     /// Verifies the protected `isValid` predicate for valid data.
-    Boolean test_isValid_success() {
+    Test test_isValid_success() {
         Person person = Person #new #ssn(800101035);
-        ^ SsnConstraint #new #isValid(person)
+        ^ #assertThat(SsnConstraint #new #isValid(person))
     }
 
     /// Verifies the protected `isValid` predicate for invalid data.
-    Boolean test_isValid_failure() {
+    Test test_isValid_failure() {
         Person person = Person #new #ssn(800101099);
-        ^ !SsnConstraint #new #isValid(person)
+        ^ #assertThat(!SsnConstraint #new #isValid(person))
     }
 
     /// Verifies the internal logic of the SSN calculation.
-    Boolean test_isValid_logic() {
+    Test test_isValid_logic() {
         // 800101035: (8001010 % 97) is 62. 97 - 62 is 35.
-        ^ SsnConstraint #new #isValid(800101035)
+        ^ #assertThat(SsnConstraint #new #isValid(800101035))
     }
 
     /// Verifies that `getIssue` returns the correct issue identity.
-    Boolean test_getIssue() {
+    Test test_getIssue() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101035);
 
         Issue issue = SsnConstraint #new #getIssue(person, context);
-        ^ issue #isPresent 
+        ^ #assertThat(issue #isPresent 
             && issue #message == "SSN_INVALID" 
-            && issue #level #isError
+            && issue #level #isError)
     }
 
     /// Verifies that the `interrupt` signal is correctly resolved via lens projection.
-    Boolean test_interrupt() {
+    Test test_interrupt() {
         Interrupt signal = SsnConstraint #new #interrupt;
-        ^ signal #isPresent && signal == ContactFormValidation #FORM_INTERRUPT
+        ^ #assertThat(signal #isPresent && signal == ContactFormValidation #FORM_INTERRUPT)
     }
 }

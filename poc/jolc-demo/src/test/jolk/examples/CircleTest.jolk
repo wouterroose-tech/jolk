@@ -1,0 +1,46 @@
+~ examples;
+
++ jolk.test.api.Test;
++ jolk.test.api.Assert;
+
+///
+/// @author Wouter Roose
+
+class CircleTest {
+
+    Test testNew() {
+        Double radius = 5.0 #asDouble;
+        Circle circle = Circle #new(radius);
+        ^ Test #new
+            #assertIsPresent(circle)
+            #assertEquals(radius, circle #radius)
+    }
+
+    Test testCircleArea() {
+        Double area = Circle #new(5 #asDouble) #area;
+        ^ Assert #equals(78.53981633974483 #asDouble, area);
+    }
+
+    Test testCircumference() {
+        Circle circle = Circle #new(5.0 #asDouble);
+        ^ Assert #equals(31, circle #circumference #round);
+    }
+
+    String runToString() {
+        ^ self #runNew #toString
+    }
+
+    Circle runScaling() {
+        ^ self #runNew * 2.0 #asDouble
+    }
+
+    Boolean runEquivalence() {
+        Circle c1 = Circle #new(5.0 #asDouble);
+        Circle c2 = Circle #new(5.0 #asDouble);
+        ^ c1 ~~ c2
+    }
+
+    Circle runInvalidConstruction() {
+        ^ Circle #new(-1.0 #asDouble)
+    }
+}

@@ -1,0 +1,59 @@
+~ jolk.test.api;
+
+/// # Assert
+///
+/// Provides class-level factory shortcuts for defining test invariants within the 
+/// Jolk testing ecosystem. This class serves as the functional operational bridge 
+/// to bypass current language constraints regarding meta-selector projections.
+///
+/// ## Architectural Role
+/// Rather than requiring explicit allocation chains within individual test methods 
+/// (`Test #new #assertTrue(...)`), this provider intercepts the invocation context, 
+/// instantiates the underlying state container, and yields an executable token 
+/// back to the execution frame.
+///
+/// ## Design Invariants
+/// - **Encapsulation Purity:** Operates completely via message passing contracts 
+///   without relying on host-side reflective field intrusion.
+/// - **Fluent Continuity:** Every assertion method returns the mutated, valid 
+///   `Test` state instance to satisfy the explicit return contract (`^`) expected 
+///   by the underlying discovery engine.
+///
+/// ## Idiomatic Usage Example
+/// ```jolk
+/// #test_verification_flow {
+///     Object actualResult = Operation #execute
+///     ^ Assert #equals(actualResult, "Expected_Outcome")
+/// }
+/// ```
+///
+/// @see jolk.test.api.Test
+/// @see org.jolk.engine.junit.JolkTestEngine
+class Assert {
+
+    String name;
+
+    meta Test success() {
+        ^ Test #new #success()
+    }
+
+    meta Test fail() {
+        ^ Test #new #fail()
+    }
+
+    meta Test that(Boolean condition) {
+        ^ Test #new #assertThat(condition)
+    }
+
+    meta Test equals(Object actual, Object expected) {
+        ^ Test #new #assertEquals(actual, expected)
+    }
+
+    meta Test isPresent(Object target) {
+        ^ Test #new #assertIsPresent(target)
+    }
+
+    meta Test throws(Function throwingFunction, Throwable expectedException) {
+        ^ Test #new #assertThrows(throwingFunction, expectedException)
+    }
+}

@@ -1,7 +1,5 @@
 package demo.validation.rules;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -9,27 +7,28 @@ public class ContactFormValidationTest extends ValidationTestBase {
 
     @BeforeEach
     public void setUp() {
+        super.setUp();
         setUp("/demo/validation/rules/ContactFormValidationTest.jolk");
     }
 
     @Test
     public void test_ValidateContactForm_success() {
-        assertTrue(testInstance.invokeMember("test_ValidateContactForm_success").asBoolean());
+        test("test_ValidateContactForm_success");
     }
 
     @Test
     public void test_ValidateContactForm_ZipConstraintIssue() {
-        assertTrue(testInstance.invokeMember("test_ValidateContactForm_ZipConstraintIssue").asBoolean());
+        test("test_ValidateContactForm_ZipConstraintIssue");
     }
 
     @Test
-    public void test_ValidateContactForm_InssConstraintIssue() {
-        assertTrue(testInstance.invokeMember("test_ValidateContactForm_SsnConstraintIssue").asBoolean());
+    public void test_ValidateContactForm_SsnConstraintIssue() {
+        test("test_ValidateContactForm_SsnConstraintIssue");
     }
 
     @Test
     public void test_interrupt() {
-        assertTrue(testInstance.invokeMember("test_interrupt").asBoolean());
+        test("test_interrupt");
     }
 
 }

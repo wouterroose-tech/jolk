@@ -3,6 +3,7 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -141,6 +142,21 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         // access projected meta constant 
         assertEquals(42, instanceB.invokeMember("val").asLong());
         assertEquals(Math.PI, instanceB.invokeMember("pi").asDouble());
+    }
+
+    @Test
+    @Disabled("Meta selector projection not yet supported") 
+    void testMetaSelectorProjection() {
+        String classA = "class ClassA { meta Long fortyTwo() { ^ 42 } }";
+        String classB = """
+            & ClassA.fortyTwo;
+            class ClassB {
+                Long val() { ^ #fortyTwo }
+            }""";
+        eval(classA);
+        Value instanceB = eval(classB).invokeMember("new");
+        // access projected meta constant 
+        assertEquals(42, instanceB.invokeMember("val").asLong());
     }
 
     /// Verifies that a meta constant can be accessed from another class via the meta-receiver, 

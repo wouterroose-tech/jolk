@@ -95,7 +95,6 @@ public class SsnConstraintTest  extends JolcTestBase {
         String source = """
             abstract class Constraint<T> extends Validation<T> {
                 package final doAccept(T subject, ExecutionContext executionContext) {
-                    System #out #println("### reached doAccept");
                     #isValid(subject) ? [ ^ self ];
                     executionContext #add(subject, #getIssue(subject, executionContext));
                     self #interrupt #ifPresent [ i -> i #throw ]

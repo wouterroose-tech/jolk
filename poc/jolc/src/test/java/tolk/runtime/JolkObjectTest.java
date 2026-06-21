@@ -612,4 +612,12 @@ public class JolkObjectTest extends JolcTestBase {
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
     }
+
+    @Test
+    void testIdentifier_value() {
+        String source = "class Test { Long value; }";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new", 42);
+        assertEquals(42, instance.invokeMember("value").asLong());
+    }
 }

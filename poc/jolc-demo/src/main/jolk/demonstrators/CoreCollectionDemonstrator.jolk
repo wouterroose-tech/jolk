@@ -1,7 +1,8 @@
-package demonstrators;
+~ demonstrators;
 
-using java.util.concurrent.atomic.AtomicReference;
-using jolk.lang.Array;
++ java.util.concurrent.atomic.AtomicReference;
++ java.lang.ArrayList;
++ java.util.HashMap;
 
 /// Demonstrates Jolk's Core Collection `Array` and its shim-less integration with the Java Collections Framework.
 ///
@@ -16,46 +17,68 @@ using jolk.lang.Array;
 
 final class CoreCollectionDemonstrator {
 
-    Array<String> runArrayNew() {
+    ArrayList<String> runArrayNew() {
         ^ Array #new("red", "green", "blue")
     }
 
-    Array<String> runArrayLiteral() {
+    ArrayList<String> runArrayLiteral() {
         ^ #["red", "green", "blue"]
     }
 
     String runArrayAt() {
-        constant Array<String> colors = Array #new("red", "green", "blue");
+        constant ArrayList<String> colors = Array #new("red", "green", "blue");
         ^ colors #at(1)
     }
 
     Array<String> runArrayPut() {
-        Array<String> colors = Array #new("red", "green", "blue");
+        ArrayList<String> colors = Array #new("red", "green", "blue");
         colors #put(1, "yellow");
         ^ colors
     }
 
     Int runArraySize() {
-        constant Array<String> colors = Array #new("red", "green", "blue");
+        constant ArrayList<String> colors = Array #new("red", "green", "blue");
         ^ colors #size
     }
 
     String runArrayToString() {
-        constant Array<String> colors = Array #new("red", "green", "blue");
+        constant ArrayList<String> colors = Array #new("red", "green", "blue");
         ^ colors #toString
     }
     
-    String runArrayFor() {
-        constant Array<String> colors = Array #new("red", "green", "blue");
-        StringBuffer result = StringBuffer #new;
-        colors #forEach[color -> result #append(color) ];
-        ^ result #toString
+    String runArrayReduce() {
+        constant ArrayList<String> colors = Array #new("red", "green", "blue");
+        ^ colors #stream #reduce("", self ##reduce);
+    }
+
+    private String reduce(String reduced, String reducing) {
+        ^ reduced + reducing
     }
 
     String runArrayForEach() {
-        constant Array<String> colors = Array #new("red", "green", "blue");
+        constant ArrayList<String> colors = Array #new("red", "green", "blue");
         constant AtomicReference<String> result = AtomicReference #new("");
         colors #forEach[color -> result #set(result #get + color)];
+        ^ result #get
+    }
+    
+    HashMap<String, String> runMapNew() {
+        ^ HashMap #new()
+    }
+    
+    HashMap<String, String> runMapLiteral() {
+        ^ #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF")
+    }
+
+    Array<String> runMapMap() {
+        constant HashMap<String, String> m = #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF");
+        ^ m #map[key, v -> key + ":" + v]
+    }
+
+    String runMapForEach() {
+        constant HashMap<String, String> m = #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF");
+        constant AtomicReference<String> result = AtomicReference #new("");
+        m #forEach[key, v -> result #set(result #get + key + v)];
         ^ result #get
     }
 }

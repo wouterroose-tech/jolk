@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -113,6 +114,23 @@ public class JolkMapTest extends JolcTestBase {
             }""";
         Value instance = eval(source).invokeMember("new");
         // Note: Map iteration order is guaranteed for LinkedHashMap, which Jolk uses.
+        assertEquals("Alice:30;Bob:25;", instance.invokeMember("collectEntries").asString());
+    }
+
+    @Test
+    @Disabled("Map #map method not yet implemented")
+    void testMapMethod() {
+        /// Verifies the #map(closure) method for transforming entries.
+        String source = """ 
+            class MyClass {
+                Map<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
+                Array<String> collectEntryStrings() {
+                    ^ self #ages #map [ k, v -> k + ":" + v #toString ];
+                }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+        // Note: Map iteration order is guaranteed for LinkedHashMap, which Jolk uses.
+        assertEquals(2, instance.invokeMember("collectEntryStrings").invokeMember("size").asLong());
         assertEquals("Alice:30;Bob:25;", instance.invokeMember("collectEntries").asString());
     }
 

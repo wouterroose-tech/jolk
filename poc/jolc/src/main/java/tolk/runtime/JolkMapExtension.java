@@ -111,6 +111,36 @@ public class JolkMapExtension {
             }
         });
 
+        // #map(closure) -> Applies closure to each value and returns a new Map with
+        // same keys and transformed values.
+        MAP_TYPE.registerInstanceMethod("map", new JolkBuiltinMethod() {
+            @Override
+            public Object execute(Object[] args) throws ArityException {
+                if (args.length != 2)
+                    throw ArityException.create(1, 1, args.length - 1);
+                Map<?, ?> map = (Map<?, ?>) unwrap(args[0]);
+                Object action = args[1]; // expected JolkClosure or interop callable
+                Map<Object, Object> result = new LinkedHashMap<>();
+                InteropLibrary interop = InteropLibrary.getUncached();
+                for (Map.Entry<?, ?> entry : map.entrySet()) {
+                    Object guestKey = lift(entry.getKey());
+                    Object guestVal = lift(entry.getValue());
+                    Object newVal;
+                    try {
+                        if (action instanceof JolkClosure closure) {
+                            newVal = closure.execute(new Object[] { guestKey, guestVal });
+                        } else {
+                            newVal = interop.execute(action, guestKey, guestVal);
+                        }
+                    } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                        throw new RuntimeException("Error executing #map closure on map entry: " + e.getMessage(), e);
+                    }
+                    result.put(lift(entry.getKey()), lift(newVal));
+                }
+                return JolkNode.interopLift(result);
+            }
+        });
+
         /**
          * ### meta #new(key1, value1, key2, value2, ...)
          *

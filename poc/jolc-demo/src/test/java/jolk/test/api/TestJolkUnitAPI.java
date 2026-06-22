@@ -26,7 +26,7 @@ public class TestJolkUnitAPI extends JolkTestBase {
     
     @Test
     public void testFail() {
-        assertThrows(RuntimeException.class, () -> test.invokeMember("testFail"));
+        test("testFail");
     }
     
     @Test
@@ -36,7 +36,7 @@ public class TestJolkUnitAPI extends JolkTestBase {
     
     @Test
     public void testAssertThat_failure() {
-        assertThrows(RuntimeException.class, () -> test.invokeMember("testAssertThat_failure"));
+        test("testAssertThat_failure");
     }
     
     @Test
@@ -46,7 +46,7 @@ public class TestJolkUnitAPI extends JolkTestBase {
     
     @Test
     public void testAssertEquals_failure() {
-        assertThrows(RuntimeException.class, () -> test.invokeMember("testAssertEquals_failure"));
+        test("testAssertEquals_failure");
     }
     
     @Test
@@ -56,7 +56,7 @@ public class TestJolkUnitAPI extends JolkTestBase {
     
     @Test
     public void testAssertIsPresent_failure() {
-        assertThrows(RuntimeException.class, () -> test.invokeMember("testAssertIsPresent_failure"));
+        test("testAssertIsPresent_failure");
     }
 
 }

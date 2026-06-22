@@ -9,7 +9,7 @@ class JolkUnitTest {
     }
 
     Test testFail() {
-        ^ Assert #fail()
+        ^ #testFailure [ Assert #fail() ]
     }
 
     Test testAssertThat_success() {
@@ -17,7 +17,7 @@ class JolkUnitTest {
     }
     
     Test testAssertThat_failure() {
-        ^ Assert #that(false)
+        ^ #testFailure [ Assert #that(false) ]
     }
     
     Test testAssertEquals_success() {
@@ -25,7 +25,7 @@ class JolkUnitTest {
     }
 
     Test testAssertEquals_failure() {
-        ^ Assert #equals("Hello", "World")
+        ^ #testFailure [ Assert #equals("Hello", "World") ]
     }
 
     Test testAssertIsPresent_success() {
@@ -33,7 +33,13 @@ class JolkUnitTest {
     }
 
     Test testAssertIsPresent_failure() {
-        ^ Assert #isPresent(null)
+        ^ #testFailure [ Assert #isPresent(null) ]
+    }
+    
+    
+    #> Test testFailure(Closure test) {
+        test #catch [ AssertionException e -> ^ Assert #success() ];
+        ^ Assert #fail()
     }
 
     /// meta selector projection not yet supported

@@ -1,7 +1,5 @@
 ~ jolk.test.api;
 
-+ java.lang.System;
-
 /// # Test
 ///
 /// Represents the primary execution token and state container within the Jolk 
@@ -32,7 +30,8 @@
 /// ```
 ///
 /// @see jolk.test.api.Assert
-/// @see org.jolk.engine.junit.JolkTestEngine
+/// @see jolk.test.engine.JolkTestEngine
+///
 class Test {
 
     String name;
@@ -55,16 +54,12 @@ class Test {
         target #isPresent ?! [ #throw("Assertion Mismatch: Instance is Nothing") ]
     }
 
-    assertThrows(Function throwingFunction, Throwable expectedException) {
-        Boolean threwExpected = false;
-        [
-            throwingFunction #get
-        ] #catch [t -> 
-            (t #instanceOf(expectedException))
-                ? [ threwExpected = true]
-                : [ #throw("Assertion Mismatch: Threw unexpected exception type")]
-            ];
-        threwExpected ?! [ #throw("Assertion Mismatch: Expected exception was not thrown") ]
+    assertThrows(Closure closure, MetaClass<Throwable> expectedException) {
+        [ closure #apply ]
+            #catch [ t -> 
+                (t #class == expectedException) ? [ ^self ];
+                #throw("Assertion Mismatch: Threw unexpected exception type") ];
+        #throw("Assertion Mismatch: Expected exception was not thrown")
     }
 
     #> throw(String message) {

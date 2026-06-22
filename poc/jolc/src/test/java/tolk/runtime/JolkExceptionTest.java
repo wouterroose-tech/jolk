@@ -87,14 +87,31 @@ public class JolkExceptionTest extends JolcTestBase {
     }
 
     @Test
+    void testCatchChecked() {
+        String myClass = """
+            + java.lang.IllegalArgumentException;
+            class MyClass {
+                Long run() {
+                    [ IllegalArgumentException #new #throw ] 
+                        #catch [IllegalArgumentException e -> 
+                            (e #class == IllegalArgumentException) ? [^ 42 ] ];
+                    ^ 0
+                }
+        }""";
+        
+        Value instance = eval(myClass).invokeMember("new");
+        assertEquals(42, instance.invokeMember("run").asLong());
+    }
+
+    @Test
     void testCatchFinally() {
         String myClass = """
-            + java.lang.RuntimeException;
+            + java.lang.NumberFormatException;
             class MyClass {
                 Long run() {
                     Long reult = 0;
-                    [ RuntimeException #new #throw ]
-                        #catch [RuntimeException e ->  /* ignore */ ]
+                    [ NumberFormatException #new #throw ]
+                        #catch [ e ->  /* ignore */ ]
                         #finally [ ^ 42 ];
                     ^ 0
                 }

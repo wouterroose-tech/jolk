@@ -9,7 +9,7 @@ import util.JolkTestBase;
 ///
 /// Verifies the behavior of the `Circle` archetype and its geometric calculations
 /// as orchestrated by the `CircleExample`.
-
+/// 
 public class CircleTest  extends JolkTestBase {
 
     @BeforeEach
@@ -33,40 +33,24 @@ public class CircleTest  extends JolkTestBase {
     void testCircumference() {
         test("testCircumference");
     }
-
-    /*
-
+    
     @Test
-    void testRunToString() {
-        Value str = getDemonstrator().invokeMember("runToString");
-        assertEquals("Circle[radius=5.0]", str.asString());
+    void testToString() {
+        test("testToString");
     }
-
-    /// ### testRunScaling
-    ///
-    /// Verifies that the scaling operator creates a new Circle with a scaled radius.
+    
     @Test
-    void testRunScaling() {
-        Value scaled = getDemonstrator().invokeMember("runScaling");
-        assertEquals(10.0, scaled.invokeMember("radius").asDouble());
+    void testScaling() {
+        test("testScaling");
     }
-
-    /// ### testRunEquivalence
-    ///
-    /// Verifies that two different Circle instances with the same radius are equivalent.
+    
     @Test
-    void testRunEquivalence() {
-        Value result = getDemonstrator().invokeMember("runEquivalence");
-        assertTrue(result.asBoolean());
+    void testEquivalence() {
+        test("testEquivalence");
     }
-
-    /// ### testRunInvalidConstruction
-    ///
-    /// Verifies that the construction guard throws an exception for negative radii.
+    
     @Test
-    void testRunInvalidConstruction() {
-        assertThrows(Exception.class, () -> getDemonstrator().invokeMember("runInvalidConstruction"));
+    void testInvalidConstruction() {
+        test("testInvalidConstruction");
     }
-
-    */
 }

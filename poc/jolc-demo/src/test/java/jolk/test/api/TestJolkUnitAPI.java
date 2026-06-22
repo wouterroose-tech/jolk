@@ -1,4 +1,4 @@
-package test.api;
+package jolk.test.api;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

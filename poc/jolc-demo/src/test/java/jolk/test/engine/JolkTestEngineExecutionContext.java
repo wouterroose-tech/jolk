@@ -1,4 +1,4 @@
-package test.api;
+package jolk.test.engine;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

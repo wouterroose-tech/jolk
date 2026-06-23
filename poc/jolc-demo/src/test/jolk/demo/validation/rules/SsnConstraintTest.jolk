@@ -16,23 +16,18 @@
 /// Test suite for verifying the logic within [SsnConstraint].
 ///
 /// @author Wouter Roose
-class SsnConstraintTest {
-
-    /// meta selector projection not yet supported
-    #> Test assertThat(Boolean condition) {
-        ^ Test #new #assertThat(condition)
-    }
+class SsnConstraintTest extends Test {
 
     /// Verifies that the `#accept` protocol succeeds for a valid `Person` ssn.
-    Test test_accept_success() {
+    test_accept_success() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101035);
         SsnConstraint #new #accept(person, context);
-        ^ #assertThat(!context #hasIssue)
+        #assertThat(!context #hasIssue)
     }
 
     /// Verifies that the `#accept` protocol generates an issue and interrupts for invalid data.
-    Test test_accept_failure() {
+    test_accept_failure() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101099);
         
@@ -40,55 +35,55 @@ class SsnConstraintTest {
         [ SsnConstraint #new #accept(person, context) ]
             #catch [ Interrupt e -> interrupted = true ];
         
-        ^ #assertThat(interrupted && context #hasIssue)
+        #assertThat(interrupted && context #hasIssue)
     }
 
     /// Verifies `satisfiesPreCondition` when an ssn is present (not 0).
-    Test test_satisfiesPreCondition_success() {
+    test_satisfiesPreCondition_success() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101035);
-        ^ #assertThat(SsnConstraint #new #satisfiesPreCondition(person, context))
+        #assertThat(SsnConstraint #new #satisfiesPreCondition(person, context))
     }
 
     /// Verifies `satisfiesPreCondition` when the ssn is 0.
-    Test test_satisfiesPreCondition_failure() {
+    test_satisfiesPreCondition_failure() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(0);
-        ^ #assertThat(!SsnConstraint #new #satisfiesPreCondition(person, context))
+        #assertThat(!SsnConstraint #new #satisfiesPreCondition(person, context))
     }
 
     /// Verifies the protected `isValid` predicate for valid data.
-    Test test_isValid_success() {
+    test_isValid_success() {
         Person person = Person #new #ssn(800101035);
-        ^ #assertThat(SsnConstraint #new #isValid(person))
+        #assertThat(SsnConstraint #new #isValid(person))
     }
 
     /// Verifies the protected `isValid` predicate for invalid data.
-    Test test_isValid_failure() {
+    test_isValid_failure() {
         Person person = Person #new #ssn(800101099);
-        ^ #assertThat(!SsnConstraint #new #isValid(person))
+        #assertThat(!SsnConstraint #new #isValid(person))
     }
 
     /// Verifies the internal logic of the SSN calculation.
-    Test test_isValid_logic() {
+    test_isValid_logic() {
         // 800101035: (8001010 % 97) is 62. 97 - 62 is 35.
-        ^ #assertThat(SsnConstraint #new #isValid(800101035))
+        #assertThat(SsnConstraint #new #isValid(800101035))
     }
 
     /// Verifies that `getIssue` returns the correct issue identity.
-    Test test_getIssue() {
+    test_getIssue() {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101035);
 
         Issue issue = SsnConstraint #new #getIssue(person, context);
-        ^ #assertThat(issue #isPresent 
+        #assertThat(issue #isPresent 
             && issue #message == "SSN_INVALID" 
             && issue #level #isError)
     }
 
     /// Verifies that the `interrupt` signal is correctly resolved via lens projection.
-    Test test_interrupt() {
+    test_interrupt() {
         Interrupt signal = SsnConstraint #new #interrupt;
-        ^ #assertThat(signal #isPresent && signal == ContactFormValidation #FORM_INTERRUPT)
+        #assertThat(signal #isPresent && signal == ContactFormValidation #FORM_INTERRUPT)
     }
 }

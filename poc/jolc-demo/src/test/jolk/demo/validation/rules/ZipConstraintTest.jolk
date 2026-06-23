@@ -15,19 +15,19 @@
 /// Test suite for verifying the logic within [ZipConstraint].
 ///
 /// @author Wouter Roose
-class ZipConstraintTest {
+class ZipConstraintTest extends Test {
 
     /// Verifies that the #accept protocol succeeds for a valid Malines zip code.
-    Test test_accept_success() {
+    test_accept_success() {
         ExecutionContext context = ExecutionContext #new;
         // Create a ContactForm with a valid Malines zip code
         ContactForm form = ContactForm #new #zipCode(2800);
         ZipConstraint #new #accept(form, context);
-        ^ Assert #that(!context #hasIssue)
+        #assertThat(!context #hasIssue)
     }
 
     /// Verifies that the #accept protocol generates an issue and interrupts for invalid data.
-    Test test_accept_failure() {
+    test_accept_failure() {
         ExecutionContext context = ExecutionContext #new;
         // Create a ContactForm with an invalid zip code
         ContactForm form = ContactForm #new #zipCode(9999);
@@ -38,51 +38,51 @@ class ZipConstraintTest {
         [ ZipConstraint #new #accept(form, context) ]
             #catch [ Interrupt e -> interrupted = true ];
         
-        ^ Assert #that(interrupted && context #hasIssue)
+        #assertThat(interrupted && context #hasIssue)
     }
 
     /// Verifies satisfiesPreCondition when a zip code is present.
-    Test test_satisfiesPreCondition_success() {
+    test_satisfiesPreCondition_success() {
         ExecutionContext context = ExecutionContext #new;
         ContactForm form = ContactForm #new #zipCode(2800);
-        ^ Assert #that(ZipConstraint #new #satisfiesPreCondition(form, context))
+        #assertThat(ZipConstraint #new #satisfiesPreCondition(form, context))
     }
 
     /// Verifies satisfiesPreCondition when the zip code is absent.
-    Test test_satisfiesPreCondition_failure() {
+    test_satisfiesPreCondition_failure() {
         ExecutionContext context = ExecutionContext #new;
         ContactForm form = ContactForm #new; // zipCode defaults to 0
-        ^ Assert #that(!ZipConstraint #new #satisfiesPreCondition(form, context))
+        #assertThat(!ZipConstraint #new #satisfiesPreCondition(form, context))
     }
 
     /// Verifies isMalinesArea for a code within the defined Mechelen scope.
-    Test test_isMalinesArea_success() {
-        ^ Assert #that(ZipConstraint #new #isMalinesArea(2800))
+    test_isMalinesArea_success() {
+        #assertThat(ZipConstraint #new #isMalinesArea(2800))
     }
 
     /// Verifies isMalinesArea for a code outside the defined scope.
-    Test test_isMalinesArea_failure() {
-        ^ Assert #that(!ZipConstraint #new #isMalinesArea(9999))
+    test_isMalinesArea_failure() {
+        #assertThat(!ZipConstraint #new #isMalinesArea(9999))
     }
 
     /// Verifies the protected isValid predicate for valid data.
-    Test test_isValid_success() {
+    test_isValid_success() {
         ContactForm form = ContactForm #new #zipCode(2800);
-        ^ Assert #that(ZipConstraint #new #isValid(form))
+        #assertThat(ZipConstraint #new #isValid(form))
     }
 
     /// Verifies the protected isValid predicate for invalid data.
-    Test test_isValid_failure() {
+    test_isValid_failure() {
         ContactForm form = ContactForm #new #zipCode(9999);
-        ^ Assert #that(!ZipConstraint #new #isValid(form))
+        #assertThat(!ZipConstraint #new #isValid(form))
     }
 
     /// Verifies that `getIssue` returns a valid issue template.
-    Test test_getIssue() {
+    test_getIssue() {
         ExecutionContext context = ExecutionContext #new;
         ContactForm form = ContactForm #new #zipCode(2800);
 
         Issue issue = ZipConstraint #new #getIssue(form, context);
-        ^ Assert #that(issue #isPresent  && issue #message == "ZIP_INVALID"  && issue #level #isError)
+        #assertThat(issue #isPresent  && issue #message == "ZIP_INVALID"  && issue #level #isError)
     }
 }

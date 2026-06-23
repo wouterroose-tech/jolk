@@ -11,12 +11,12 @@
 /// Test suite for verifying the logic within [Issue].
 ///
 /// @author Wouter Roose
-class IssueTest {
+class IssueTest extends Test {
     
     /// Verifies that `getIssue` returns a valid issue template.
-    Test test_getIssue() {
+    test_getIssue() {
         Issue issue = Issue #new(null, "ZIP_INVALID",  Level #ERROR);
-        ^ Test #new #assertThat(issue #message == "ZIP_INVALID"  && issue #level #isError)
+        #assertThat(issue #message == "ZIP_INVALID"  && issue #level #isError)
     }
 
 }

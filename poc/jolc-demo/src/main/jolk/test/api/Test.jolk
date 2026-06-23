@@ -2,39 +2,39 @@
 
 /// # Test
 ///
-/// Represents the primary execution token and state container within the Jolk 
-/// specification framework. This class manages the evaluation of test invariants 
-/// and encapsulates the outcome context required by the host discovery runtime.
+/// A class serving as a Proof of Concept (POC) demonstrator 
+/// for the JolkUnit testing framework architecture.
 ///
-/// ## Architectural Role
-/// Following the Kayan model of object autonomy, this instance acts as a self-contained 
-/// validation unit. It intercepts message dispatches, executes short-circuiting 
-/// condition verifications, and acts as the explicit return payload (`^`) that 
-/// signals a successful specification frame completion to the execution engine.
+/// This implementation unifies test execution, default assertions, and dynamic 
+/// metadata configuration within a single object boundary. It leverages Jolk's 
+/// zero-parameter, implicit self-return contract to handle orchestration without 
+/// relying on static reflection pipelines or declarative annotations.
 ///
-/// ## Design Invariants
-/// - **Zero-Annotation Compliance:** Eliminates the requirement for declarative metadata 
-///   markers (`@Test`). Discovery is driven entirely by object layout and slot signatures.
-/// - **Exception Propagation Boundary:** Invariant failures cause an immediate, typed 
-///   guest exception execution halt, which maps as a clean failure node on the JVM host platform.
-/// - **Monadic Composition:** Assertion messages return `self` to enable fluent, single-line 
-///   sequential evaluation pipelines.
+/// ## Future Architecture Note
+/// This class is a transitional blueprint designed for initial validation. In 
+/// production-grade environments, this monolithic design is replaced by a 
+/// stateless `Test` protocol paired with a thread-isolated `TestExecutionContext` 
+/// to ensure thread safety and eliminate namespace pollution.
 ///
-/// ## Idiomatic Usage Example
-/// ```jolk
-/// #test_operational_invariant {
-///     Account account = AccountFactory #createEmpty
-///     account #deposit(100)
-///     ^ Test #new #assertEquals(account #balance, 100)
-/// }
-/// ```
-///
-/// @see jolk.test.api.Assert
-/// @see jolk.test.engine.JolkTestEngine
+/// @author Wouter Roose
 ///
 class Test {
+    
+    meta constant TestDisabledSignal SKIP = TestDisabledSignal #new;
 
     String name;
+    
+    before() {} 
+
+    after() {}
+
+    disabled() {
+        #SKIP #throw
+    }
+
+    disabled(Boolean condition) {
+        condition ? [#disabled]
+    }
 
     success() {}
 
@@ -62,7 +62,20 @@ class Test {
         #throw("Assertion Mismatch: Expected exception was not thrown")
     }
 
+    parameterized(Closure closure, Array parameters) {
+        parameters #forEach [ p -> 
+            #before;
+            [ closure #apply(p) ]
+                #finally [ #after ];
+            #success;
+        ]
+    }
+
+    timeout(Closure closure, Long milliseconds) {
+        // TODO
+    }
+
     #> throw(String message) {
-        AssertionException #throw(message)
+        AssertionException #new(message) #throw
     }
 }

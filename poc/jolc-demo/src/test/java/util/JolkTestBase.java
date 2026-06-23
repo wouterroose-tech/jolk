@@ -34,8 +34,8 @@ public abstract class JolkTestBase {
         engine = getEngine().build();
         context = getContext().build();
         getJolkClass("/test/api/Test.jolk");
-        getJolkClass("/test/api/Assert.jolk");
         getJolkClass("/test/api/AssertionException.jolk");
+        getJolkClass("/test/api/TestDisabledSignal.jolk");
     }
 
     public void setUp(String path) {
@@ -108,6 +108,11 @@ public abstract class JolkTestBase {
     }
 
     protected Value test(String testCase) {
-        return testInstance.invokeMember(testCase);
+        testInstance.invokeMember("before");
+        try {
+            return testInstance.invokeMember(testCase);
+        } finally {
+            testInstance.invokeMember("after");
+        }
     }
 }

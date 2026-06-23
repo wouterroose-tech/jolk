@@ -13,10 +13,10 @@
 ///
 /// @author Wouter Roose
 
-class ContactFormValidationTest {
+class ContactFormValidationTest extends Test {
 
     /// Test case for validating a contact form with valid data
-    Test test_ValidateContactForm_success() {
+    test_ValidateContactForm_success() {
         
         // Create a valid contact form
         Person person = Person #new
@@ -30,11 +30,11 @@ class ContactFormValidationTest {
             #description("Test description");
         
         ExecutionContext context = #validate(form);
-        ^ Assert #that(!context #hasIssue)
+        #assertThat(!context #hasIssue)
     }
 
     /// Test that validation fails when ...
-    Test test_ValidateContactForm_ZipConstraintIssue() {
+    test_ValidateContactForm_ZipConstraintIssue() {
         
         // Create an invalid contact form
         Person person = Person #new
@@ -48,11 +48,11 @@ class ContactFormValidationTest {
             #description("Test description");
         
         ExecutionContext context = #validate(form);
-        ^ Assert #that(context #hasIssue && context #issues #size == 1)
+        #assertThat(context #hasIssue && context #issues #size == 1)
     }
 
     /// Test that validation fails when ...
-    Test test_ValidateContactForm_SsnConstraintIssue() {
+    test_ValidateContactForm_SsnConstraintIssue() {
         
         // Create an invalid contact form
         Person person = Person #new
@@ -68,7 +68,7 @@ class ContactFormValidationTest {
         
         ExecutionContext context = #validate(form);
         // SsnConstraint is an interrupting issue and will stop further validation, so only one issue is registered
-        ^ Assert #that(context #hasIssue && context #issues #size == 1)
+        #assertThat(context #hasIssue && context #issues #size == 1)
     }
 
     #> ExecutionContext validate(ContactForm form) {

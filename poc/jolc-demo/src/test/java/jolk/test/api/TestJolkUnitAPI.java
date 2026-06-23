@@ -3,13 +3,11 @@ package jolk.test.api;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import org.graalvm.polyglot.Value;
 
 import util.JolkTestBase;
 
-public class TestJolkUnitAPI extends JolkTestBase {
+public class TestJolkUnitApi extends JolkTestBase {
     
     protected Value test;
 
@@ -57,6 +55,11 @@ public class TestJolkUnitAPI extends JolkTestBase {
     @Test
     public void testAssertIsPresent_failure() {
         test("testAssertIsPresent_failure");
+    }
+    
+    @Test
+    public void testParameterized() {
+        test("testParameterized");
     }
 
 }

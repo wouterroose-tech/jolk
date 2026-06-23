@@ -1,54 +1,63 @@
 ~ jolk.test.api;
 
++ jolk.test.api.Test;
 & jolk.test.api.Test.assertTrue;
 
-class JolkUnitTest {
+/// # JolkUnitTest
+///
+/// Demonstrator for the Jolk fluid Test Protocol.
+///
+/// This class showcases various testing patterns, including immediate assertions,
+/// failure injection, success cases, parameterized tests, and assertions against
+/// specific conditions and values, all within Jolk's message-passing paradigm.
+///
+/// @author Wouter Roose
+///
+class JolkUnitTest extends Test {
 
-    Test testSuccess() {
-        ^ Assert #success()
+    testSuccess() {
+        #success()
     }
 
-    Test testFail() {
-        ^ #testFailure [ Assert #fail() ]
+    testFail() {
+        #testFailure [ #fail() ]
     }
 
-    Test testAssertThat_success() {
-        ^ #assertThat(true)
+    testAssertThat_success() {
+        #assertThat(true)
     }
     
-    Test testAssertThat_failure() {
-        ^ #testFailure [ Assert #that(false) ]
+    testAssertThat_failure() {
+        #testFailure [ #assertThat(false) ]
     }
     
-    Test testAssertEquals_success() {
-        ^ #test #assertEquals("Hello", "Hello")
+    testAssertEquals_success() {
+        #assertEquals("Hello", "Hello")
     }
 
-    Test testAssertEquals_failure() {
-        ^ #testFailure [ Assert #equals("Hello", "World") ]
+    testAssertEquals_failure() {
+        #testFailure [ #assertEquals("Hello", "World") ]
     }
 
-    Test testAssertIsPresent_success() {
-        ^ #test #assertIsPresent("Hello")
+    testAssertIsPresent_success() {
+        #assertIsPresent("Hello")
     }
 
-    Test testAssertIsPresent_failure() {
-        ^ #testFailure [ Assert #isPresent(null) ]
+    testAssertIsPresent_failure() {
+        #testFailure [ #assertIsPresent(null) ]
+    }
+
+    meta constant List<Int> params = #[1, 2, 3, 4, 5, 6, 7];
+    testParameterized() {
+        #parameterized(self ##assertPossitive, params)
+    }
+
+    assertPossitive(Int i) {
+        #assertThat(i > 0)
     }
     
-    
-    #> Test testFailure(Closure test) {
-        test #catch [ AssertionException e -> ^ Assert #success() ];
-        ^ Assert #fail()
+    #> testFailure(Closure test) {
+        test #catch [ AssertionException e -> ^ #success() ];
+        #fail
     }
-
-    /// meta selector projection not yet supported
-    #> Test assertThat(Boolean condition) {
-        ^ #test #assertThat(condition)
-    }
-
-    #> Test test() {
-        ^ Test #new
-    }
-
 }

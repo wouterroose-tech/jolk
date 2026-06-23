@@ -9,13 +9,13 @@
 ///
 /// @author Wouter Roose
 
-class ContactFormTest {
+class ContactFormTest extends Test {
 
-    Test testNew() {
+    testNew() {
         ^ Assert #that(ContactForm #new #isPresent)
     }
 
-    Test testNewCompleted() {
+    testNewCompleted() {
         Person person = #getPerson;
         ContactForm #new
             #person(person)
@@ -33,18 +33,18 @@ class ContactFormTest {
     }
 
     // Form should be identical to itself.
-    Test testEquality1() {
+    testEquality1() {
         
         ContactForm form = ContactForm #new
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        ^ Assert #that(form == form)
+        ^ #assertThat(form == form)
     }
 
     // Distinct forms should not be identical.
-    Test testEquality2() {
+    testEquality2() {
         
         ContactForm formA = ContactForm #new
             #person(#getPerson)
@@ -56,22 +56,22 @@ class ContactFormTest {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        ^ Assert #that(formA != formB)
+        #assertThat(formA != formB)
     }
 
     // Form should be equivalent to itself.
-    Test testEquivalence1() {
+    testEquivalence1() {
         
         ContactForm form = ContactForm #new
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        ^ Assert #that(form ~~ form)
+        #assertThat(form ~~ form)
     }
 
     // Forms with equivalent persons and matching data should be equivalent.
-    Test testEquivalence2() {
+    testEquivalence2() {
         
         ContactForm formA = ContactForm #new
             #person(#getPerson)
@@ -83,11 +83,11 @@ class ContactFormTest {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        ^ Assert #that(formA ~~ formB)
+        #assertThat(formA ~~ formB)
     }
     
     // Forms with different data should not be equivalent.
-    Test testEquivalence3() {
+    testEquivalence3() {
 
         ContactForm formA = ContactForm #new
             #person(#getPerson)
@@ -99,7 +99,7 @@ class ContactFormTest {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description B");
-        ^ Assert #that(formA !~ formB)
+        #assertThat(formA !~ formB)
     }
 
     #> Person getPerson() {

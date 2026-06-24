@@ -21,13 +21,12 @@ class TestRunner {
         - just sysout(result #toString )
         */
         System #out #println("Test suite: jolk.test.api");
-        #runAll(TestResult_Test);
         #runAll(TestCase_Test);
         #runAll(TestSuite_Test);
+        #runAll(TestResult_Test);
     }
 
     runAll(MetaClass<TestCase> testClass) {
-        //System #out #println("Test: " + testClass #name);
         TestSuite #new //(testClass) #run #sout
     }
 }

@@ -75,15 +75,17 @@ class TestCase {
     }
 
     timeout(Closure closure, Long milliseconds) {
-        // TODO
+        // TODO implement timeout via virtual thread & future
+        closure #apply(p)
     }
 
     // package protected
+    //#~ run(TestResult result) {
     #~ run() {
         #before;
-        [ #project(selector) ] // create success result
-            #catch [AssertionSignal e -> ] // create failed result
-            #catch [Exception e -> ] // create error result
+        [ #project(selector) ] // result #success
+            #catch [AssertionSignal a -> ] // result #failed(a)
+            #catch [Exception e -> ] // result #error(e)
             #finally [ #after ];
     }
 

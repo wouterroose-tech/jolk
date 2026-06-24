@@ -33,14 +33,16 @@ public abstract class JolkTestBase {
         err = new ByteArrayOutputStream();
         engine = getEngine().build();
         context = getContext().build();
-        getJolkClass("/test/api/TestCase.jolk");
-        getJolkClass("/test/api/AssertionSignal.jolk");
-        getJolkClass("/test/api/DisabledSignal.jolk");
-        getJolkClass("/test/api/TimeoutSignal.jolk");
+        load("/test/api/TestCase.jolk");
+        load("/test/api/TestSuite.jolk");
+        load("/test/api/TestResult.jolk");
+        load("/test/api/AssertionSignal.jolk");
+        load("/test/api/DisabledSignal.jolk");
+        load("/test/api/TimeoutSignal.jolk");
     }
 
     public void setUp(String path) {
-        testInstance = getJolkClass(path).invokeMember("new");
+        testInstance = load(path).invokeMember("new");
     }
 
     protected Engine.Builder getEngine() {
@@ -100,10 +102,10 @@ public abstract class JolkTestBase {
         }
     }
 
-    /// ### getJolkClass
+    /// ### load
     ///
     /// Helper method to load the class from the Jolk source file for testing purposes.
-    protected Value getJolkClass(String path) {
+    protected Value load(String path) {
         String source = readResource(path);
         return eval(source);
     }

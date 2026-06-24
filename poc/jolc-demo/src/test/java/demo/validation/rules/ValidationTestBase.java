@@ -21,34 +21,34 @@ public abstract class ValidationTestBase extends JolkTestBase {
 
     private void loadValidationEngine() {
         // load engine
-        getJolkClass("/demo/validation/engine/Level.jolk");
-        getJolkClass("/demo/validation/engine/Issue.jolk");
-        getJolkClass("/demo/validation/engine/Interrupt.jolk");
-        getJolkClass("/demo/validation/engine/ExecutionContext.jolk");
-        getJolkClass("/demo/validation/engine/Node.jolk");
-        getJolkClass("/demo/validation/engine/ChildValidation.jolk");
-        getJolkClass("/demo/validation/engine/ChildrenValidation.jolk");
-        getJolkClass("/demo/validation/engine/Validation.jolk");
-        getJolkClass("/demo/validation/engine/Constraint.jolk");
-        getJolkClass("/demo/validation/engine/ValidationSuite.jolk");
+        load("/demo/validation/engine/Level.jolk");
+        load("/demo/validation/engine/Issue.jolk");
+        load("/demo/validation/engine/Interrupt.jolk");
+        load("/demo/validation/engine/ExecutionContext.jolk");
+        load("/demo/validation/engine/Node.jolk");
+        load("/demo/validation/engine/ChildValidation.jolk");
+        load("/demo/validation/engine/ChildrenValidation.jolk");
+        load("/demo/validation/engine/Validation.jolk");
+        load("/demo/validation/engine/Constraint.jolk");
+        load("/demo/validation/engine/ValidationSuite.jolk");
     }
 
     private Value loadPersonClass() {
-        return getJolkClass("/demo/validation/domain/Person.jolk");
+        return load("/demo/validation/domain/Person.jolk");
     }
 
     private Value loadContactFormClass() {
-        return getJolkClass("/demo/validation/domain/ContactForm.jolk");
+        return load("/demo/validation/domain/ContactForm.jolk");
     }
 
     private Value loadValidationSuite() {
         // load services
-        getJolkClass("/demo/validation/services/City.jolk");
-        getJolkClass("/demo/validation/services/GeoGraphicalService.jolk");
+        load("/demo/validation/services/City.jolk");
+        load("/demo/validation/services/GeoGraphicalService.jolk");
         // load rules
-        getJolkClass("/demo/validation/rules/SsnConstraint.jolk");
-        getJolkClass("/demo/validation/rules/ZipConstraint.jolk");
-        return getJolkClass("/demo/validation/rules/ContactFormValidation.jolk");
+        load("/demo/validation/rules/SsnConstraint.jolk");
+        load("/demo/validation/rules/ZipConstraint.jolk");
+        return load("/demo/validation/rules/ContactFormValidation.jolk");
     }
 
 }

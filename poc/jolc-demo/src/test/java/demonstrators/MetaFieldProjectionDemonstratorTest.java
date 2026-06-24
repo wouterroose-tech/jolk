@@ -14,7 +14,7 @@ import util.JolkTestBase;
 public class MetaFieldProjectionDemonstratorTest extends JolkTestBase {
 
     private Value getDemonstrator() {
-        Value demonstrator = getJolkClass("/demonstrators/MetaFieldProjectionDemonstrator.jolk");
+        Value demonstrator = load("/demonstrators/MetaFieldProjectionDemonstrator.jolk");
         return demonstrator.invokeMember("new");
     }
 

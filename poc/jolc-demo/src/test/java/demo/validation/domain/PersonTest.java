@@ -57,6 +57,6 @@ public class PersonTest extends JolkTestBase {
     }
 
     private Value getPersonClass() {
-        return getJolkClass("/demo/validation/domain/Person.jolk");
+        return load("/demo/validation/domain/Person.jolk");
     }
 }

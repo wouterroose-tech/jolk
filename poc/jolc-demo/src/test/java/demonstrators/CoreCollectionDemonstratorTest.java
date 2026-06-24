@@ -15,7 +15,7 @@ import util.JolkTestBase;
 public class CoreCollectionDemonstratorTest extends JolkTestBase {
 
     private Value getDemonstrator() {
-        Value demonstrator = getJolkClass("/demonstrators/CoreCollectionDemonstrator.jolk");
+        Value demonstrator = load("/demonstrators/CoreCollectionDemonstrator.jolk");
         return demonstrator.invokeMember("new");
     }
 

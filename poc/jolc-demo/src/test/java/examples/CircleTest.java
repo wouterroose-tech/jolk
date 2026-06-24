@@ -15,7 +15,7 @@ public class CircleTest  extends JolkTestBase {
     @BeforeEach
     public void setUp() {
         super.setUp();
-        getJolkClass("/examples/Circle.jolk");
+        load("/examples/Circle.jolk");
         super.setUp("/examples/CircleTest.jolk");
     }
 

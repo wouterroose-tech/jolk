@@ -12,8 +12,8 @@ import util.JolkTestBase;
 public class ArchetypeClassDemonstratorTest extends JolkTestBase {
 
     private Value getDemonstrator() {
-        getJolkClass("/demo/validation/domain/Person.jolk");
-        Value demonstrator = getJolkClass("/demonstrators/ArchetypeClassDemonstrator.jolk");
+        load("/demo/validation/domain/Person.jolk");
+        Value demonstrator = load("/demonstrators/ArchetypeClassDemonstrator.jolk");
         return demonstrator.invokeMember("new");
     }
 

@@ -1,9 +1,6 @@
 ~ jolk.test.api;
 
-+ jolk.test.api.TestCase;
-& jolk.test.api.Test.assertTrue;
-
-/// # JolkUnitTest
+/// # TestCase_Test
 ///
 /// Demonstrator for the Jolk fluid Test Protocol.
 ///

@@ -1,0 +1,33 @@
+~ jolk.test;
+
++ java.lang.System;
+
++ jolk.test.api.TestCase_Test;
++ jolk.test.api.TestSuite_Test;
++ jolk.test.api.TestResult_Test;
+
+/// # TestRunner
+///
+/// Simulates the JolkTestEngine.
+///
+/// @author Wouter Roose
+///
+class TestRunner {
+
+    run() {
+        /*
+        - create a suitefor each testclass (flat list per class)
+        - run the tests & collect results
+        - just sysout(result #toString )
+        */
+        System #out #println("Test suite: jolk.test.api");
+        #runAll(TestResult_Test);
+        #runAll(TestCase_Test);
+        #runAll(TestSuite_Test);
+    }
+
+    runAll(MetaClass<TestCase> testClass) {
+        //System #out #println("Test: " + testClass #name);
+        TestSuite #new //(testClass) #run #sout
+    }
+}

@@ -1,0 +1,8 @@
+~ jolk.test.api;
+
+/// # TestResult
+///
+/// @author Wouter Roose
+///
+class TestResult {
+}

@@ -1,0 +1,10 @@
+~ jolk.test.api;
+
+/// # TestResult_Test
+///
+/// TODO
+///
+/// @author Wouter Roose
+///
+class TestResult_Test extends TestCase {
+}

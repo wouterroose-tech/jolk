@@ -16,8 +16,8 @@ import util.JolkTestBase;
 public class ArchetypeEnumDemonstratorTest extends JolkTestBase {
 
     private Value getDemonstrator() {
-        getJolkClass("/demo/validation/engine/Level.jolk");
-        Value demonstrator = getJolkClass("/demonstrators/ArchetypeEnumDemonstrator.jolk");
+        load("/demo/validation/engine/Level.jolk");
+        Value demonstrator = load("/demonstrators/ArchetypeEnumDemonstrator.jolk");
         return demonstrator.invokeMember("new");
     }
 

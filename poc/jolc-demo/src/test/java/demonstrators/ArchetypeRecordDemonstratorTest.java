@@ -12,9 +12,9 @@ import util.JolkTestBase;
 public class ArchetypeRecordDemonstratorTest extends JolkTestBase {
 
     private Value getDemonstrator() {
-        getJolkClass("/demo/validation/engine/Level.jolk");
-        getJolkClass("/demo/validation/engine/Issue.jolk");
-        Value demonstrator = getJolkClass("/demonstrators/ArchetypeRecordDemonstrator.jolk");
+        load("/demo/validation/engine/Level.jolk");
+        load("/demo/validation/engine/Issue.jolk");
+        Value demonstrator = load("/demonstrators/ArchetypeRecordDemonstrator.jolk");
         return demonstrator.invokeMember("new");
     }
 

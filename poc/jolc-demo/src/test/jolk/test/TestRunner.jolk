@@ -27,6 +27,7 @@ class TestRunner {
     }
 
     runAll(MetaClass<TestCase> testClass) {
+        System #out #println("Test: " + testClass #name);
         TestSuite #new //(testClass) #run #sout
     }
 }

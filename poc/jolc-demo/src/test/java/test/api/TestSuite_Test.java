@@ -1,4 +1,4 @@
-package jolk.test.api;
+package test.api;
 
 import util.JolkTestBase;
 

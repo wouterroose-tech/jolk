@@ -7,14 +7,14 @@ import org.graalvm.polyglot.Value;
 
 import util.JolkTestBase;
 
-public class TestJolkUnitApi extends JolkTestBase {
+public class TestCase_Test extends JolkTestBase {
     
     protected Value test;
 
     @BeforeEach
     public void setUp() {
         super.setUp();
-        super.setUp("/test/api/JolkUnitTest.jolk");
+        super.setUp("/test/api/TestCase_Test.jolk");
     }
     
     @Test

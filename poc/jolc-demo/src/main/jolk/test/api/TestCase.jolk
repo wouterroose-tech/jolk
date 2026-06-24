@@ -22,7 +22,9 @@ class TestCase {
     
     meta constant DisabledSignal SKIP = DisabledSignal #new;
 
-    String name;
+    String selector;
+
+    String displayName;
     
     before() {} 
 
@@ -57,12 +59,13 @@ class TestCase {
     assertThrows(Closure closure, MetaClass<Throwable> expectedException) {
         [ closure #apply ]
             #catch [ t -> 
-                (t #class == expectedException) ? [ ^self ];
+                (t #class == expectedException) ? [ ^ self ];
                 #throw("Assertion Mismatch: Threw unexpected exception type") ];
         #throw("Assertion Mismatch: Expected exception was not thrown")
     }
 
     parameterized(Closure closure, Array parameters) {
+        // TODO collect results
         parameters #forEach [ p -> 
             #before;
             [ closure #apply(p) ]
@@ -73,6 +76,15 @@ class TestCase {
 
     timeout(Closure closure, Long milliseconds) {
         // TODO
+    }
+
+    // package protected
+    #~ run() {
+        #before;
+        [ #project(selector) ] // create success result
+            #catch [AssertionSignal e -> ] // create failed result
+            #catch [Exception e -> ] // create error result
+            #finally [ #after ];
     }
 
     #> throw(String message) {

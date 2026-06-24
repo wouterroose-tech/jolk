@@ -13,7 +13,7 @@
 ///
 /// @author Wouter Roose
 ///
-class JolkUnitTest extends TestCase {
+class TestCase_Test extends TestCase {
 
     testSuccess() {
         #success()

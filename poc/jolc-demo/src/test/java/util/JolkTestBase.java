@@ -33,10 +33,10 @@ public abstract class JolkTestBase {
         err = new ByteArrayOutputStream();
         engine = getEngine().build();
         context = getContext().build();
-        getJolkClass("/test/api/Test.jolk");
         getJolkClass("/test/api/TestCase.jolk");
         getJolkClass("/test/api/AssertionSignal.jolk");
         getJolkClass("/test/api/DisabledSignal.jolk");
+        getJolkClass("/test/api/TimeoutSignal.jolk");
     }
 
     public void setUp(String path) {

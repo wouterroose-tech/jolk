@@ -2,13 +2,13 @@
 
 + java.lang.IllegalArgumentException;
 
-+ jolk.test.api.Test;
++ jolk.test.api.TestCase;
 + jolk.test.api.Assert;
 
 ///
 /// @author Wouter Roose
 ///
-class CircleTest extends Test {
+class CircleTest extends TestCase {
 
     testNew() {
         Double radius = 5.0;

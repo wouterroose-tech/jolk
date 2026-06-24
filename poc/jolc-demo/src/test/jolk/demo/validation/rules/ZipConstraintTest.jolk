@@ -7,7 +7,7 @@
 + demo.validation.engine.Issue;
 + demo.validation.engine.Interrupt;
 
-+ jolk.test.api.Test;
++ jolk.test.api.TestCase;
 + jolk.test.api.Assert;
 
 /// # ZipConstraintTest
@@ -15,7 +15,7 @@
 /// Test suite for verifying the logic within [ZipConstraint].
 ///
 /// @author Wouter Roose
-class ZipConstraintTest extends Test {
+class ZipConstraintTest extends TestCase {
 
     /// Verifies that the #accept protocol succeeds for a valid Malines zip code.
     test_accept_success() {

@@ -3,7 +3,7 @@
 + demo.validation.engine.Issue;
 + demo.validation.engine.Level;
 
-+ jolk.test.api.Test;
++ jolk.test.api.TestCase;
 + jolk.test.api.Assert;
 
 /// # IssueTest
@@ -11,7 +11,7 @@
 /// Test suite for verifying the logic within [Issue].
 ///
 /// @author Wouter Roose
-class IssueTest extends Test {
+class IssueTest extends TestCase {
     
     /// Verifies that `getIssue` returns a valid issue template.
     test_getIssue() {

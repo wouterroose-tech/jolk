@@ -1,6 +1,6 @@
 ~ jolk.test.api;
 
-+ jolk.test.api.Test;
++ jolk.test.api.TestCase;
 & jolk.test.api.Test.assertTrue;
 
 /// # JolkUnitTest
@@ -13,7 +13,7 @@
 ///
 /// @author Wouter Roose
 ///
-class JolkUnitTest extends Test {
+class JolkUnitTest extends TestCase {
 
     testSuccess() {
         #success()
@@ -57,7 +57,7 @@ class JolkUnitTest extends Test {
     }
     
     #> testFailure(Closure test) {
-        test #catch [ AssertionException e -> ^ #success() ];
+        test #catch [ AssertionSignal e -> ^ #success() ];
         #fail
     }
 }

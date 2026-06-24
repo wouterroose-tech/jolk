@@ -1,4 +1,0 @@
-~ jolk.test.api;
-
-class TestDisabledSignal extends RuntimeException {
-}

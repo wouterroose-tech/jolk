@@ -1,6 +1,6 @@
 ~ jolk.test.api;
 
-/// # Test
+/// # TestCase
 ///
 /// A class serving as a Proof of Concept (POC) demonstrator 
 /// for the JolkUnit testing framework architecture.
@@ -18,7 +18,7 @@
 ///
 /// @author Wouter Roose
 ///
-class Test {
+class TestCase {
     
     meta constant DisabledSignal SKIP = DisabledSignal #new;
 

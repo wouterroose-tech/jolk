@@ -3,13 +3,13 @@
 + demo.validation.domain.Person;
 + demo.validation.domain.ContactForm;
 
-+ jolk.test.api.Test;
++ jolk.test.api.TestCase;
 + jolk.test.api.Assert;
 
 ///
 /// @author Wouter Roose
 
-class ContactFormTest extends Test {
+class ContactFormTest extends TestCase {
 
     testNew() {
         ^ Assert #that(ContactForm #new #isPresent)
@@ -27,9 +27,9 @@ class ContactFormTest extends Test {
                     && (f #email ~~ "john.doe@example.com")
                     && (f #zipCode == 12345)
                     && (f #description ~~ "Test description");
-                ^ Assert #success
                 ];
-        ^ Assert #fail
+            #ifEmpty [ #fail ]
+            #success
     }
 
     // Form should be identical to itself.
@@ -40,7 +40,7 @@ class ContactFormTest extends Test {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        ^ #assertThat(form == form)
+        #assertThat(form == form)
     }
 
     // Distinct forms should not be identical.

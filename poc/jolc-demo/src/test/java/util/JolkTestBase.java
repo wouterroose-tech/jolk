@@ -34,8 +34,9 @@ public abstract class JolkTestBase {
         engine = getEngine().build();
         context = getContext().build();
         getJolkClass("/test/api/Test.jolk");
-        getJolkClass("/test/api/AssertionException.jolk");
-        getJolkClass("/test/api/TestDisabledSignal.jolk");
+        getJolkClass("/test/api/TestCase.jolk");
+        getJolkClass("/test/api/AssertionSignal.jolk");
+        getJolkClass("/test/api/DisabledSignal.jolk");
     }
 
     public void setUp(String path) {

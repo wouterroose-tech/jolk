@@ -7,13 +7,13 @@
 + demo.validation.engine.ValidationSuite;
 + demo.validation.rules.ContactFormValidation;
 
-+ jolk.test.api.Test;
++ jolk.test.api.TestCase;
 + jolk.test.api.Assert;
 
 ///
 /// @author Wouter Roose
 
-class ContactFormValidationTest extends Test {
+class ContactFormValidationTest extends TestCase {
 
     /// Test case for validating a contact form with valid data
     test_ValidateContactForm_success() {

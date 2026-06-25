@@ -5,6 +5,7 @@
 + demo.validation.rules.ZipConstraint;
 + demo.validation.rules.ContactFormValidation;
 + demo.validation.engine.Issue;
++ demo.validation.engine.Level;
 + demo.validation.engine.Interrupt;
 
 + jolk.test.api.TestCase;
@@ -83,6 +84,6 @@ class ZipConstraintTest extends TestCase {
         ContactForm form = ContactForm #new #zipCode(2800);
 
         Issue issue = ZipConstraint #new #getIssue(form, context);
-        #assertThat(issue #isPresent  && issue #message == "ZIP_INVALID"  && issue #level #isError)
+        #assertThat(issue #isPresent && issue #message == "ZIP_INVALID" && issue #level #isError)
     }
 }

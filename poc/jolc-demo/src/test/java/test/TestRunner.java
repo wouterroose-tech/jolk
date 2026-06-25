@@ -7,6 +7,13 @@ import org.graalvm.polyglot.Value;
 
 import util.JolkTestBase;
 
+
+/// # TestRunner
+///
+/// run the jolk TestRunner, will be replaced by ...
+///
+/// @author Wouter Roose
+///
 public class TestRunner extends JolkTestBase {
     
     protected Value test;
@@ -17,7 +24,7 @@ public class TestRunner extends JolkTestBase {
         super.load("/test/api/TestCase_Test.jolk");
         super.load("/test/api/TestSuite_Test.jolk");
         super.load("/test/api/TestResult_Test.jolk");
-        super.setUp("/test/TestRunner.jolk");
+        super.setUp("/test/engine/TestRunner.jolk");
     }
     
     @Test

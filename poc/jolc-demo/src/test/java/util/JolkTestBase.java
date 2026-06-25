@@ -33,9 +33,11 @@ public abstract class JolkTestBase {
         err = new ByteArrayOutputStream();
         engine = getEngine().build();
         context = getContext().build();
+        load("/test/api/Test.jolk");
         load("/test/api/TestCase.jolk");
         load("/test/api/TestSuite.jolk");
         load("/test/api/TestResult.jolk");
+        load("/test/api/TestStatus.jolk");
         load("/test/api/AssertionSignal.jolk");
         load("/test/api/DisabledSignal.jolk");
         load("/test/api/TimeoutSignal.jolk");

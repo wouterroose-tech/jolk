@@ -2,9 +2,9 @@
 
 /// # TestCase_Test
 ///
-/// Demonstrator for the Jolk fluid Test Protocol.
+/// Demonstrator for the Jolk test protocol.
 ///
-/// This class showcases various testing patterns, including immediate assertions,
+/// This class showcases various testing patterns, including assertions,
 /// failure injection, success cases, parameterized tests, and assertions against
 /// specific conditions and values, all within Jolk's message-passing paradigm.
 ///
@@ -12,8 +12,11 @@
 ///
 class TestCase_Test extends TestCase {
 
+    // temporary until implementation MetaClass #instanceProtocol is finilized
+    meta List<String> instanceProtocol = #["testSuccess", "testFail", "testAssertThat_success"];
+
     testSuccess() {
-        #success()
+        #success();
     }
 
     testFail() {

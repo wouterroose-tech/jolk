@@ -221,6 +221,7 @@ public class JolkMetaProtocolTest extends JolcTestBase {
                 Long update(Long v) {
                     self #val(v);
                     ^ self #val }
+                Long noUpdate() { ^ 0 }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -229,6 +230,8 @@ public class JolkMetaProtocolTest extends JolcTestBase {
         // Jolk: selector = Target #message("update"); instance #project(selector, 100)
         Value result = instance.invokeMember("project", "update", 100L);
         assertEquals(100L, result.asLong());
+        result = instance.invokeMember("project", "noUpdate");
+        assertEquals(0L, result.asLong());
     }
 
 }

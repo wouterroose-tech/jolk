@@ -1,0 +1,13 @@
+~ jolk.test.api;
+
+/// # Test
+///
+/// TODO
+///
+/// @author Wouter Roose
+///
+class Test {
+
+    String name;
+    
+}

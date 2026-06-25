@@ -2,32 +2,43 @@
 
 + java.lang.System;
 
++ jolk.test.api.Test;
++ jolk.test.api.TestCase;
 + jolk.test.api.TestCase_Test;
++ jolk.test.api.TestSuite;
 + jolk.test.api.TestSuite_Test;
 + jolk.test.api.TestResult_Test;
++ examples.CircleTest;
 
 /// # TestRunner
 ///
-/// Simulates the JolkTestEngine.
+/// Simulates the JolkTestEngine for the JUnit test framework
 ///
 /// @author Wouter Roose
 ///
 class TestRunner {
 
     run() {
-        /*
-        - create a suitefor each testclass (flat list per class)
-        - run the tests & collect results
-        - just sysout(result #toString )
-        */
-        System #out #println("Test suite: jolk.test.api");
-        #runAll(TestCase_Test);
-        #runAll(TestSuite_Test);
-        #runAll(TestResult_Test);
+        // TODO 
+        // 1. collect testsuites
+        // 2. run tests, collect results
+        
+        System #out #println("Run Tests");
+        System #out #println(">   " + "jolk.test.api");
+        #runTestCase(TestCase_Test);
+        // TODO finalize implementation of MetaClass #instanceProtocol
+        // #runTestCase(TestSuite_Test);
+        // #runTestCase(TestResult_Test);
+        // #runTestCase(CircleTest);
     }
-
-    runAll(MetaClass<TestCase> testClass) {
-        System #out #println("Test: " + testClass #name);
-        TestSuite #new //(testClass) #run #sout
+    
+    runTestCase(MetaClass<TestCase> testClass) {
+        System #out #println(">>  " + testClass #name);
+        testClass
+            #instanceProtocol
+            #forEach[ s ->
+                TestResult result = testClass #new #selector(s) #run;
+                System #out #println(">>> " + s + " -> " + result #result);
+            ]
     }
 }

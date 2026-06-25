@@ -2065,17 +2065,25 @@ public abstract class JolkDispatchNode extends Node {
                 case "project" -> {
                     // DMS API / Protocol Projection: Implements mass-assignment or directed projection.
                     if (arguments.length == 1) {
-                        Object mapObj = arguments[0];
-                        InteropLibrary mapInterop = InteropLibrary.getUncached(mapObj);
+                        Object arg = arguments[0];
                         
-                        if (mapInterop.hasHashEntries(mapObj)) {
+                        if ( arg instanceof String || arg instanceof TruffleString) {
+                            // Selector-based projection: targetClass #project(selector)
+                            String selector = String.valueOf(arguments[0]);
+                            // Use Interop to perform the projected handshake
+                            return JolkNode.lift(interop.invokeMember(receiver, selector));
+                        }
+
+                        InteropLibrary mapInterop = InteropLibrary.getUncached(arg);
+                        
+                        if (mapInterop.hasHashEntries(arg)) {
                             try {
-                                Object keys = mapInterop.getHashKeysIterator(mapObj);
+                                Object keys = mapInterop.getHashKeysIterator(arg);
                                 InteropLibrary iterInterop = InteropLibrary.getUncached(keys);
                                 while (iterInterop.hasIteratorNextElement(keys)) {
                                     Object keyObj = iterInterop.getIteratorNextElement(keys);
                                     String key = String.valueOf(keyObj);
-                                    Object value = mapInterop.readHashValue(mapObj, keyObj);
+                                    Object value = mapInterop.readHashValue(arg, keyObj);
                                     
                                     try {
                                         // Use the receiver's interop to perform the projected handshake

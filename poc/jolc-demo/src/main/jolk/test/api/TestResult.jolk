@@ -1,5 +1,9 @@
 ~ jolk.test.api;
 
+& jolk.test.api.TestStatus.SUCCESS;
+& jolk.test.api.TestStatus.ERROR;
+& jolk.test.api.TestStatus.FAILURE;
+
 /// # TestResult
 ///
 /// TODO
@@ -7,4 +11,26 @@
 /// @author Wouter Roose
 ///
 class TestResult {
+
+    String result;
+
+    TestStatus status;
+
+    meta success(Exception e) {
+        ^ #new
+            #status(TestStatus #SUCCESS)
+            #result("success")
+    }
+
+    meta fault(Exception e) {
+        ^ #new
+            #status(TestStatus #FAULT)
+            #result("fault: " + e #getMessage)
+    }
+
+    meta failed(Exception e) {
+        ^ #new
+            #status(TestStatus #FAILURE)
+            #result("failure: " + e #getMessage)
+    }
 }

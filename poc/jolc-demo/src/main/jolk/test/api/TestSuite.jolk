@@ -2,7 +2,15 @@
 
 /// # TestSuite
 ///
+/// TODO
+///
 /// @author Wouter Roose
 ///
-class TestSuite {
+class TestSuite extends Test {
+
+    Map<String, Test> tests = #();
+
+    add(Test test) {
+        tests #put(test #name, test)
+    }
 }

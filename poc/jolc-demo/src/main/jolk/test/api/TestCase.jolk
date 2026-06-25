@@ -18,20 +18,16 @@
 ///
 /// @author Wouter Roose
 ///
-class TestCase {
-    
-    meta constant DisabledSignal SKIP = DisabledSignal #new;
+class TestCase extends Test {
 
     String selector;
-
-    String displayName;
     
     before() {} 
 
     after() {}
 
     disabled() {
-        #SKIP #throw
+        DisabledSignal #DISABLED #throw
     }
 
     disabled(Boolean condition) {
@@ -79,14 +75,16 @@ class TestCase {
         closure #apply(p)
     }
 
-    // package protected
-    //#~ run(TestResult result) {
-    #~ run() {
+    TestResult run() {
         #before;
-        [ #project(selector) ] // result #success
-            #catch [AssertionSignal a -> ] // result #failed(a)
-            #catch [Exception e -> ] // result #error(e)
+        [
+            #project(selector);
+            result ;
+        ]
+            #catch [AssertionSignal a -> TestResult #failed(a) ]
+            #catch [Exception e -> TestResult #fault(e)]
             #finally [ #after ];
+        ^ TestResult #success
     }
 
     #> throw(String message) {

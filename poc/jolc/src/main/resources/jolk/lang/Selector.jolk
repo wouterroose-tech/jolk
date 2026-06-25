@@ -12,9 +12,11 @@
 
 @Intrinsic
 package class Selector {
+
+    String name;
     
     /// The raw structural logic bound to this JoMoo
-    private java.util.function.Supplier<Object> logic;
+    java.util.function.Supplier<Object> logic;
 
     /// Executes the reified logic of this selector.
     ///

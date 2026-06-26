@@ -25,4 +25,8 @@ public class Person {
             ];
         ^ false
     }
+
+    Boolean !~(Object other) {
+        ^ !(self ~~ other)
+    }
 }

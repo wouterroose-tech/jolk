@@ -1,4 +1,6 @@
 ~ jolk.test.api;
 
++ java.lang.RuntimeException;
+
 class AssertionSignal extends RuntimeException {
 }

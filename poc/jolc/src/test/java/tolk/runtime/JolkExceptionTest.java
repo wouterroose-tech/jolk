@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 
@@ -21,7 +22,7 @@ public class JolkExceptionTest extends JolcTestBase {
         Value instance = eval(myClass).invokeMember("new");
         Value result = instance.invokeMember("interrupt");
         assertNotNull(result);
-        assertTrue(result.isHostObject(), "Result should be a host object, but was: " + result);
+        assertTrue(result.isHostObject());
         assertEquals(RuntimeException.class, result.asHostObject().getClass());
     }
 
@@ -29,15 +30,36 @@ public class JolkExceptionTest extends JolcTestBase {
     void testJolkExceptionExtension() {
         String myClass = """
             + java.lang.RuntimeException;
-            class MyClass { Long interrupt() { RuntimeException #new #throw } }
-            """;
+            class MyClass {
+                throw() {
+                    RuntimeException #new #throw
+                }
+                RuntimeException message(String message) {
+                    ^ RuntimeException #new(message)
+                } 
+            }""";
         
         Value instance = eval(myClass).invokeMember("new");
-        assertThrows(RuntimeException.class, () -> instance.invokeMember("interrupt"));
+        assertThrows(RuntimeException.class, () -> instance.invokeMember("throw"));
+        assertEquals("error", ((RuntimeException) instance.invokeMember("message", "error").asHostObject()).getMessage());
     }
     
     @Test
+    @Disabled("RuntimeException subclassing not functional ")
     void testJolkException() {
+        String interrupt = """
+            + java.lang.RuntimeException;
+            class Interrupt extends RuntimeException {
+                message() {
+                    ^ #getMessage 
+                }
+            }""";
+        Value instance = eval(interrupt).invokeMember("new");
+        assertEquals("test", instance.invokeMember("message").asString());
+    }
+
+    @Test
+    void testJThrowolkException() {
         String interrupt = """
             + java.lang.RuntimeException;
             class Interrupt extends RuntimeException {  }

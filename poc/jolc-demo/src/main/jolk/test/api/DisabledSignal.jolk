@@ -1,5 +1,7 @@
 ~ jolk.test.api;
 
++ java.lang.RuntimeException;
+
 class DisabledSignal extends RuntimeException {
 
     meta constant DisabledSignal DISABLED = DisabledSignal #new;

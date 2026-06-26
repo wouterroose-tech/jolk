@@ -1,5 +1,7 @@
 ~ jolk.test.api;
 
++ java.lang.RuntimeException;
+
 /// # TestCase
 ///
 /// A class serving as a Proof of Concept (POC) demonstrator 
@@ -38,7 +40,9 @@ class TestCase extends Test {
     after() {}
 
     disabled() {
-        DisabledSignal #DISABLED #throw
+        // RuntimeException subclassing not implemented
+        // DisabledSignal #DISABLED #throw
+        RuntimeException #new("DISABLED") #throw
     }
 
     disabled(Boolean condition) {
@@ -95,13 +99,20 @@ class TestCase extends Test {
             #project(selector);
             ^ TestResult #success
         ]
-            #catch [DisabledSignal d -> ^ TestResult #disabled ]
-            #catch [AssertionSignal a -> ^ TestResult #failed(a) ]
-            #catch [Exception e -> ^ TestResult #fault(e)]
+            #catch [e -> ^ #handle(e) ]
             #finally [ #after ];
     }
 
+    #> handle(RuntimeExecption e) {
+        // Exception type verified catch not yet implemented
+        (e #getMessage == "DISABLED") ? [ e ->  ^ TestResult #disabled ];
+        (e #getMessage == "FAILURE") ?  [ a -> ^ TestResult #failed(a) ];
+        ^ TestResult #fault(e)
+    }
+
     #> throw(String message) {
-        AssertionSignal #new(message) #throw
+        // RuntimeException subclassing not implemented
+        // AssertionSignal #new(message) #throw
+        RuntimeException #new(message) #throw
     }
 }

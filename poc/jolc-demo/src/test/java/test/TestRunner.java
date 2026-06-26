@@ -27,6 +27,7 @@ public class TestRunner extends JolkTestBase {
         
         
         super.load("demo/validation/domain/Person.jolk");
+        super.load("demo/validation/domain/PersonTest.jolk");
         super.load("demo/validation/domain/ContactForm.jolk");
         super.load("demo/validation/domain/ContactFormTest.jolk");
 

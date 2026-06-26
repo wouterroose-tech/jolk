@@ -46,6 +46,7 @@ import tolk.runtime.JolkObject;
 import tolk.runtime.JolkSelector;
 import tolk.runtime.JolkStringExtension;
 import tolk.runtime.JolkMatch;
+import tolk.runtime.JolkMemberNames;
 import tolk.runtime.JolkBooleanExtension;
 import tolk.runtime.JolkExceptionExtension;
 import tolk.runtime.JolkArrayExtension;
@@ -348,8 +349,15 @@ public abstract class JolkDispatchNode extends Node {
                     return JolkNode.lift(receiver.getMembers(true));
                 }
                 case "instanceProtocol" -> {
-                    if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
-                    return JolkNode.lift(receiver.getInstanceMemberNames());
+                    if (arguments.length != 0) {
+                        throw ArityException.create(0, 0, arguments.length);
+                    }
+                    JolkMemberNames memberNames = receiver.getInstanceMemberNames();
+                    List<String> selectorNames = new ArrayList<>();
+                    for (int i = 0; i < memberNames.getArraySize(); i++) {
+                        selectorNames.add(memberNames.readArrayElement(i));
+                    }
+                    return JolkNode.lift(selectorNames);
                 }
                 case "message" -> { // Dynamic Message Send API
                     if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);

@@ -20,6 +20,17 @@
 ///
 class TestCase extends Test {
 
+    meta List<String> testProtocol() {
+        // TODO in future releases protocol will return Selector
+        // -> filter public methods
+
+        // TODO replace with filter once implemented for ArrayExtension in the Jolk engine
+        // ^ #instanceProtocol #filter [ s -> s #startWith("test)")]
+        List<String> testProtocol = #[];
+        #instanceProtocol #forEach [ s -> s #startsWith("test") ? [ testProtocol #add(s)]];
+        ^ testProtocol
+    }
+
     String selector;
     
     before() {} 
@@ -44,8 +55,12 @@ class TestCase extends Test {
         condition ?! [ #throw("Assertion Mismatch: Expected True") ]
     }
 
+    assertSame(Object actual, Object expected) {
+        actual != expected ? [ #throw("Assertion Mismatch: Values not the same, Expected: " + expected + ", Actual: " + actual) ]
+    }
+
     assertEquals(Object actual, Object expected) {
-        actual !~ expected ? [ #throw("Assertion Mismatch: Values do not align, Expected: " + expected + ", Actual: " + actual) ]
+        actual !~ expected ? [ #throw("Assertion Mismatch: Values not equivalent, Expected: " + expected + ", Actual: " + actual) ]
     }
 
     assertIsPresent(Object target) {
@@ -64,9 +79,8 @@ class TestCase extends Test {
         // TODO collect results
         parameters #forEach [ p -> 
             #before;
-            [ closure #apply(p) ]
+            [ closure #apply(p) ] 
                 #finally [ #after ];
-            #success;
         ]
     }
 
@@ -79,12 +93,12 @@ class TestCase extends Test {
         #before;
         [
             #project(selector);
-            result ;
+            ^ TestResult #success
         ]
-            #catch [AssertionSignal a -> TestResult #failed(a) ]
-            #catch [Exception e -> TestResult #fault(e)]
+            #catch [DisabledSignal d -> ^ TestResult #disabled ]
+            #catch [AssertionSignal a -> ^ TestResult #failed(a) ]
+            #catch [Exception e -> ^ TestResult #fault(e)]
             #finally [ #after ];
-        ^ TestResult #success
     }
 
     #> throw(String message) {

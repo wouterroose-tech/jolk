@@ -24,6 +24,15 @@ public class TestRunner extends JolkTestBase {
         super.load("/test/api/TestCase_Test.jolk");
         super.load("/test/api/TestSuite_Test.jolk");
         super.load("/test/api/TestResult_Test.jolk");
+        
+        
+        super.load("demo/validation/domain/Person.jolk");
+        super.load("demo/validation/domain/ContactForm.jolk");
+        super.load("demo/validation/domain/ContactFormTest.jolk");
+
+        super.load("/examples/Circle.jolk");
+        super.load("/examples/CircleTest.jolk");
+
         super.setUp("/test/engine/TestRunner.jolk");
     }
     

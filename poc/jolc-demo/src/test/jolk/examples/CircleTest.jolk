@@ -1,5 +1,6 @@
-~ examples;
+~ jolk.examples;
 
++ examples.Circle;
 + java.lang.IllegalArgumentException;
 
 + jolk.test.api.TestCase;
@@ -11,13 +12,18 @@
 class CircleTest extends TestCase {
 
     testNew() {
-        Double radius = 5.0;
-        Circle circle = Circle #new(radius);
+        Double radious = 5.0;
+        Circle circle = Circle #new(5);
         #assertIsPresent(circle);
-        #assertEquals(radius, circle #radius)
+        #assertEquals(radious, circle #radius)
     }
 
-    testCircleArea() {
+    testDiameter() {
+        #disabled; // lazy fields are not yet supported
+        #assertEquals(10, circle #diameter)
+    }
+
+    testArea() {
         Double area = Circle #new(5) #area;
         #assertEquals(78.53981633974483 #asDouble, area);
     }

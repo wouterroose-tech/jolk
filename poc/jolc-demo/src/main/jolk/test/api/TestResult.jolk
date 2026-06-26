@@ -33,4 +33,10 @@ class TestResult {
             #status(TestStatus #FAILURE)
             #result("failure: " + e #getMessage)
     }
+
+    meta disabled(Exception e) {
+        ^ #new
+            #status(TestStatus #DISABLED)
+            #result("disabled")
+    }
 }

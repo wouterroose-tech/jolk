@@ -2,6 +2,9 @@ package tolk.runtime;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.object.DynamicObjectLibrary;
+
+import org.graalvm.polyglot.Value;
+
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.InvalidArrayIndexException;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -11,6 +14,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import tolk.JolcTestBase;
@@ -413,5 +417,24 @@ public class JolkMetaClassTest extends JolcTestBase {
         } finally {
             context.leave();
         }
+    }
+    
+    @Test
+    void testInstanceProtocol() {
+        String source = """
+            class ToTest {
+                String a() { ^ "a" } 
+                String b() { ^ "b" } 
+            }""";
+        eval(source);
+        source = """
+            class Test {
+                Boolean hasSelector(String selector) { 
+                    ^ ToTest #instanceProtocol #anyMatch [ s -> s ~~ selector];
+                } 
+            }""";
+        Value test = eval(source).invokeMember("new");
+        assertTrue(test.invokeMember("hasSelector", "a").asBoolean());
+        assertTrue(test.invokeMember("hasSelector", "b").asBoolean());
     }
 }

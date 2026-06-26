@@ -8,7 +8,8 @@
 + jolk.test.api.TestSuite;
 + jolk.test.api.TestSuite_Test;
 + jolk.test.api.TestResult_Test;
-+ examples.CircleTest;
++ jolk.demo.validation.domain.ContactFormTest;
++ jolk.examples.CircleTest;
 
 /// # TestRunner
 ///
@@ -21,24 +22,27 @@ class TestRunner {
     run() {
         // TODO 
         // 1. collect testsuites
-        // 2. run tests, collect results
+        // 2. run tests, sout result
         
-        System #out #println("Run Tests");
+        System #out #println("    Run All Tests");
+        System #out #println("    -------------");
         System #out #println(">   " + "jolk.test.api");
         #runTestCase(TestCase_Test);
-        // TODO finalize implementation of MetaClass #instanceProtocol
-        // #runTestCase(TestSuite_Test);
-        // #runTestCase(TestResult_Test);
-        // #runTestCase(CircleTest);
+        #runTestCase(TestSuite_Test);
+        #runTestCase(TestResult_Test);
+        System #out #println(">   " + "demo.validation.domain");
+        #runTestCase(ContactFormTest);
+        System #out #println(">   " + "examples");
+        #runTestCase(CircleTest);
     }
     
     runTestCase(MetaClass<TestCase> testClass) {
         System #out #println(">>  " + testClass #name);
         testClass
-            #instanceProtocol
+            #testProtocol
             #forEach[ s ->
                 TestResult result = testClass #new #selector(s) #run;
                 System #out #println(">>> " + s + " -> " + result #result);
-            ]
+            ];
     }
 }

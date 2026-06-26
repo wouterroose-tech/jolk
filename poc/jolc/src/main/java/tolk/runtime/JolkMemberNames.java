@@ -26,7 +26,7 @@ public final class JolkMemberNames implements TruffleObject {
     }
 
     @ExportMessage
-    public Object readArrayElement(long index) throws InvalidArrayIndexException {
+    public String readArrayElement(long index) throws InvalidArrayIndexException {
         if (index < 0 || index >= members.length) throw InvalidArrayIndexException.create(index);
         return members[(int) index];
     }

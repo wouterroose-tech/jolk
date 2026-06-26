@@ -18,6 +18,11 @@ public class TestCase_Test extends JolkTestBase {
     }
     
     @Test
+    public void testTestProtocol() {
+        test("testTestProtocol");
+    }
+    
+    @Test
     public void testSuccess() {
         test("testSuccess");
     }
@@ -35,6 +40,16 @@ public class TestCase_Test extends JolkTestBase {
     @Test
     public void testAssertThat_failure() {
         test("testAssertThat_failure");
+    }
+    
+    @Test
+    public void testAssertSame_success() {
+        test("testAssertSame_success");
+    }
+    
+    @Test
+    public void testAssertSame_failure() {
+        test("testAssertSame_failure");
     }
     
     @Test

@@ -2,6 +2,7 @@ package tolk.runtime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import com.oracle.truffle.api.CallTarget;
@@ -272,7 +273,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         String source = """
             class AnyMatchTest {
                 ArrayList<Long> elements = #[1, 2, 3];
-                Boolean run(Long x) { ^ self #elements #anyMatch [s -> s ~~ x] }          
+                Boolean run(Long x) { ^ self #elements #anyMatch [s -> s == x] }          
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -285,12 +286,26 @@ public class JolkArrayExtensionTest extends JolcTestBase {
         String source = """
             class FindFirstTest {
                 ArrayList<Long> elements = #[1, 2, 3];
-                Long run(Long x) { ^ self #elements #findFirst [s -> s ~~ x] }          
+                Long run(Long x) { ^ self #elements #findFirst [s -> s == x] }          
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         assertEquals(2, instance.invokeMember("run", 2).asLong()); 
         assertEquals("null", instance.invokeMember("run", 0).toString(), "Should return Nothing when match is not found"); 
+    }   
+
+    @Test
+    @Disabled
+    void testFilter() {
+        String source = """
+            class FindFirstTest {
+                ArrayList<Long> elements = #[1, 2, 3];
+                Boolean test(Long x) { ^ self #elements #filter [s -> s == x] #size == 1}          
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        assertTrue(instance.invokeMember("test", 2).asBoolean()); 
+        assertTrue(instance.invokeMember("test", 0).asBoolean()); 
     }   
 
     @Test

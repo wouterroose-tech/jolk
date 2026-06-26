@@ -1,4 +1,4 @@
-~ test.validation.rules;
+~ jolk.demo.validation.rules;
 
 + demo.validation.domain.ContactForm;
 + demo.validation.engine.ExecutionContext;
@@ -9,7 +9,6 @@
 + demo.validation.engine.Interrupt;
 
 + jolk.test.api.TestCase;
-+ jolk.test.api.Assert;
 
 /// # ZipConstraintTest
 ///
@@ -24,11 +23,13 @@ class ZipConstraintTest extends TestCase {
         // Create a ContactForm with a valid Malines zip code
         ContactForm form = ContactForm #new #zipCode(2800);
         ZipConstraint #new #accept(form, context);
-        #assertThat(!context #hasIssue)
+        
+        #assertThat(! (context #hasIssue))
     }
 
     /// Verifies that the #accept protocol generates an issue and interrupts for invalid data.
     test_accept_failure() {
+        //#disabled;
         ExecutionContext context = ExecutionContext #new;
         // Create a ContactForm with an invalid zip code
         ContactForm form = ContactForm #new #zipCode(9999);

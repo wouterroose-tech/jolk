@@ -4,7 +4,6 @@
 + java.lang.IllegalArgumentException;
 
 + jolk.test.api.TestCase;
-+ jolk.test.api.Assert;
 
 ///
 /// @author Wouter Roose

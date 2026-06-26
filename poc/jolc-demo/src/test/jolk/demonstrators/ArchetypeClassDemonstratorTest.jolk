@@ -1,0 +1,51 @@
+~ jolk.demonstrators;
+
++ demonstrators.ArchetypeClassDemonstrator;
+
++ jolk.test.api.TestCase;
+
+///
+/// @author Wouter Roose
+///
+final class ArchetypeClassDemonstratorTest extends TestCase {
+    
+    testBasicNew() {
+        Person p = ArchetypeClassDemonstrator #new #runBasicNew;
+        #assertIsPresent(p);
+        #assertThat(p != null);
+    }
+
+    Person runCanonicalNew() {
+        ^ Person #new(123456789, "John", "Doe")
+    }
+
+    String runFluid() {
+        ^ Person #new
+            #ssn(987654321)
+            #firstName("Jane")
+            #lastName("Doe")
+            #name
+    }
+
+    String runVariable() {
+        Person person = Person #new
+            #ssn(987654321)
+            #firstName("Jane")
+            #lastName("Doe");
+        ^ person #firstName
+    }
+
+    String runConstant() {
+        constant Person person = Person #new
+            #ssn(987654321)
+            #firstName("Jane")
+            #lastName("Doe");
+        ^ person #firstName
+    }
+
+    String runToString() {
+        Person person = Person #new(123456789, "John", "Doe");
+        ^ person #toString
+    }
+
+}

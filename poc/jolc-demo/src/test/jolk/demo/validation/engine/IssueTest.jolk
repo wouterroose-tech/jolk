@@ -1,20 +1,18 @@
-~ test.validation.rules;
+~ jolk.demo.validation.engine;
 
 + demo.validation.engine.Issue;
 + demo.validation.engine.Level;
 
 + jolk.test.api.TestCase;
-+ jolk.test.api.Assert;
 
 /// # IssueTest
 ///
-/// Test suite for verifying the logic within [Issue].
-///
 /// @author Wouter Roose
+///
 class IssueTest extends TestCase {
     
     /// Verifies that `getIssue` returns a valid issue template.
-    test_getIssue() {
+    testGetIssue() {
         Issue issue = Issue #new(null, "ZIP_INVALID", Level #ERROR);
         #assertThat(issue #message == "ZIP_INVALID" && issue #level #isError)
     }

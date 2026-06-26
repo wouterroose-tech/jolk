@@ -11,7 +11,11 @@ using java.util.function.Predicate;
 
 class ExecutionContext {
 
-    stable ArrayList<Issue> issues = #[];
+    ArrayList<Issue> issues;
+
+    meta new() {
+        ^super #new #issues(#[])
+    }
 
     /// Adds an issue for the given subject.
     Self add(Object subject, Issue issue) {

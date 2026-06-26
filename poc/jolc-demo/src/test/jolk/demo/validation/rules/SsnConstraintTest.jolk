@@ -1,4 +1,4 @@
-~ test.validation.rules;
+~ jolk.demo.validation.rules;
 
 + demo.validation.domain.ContactForm;
 + demo.validation.domain.Person;
@@ -9,7 +9,6 @@
 + demo.validation.engine.Interrupt;
 
 + jolk.test.api.TestCase;
-+ jolk.test.api.Assert;
 
 /// # SsnConstraintTest
 ///
@@ -23,7 +22,7 @@ class SsnConstraintTest extends TestCase {
         ExecutionContext context = ExecutionContext #new;
         Person person = Person #new #ssn(800101035);
         SsnConstraint #new #accept(person, context);
-        #assertThat(!context #hasIssue)
+        #assertThat(! (context #hasIssue))
     }
 
     /// Verifies that the `#accept` protocol generates an issue and interrupts for invalid data.

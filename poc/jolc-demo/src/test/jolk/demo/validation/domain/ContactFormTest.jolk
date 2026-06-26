@@ -4,7 +4,6 @@
 + demo.validation.domain.ContactForm;
 
 + jolk.test.api.TestCase;
-+ jolk.test.api.Assert;
 
 /// #ContactFormTest
 ///

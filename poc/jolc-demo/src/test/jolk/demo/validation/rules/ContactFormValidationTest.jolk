@@ -1,4 +1,4 @@
-~ test.validation.rules;
+~ jolk.demo.validation.rules;
 
 + demo.validation.domain.Person;
 + demo.validation.domain.ContactForm;
@@ -8,7 +8,6 @@
 + demo.validation.rules.ContactFormValidation;
 
 + jolk.test.api.TestCase;
-+ jolk.test.api.Assert;
 
 ///
 /// @author Wouter Roose

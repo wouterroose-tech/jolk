@@ -1,0 +1,22 @@
+~ jolk.demo.validation.engine;
+
++ demo.validation.engine.Level;
+
++ jolk.test.api.TestCase;
+
+/// # LevelTest
+///
+/// @author Wouter Roose
+///
+class LevelTest extends TestCase {
+    
+    testLevel() {
+        /*
+        Level level = Level.ERROR;
+        assertTrue(level.isError());
+        assertFalse(level.isWarning());
+        assertEquals("ERROR", level.name());
+        */
+    }
+
+}

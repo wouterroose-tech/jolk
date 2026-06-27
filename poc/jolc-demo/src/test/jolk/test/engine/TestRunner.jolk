@@ -13,9 +13,10 @@
 + jolk.demo.validation.domain.PersonTest;
 + jolk.demo.validation.domain.ContactFormTest;
 + jolk.demo.validation.engine.IssueTest;
-+ jolk.demo.validation.rules.ZipConstraintTest;
-+ jolk.demo.validation.rules.SsnConstraintTest;
++ jolk.demo.validation.engine.LevelTest;
 + jolk.demo.validation.rules.ContactFormValidationTest;
++ jolk.demo.validation.rules.SsnConstraintTest;
++ jolk.demo.validation.rules.ZipConstraintTest;
 
 /// # TestRunner
 ///
@@ -38,11 +39,14 @@ class TestRunner {
         #runTestCase(CircleTest);
         System #out #println(">   " + "demonstrators");
         #runTestCase(ArchetypeClassDemonstratorTest);
+        // add more demonstrators
         System #out #println(">   " + "demo.validation.domain");
         #runTestCase(PersonTest);
         #runTestCase(ContactFormTest);
         System #out #println(">   " + "demo.validation.engine");
+        #runTestCase(LevelTest);
         #runTestCase(IssueTest);
+        // add tests for each engine class
         System #out #println(">   " + "demo.validation.rules");
         #runTestCase(ZipConstraintTest);
         #runTestCase(SsnConstraintTest);

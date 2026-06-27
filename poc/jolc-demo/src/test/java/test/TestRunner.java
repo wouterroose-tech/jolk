@@ -47,6 +47,7 @@ public class TestRunner extends JolkTestBase {
         load("/demo/validation/domain/ContactFormTest.jolk");
         // validation engine
         load("/demo/validation/engine/Level.jolk");
+        load("/demo/validation/engine/LevelTest.jolk");
         load("/demo/validation/engine/Issue.jolk");
         load("/demo/validation/engine/IssueTest.jolk");
         load("/demo/validation/engine/Interrupt.jolk");

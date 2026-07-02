@@ -15,37 +15,31 @@ final class ArchetypeClassDemonstratorTest extends TestCase {
         #assertThat(p != null);
     }
 
-    Person runCanonicalNew() {
-        ^ Person #new(123456789, "John", "Doe")
+    testRunCanonicalNew() {
+        Person p = ArchetypeClassDemonstrator #new #runCanonicalNew;
+        #assertEquals(123456789, p #ssn);
+        #assertEquals("John", p #firstName);
+        #assertEquals("Doe", p #lastName);
     }
 
-    String runFluid() {
-        ^ Person #new
-            #ssn(987654321)
-            #firstName("Jane")
-            #lastName("Doe")
-            #name
+    testRunFluid() {
+        String s = ArchetypeClassDemonstrator #new #runFluid;
+        #assertEquals("Jane Doe", s);
     }
 
-    String runVariable() {
-        Person person = Person #new
-            #ssn(987654321)
-            #firstName("Jane")
-            #lastName("Doe");
-        ^ person #firstName
+    testRunVariable() {
+        String s = ArchetypeClassDemonstrator #new #runVariable;
+        #assertEquals("Jane", s);
     }
-
-    String runConstant() {
-        constant Person person = Person #new
-            #ssn(987654321)
-            #firstName("Jane")
-            #lastName("Doe");
-        ^ person #firstName
+    
+    testRunConstant() {
+        String s = ArchetypeClassDemonstrator #new #runConstant;
+        #assertEquals("Jane", s);
     }
-
-    String runToString() {
-        Person person = Person #new(123456789, "John", "Doe");
-        ^ person #toString
+    
+    testRunToString() {
+        String s = ArchetypeClassDemonstrator #new #runToString;
+        #assertEquals("Person[ssn=123456789, firstName=John, lastName=Doe]", s);
     }
 
 }

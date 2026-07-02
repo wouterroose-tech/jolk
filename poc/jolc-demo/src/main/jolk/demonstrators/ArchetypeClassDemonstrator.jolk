@@ -47,8 +47,7 @@ final class ArchetypeClassDemonstrator {
     }
 
     String runToString() {
-        Person person = Person #new(123456789, "John", "Doe");
-        ^ person #toString
+        ^ Person #new(123456789, "John", "Doe") #toString
     }
 
 }

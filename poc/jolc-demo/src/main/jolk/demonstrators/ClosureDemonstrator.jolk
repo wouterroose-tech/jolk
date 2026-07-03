@@ -1,6 +1,6 @@
-package demonstrators;
+~ demonstrators;
 
-using jolk.lang.Array;
++ jolk.lang.Array;
 
 /// # ClosureDemonstrator
 ///

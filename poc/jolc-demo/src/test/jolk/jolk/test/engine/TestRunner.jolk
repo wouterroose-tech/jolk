@@ -8,6 +8,7 @@
 + jolk.test.api.TestSuite_Test;
 + jolk.test.api.TestResult_Test;
 + examples.CircleTest;
++ examples.ComplexTest;
 + demonstrators.ArchetypeClassDemonstratorTest;
 + demonstrators.ArchetypeEnumDemonstratorTest;
 + demonstrators.ArchetypeRecordDemonstratorTest;
@@ -39,7 +40,7 @@ class TestRunner {
         #runTestCase(TestResult_Test);
         System #out #println(">   " + "examples");
         #runTestCase(CircleTest);
-        //#runTestCase(ComplexTest);
+        #runTestCase(ComplexTest);
         System #out #println(">   " + "demonstrators");
         #runTestCase(ArchetypeClassDemonstratorTest);
         #runTestCase(ArchetypeEnumDemonstratorTest);

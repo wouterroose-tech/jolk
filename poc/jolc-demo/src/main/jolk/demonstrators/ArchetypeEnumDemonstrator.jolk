@@ -1,6 +1,6 @@
-package demonstrators;
+~ demonstrators;
 
-using demo.validation.engine.Level;
++ demo.validation.engine.Level;
 
 /// # ArchetypeEnumDemonstrator
 ///

@@ -107,23 +107,28 @@ public class TestRunner  {
         context = getContext().build();
 
         // test framework
-        load("/test/api/Test.jolk");
-        load("/test/api/TestCase.jolk");
-        load("/test/api/TestSuite.jolk");
-        load("/test/api/TestResult.jolk");
-        load("/test/api/TestStatus.jolk");
-        load("/test/api/AssertionSignal.jolk");
-        load("/test/api/DisabledSignal.jolk");
-        load("/test/api/TimeoutSignal.jolk");
-        load("/test/api/TestCase_Test.jolk");
-        load("/test/api/TestSuite_Test.jolk");
-        load("/test/api/TestResult_Test.jolk");
+        load("/jolk/test/api/Test.jolk");
+        load("/jolk/test/api/TestCase.jolk");
+        load("/jolk/test/api/TestSuite.jolk");
+        load("/jolk/test/api/TestResult.jolk");
+        load("/jolk/test/api/TestStatus.jolk");
+        load("/jolk/test/api/AssertionSignal.jolk");
+        load("/jolk/test/api/DisabledSignal.jolk");
+        load("/jolk/test/api/TimeoutSignal.jolk");
+        load("/jolk/test/api/TestCase_Test.jolk");
+        load("/jolk/test/api/TestSuite_Test.jolk");
+        load("/jolk/test/api/TestResult_Test.jolk");
         // examples
         load("/examples/Circle.jolk");
         load("/examples/CircleTest.jolk");
         // demonstrators
         load("/demonstrators/ArchetypeClassDemonstrator.jolk");
         load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeEnumDemonstrator.jolk");
+        load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
+        load("/demonstrators/ClosureDemonstrator.jolk");
+        load("/demonstrators/ClosureDemonstratorTest.jolk");
+        
         // domain
         load("/demo/validation/domain/Person.jolk");
         load("/demo/validation/domain/PersonTest.jolk");
@@ -156,7 +161,7 @@ public class TestRunner  {
     
     @Test
     public void testRun() {
-        Value runner = load("/test/engine/TestRunner.jolk").invokeMember("new");
+        Value runner = load("/jolk/test/engine/TestRunner.jolk").invokeMember("new");
         runner.invokeMember("run");
     }
 

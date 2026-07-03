@@ -1,7 +1,4 @@
-~ jolk.demo.validation.engine;
-
-+ demo.validation.engine.Issue;
-+ demo.validation.engine.Level;
+~ demo.validation.engine;
 
 + jolk.test.api.TestCase;
 

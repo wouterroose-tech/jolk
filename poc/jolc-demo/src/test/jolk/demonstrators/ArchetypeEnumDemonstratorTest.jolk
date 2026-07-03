@@ -1,0 +1,33 @@
+~ demonstrators;
+
++ jolk.test.api.TestCase;
+
+///
+/// @author Wouter Roose
+///
+public class ArchetypeEnumDemonstratorTest extends TestCase {
+    
+    testRunAccessConstant() {
+        Level level = ArchetypeEnumDemonstrator #new #runAccessConstant;
+        #assertIsPresent(level);
+        #assertThat(level #isPresent);
+        #assertEquals("ERROR", level #name);
+    }
+
+    testRunName() {
+        #assertEquals("ERROR", ArchetypeEnumDemonstrator #new #runName);
+    }
+
+    testRunVariable() {
+        #assertEquals("WARNING", ArchetypeEnumDemonstrator #new #runVariable);
+    }
+
+    testRunConstant() {
+        #assertEquals("INFO", ArchetypeEnumDemonstrator #new #runConstant);
+    }
+
+    testRunToString() {
+        #assertEquals("ERROR", ArchetypeEnumDemonstrator #new #runToString);
+    }
+
+}

@@ -1,22 +1,23 @@
 ~ jolk.test;
 
 + java.lang.System;
-
 + jolk.test.api.Test;
 + jolk.test.api.TestCase;
 + jolk.test.api.TestCase_Test;
 + jolk.test.api.TestSuite;
 + jolk.test.api.TestSuite_Test;
 + jolk.test.api.TestResult_Test;
-+ jolk.examples.CircleTest;
-+ jolk.demonstrators.ArchetypeClassDemonstratorTest;
-+ jolk.demo.validation.domain.PersonTest;
-+ jolk.demo.validation.domain.ContactFormTest;
-+ jolk.demo.validation.engine.IssueTest;
-+ jolk.demo.validation.engine.LevelTest;
-+ jolk.demo.validation.rules.ContactFormValidationTest;
-+ jolk.demo.validation.rules.SsnConstraintTest;
-+ jolk.demo.validation.rules.ZipConstraintTest;
++ examples.CircleTest;
++ demonstrators.ArchetypeClassDemonstratorTest;
++ demonstrators.ArchetypeEnumDemonstratorTest;
++ demonstrators.ClosureDemonstratorTest;
++ demo.validation.domain.PersonTest;
++ demo.validation.domain.ContactFormTest;
++ demo.validation.engine.IssueTest;
++ demo.validation.engine.LevelTest;
++ demo.validation.rules.ContactFormValidationTest;
++ demo.validation.rules.SsnConstraintTest;
++ demo.validation.rules.ZipConstraintTest;
 
 /// # TestRunner
 ///
@@ -39,6 +40,8 @@ class TestRunner {
         #runTestCase(CircleTest);
         System #out #println(">   " + "demonstrators");
         #runTestCase(ArchetypeClassDemonstratorTest);
+        #runTestCase(ArchetypeEnumDemonstratorTest);
+        #runTestCase(ClosureDemonstratorTest);
         // add more demonstrators
         System #out #println(">   " + "demo.validation.domain");
         #runTestCase(PersonTest);

@@ -1,10 +1,8 @@
-~ jolk.demo.validation.rules;
+~ demo.validation.rules;
 
 + demo.validation.domain.ContactForm;
 + demo.validation.domain.Person;
 + demo.validation.engine.ExecutionContext;
-+ demo.validation.rules.SsnConstraint;
-+ demo.validation.rules.ContactFormValidation;
 + demo.validation.engine.Issue;
 + demo.validation.engine.Interrupt;
 

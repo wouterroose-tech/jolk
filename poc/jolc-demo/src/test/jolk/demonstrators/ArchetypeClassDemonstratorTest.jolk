@@ -1,6 +1,4 @@
-~ jolk.demonstrators;
-
-+ demonstrators.ArchetypeClassDemonstrator;
+~ demonstrators;
 
 + jolk.test.api.TestCase;
 

@@ -1,11 +1,10 @@
-~ jolk.demo.validation.rules;
+~ demo.validation.rules;
 
 + demo.validation.domain.Person;
 + demo.validation.domain.ContactForm;
 + demo.validation.engine.Interrupt;
 + demo.validation.engine.ExecutionContext;
 + demo.validation.engine.ValidationSuite;
-+ demo.validation.rules.ContactFormValidation;
 
 + jolk.test.api.TestCase;
 

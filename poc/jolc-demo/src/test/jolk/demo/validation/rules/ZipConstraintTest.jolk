@@ -1,9 +1,7 @@
-~ jolk.demo.validation.rules;
+~ demo.validation.rules;
 
 + demo.validation.domain.ContactForm;
 + demo.validation.engine.ExecutionContext;
-+ demo.validation.rules.ZipConstraint;
-+ demo.validation.rules.ContactFormValidation;
 + demo.validation.engine.Issue;
 + demo.validation.engine.Level;
 + demo.validation.engine.Interrupt;

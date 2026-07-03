@@ -1,8 +1,6 @@
-~ jolk.examples;
+~ examples;
 
-+ examples.Circle;
 + java.lang.IllegalArgumentException;
-
 + jolk.test.api.TestCase;
 
 ///

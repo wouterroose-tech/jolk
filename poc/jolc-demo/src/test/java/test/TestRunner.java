@@ -121,11 +121,15 @@ public class TestRunner  {
         // examples
         load("/examples/Circle.jolk");
         load("/examples/CircleTest.jolk");
+        load("/examples/Complex.jolk");
+        load("/examples/ComplexTest.jolk");
         // demonstrators
         load("/demonstrators/ArchetypeClassDemonstrator.jolk");
         load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
         load("/demonstrators/ArchetypeEnumDemonstrator.jolk");
         load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeRecordDemonstrator.jolk");
+        load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
         load("/demonstrators/ClosureDemonstrator.jolk");
         load("/demonstrators/ClosureDemonstratorTest.jolk");
         

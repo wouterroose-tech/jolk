@@ -1,0 +1,38 @@
+~ demonstrators;
+
++ demo.validation.engine.Issue;
++ demo.validation.engine.Level;
++ jolk.test.api.TestCase;
+
+///
+/// @author Wouter Roose
+///
+public class ArchetypeRecordDemonstratorTest extends TestCase {
+
+    ArchetypeRecordDemonstrator demonstrator = ArchetypeRecordDemonstrator #new;
+
+    testRunCanonicalNew() {
+        Issue issue = demonstrator #runCanonicalNew;
+        #assertIsPresent(issue);
+        #assertThat(issue #isPresent);
+        #assertEquals("Identity", issue #subject);
+        #assertEquals("Validation failed", issue #message);
+        #assertEquals(Level #ERROR, issue #level);
+    }
+
+    testRunAccessors() {
+        #assertEquals("Message Content", demonstrator #runAccessors);
+    }
+
+    testRunVariable() {
+        #assertEquals("Variable Test", demonstrator #runVariable);
+    }
+
+    testRunConstant() {
+        #assertEquals("Constant Test", demonstrator #runConstant);
+    }
+
+    testRunToString() {
+        #assertEquals("Issue[subject=Target, message=String representation, level=INFO]", demonstrator #runToString);
+    }
+}

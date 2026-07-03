@@ -1,6 +1,6 @@
-package demonstrators;
+~ demonstrators;
 
-using demo.validation.domain.Person;
++ demo.validation.domain.Person;
 
 /// Demonstrates various Jolk archetype features using the `Person` class.
 ///

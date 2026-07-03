@@ -1,7 +1,7 @@
-package demonstrators;
+~ demonstrators;
 
-using demo.validation.engine.Issue;
-using demo.validation.engine.Level;
++ demo.validation.engine.Issue;
++ demo.validation.engine.Level;
 
 /// Demonstrates various Jolk archetype features using the `Issue` record.
 ///

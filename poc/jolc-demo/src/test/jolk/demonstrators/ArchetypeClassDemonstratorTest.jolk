@@ -1,42 +1,45 @@
 ~ demonstrators;
 
++ demo.validation.domain.Person;
 + jolk.test.api.TestCase;
 
 ///
 /// @author Wouter Roose
 ///
 final class ArchetypeClassDemonstratorTest extends TestCase {
+
+    ArchetypeClassDemonstrator demonstrator = ArchetypeClassDemonstrator #new;
     
     testBasicNew() {
-        Person p = ArchetypeClassDemonstrator #new #runBasicNew;
+        Person p = demonstrator #runBasicNew;
         #assertIsPresent(p);
         #assertThat(p != null);
     }
 
     testRunCanonicalNew() {
-        Person p = ArchetypeClassDemonstrator #new #runCanonicalNew;
+        Person p = demonstrator #runCanonicalNew;
         #assertEquals(123456789, p #ssn);
         #assertEquals("John", p #firstName);
         #assertEquals("Doe", p #lastName);
     }
 
     testRunFluid() {
-        String s = ArchetypeClassDemonstrator #new #runFluid;
+        String s = demonstrator #runFluid;
         #assertEquals("Jane Doe", s);
     }
 
     testRunVariable() {
-        String s = ArchetypeClassDemonstrator #new #runVariable;
+        String s = demonstrator #runVariable;
         #assertEquals("Jane", s);
     }
     
     testRunConstant() {
-        String s = ArchetypeClassDemonstrator #new #runConstant;
+        String s = demonstrator #runConstant;
         #assertEquals("Jane", s);
     }
     
     testRunToString() {
-        String s = ArchetypeClassDemonstrator #new #runToString;
+        String s = demonstrator #runToString;
         #assertEquals("Person[ssn=123456789, firstName=John, lastName=Doe]", s);
     }
 

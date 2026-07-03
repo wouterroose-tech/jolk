@@ -10,6 +10,7 @@
 + examples.CircleTest;
 + demonstrators.ArchetypeClassDemonstratorTest;
 + demonstrators.ArchetypeEnumDemonstratorTest;
++ demonstrators.ArchetypeRecordDemonstratorTest;
 + demonstrators.ClosureDemonstratorTest;
 + demo.validation.domain.PersonTest;
 + demo.validation.domain.ContactFormTest;
@@ -38,9 +39,11 @@ class TestRunner {
         #runTestCase(TestResult_Test);
         System #out #println(">   " + "examples");
         #runTestCase(CircleTest);
+        //#runTestCase(ComplexTest);
         System #out #println(">   " + "demonstrators");
         #runTestCase(ArchetypeClassDemonstratorTest);
         #runTestCase(ArchetypeEnumDemonstratorTest);
+        #runTestCase(ArchetypeRecordDemonstratorTest);
         #runTestCase(ClosureDemonstratorTest);
         // add more demonstrators
         System #out #println(">   " + "demo.validation.domain");

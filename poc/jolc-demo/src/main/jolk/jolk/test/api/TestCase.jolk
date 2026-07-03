@@ -1,6 +1,7 @@
 ~ jolk.test.api;
 
 + java.lang.RuntimeException;
+& jolk.test.api.DisabledSignal.DISABLED;
 
 /// # TestCase
 ///
@@ -40,9 +41,7 @@ class TestCase extends Test {
     after() {}
 
     disabled() {
-        // RuntimeException subclassing not implemented
-        // DisabledSignal #DISABLED #throw
-        RuntimeException #new("DISABLED") #throw
+        DisabledSignal #DISABLED #throw
     }
 
     disabled(Boolean condition) {
@@ -59,11 +58,11 @@ class TestCase extends Test {
         condition ?! [ #throw("Assertion Mismatch: Expected True") ]
     }
 
-    assertSame(Object actual, Object expected) {
+    assertSame(Object expected, Object actual) {
         actual != expected ? [ #throw("Assertion Mismatch: Values not the same, Expected: " + expected + ", Actual: " + actual) ]
     }
 
-    assertEquals(Object actual, Object expected) {
+    assertEquals(Object expected, Object actual) {
         actual !~ expected ? [ #throw("Assertion Mismatch: Values not equivalent, Expected: " + expected + ", Actual: " + actual) ]
     }
 
@@ -111,8 +110,6 @@ class TestCase extends Test {
     }
 
     #> throw(String message) {
-        // RuntimeException subclassing not implemented
-        // AssertionSignal #new(message) #throw
-        RuntimeException #new(message) #throw
+        AssertionSignal #new(message) #throw
     }
 }

@@ -1,11 +1,7 @@
 ~ demo.validation.rules;
 
-+ demo.validation.domain.ContactForm;
-+ demo.validation.domain.Person;
-+ demo.validation.engine.ExecutionContext;
-+ demo.validation.engine.Issue;
-+ demo.validation.engine.Interrupt;
-
++ demo.validation.domain.*;
++ demo.validation.domain.*;
 + jolk.test.api.TestCase;
 
 /// # SsnConstraintTest

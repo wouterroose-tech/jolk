@@ -3,4 +3,10 @@
 + java.lang.RuntimeException;
 
 class AssertionSignal extends RuntimeException {
+
+    meta new(String message) {
+        // RuntimeException subclassing not implemented
+        ^ RuntimeException #new(message)
+    }
+
 }

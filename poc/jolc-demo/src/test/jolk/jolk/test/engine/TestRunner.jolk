@@ -13,6 +13,7 @@
 + demonstrators.ArchetypeEnumDemonstratorTest;
 + demonstrators.ArchetypeRecordDemonstratorTest;
 + demonstrators.ClosureDemonstratorTest;
++ demonstrators.CollectionLiteralDemonstratorTest;
 + demo.validation.domain.PersonTest;
 + demo.validation.domain.ContactFormTest;
 + demo.validation.engine.IssueTest;
@@ -46,6 +47,7 @@ class TestRunner {
         #runTestCase(ArchetypeEnumDemonstratorTest);
         #runTestCase(ArchetypeRecordDemonstratorTest);
         #runTestCase(ClosureDemonstratorTest);
+        #runTestCase(CollectionLiteralDemonstratorTest);
         // add more demonstrators
         System #out #println(">   " + "demo.validation.domain");
         #runTestCase(PersonTest);

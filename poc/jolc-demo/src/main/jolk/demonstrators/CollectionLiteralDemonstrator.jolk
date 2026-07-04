@@ -24,55 +24,52 @@ final class CollectionLiteralDemonstrator {
     stable HashSet<String> colorSet = #{"red", "green", "blue"};
     stable HashMap<String, String> colorMap = #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF");
 
-    /// Returns a literal array of strings.
-    ArrayList<String> runArrayLiteral() {
-        ^ #["a", "b", "c"]
+    /// Returns the element at the index from an array literal.
+    String runArrayLiteral(Int i) {
+        ^ #["a", "b", "c"] #at(i)
     }
 
-    /// Returns the contents of the `colors` field.
-    ArrayList<String> runArrayLiteralField() {
-        ^ colors
+    /// Returns the element at the index from an array literal field.
+    String runArrayLiteralField(Int i) {
+        ^ colors #at(i)
     }
 
-    /// Returns an empty array literal.
-    ArrayList<Object> runEmptyArray() {
-        ^ #[]
+    /// Returns the size of an empty array literal.
+    Int runEmptyArray() {
+        ^ #[] #size
     }
 
-    /// Checks if the colors array contains a specific color.
+    /// Returns true if the array literal contains the specified color.
     Boolean runArrayContains(String color) {
         ^ colors #anyMatch [ c -> c ~~ color ]
     }
 
-    /// Returns a nested array structure.
-    ArrayList<ArrayList<Long>> runNestedArray() {
-        ^ #[ #[1, 2], #[3, 4] ]
+    /// Returns the first element of a nested array literal.
+    Long runNestedArray(Int i) {
+        ^ #[ #[1, 2], #[3, 4] ] #at(i) #at(i)
     }
 
-    HashMap<String, String> runMapLiteral() {
-        ^ #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF")
+    /// Returns the value associated with the key from a map literal.
+    String runMapLiteral(String key) {
+        ^ #("red" -> "#FF0000", "green" -> "#00FF00", "blue" -> "#0000FF") #at(key)
     }
 
-    HashMap<String, String> runMapLiteralField() {
-        ^ colorMap
-    }
-
-    /// Returns an empty array literal.
-    HashMap<String, String> runEmptyMap() {
-        ^ #()
-    }
-
-    /// Returns the value for a given key:
-    String runMapGet(String key) {
+    /// Returns the value associated with the key from a map literal field.
+    String runMapLiteralField(String key) {
         ^ colorMap #at(key)
     }
 
-    /// Checks whether the key exists:
+    /// Returns true if the map literal contains the specified key.
     Boolean runMapContainsKey(String key) {
         ^ colorMap #containsKey(key)
     }
 
-    /// Returns the map size:
+    /// Returns the size of an empty map literal.
+    Int runEmptyMapSize() {
+        ^ #() #size
+    }
+
+    /// Returns the size of a map literal.
     Long runMapSize() {
         ^ colorMap #size()
     }

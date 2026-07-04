@@ -132,6 +132,8 @@ public class TestRunner  {
         load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
         load("/demonstrators/ClosureDemonstrator.jolk");
         load("/demonstrators/ClosureDemonstratorTest.jolk");
+        load("/demonstrators/CollectionLiteralDemonstrator.jolk");
+        load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
         
         // domain
         load("/demo/validation/domain/Person.jolk");

@@ -114,12 +114,29 @@ public class JolkBasicBenchmark {
         return jolkTest.invokeMember("runNumerical", n, iterations).asLong();
     }
 
+    /// ### javaFactorial
+    /// 
+    /// Measures the performance of recursive factorial logic on the host JVM.
+    @Benchmark
+    public long javaFactoria() {
+        return javaTest.runFactorial(n, iterations);
+    }
+
     /// ### javaFactorialIterative
     /// 
     /// Measures the performance of iterative factorial logic on the host JVM.
     @Benchmark
     public long javaFactorialIterative() {
         return javaTest.runFactorialIterative(n, iterations);
+    }
+
+    /// ### jolkFactorial
+    /// 
+    /// Measures recursive factorial performance in Jolk, testing the efficiency of 
+    /// local variable writes and the `#times` loop optimization.
+    @Benchmark
+    public long jolkFactorial() {
+        return jolkTest.invokeMember("runFactorial", n, iterations).asLong();
     }
 
     /// ### jolkFactorialIterative
@@ -131,12 +148,29 @@ public class JolkBasicBenchmark {
         return jolkTest.invokeMember("runFactorialIterative", n, iterations).asLong();
     }
 
+    /// ### javaFibonacci
+    /// 
+    /// Measures the performance of the recursive Fibonacci algorithm in Java.
+    @Benchmark
+    public long javaFibonacci() {
+        return javaTest.runFibonacci(n, iterations);
+    }
+
     /// ### javaFibonacciIterative
     /// 
     /// Measures the performance of the iterative Fibonacci algorithm in Java.
     @Benchmark
     public long javaFibonacciIterative() {
         return javaTest.runFibonacciIterative(n, iterations);
+    }
+
+    /// ### jolkFibonacci
+    /// 
+    /// Measures the performance of the recursive Fibonacci algorithm in the Jolk guest language.
+    @Benchmark
+    public long jolkFibonacci() {
+        // Replace with the actual method call on your Jolk object
+        return jolkTest.invokeMember("runFibonacci", n, iterations).asLong();
     }
 
     /// ### jolkFibonacciIterative

@@ -44,8 +44,24 @@ public class JavaBasicBenchmarkWorkload {
         return (n <= 1) ? 1 : n * factorial(n - 1);
     }
 
+    long runFactorial(long n, long times) {
+        long sum = 0;
+        for (long i = 0; i < times; i++) {
+            sum += factorial(n);
+        }
+        return sum;
+    }
+
     long fibonacci(long n) {
         return (n <= 1) ? n : fibonacci(n - 1) + fibonacci(n - 2);
+    }
+
+    long runFibonacci(long n, long times) {
+        long sum = 0;
+        for (long i = 0; i < times; i++) {
+            sum += fibonacci(n);
+        }
+        return sum;
     }
 
     long runFactorialIterative(long n, long times) {

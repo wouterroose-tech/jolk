@@ -1,12 +1,13 @@
 ~ demonstrators;
 
 + jolk.lang.Array;
++ java.util.List;
 
 /// # ClosureDemonstrator
 ///
 /// Demonstrates the usage of Closures and Method References in Jolk.
 ///
-/// * **Jolk**: Closures are reified blocks `{ args -> body }`. Method references use `##`.
+/// * **Jolk**: Closures are reified blocks `[ args -> body ]`. Method references use `##`.
 /// * **Java**: Lambdas `(args) -> body` and method references `::`.
 ///
 /// @author Wouter Roose
@@ -14,33 +15,34 @@
 final class ClosureDemonstrator {
 
     /// Demonstrates passing a closure as a parameter.
-    Array<String> runClosureParam() {
-        Array<String> strings = #["a", "b", "c"];
-        ^ strings #map [ String s -> s + s ]
+    Long runClosureParam(Long v) {
+        Closure c = [ v -> v == 42 ? 42 : 0 ];
+        ^ self #run(v, c);
     }
 
-    /// Demonstrates using a method reference.
-    Array<String> runMethodReference_class() {
-        Array<String> strings = #["x", "y", "z"];
-        ^ strings #map(ClosureDemonstrator ##staticDoubleValue)
+    Long runMethodReference_self(Long v) {
+        ^ self #run(v, self ##doubleValue);
     }
 
-    Array<String> runMethodReference_self() {
-        Array<String> strings = #["x", "y", "z"];
-        ^ strings #map(self ##doubleValue)
+    Long runMethodReference_meta(Long v) {
+        ^ self #run(v, ClosureDemonstrator ##doubleValue);
     }
 
-    Array<String> runMethodReference_instance() {
-        Array<String> strings = #["x", "y", "z"];
-        ClosureDemonstrator demo = ClosureDemonstrator #new;
-        ^ strings #map(demo ##doubleValue)
+    Long runMethodReference_instance(Long v) {
+        ClosureDemonstrator instance = Self #new;
+        ^ self #run(v, instance ##doubleValue);
     }
 
-    String doubleValue(String s) {
-        ^ s + s
+    Long run(Long v, Closure c) {
+        ^ c #apply(v)
     }
 
-    meta String staticDoubleValue(String s) {
-        ^ s + s
+    Long doubleValue(Long l) {
+        ^ 2 * l
     }
+
+    meta Long doubleValue(Long l) {
+        ^ 2 * l
+    }
+    
 }

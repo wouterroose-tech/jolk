@@ -14,6 +14,7 @@
 + demonstrators.ArchetypeRecordDemonstratorTest;
 + demonstrators.ClosureDemonstratorTest;
 + demonstrators.CollectionLiteralDemonstratorTest;
++ demonstrators.CoreCollectionDemonstratorTest;
 + demo.validation.domain.PersonTest;
 + demo.validation.domain.ContactFormTest;
 + demo.validation.engine.IssueTest;
@@ -39,23 +40,34 @@ class TestRunner {
         #runTestCase(TestCase_Test);
         #runTestCase(TestSuite_Test);
         #runTestCase(TestResult_Test);
+
+        System #out #println("    -------------");
         System #out #println(">   " + "examples");
         #runTestCase(CircleTest);
         #runTestCase(ComplexTest);
+
+        System #out #println("    -------------");
         System #out #println(">   " + "demonstrators");
         #runTestCase(ArchetypeClassDemonstratorTest);
         #runTestCase(ArchetypeEnumDemonstratorTest);
         #runTestCase(ArchetypeRecordDemonstratorTest);
         #runTestCase(ClosureDemonstratorTest);
         #runTestCase(CollectionLiteralDemonstratorTest);
-        // add more demonstrators
+        #runTestCase(CoreCollectionDemonstratorTest);
+        // TODO add more demonstrators
+
+        System #out #println("    -------------");
         System #out #println(">   " + "demo.validation.domain");
         #runTestCase(PersonTest);
         #runTestCase(ContactFormTest);
+
+        System #out #println("    -------------");
         System #out #println(">   " + "demo.validation.engine");
         #runTestCase(LevelTest);
         #runTestCase(IssueTest);
-        // add tests for each engine class
+        // TODO add tests for each engine class
+
+        System #out #println("    -------------");
         System #out #println(">   " + "demo.validation.rules");
         #runTestCase(ZipConstraintTest);
         #runTestCase(SsnConstraintTest);

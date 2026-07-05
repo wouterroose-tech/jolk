@@ -13,8 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import tolk.language.JolkLanguage;
 
-
-
 /// # TestRunner
 ///
 /// run the jolk TestRunner, will be replaced by the JolkTestEngine for the JUnit test framework
@@ -134,6 +132,8 @@ public class TestRunner  {
         load("/demonstrators/ClosureDemonstratorTest.jolk");
         load("/demonstrators/CollectionLiteralDemonstrator.jolk");
         load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
+        load("/demonstrators/CoreCollectionDemonstrator.jolk");
+        load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
         
         // domain
         load("/demo/validation/domain/Person.jolk");

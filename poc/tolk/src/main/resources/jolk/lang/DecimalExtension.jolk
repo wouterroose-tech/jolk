@@ -1,0 +1,59 @@
+~ jolk.lang;
+
+/// # Decimal
+///
+/// The `Decimal` identity represents a high-precision scaled decimal number. 
+/// In financial and banking contexts, this identity is used to eliminate 
+/// the rounding errors inherent in binary floating-point types (Double).
+///
+/// This is the **Standard Decimal** implementation, utilizing a 64-bit 
+/// significand and a 64-bit scale. It adheres to the **Number Protocol**, 
+/// participating in the unified messaging flow with full 
+/// **Identity Congruence**.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+extension DecimalExtension on java.lang.BigDecimal {
+
+    /**
+     * ### meta #new(Long significand, Long scale)
+     *
+     * Synthesizes a new Decimal fact from a significand and a scale.
+     */
+    meta Self new(Long significand, Integer scale) { }
+
+    /// The integer value of the decimal.
+    Long significand() { }
+
+    /// The power of ten by which the significand is divided.
+    Integer scale() { }
+
+    /// ### round
+    ///
+    /// Returns the Long closest to the value.
+    Long round() { }
+
+    /// ### truncate
+    ///
+    /// Returns the Long truncated from the value.
+    Long truncate() { }
+
+    /// ### fraction
+    ///
+    /// Returns a new Decimal representing the fractional part of the value.
+    Decimal fraction() { }
+
+    // --- Conversion Protocol ---
+
+    /// ### asDouble
+    ///
+    /// Converts this Decimal to a Double.
+    Double asDouble() { }
+
+    /// ### asLong
+    ///
+    /// Converts this Decimal to a Long, truncating any fractional part.
+    Long asLong() { }
+
+}

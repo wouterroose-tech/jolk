@@ -27,5 +27,8 @@ replay_pid*
 */*/target/
 
 #local
+.assistant/
+.continue/
+.github/
 .vscode/
 tmp/

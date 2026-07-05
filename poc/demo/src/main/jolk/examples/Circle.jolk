@@ -1,0 +1,70 @@
+~ examples;
+
+& java.lang.IllegalArgumentException;
+& java.lang.Math.PI;
+
+& TWO_PI = java.lang.Math.TAU;
+
+/// #Circle
+///
+/// This class represents a simple circle with a radius and provides methods to calculate its area and circumference.
+/// It demonstrates basic class structure, instance variable declaration, constructor definition, 
+/// method declaration, and method implementation and meta field projection in Jolk.
+/// 
+/// @author Wouter Roose
+
+final class Circle {
+
+    Double radius;
+
+    /// The diameter is computed lazily upon first access and then memoized.
+    lazy Double diameter = self #radius * 2;
+
+    /// ### meta new
+    ///
+    /// Explicit creation method to ensure the radius is anchored as a Double 
+    /// identity, satisfying the interop contract and performing guided coercion.
+    ///
+    /// It includes a guard to ensure geometric integrity.
+    meta Circle new(Number r) {
+        (r < 0) ? [ IllegalArgumentException #new("Radius cannot be negative") #throw ];
+        ^ super #new #radius(r #asDouble)
+    }
+
+    /// ### area
+    ///
+    /// Calculates the area of the circle instance.
+    Double area() {
+        ^ PI * self #radius ** 2
+    }
+
+    Double circumference() {
+        ^ TWO_PI * self #radius
+    }
+
+    /// ### * (Scaling)
+    ///
+    /// Returns a new Circle scaled by the provided factor.
+    Circle *(Number factor) {
+        ^ Circle #new(self #radius * factor)
+    }
+
+    /// ### ~~ (Equivalence)
+    ///
+    /// Circles are equivalent if their radii are identical.
+    Boolean ~~(Object other) {
+        (self == other) ? [ ^ true ];
+        // Use pattern matching to safely compare properties
+        other #instanceOf(Circle)
+            #ifPresent [ c ->  ^ self #radius == c #radius ];
+        ^ false
+    }
+
+    /// ### toString
+    ///
+    /// Returns a standardized string representation of the circle.
+    String toString() {
+        ^ "Circle[radius=" + self #radius #toString + "]"
+    }
+
+}

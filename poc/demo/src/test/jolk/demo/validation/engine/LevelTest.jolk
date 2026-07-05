@@ -1,0 +1,47 @@
+~ demo.validation.engine;
+
++ jolk.test.api.TestCase;
+
+& demo.validation.engine.Level.ERROR;
+
+/// # LevelTest
+///
+/// @author Wouter Roose
+///
+class LevelTest extends TestCase {
+    
+    testName() {
+        #assertEquals("ERROR", Level #ERROR #name);
+    }
+    
+    testIdentity() {
+        #assertThat(Level #ERROR #isPresent);
+        #assertSame(Level #ERROR, Level #ERROR);
+        #assertThat(Level #ERROR == Level #ERROR);
+        #assertThat(Level #ERROR != Level #WARNING);
+    }
+    
+    testEquality() {
+        #assertSame(Level #ERROR, Level #ERROR);
+        #assertThat(Level #ERROR ~~ Level #ERROR);
+        #assertThat(Level #ERROR !~ Level #WARNING);
+    }
+    
+    testMetaProjection() {
+        #assertSame(ERROR, Level #ERROR);
+    }
+    
+    testIsLevel() {
+        Level level = Level #ERROR;
+        #assertThat(level #isError);
+        #assertThat(! (level #isWarning));
+    }
+    
+    testLevelEnumOrdinal() {
+        #assertEquals(0, Level #ERROR #ordinal);
+        #assertEquals(1, Level #WARNING #ordinal);
+        #assertEquals(2, Level #INFO #ordinal);
+        #assertEquals(3, Level #DEBUG #ordinal);
+    }
+
+}

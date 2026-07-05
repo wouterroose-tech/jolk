@@ -1,0 +1,36 @@
+~ demo.validation.rules;
+
++ demo.validation.engine.Constraint;
++ demo.validation.engine.ExecutionContext;
++ demo.validation.engine.Interrupt;
++ demo.validation.engine.Issue;
++ demo.validation.engine.Level;
++ demo.validation.domain.Person;
+
+& demo.validation.rules.ContactFormValidation.FORM_INTERRUPT;
+
+///
+/// @author Wouter Roose
+
+#! class SsnConstraint extends Constraint<Person> {
+
+    Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
+        ^ person #ssn != 0
+    }
+
+    #: Boolean isValid(Person person) {
+        ^ self #isValid(person #ssn)
+    }
+
+    #> Boolean isValid(Long ssn) {
+        ^ 97 - ((ssn / 100) % 97) == (ssn % 100)
+    }
+
+    #: Issue getIssue(Person person,  ExecutionContext executionContext) {
+        ^ Issue #new(person, "SSN_INVALID",  Level #ERROR)
+    }
+
+    #: Interrupt interrupt() {
+        ^ FORM_INTERRUPT
+    }
+}

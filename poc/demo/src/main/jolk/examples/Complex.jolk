@@ -1,0 +1,63 @@
+~ examples;
+
+/// #Complex
+///
+/// Representation of a Complex number, i.e. a number which has both a real and imaginary part.
+///
+/// Implementations of arithmetic operations handle NaN and infinite values according to the rules for Double.
+/// 
+/// @author Wouter Roose
+///
+final class Complex {
+
+    meta constant Complex I = Complex #new(0.0, 1.0);
+    meta constant Complex IN = Complex #new(0.0, -1.0);
+    meta constant Complex NaN = Complex #new(Double #NaN, Double #NaN);
+    meta constant Complex ONE = Complex #new(1.0, 0.0);
+    meta constant Complex ZERO = Complex #new(0.0, 0.0);
+
+    Double real;
+    Double imaginary;
+
+    meta Complex new(Number real, Number imaginary) {
+        ^ super #new #real(real #asDouble) #imaginary(imaginary #asDouble)
+    }
+
+    /// If either this or addend has a NaN value in either part, NaN is returned; otherwise Infinite and NaN values 
+    /// are returned in the parts of the result according to the rules for Double arithmetic.
+    +(Complex other) {
+        (#isNaN || other #isNaN) ? [ ^ Complex #NaN ];
+        ^ Self #new(#real + other #real, #imaginary + other #imaginary)
+    }
+
+    -(Complex other) {
+        (#isNaN || other #isNaN) ? [ ^ Complex #NaN ];
+        ^ Self #new(#real - other #real, #imaginary - other #imaginary)
+    }
+
+    Boolean ~~(Object other) {
+        (self == other) ? [ ^ true ];
+        other #instanceOf(Complex) #ifPresent [ c ->
+            (#isNaN && c #isNaN) ? [ ^ true ];
+            (#isNaN || c #isNaN) ? [ ^ false ];
+            ^ (#real == c #real) && (#imaginary == c #imaginary)
+        ];
+        ^ false
+    }
+    
+    /// Returns true if either the real or imaginary part is NaN.
+    Boolean isNaN() {
+        // TODO check this implementation:
+        // ^ #real #isNaN || #imaginary #isNaN
+        ^ Double #class #isNaN(#real) || Double #class #isNaN(#imaginary)
+    }
+
+    String toString() {
+        ^ #toString(#real) + " + " + #toString(#imaginary) + "i"
+    }
+
+    #> String toString(Double d) {
+        ^ (Double #class #isNaN(d) ? "NaN" : d #toString)
+    }
+
+}

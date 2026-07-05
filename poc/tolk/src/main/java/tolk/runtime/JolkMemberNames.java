@@ -1,0 +1,45 @@
+package tolk.runtime;
+
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.interop.InvalidArrayIndexException;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
+
+/// Helper class to expose member names as a TruffleObject.
+@ExportLibrary(InteropLibrary.class)
+public final class JolkMemberNames implements TruffleObject {
+    private final String[] members;
+
+    public JolkMemberNames(String[] members) {
+        this.members = members;
+    }
+
+    @ExportMessage
+    public boolean hasArrayElements() {
+        return true;
+    }
+
+    @ExportMessage
+    public long getArraySize() {
+        return members.length;
+    }
+
+    @ExportMessage
+    public String readArrayElement(long index) throws InvalidArrayIndexException {
+        if (index < 0 || index >= members.length) throw InvalidArrayIndexException.create(index);
+        return members[(int) index];
+    }
+
+    @ExportMessage
+    public boolean isArrayElementReadable(long index) {
+        return index >= 0 && index < members.length;
+    }
+
+    /// Returns a human-readable representation of the member collection for interop display.
+    @ExportMessage
+    @com.oracle.truffle.api.CompilerDirectives.TruffleBoundary
+    public String toDisplayString(boolean allowSideEffects) {
+        return java.util.Arrays.toString(members);
+    }
+}

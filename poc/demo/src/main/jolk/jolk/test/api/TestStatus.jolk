@@ -1,0 +1,15 @@
+~ jolk.test.api;
+
+/// # TestStatus
+///
+/// @author Wouter Roose
+
+enum TestStatus {
+
+    DISABLED; FAULT; FAILURE; SUCCESS;
+
+    Boolean isDisabled() { ^ self == DISABLED }
+    Boolean isFault() { ^ self == FAULT }
+    Boolean isFailure() { ^ self == FAILURE }
+    Boolean isSuccess() { ^ self == SUCCESS }
+}

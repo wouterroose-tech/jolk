@@ -1,0 +1,21 @@
+package demo.validation.engine;
+
+/// # Issue
+/// 
+/// @author Wouter Roose
+
+record Issue {
+    Object subject;
+    String message;
+    Level level;
+
+    /// Returns true if the issue concerns the given subject.
+    Boolean concerns(Object subject) {
+        ^ self #subject == subject
+    }
+
+    /// Returns true if the issue concerns the given level.
+    Boolean match(Level level) {
+        ^ self #level == level
+    }
+}

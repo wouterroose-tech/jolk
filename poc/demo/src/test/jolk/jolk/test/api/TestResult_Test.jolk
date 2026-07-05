@@ -1,0 +1,44 @@
+~ jolk.test.api;
+
+/// # TestResult_Test
+///
+/// TODO
+///
+/// @author Wouter Roose
+///
+class TestResult_Test extends TestCase {
+
+    testNew() {
+        TestResult result = TestResult #new;
+        #assertThat(result #status #isEmpty);
+        #assertEquals("", result #result);
+    }
+
+    testSuccess() {
+        TestResult result = TestResult #success;
+        #assertEquals(TestStatus #SUCCESS, result #status);
+        #assertEquals("success", result #result);
+    }
+
+    testFault() {
+        RuntimeException a = RuntimeException #new("message");
+        TestResult result = TestResult #fault(a) ;
+        #assertEquals(TestStatus #FAULT, result #status);
+        #assertEquals("fault: message", result #result);
+    }
+
+    testFailed() {
+        // RuntimeException subclassing not implemented
+        // AssertionSignal a = AssertionSignal #new("message");
+        RuntimeException a = RuntimeException #new("message");
+        TestResult result = TestResult #failed(a) ;
+        #assertEquals(TestStatus #FAILURE, result #status);
+        #assertEquals("failure: message", result #result);
+    }
+
+    testDisabled() {
+        TestResult result = TestResult #disabled;
+        #assertEquals(TestStatus #DISABLED, result #status);
+        #assertEquals("disabled", result #result);
+    }
+}

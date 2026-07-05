@@ -1,0 +1,152 @@
+~ jolk.lang;
+
+/// # Object
+///
+/// The **Object** extension augments [java.lang.Object] with the **Jolk Core Protocol**.
+///
+/// This extension is the foundation of **Shim-less Integration**. By augmenting the 
+/// root of the Java hierarchy, every JVM identity automatically participates in 
+/// Jolk's unified messaging model without requiring proxies or wrappers.
+///
+/// This ensures that all Java objects conform to Jolk's core messaging protocol, 
+/// allowing for seamless interoperability and enabling Jolk's powerful features 
+/// to be used with any Java object.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+extension ObjectExtension on java.lang.Object {
+
+    /// ## ~~
+    /// Performs a semantic equivalent check.
+    ///
+    /// This is the core message for the semantic equivalent operator.
+    /// By default, it falls back to identity (`==`).
+    ///
+    /// - **other**: The Object to compare against.
+    /// - **Returns**: True if the objects are semantically equivalent.
+    Boolean ~~(Object other) {
+        ^ self == other
+    }
+
+    /// ## !~
+    /// Performs a semantic non-equivalence check.
+    ///
+    /// This is the logical negation of the equivalence operator (`~~`).
+    ///
+    /// - **other**: The Object to compare against.
+    /// - **Returns**: True if the objects are NOT semantically equivalent.
+    Boolean !~(Object other) {
+        ^ !(self ~~ other)
+    }
+    
+    /// ## hash
+    /// Returns a hash code value for the object.
+    ///
+    /// This is the core message for object identification in hash-based collections.
+    ///
+    /// - **Returns**: A hash code value for this object.
+    Int hash() { }
+
+    /// ## toString
+    /// Returns a string representation of the object.
+    ///
+    /// - **Returns**: A string representation of the object.
+    String toString() {}
+
+    /// ## ifPresent
+    /// Executes a functional block if the receiver is not null.
+    /// This is the primary industrial alternative to explicit null checks.
+    ///
+    /// - **action**: A Closure that receives the current object as an argument.
+    /// - **Returns**: `self` to allow for fluent message chaining.
+    Self ifPresent(Closure action) {
+        action #apply(self)
+    }
+    
+    /// ## ifEmpty
+    /// Executes a- functional block if the receiver is null (Nothing).
+    /// This is the primary industrial alternative to explicit null checks.
+    ///
+    /// - **action**: A Closure that receives the current object as an argument.
+    /// - **Returns**: `self` to allow for fluent message chaining.
+    Self ifEmpty(Closure action) { }
+    
+    /// ## isPresent
+    /// Checks if the receiver is a valid, non-null identity.
+    ///
+    /// - **Returns**: `true` for all objects except `null` (Nothing).
+    Boolean isPresent() {
+        ^ true
+    }
+    
+    /// ## project
+    /// DMS API / Identity Projection: Implements mass-assignment or directed projection.
+    ///
+    /// This message facilitates the **Identity Projection** handshake. When provided 
+    /// with a Map, it performs a mass-assignment by invoking members corresponding 
+    /// to the map keys. When provided with a Selector and arguments, it performs 
+    /// a dynamic message send.
+    ///
+    /// - **map**: A Map of field identifiers to values for mass-assignment.
+    /// - **Returns**: `self`.
+    Self project(Map map) {}
+
+    /// ## project
+    /// Selector-based projection: receiver #project(selector, args)
+    ///
+    /// - **s**: The reified Selector (message) to project onto the receiver.
+    /// - **args**: Variadic arguments for the message send.
+    /// - **Returns**: The result of the projected message send.
+    Object project(Selector s, Object... args) {}
+
+    /// ## isEmpty
+    /// Checks if the receiver represents the absence of a value.
+    ///
+    /// - **Returns**: `false` for all objects except `null` (Nothing).
+    Boolean isEmpty() {
+        ^ false
+    }
+
+    /// ## class
+    /// Returns the class object representing the type of the receiver.
+    ///
+    /// - **Returns**: The Class of the instance.
+    MetaClass<Self> class() { }
+
+    /// ## instanceOf
+    /// The Jolk Type pattern match.
+    ///
+    /// At runtime, this flattens into an INSTANCEOF check and a conditional branch.
+    /// At compile-time, the selector returns a Selection<T>, enabling execution in the fluent chain.
+    ///
+    /// - **type**: The type to check against.
+    /// - **Returns**: A Match containing the object if it is an instance of the type, otherwise an empty Match.
+    <T> Match<T> instanceOf(Type<T> type) {
+        ^ type #isInstance(self) ? Match #with(self) : Match #empty
+    }
+
+    /// ## get
+    /// Returns the receiver itself.
+    ///
+    /// This method implements the **Constant Supplier** pattern, allowing any
+    /// identity to behave as a supplier of itself. This is critical for 
+    /// **Impedance Resolution** when interacting with functional interfaces 
+    /// or monadic chains that expect a value provider.
+    ///
+    /// - **Returns**: `self`.
+    Object get() {
+        ^ self
+    }
+
+    /// ## value
+    /// Returns the receiver itself.
+    ///
+    /// An alias for `#get` providing a unified handshake for polymorphic 
+    /// interop across different archetypes.
+    ///
+    /// - **Returns**: `self`.
+    Object value() {
+        ^ self
+    }
+}

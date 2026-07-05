@@ -1,0 +1,16 @@
+~ demonstrators
+
+
+final class StableAndConstantFieldDemonstrator {
+
+    meta constant String constantMetaField = "constantMetaFieldValue";
+    
+    constant String constantField = "constantFieldValue";
+
+    stable String stableField;
+
+    Self new(String value) {
+        stableField = value;
+    }
+
+}

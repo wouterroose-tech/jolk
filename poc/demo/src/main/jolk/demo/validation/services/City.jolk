@@ -1,0 +1,10 @@
+package demo.validation.services;
+
+///
+/// @author Wouter Roose
+
+record City {
+    Int zipcode;
+    String name;
+    String province;
+}

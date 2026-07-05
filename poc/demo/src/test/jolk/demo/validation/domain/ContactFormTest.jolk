@@ -1,0 +1,109 @@
+~ demo.validation.domain;
+
++ jolk.test.api.TestCase;
+
+/// #ContactFormTest
+///
+/// @author Wouter Roose
+///
+class ContactFormTest extends TestCase {
+
+    testNew() {
+        ^ Assert #that(ContactForm #new #isPresent)
+    }
+
+    testNewCompleted() {
+        Person person = #getPerson;
+        ContactForm #new
+            #person(person)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description")
+            #ifPresent [ f ->
+                (f #person == person)
+                    && (f #email ~~ "john.doe@example.com")
+                    && (f #zipCode == 12345)
+                    && (f #description ~~ "Test description");
+                ];
+            #ifEmpty [ #fail ]
+            #success
+    }
+
+    // Form should be identical to itself.
+    testEquality1() {
+        
+        ContactForm form = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description");
+        #assertThat(form == form)
+    }
+
+    // Distinct forms should not be identical.
+    testEquality2() {
+        
+        ContactForm formA = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description");
+        ContactForm formB = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description");
+        #assertThat(formA != formB)
+    }
+
+    // Form should be equivalent to itself.
+    testEquivalence1() {
+        
+        ContactForm form = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description");
+        #assertThat(form ~~ form)
+    }
+
+    // Forms with equivalent persons and matching data should be equivalent.
+    testEquivalence2() {
+        
+        ContactForm formA = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description");
+        ContactForm formB = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description");
+        #assertThat(formA ~~ formB)
+    }
+    
+    // Forms with different data should not be equivalent.
+    testEquivalence3() {
+
+        ContactForm formA = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description A");
+        ContactForm formB = ContactForm #new
+            #person(#getPerson)
+            #email("john.doe@example.com")
+            #zipCode(12345)
+            #description("Test description B");
+        #assertThat(formA !~ formB)
+    }
+
+    #> Person getPerson() {
+        ^ Person #new
+            #ssn(12345678939)
+            #firstName("John")
+            #lastName("Doe");
+    }
+
+}

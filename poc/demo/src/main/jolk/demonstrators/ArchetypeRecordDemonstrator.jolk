@@ -1,0 +1,42 @@
+~ demonstrators;
+
++ demo.validation.engine.Issue;
++ demo.validation.engine.Level;
+
+/// Demonstrates various Jolk archetype features using the `Issue` record.
+///
+/// This class showcases:
+/// * canonical object creation (`#new`).
+/// * Accessing record components via synthesized message selectors.
+/// * Declaration of mutable and immutable local variables for records.
+/// * Standard protocol messaging (`#toString`).
+///
+/// @author Wouter Roose
+
+final class ArchetypeRecordDemonstrator {
+
+    Issue runCanonicalNew() {
+        ^ Issue #new("Identity", "Validation failed", Level #ERROR)
+    }
+
+    String runAccessors() {
+        Issue issue = Issue #new("Subject", "Message Content", Level #WARNING);
+        ^ issue #message
+    }
+
+    String runVariable() {
+        Issue issue = Issue #new("Data", "Variable Test", Level #INFO);
+        ^ issue #message
+    }
+
+    String runConstant() {
+        constant Issue issue = Issue #new("Data", "Constant Test", Level #ERROR);
+        ^ issue #message
+    }
+
+    String runToString() {
+        Issue issue = Issue #new("Target", "String representation", Level #INFO);
+        ^ issue #toString
+    }
+
+}

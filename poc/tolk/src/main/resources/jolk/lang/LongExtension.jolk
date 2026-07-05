@@ -1,0 +1,21 @@
+~ jolk.lang;
+
+/// # Long
+///
+/// The **Long** type represents a 64-bit signed Integer, serving as the 
+/// fundamental building block for numerical computations and indexing.
+///
+/// @author Wouter Roose
+
+@Intrinsic
+extension LongExtension on java.lang.Long {
+
+    ///
+    /// This method supports two forms of closures:
+    /// - A closure with an index parameter: `times #times [ i -> ... ]`
+    /// - A closure without an index parameter: `times #times [ ... ]`
+    ///
+    /// @param action The closure to execute.
+    Self times(Closure<Long> action) { }
+
+}

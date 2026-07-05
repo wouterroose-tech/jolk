@@ -1,0 +1,77 @@
+~ demo.validation.rules;
+
++ demo.validation.domain.*;
++ demo.validation.engine.*;
++ jolk.test.api.TestCase;
+
+///
+/// @author Wouter Roose
+
+class ContactFormValidationTest extends TestCase {
+
+    /// Test case for validating a contact form with valid data
+    test_ValidateContactForm_success() {
+        
+        // Create a valid contact form
+        Person person = Person #new
+            #ssn(800101035)
+            #firstName("John")
+            #lastName("Doe");
+        ContactForm form = ContactForm #new
+            #person(person)
+            #email("john.doe@example.com")
+            #zipCode(2800)
+            #description("Test description");
+        
+        ExecutionContext context = #validate(form);
+        #assertThat(!context #hasIssue)
+    }
+
+    /// Test that validation fails when ...
+    test_ValidateContactForm_ZipConstraintIssue() {
+        
+        // Create an invalid contact form
+        Person person = Person #new
+            #ssn(800101035)
+            #firstName("John")
+            #lastName("Doe");
+        ContactForm form = ContactForm #new
+            #person(person)
+            #email("john.doe@example.com")
+            #zipCode(12346)
+            #description("Test description");
+        
+        ExecutionContext context = #validate(form);
+        #assertThat(context #hasIssue && context #issues #size == 1)
+    }
+
+    /// Test that validation fails when ...
+    test_ValidateContactForm_SsnConstraintIssue() {
+        
+        // Create an invalid contact form
+        Person person = Person #new
+            // invaluid SSN that fails the SSN constraint
+            #ssn(123456789)
+            #firstName("John")
+            #lastName("Doe");
+        ContactForm form = ContactForm #new
+            #person(person)
+            #email("john.doe@example.com")
+            #zipCode(1234)
+            #description("Test description");
+        
+        ExecutionContext context = #validate(form);
+        // SsnConstraint is an interrupting issue and will stop further validation, so only one issue is registered
+        #assertThat(context #hasIssue && context #issues #size == 1)
+    }
+
+    #> ExecutionContext validate(ContactForm form) {
+        ExecutionContext context = ExecutionContext #new;
+        ContactFormValidation #new #validate(form, context);
+        ^context
+    }
+
+    Boolean test_interrupt() {
+        ^ ContactFormValidation #FORM_INTERRUPT #instanceOf(Interrupt) #isPresent 
+    }
+}

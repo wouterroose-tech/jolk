@@ -1,0 +1,36 @@
+~ demonstrators;
+
++ demo.validation.engine.Level;
++ jolk.test.api.TestCase;
+
+///
+/// @author Wouter Roose
+///
+public class ArchetypeEnumDemonstratorTest extends TestCase {
+
+    ArchetypeEnumDemonstrator demonstrator = ArchetypeEnumDemonstrator #new;
+    
+    testRunAccessConstant() {
+        Level level = demonstrator #runAccessConstant;
+        #assertIsPresent(level);
+        #assertThat(level #isPresent);
+        #assertEquals("ERROR", level #name);
+    }
+
+    testRunName() {
+        #assertEquals("ERROR", demonstrator #runName);
+    }
+
+    testRunVariable() {
+        #assertEquals("WARNING", demonstrator #runVariable);
+    }
+
+    testRunConstant() {
+        #assertEquals("INFO", demonstrator #runConstant);
+    }
+
+    testRunToString() {
+        #assertEquals("ERROR", demonstrator #runToString);
+    }
+
+}

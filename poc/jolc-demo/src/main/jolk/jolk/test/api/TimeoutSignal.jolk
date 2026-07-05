@@ -1,6 +1,0 @@
-~ jolk.test.api;
-
-+ java.lang.RuntimeException;
-
-class TimeoutSignal extends RuntimeException {
-}

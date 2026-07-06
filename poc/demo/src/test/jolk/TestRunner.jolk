@@ -1,12 +1,6 @@
 ~ jolk.test;
 
 + java.lang.System;
-+ jolk.test.api.Test;
-+ jolk.test.api.TestCase;
-+ jolk.test.api.TestCase_Test;
-+ jolk.test.api.TestSuite;
-+ jolk.test.api.TestSuite_Test;
-+ jolk.test.api.TestResult_Test;
 + examples.CircleTest;
 + examples.ComplexTest;
 + demonstrators.ArchetypeClassDemonstratorTest;
@@ -35,12 +29,6 @@ class TestRunner {
         // TODO collect testsuites, run tests & sout result
         
         System #out #println("    Run All Tests");
-        System #out #println("    -------------");
-        System #out #println(">   " + "jolk.test.api");
-        #runTestCase(TestCase_Test);
-        #runTestCase(TestSuite_Test);
-        #runTestCase(TestResult_Test);
-
         System #out #println("    -------------");
         System #out #println(">   " + "examples");
         #runTestCase(CircleTest);

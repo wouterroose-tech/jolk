@@ -19,6 +19,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>jolk</groupId>
+            <artifactId>jolk-test-engine</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
@@ -39,14 +44,18 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-            </resource>
-            <resource>
+            </resource><resource>
                 <directory>src/main/jolk</directory>
             </resource>
-            <resource>
-                <directory>src/test/jolk</directory>
-            </resource>
         </resources>
+        <testResources>
+            <testResource>
+                <directory>src/test/resources</directory>
+            </testResource>
+            <testResource>
+                <directory>src/test/jolk</directory>
+            </testResource>
+        </testResources>
     </build>
 
 </project>

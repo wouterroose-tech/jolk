@@ -30,10 +30,10 @@ final class CoreCollectionDemonstrator {
         ^ colors #at(1)
     }
 
-    Array<String> runArrayPut() {
+    String runArrayPut() {
         ArrayList<String> colors = Array #new("red", "green", "blue");
         colors #put(1, "yellow");
-        ^ colors
+        ^ colors #at(1)
     }
 
     Int runArraySize() {

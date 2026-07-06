@@ -14,7 +14,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import tolk.JolcTestBase;

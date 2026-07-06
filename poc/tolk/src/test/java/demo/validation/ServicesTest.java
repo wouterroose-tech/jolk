@@ -31,7 +31,6 @@ public class ServicesTest extends JolcTestBase {
         return eval(source);
     }
 
-    @Test
     private Value cityClass() {
         String source = """
             record City {
@@ -44,7 +43,7 @@ public class ServicesTest extends JolcTestBase {
 
     @Test
     void testCity() {
-        Value city = this.cityClass().invokeMember("new", 12345, "New York", "NY");
+        Value city = cityClass().invokeMember("new", 12345, "New York", "NY");
         assertEquals(12345L, city.invokeMember("zipcode").asLong());
         assertEquals("New York", city.invokeMember("name").asString());
         assertEquals("NY", city.invokeMember("province").asString());
@@ -52,7 +51,7 @@ public class ServicesTest extends JolcTestBase {
 
     @Test
     void testGeoGraphicalService() {
-        Value service = this.geoGraphicalServiceClass();
+        Value service = geoGraphicalServiceClass();
         Value mechelen = service.invokeMember("MECHELEN");
         assertEquals(4, ((ArrayList<?>) mechelen.asHostObject()).size());
         assertEquals(2800L, ((ArrayList<?>) mechelen.asHostObject()).get(0));

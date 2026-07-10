@@ -54,20 +54,36 @@ class TestCase extends Test {
         #throw("Test Failure: Invariant did not hold")
     }
 
-    assertThat(Boolean condition) {
+    assertTrue(Boolean condition) {
         condition ?! [ #throw("Assertion Mismatch: Expected True") ]
+    }
+    
+    assertFalse(Boolean condition) {
+        condition ? [ #throw("Assertion Mismatch: Expected False") ]
     }
 
     assertSame(Object expected, Object actual) {
         actual != expected ? [ #throw("Assertion Mismatch: Values not the same, Expected: " + expected + ", Actual: " + actual) ]
+    }
+    
+    assertNotSame(Object expected, Object actual) {
+        actual == expected ? [ #throw("Assertion Mismatch: Values are the same, Not expected: " + expected + ", Actual: " + actual) ]
     }
 
     assertEquals(Object expected, Object actual) {
         actual !~ expected ? [ #throw("Assertion Mismatch: Values not equivalent, Expected: " + expected + ", Actual: " + actual) ]
     }
 
+    assertNotEquals(Object expected, Object actual) {
+        actual ~~ expected ? [ #throw("Assertion Mismatch: Values are equivalent, Not expected: " + expected + ", Actual: " + actual) ]
+    }
+
     assertIsPresent(Object target) {
         target #isPresent ?! [ #throw("Assertion Mismatch: Instance is Nothing") ]
+    }
+
+    assertIsEmpty(Object target) {
+        target #isEmpty ?! [ #throw("Assertion Mismatch: Instance is not Empty") ]
     }
 
     assertThrows(Closure closure, MetaClass<Throwable> expectedException) {
@@ -78,6 +94,9 @@ class TestCase extends Test {
         #throw("Assertion Mismatch: Expected exception was not thrown")
     }
 
+    /// demonstrator for parameterized test execution
+    /// In future releases, this will be replaced by anotation-driven test discovery and execution,
+    /// that will automatically generate parameterized test cases based on the provided data set.
     parameterized(Closure closure, Array parameters) {
         // TODO collect results
         parameters #forEach [ p -> 
@@ -87,6 +106,9 @@ class TestCase extends Test {
         ]
     }
 
+    /// demonstrator for timeout test execution
+    /// In future releases, this will be replaced by anotation-driven test discovery and execution,
+    /// that will automatically generate timeout test cases based on the provided time limit.
     timeout(Closure closure, Long milliseconds) {
         // TODO implement timeout via virtual thread & future
         closure #apply(p)

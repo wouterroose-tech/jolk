@@ -13,7 +13,7 @@ public class ArchetypeEnumDemonstratorTest extends TestCase {
     testRunAccessConstant() {
         Level level = demonstrator #runAccessConstant;
         #assertIsPresent(level);
-        #assertThat(level #isPresent);
+        #assertTrue(level #isPresent);
         #assertEquals("ERROR", level #name);
     }
 

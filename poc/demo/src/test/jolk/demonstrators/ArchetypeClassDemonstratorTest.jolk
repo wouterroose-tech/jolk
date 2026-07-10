@@ -13,7 +13,7 @@ final class ArchetypeClassDemonstratorTest extends TestCase {
     testBasicNew() {
         Person p = demonstrator #runBasicNew;
         #assertIsPresent(p);
-        #assertThat(p != null);
+        #assertTrue(p != null);
     }
 
     testRunCanonicalNew() {

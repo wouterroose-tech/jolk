@@ -24,7 +24,7 @@ class ContactFormValidationTest extends TestCase {
             #description("Test description");
         
         ExecutionContext context = #validate(form);
-        #assertThat(!context #hasIssue)
+        #assertFalse(context #hasIssue)
     }
 
     /// Test that validation fails when ...
@@ -42,7 +42,7 @@ class ContactFormValidationTest extends TestCase {
             #description("Test description");
         
         ExecutionContext context = #validate(form);
-        #assertThat(context #hasIssue && context #issues #size == 1)
+        #assertTrue(context #hasIssue && context #issues #size == 1)
     }
 
     /// Test that validation fails when ...
@@ -62,7 +62,7 @@ class ContactFormValidationTest extends TestCase {
         
         ExecutionContext context = #validate(form);
         // SsnConstraint is an interrupting issue and will stop further validation, so only one issue is registered
-        #assertThat(context #hasIssue && context #issues #size == 1)
+        #assertTrue(context #hasIssue && context #issues #size == 1)
     }
 
     #> ExecutionContext validate(ContactForm form) {

@@ -18,7 +18,7 @@ class ZipConstraintTest extends TestCase {
         ContactForm form = ContactForm #new #zipCode(2800);
         ZipConstraint #new #accept(form, context);
         
-        #assertThat(! (context #hasIssue))
+        #assertFalse(context #hasIssue)
     }
 
     /// Verifies that the #accept protocol generates an issue and interrupts for invalid data.
@@ -34,43 +34,43 @@ class ZipConstraintTest extends TestCase {
         [ ZipConstraint #new #accept(form, context) ]
             #catch [ Interrupt e -> interrupted = true ];
         
-        #assertThat(interrupted && context #hasIssue)
+        #assertTrue(interrupted && context #hasIssue)
     }
 
     /// Verifies satisfiesPreCondition when a zip code is present.
     test_satisfiesPreCondition_success() {
         ExecutionContext context = ExecutionContext #new;
         ContactForm form = ContactForm #new #zipCode(2800);
-        #assertThat(ZipConstraint #new #satisfiesPreCondition(form, context))
+        #assertTrue(ZipConstraint #new #satisfiesPreCondition(form, context))
     }
 
     /// Verifies satisfiesPreCondition when the zip code is absent.
     test_satisfiesPreCondition_failure() {
         ExecutionContext context = ExecutionContext #new;
         ContactForm form = ContactForm #new; // zipCode defaults to 0
-        #assertThat(!ZipConstraint #new #satisfiesPreCondition(form, context))
+        #assertFalse(ZipConstraint #new #satisfiesPreCondition(form, context))
     }
 
     /// Verifies isMalinesArea for a code within the defined Mechelen scope.
     test_isMalinesArea_success() {
-        #assertThat(ZipConstraint #new #isMalinesArea(2800))
+        #assertTrue(ZipConstraint #new #isMalinesArea(2800))
     }
 
     /// Verifies isMalinesArea for a code outside the defined scope.
     test_isMalinesArea_failure() {
-        #assertThat(!ZipConstraint #new #isMalinesArea(9999))
+        #assertFalse(ZipConstraint #new #isMalinesArea(9999))
     }
 
     /// Verifies the protected isValid predicate for valid data.
     test_isValid_success() {
         ContactForm form = ContactForm #new #zipCode(2800);
-        #assertThat(ZipConstraint #new #isValid(form))
+        #assertTrue(ZipConstraint #new #isValid(form))
     }
 
     /// Verifies the protected isValid predicate for invalid data.
     test_isValid_failure() {
         ContactForm form = ContactForm #new #zipCode(9999);
-        #assertThat(!ZipConstraint #new #isValid(form))
+        #assertFalse(ZipConstraint #new #isValid(form))
     }
 
     /// Verifies that `getIssue` returns a valid issue template.
@@ -79,6 +79,6 @@ class ZipConstraintTest extends TestCase {
         ContactForm form = ContactForm #new #zipCode(2800);
 
         Issue issue = ZipConstraint #new #getIssue(form, context);
-        #assertThat(issue #isPresent && issue #message == "ZIP_INVALID" && issue #level #isError)
+        #assertTrue(issue #isPresent && issue #message == "ZIP_INVALID" && issue #level #isError)
     }
 }

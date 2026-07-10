@@ -25,8 +25,8 @@ public class CollectionLiteralDemonstratorTest extends TestCase {
     }
 
     testRunArrayContains() {
-        #assertThat(demonstrator #runArrayContains("red"));
-        #assertThat(! (demonstrator #runArrayContains("yellow")));
+        #assertTrue(demonstrator #runArrayContains("red"));
+        #assertFalse(demonstrator #runArrayContains("yellow"));
     }
 
     testRunNestedArray() {
@@ -43,8 +43,8 @@ public class CollectionLiteralDemonstratorTest extends TestCase {
 
 
     testRunMapContainsKey() {
-        #assertThat(demonstrator #runMapContainsKey("red"));
-        #assertThat(! (demonstrator #runMapContainsKey("yellow")));
+        #assertTrue(demonstrator #runMapContainsKey("red"));
+        #assertFalse(demonstrator #runMapContainsKey("yellow"));
     }
 
     testRunEmptyMapSize() {

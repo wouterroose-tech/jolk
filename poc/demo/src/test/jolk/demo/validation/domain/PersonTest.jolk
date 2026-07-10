@@ -30,7 +30,7 @@ class PersonTest extends TestCase {
             #lastName("Doe");
         
         #assertSame(p1, p1);
-        #assertThat(p1 != p2);
+        #assertTrue(p1 != p2);
     }
 
     testPersonEquivalence() {
@@ -49,7 +49,7 @@ class PersonTest extends TestCase {
         
         #assertEquals(p1, p1);
         #assertEquals(p1, p2);
-        #assertThat(p1 !~ p3);
+        #assertTrue(p1 !~ p3);
     }
 
 }

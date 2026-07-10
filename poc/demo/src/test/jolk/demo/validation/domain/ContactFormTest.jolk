@@ -37,7 +37,7 @@ class ContactFormTest extends TestCase {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        #assertThat(form == form)
+        #assertTrue(form == form)
     }
 
     // Distinct forms should not be identical.
@@ -53,7 +53,7 @@ class ContactFormTest extends TestCase {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        #assertThat(formA != formB)
+        #assertTrue(formA != formB)
     }
 
     // Form should be equivalent to itself.
@@ -64,7 +64,7 @@ class ContactFormTest extends TestCase {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        #assertThat(form ~~ form)
+        #assertTrue(form ~~ form)
     }
 
     // Forms with equivalent persons and matching data should be equivalent.
@@ -80,7 +80,7 @@ class ContactFormTest extends TestCase {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
-        #assertThat(formA ~~ formB)
+        #assertTrue(formA ~~ formB)
     }
     
     // Forms with different data should not be equivalent.
@@ -96,7 +96,7 @@ class ContactFormTest extends TestCase {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description B");
-        #assertThat(formA !~ formB)
+        #assertTrue(formA !~ formB)
     }
 
     #> Person getPerson() {

@@ -11,7 +11,7 @@ class IssueTest extends TestCase {
     /// Verifies that `getIssue` returns a valid issue template.
     testGetIssue() {
         Issue issue = Issue #new(null, "ZIP_INVALID", Level #ERROR);
-        #assertThat(issue #message == "ZIP_INVALID" && issue #level #isError)
+        #assertTrue(issue #message == "ZIP_INVALID" && issue #level #isError)
     }
 
 }

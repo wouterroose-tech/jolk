@@ -39,7 +39,7 @@ class CircleTest extends TestCase {
     }
 
     testEquivalence() {
-        #assertThat(Circle #new(5) ~~ Circle #new(5.0))
+        #assertTrue(Circle #new(5) ~~ Circle #new(5.0))
     }
 
     testInvalidConstruction() {

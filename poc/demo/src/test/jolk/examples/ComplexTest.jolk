@@ -48,14 +48,14 @@ class ComplexTest extends TestCase {
         Complex c1 = Complex #new(1.0, 2.0);
         Complex c2 = Complex #new(1.0, 2.0);
         Complex c3 = Complex #new(2.0, 3.0);
-        #assertThat(c1 ~~ c1);
-        #assertThat(c1 ~~ c2);
-        #assertThat(!(c1 ~~ c3));
+        #assertTrue(c1 ~~ c1);
+        #assertTrue(c1 ~~ c2);
+        #assertFalse(c1 ~~ c3);
         // Test addition with NaN values
-        #assertThat(NaN == NaN);
-        #assertThat(NaN ~~ NaN);
-        #assertThat(!(c1 ~~ NaN));
-        #assertThat(!(NaN ~~ c1));
+        #assertTrue(NaN == NaN);
+        #assertTrue(NaN ~~ NaN);
+        #assertFalse(c1 ~~ NaN);
+        #assertFalse(NaN ~~ c1);
     }
 
 }

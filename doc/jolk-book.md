@@ -343,7 +343,7 @@ Classes, Records, Enums, and Value Types are harmonised under a unified, "bracke
 
 This alignment is anchored by semantic casing, where uppercase names signal that these types are first-class Meta-objects. Consequently, Value types offer the same "bracket-light" accessor protocol as records but are optimised for flat memory layouts and reduced heap overhead, treating the JVM as a high-performance substrate while maintaining an object-oriented discipline.
 
-By the application of implicit field encapsulation and standardising core capabilities like equivalence across every archetype, the model achieves *behavioral integrity*. Jolk supports parameterized types through generics and (F-)Bounded quantification[8]. Unlike Java interfaces, which are nominal, Jolk protocols use the `&` operator to represent behavioral conjunctions within the subtype lattice. Finally, extension protocols allow behavior to be "bolted on" to existing final types without modifying source code.
+By the application of implicit field encapsulation and standardising core capabilities like equivalence across every archetype, the model achieves *behavioral integrity*. Jolk supports parameterised types through generics and (F-)Bounded quantification[8]. Unlike Java interfaces, which are nominal, Jolk protocols use the `&` operator to represent behavioral conjunctions within the subtype lattice. Finally, extension protocols allow behavior to be "bolted on" to existing final types without modifying source code.
 
 ### Archetypes
 
@@ -1489,49 +1489,29 @@ During steady-state execution, the Graal JIT recognizes these patterns as candid
 
 Projection in Jolk offers architectural clarity that surpasses the obscurity of source-generated boilerplate. It establishes a deterministic identity, where the logic for value assignment is always a visible handshake, `Receiver #project(Identity, Value)`, eliminating the need to search through extensive generated code common in Java. Furthermore, it ensures structural clarity by making the state of an object consistently retrievable via `#stateProjection`, thereby removing the "black box" nature of generated Plain Old Java Objects (POJOs) and rendering the data flow across the unified communicative field explicit and auditable.
 
-## Unit test framework
+## JolkUnit, unit test framework
 
-Testing frameworks are mirrors of a language’s foundational model. This chapter details the architectural design of the Jolk Unit test framework, tracing its evolutionary lineage from early dynamic environments to an integrated, modern guest-language substrate.
-
-### The inheritance lineage and structural bottlenecks
-
-The blueprint of automated unit testing originates in Kent Beck’s Smalltalk-80 framework, `SUnit` [23], which established the xUnit lineage through structural homogeneity, inheritance-driven capability, and reflective discovery. Tests are authored using native object primitives, inheriting validation assertions and lifecycles (`setUp`, `tearDown`) directly from a root `TestCase` class, while the runner utilizes selector reflection to discover execution paths.
-
-When `JUnit 3` brought this paradigm to Java, it replicated this inheritance model (`extends TestCase`). Forcing test suites to occupy the single inheritance slot became an unacceptable architectural bottleneck. The industry responded by shifting from structural hierarchies to declarative metadata configurations, a transition realized in `JUnit 4 & 5` via annotations (`@Test`). This decoupled execution from the object hierarchy, allowing tests to be implemented as POJOs that maintained total class taxonomy freedom.
-
-Despite providing structural decoupling, annotations introduce significant friction into a pure object-oriented architecture:
-
-* **Secundary syntax:** Introducing annotations forces a pure message-oriented language to maintain a macro-driven secondary syntax layer simply to satisfy the testing harness.
-* **Metaclass violation:** Reflection-based metadata scanning breaks with the self-contained concept of a Jolk Object and its `MetaClass`.
-* **Encapsulation breach:** The verification environment ceases to be a peer participating in standard message passing, turning instead into an intrusive meta-actor that disrupts object encapsulation.
+The evolution of automated unit testing frameworks represents a tension between declarative metadata structures and active object-oriented behaviors. Traditional verification environments rely on static reflections and external metadata configurations to decouple execution from application code, effectively outsourcing control flow to a framework-level interpreter. Inspired by Alan Kay’s “The big idea is messaging” and Kent Beck’s original `SUnit` [23] blueprint, the architecture unifies structural exploration with message-oriented execution. Under this paradigm, discovery operates as a behavioral conversation, wherein the test engine sends a message to a "living" `MetaClass` to resolve the test definition dynamically. By treating discovery as a behavioral, meta-level conversation executed through native message-dispatch pathways, the Jolk testing architecture shifts to direct object communication. Under this paradigm, test configurations, parameter models, and lifecycles are negotiated dynamically and managed in absolute isolation, establishing the framework as a peer participant within the messaging model.
 
 ### Message-oriented verification
 
-The unit testing framework is synthesised as a direct manifestation of the language's message-dispatch mechanics. By leveraging native language primitives—specifically, the formal runtime guarantees of the *self-receiver* and zero-parameter *self-return* syntax patterns—the system treats the test initialization layer as a standard code structure. When a test method evaluates, it naturally updates an execution context. This framework handles verification constraints entirely through messaging and meta-layer protocol. By utilizing a stateless protocol with default method implementations, JolkUnit serves as a flexible trait interface, bypassing single-inheritance limitations without resorting to external metadata markers.
+Testing frameworks are mirrors of a language’s foundational model. The unit testing framework is synthesised as a direct manifestation of the language's message-dispatch mechanics. By leveraging native language primitives—specifically, the formal runtime guarantees of the *self-receiver* and zero-parameter *self-return* selector signatures—the system treats the test initialization layer as a standard code structure. When a test method evaluates, it naturally updates an execution context. This framework handles verification constraints entirely through messaging and meta-layer protocols. By utilizing a stateless protocol with default method implementations, JolkUnit serves as a flexible trait interface, bypassing single-inheritance limitations without resorting to external metadata markers.
 
-JolkUnit demonstrates that standard primitives are fully sufficient for orchestrating complex testing architectures. It pairs dynamic selector routing (`##method`) with polymorphic message dispatch to maintain a unified, fluid system. For instance, replacing declarative annotations like `@Disabled` with executable runtime statements like `#disabled(condition)` pulls control-flow decisions back into the application layer. This enables dynamic, environment-aware test skipping using standard conditional checks rather than forcing the host compiler to parse external expression languages.
+### Architecture
 
-By expressing configuration rules through native message pathways, JolkUnit bridges readable testing syntax with a dense, code-centric architecture.
+Testing frameworks are mirrors of a language’s foundational model. When engineering a runtime environment on a polyglot infrastructure, the unit testing framework is synthesized as a direct manifestation of the language's message-dispatch mechanics. The Jolk Unit Test Framework embodies this principle by leveraging Jolk's meta-level capabilities for test discovery and configuration.
 
-### JolkUnit (from the xUnit family)
+Protocols with implementations solve the inheritance problem cleanly and explicitly—offering self-receiver ergonomics while respecting strict encapsulation boundaries. Jolk rejects external metadata macros and compiler transformations, maintaining total fidelity to the message-passing philosophy of JoMoo. The Trade-off: To get clean validation prose without boilerplate, the test class must announce its intent to the type system. By implementing the `protocol TestCase` mitigates the single-inheritance limitation, but the developer must still specify the intent via `implements` on the class definition boundary.
 
-#### Architecture
+Because the builder pattern operates at execution runtime rather than compilation runtime, datasets can be dynamically computed via logic, database connections, or external configuration files during the building phase, offering a major architectural advantage over static annotations. This approach solves the metadata problem natively within a message-passing layer completes a clear architectural loop. It directly evolves the original design choices of SUnit to solve the challenges of modern enterprise software.
 
-The core philosophy driving this multi-tiered architecture centers on preserving linguistic homogeneity and structural autonomy via message-passing execution. Every validation is executed as a native slot dispatch, the system avoids introducing non-object metadata concepts like annotations.
+The Jolk unit test framework is designed as a native extension of the message-passing paradigm. It employs a unified protocol-based approach where test case definitions, lifecycle hooks (`#before`, `#after`) , assertions and verifications, are all expressed as message dispatches. This adheres to Jolk's message-passing paradigm, ensuring all testing constructs are first-class citizens within the language's object model. The framework's design prioritizes linguistic homogeneity and architectural purity, allowing for seamless integration with the GraalVM/Truffle runtime's optimization capabilities, such as inline caching and partial evaluation, to achieve high-performance test execution.
 
-Using protocols with default implementations is the most cohesive path for Jolk. Protocols with implementations solve the inheritance problem cleanly and explicitly—offering self-receiver ergonomics while respecting strict encapsulation boundaries. Jolk rejects external metadata macros and compiler transformations, maintaining total fidelity to the message-passing philosophy of JoMoo. The Trade-off: To get clean validation prose without boilerplate, the test class must announce its intent to the type system. By implementing the `protocol TestCase` mitigates the single-inheritance limitation, but the developer must still specify the intent via `implements` on the class definition boundary.
+### Implementation blueprint
 
-Because the builder pattern operates at execution runtime rather than compilation runtime, datasets can be dynamically computed via logic, database connections, or external configuration files during the building phase, offering a major architectural advantage over static annotations.
+The framework architecture decouples operational definitions from state management through three structural layers: a stateless configuration protocol, an isolated execution context, and an execution engine.
 
-This appraoch solves the metadata problem natively within a message-passing object layer completes a clear architectural loop. It directly evolves the original design choices of Smalltalk and SUnit to solve the "annotation hell" challenges of modern enterprise software.
-
-The Jolk Unit Test Framework is designed as a native extension of the message-passing paradigm, obviating the need for external metadata annotations or heavy reflection mechanisms common in Java-based testing frameworks. It employs a unified protocol-based approach where test case definitions, lifecycle hooks (`#beforeEach`, `#afterEach`), configuration parameters (`#parameterized`, `#timeout`), and conditional disabling (`#disabled`) are all expressed as standard message dispatches. This adheres strictly to Jolk's message-passing philosophy, ensuring all testing constructs are first-class citizens within the language's object model. The framework's design prioritizes linguistic homogeneity and architectural purity, allowing for seamless integration with the GraalVM/Truffle runtime's optimization capabilities, such as inline caching and partial evaluation, to achieve high-performance test execution.
-
-#### Implementation blueprint
-
-The framework's implementation is structured into three key layers to manage complexity and maintain separation of concerns:
-
-A stateless protocol (`jolk.test.api.TestCase`) defines the  API for test definition and configuration. It includes default implementations for lifecycle hooks and builder methods that delegate state management to an isolated `TestExecutionContext`. This ensures the protocol remains clean and free of implementation-specific state, adhering to the principle of encapsulation.
+The stateless protocol (`jolk.test.api.TestCase`) establishes the contract for validation routines and test configurations. It provides default method implementations for lifecycle phases and fluent builder selectors that delegate operational data mutations to an active execution context, preserving encapsulation by remaining devoid of mutable instance variables.
 
 ```jolk
 protocol TestCase {
@@ -1539,10 +1519,6 @@ protocol TestCase {
     before() {} 
 
     after() {}
-
-    disabled() {
-        DisabledSignal #DISABLED #throw
-    }
 
     fail() {
         #throw("Test Failure: Invariant did not hold")
@@ -1556,25 +1532,18 @@ protocol TestCase {
 }
 ```
 
-An internal, thread-isolated execution context is responsible for storing transient configuration state (target selector, datasets, timeouts) during test execution. This isolation is critical for supporting parallel test runs and preventing state corruption across threads.
-
-A test engine leverages Jolk's meta-level protocol to discover test slots, interprets the returned payload (either a test result or a configuration descriptor), and manages the execution lifecycle, including conditional disabling and parameterized test runs, all without relying on reflection or annotations for test discovery.
-
-#### Execution
-
-The execution flow within the JolkUnit framework follows a three-phase process managed by the `JolkTestEngine`:
-
-1.  **Test discovery:** The engine scans the test suite class for public, zero-parameter methods. These are treated as potential test cases or configuration orchestrators. This phase relies on Jolk's implicit self-return contract to identify test methods without requiring special annotations.
-2.  **Test building:** The engine dispatches each discovered slot against a test instance. If the method contains direct assertions, it executes them. If it's an orchestrator (e.g., `#parameterized`), it mutates the thread-local `TestExecutionContext` and returns `self`.
-3.  **Test execution:** The engine inspects the `TestExecutionContext`. If configuration data is present, it proceeds to execute the targeted validation logic (e.g., iterating through datasets or applying timeouts). Otherwise, it logs the test as successful if the method executed without error. All execution and configuration phases are managed within a single, cohesive runtime loop, optimizing performance and simplifying the engine's logic.
+The execution engine coordinates execution pipelines via the meta-protocol, driving the verification cycle:
+* **Discovery:** The engine loads the foundational `jolk.test.api` protocol definitions, identifies and evaluates Jolk test classes from the classpath within a dedicated Truffle context, loading the target definitions into the runtime environment.
+* **Building:** The engine interrogates the loaded `MetaClass` object via the meta-layer protocol to extract zero-argument method selectors. Orchestrator slots containing configuration modifiers evaluate their underlying method blocks to populate the execution context with runtime parameter matrices and lifecycle conditions prior to returning the *self-receiver*.
+* **Execution:** The engine processes the returned selector payload and the populated execution context, executing the validation logic and logging the test results.
 
 ### Integration into the JUnit platform
 
-Industrialization requires seamless compatibility with existing continuous integration toolchains and IDE environments. The Jolk Unit Test Framework achieves this through a native host-boundary bridge: `jolk.test.engine.JolkTestEngine`. The engine implements the `org.junit.platform.engine.TestEngine` interface and registers itself via the standard Java `ServiceLoader` protocol using the local SPI registration token.
+The Jolk unit test framework achieves compatibility with continuous integration ecosystems through a host-boundary bridge designated as the `JolkTestEngine`. This engine implements the `org.junit.platform.engine.TestEngine` SPI and registers via the standard Java `ServiceLoader` mechanism, allowing external build tools to discover and delegate execution natively.
 
-During the discovery phase, the engine reads and parses the target `.jolc` or `.jolk` files, translating the package hierarchies into the Truffle context. The engine locates test method slots via the meta-layer protocol, initiates execution loops, intercepts guest-language `AssertionException` results, and maps them to clean failure nodes on the host JVM platform.
+The integration lifecycle manages guest-to-host boundaries through a continuous execution pipeline. During discovery, the engine instantiates a `JolkTestEngineExecutionContext` to encapsulate the GraalVM polyglot container and to initialize the runtime type space. Transiting to the building phase, the engine maps the resolved guest-space execution configurations into a host-side JUnit `TestDescriptor` tree. Finally, during execution, the engine traverses this tree to initiate guest-language validations, intercepting guest-space exceptions or assertion failures to translate them into corresponding host-side success, skipped, or failure nodes on the JVM platform.
 
-Through this architecture, the framework retains its message-passing philosophy internally, while presenting itself as a standard, execution node.
+Through this host-bridge design, the framework retains its message-passing paradigm internally while exposing a standard execution contract to the Java ecosystem.
 
 ## Industrial potential 
 

@@ -2,7 +2,7 @@
 
 **Unified Messaging and Meta-Layer Protocol for the Java Type System**
 
-The translation of the Smalltalk-80 execution model—defined in the 'Blue Book'[1]—onto the Java type system formalises the Jolk specification as the conceptual foundation for a message-oriented paradigm with a C-family syntax structure that the Tolk Engine maps onto the underlying Java Virtual Machine. While standard industrial models treat the object as a data container and execution operates procedurally, Jolk enforces a semantic overlay wherein message dispatch governs behaviour and drives interactions.
+The Jolk specification formalises the translation of the Smalltalk-80 model—defined in the 'Blue Book'[1]—onto the Java type system, establishing the conceptual foundation for this architecture. It integrates a messaging model with a C-family syntax structure, which the Tolk Engine maps onto the underlying Java Virtual Machine. While mainstream industrial models treat the object as a data container and execution operates procedurally, Jolk enforces a semantic overlay wherein message dispatch governs behaviour and drives interactions.
 
 The architecture implements the computational paradigm described by Alan Kay,[2][3] wherein autonomous entities communicate through messages. Jolk enforces this design uniformly: every operational interaction—including arithmetic evaluation and control flow execution—is resolved through message dispatch.
 
@@ -24,7 +24,7 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 * [Part Two: Identity and Type Architecture](#part-two)
     * [Types](#types)
     * [Messaging](#messaging)
-    * [The meta-Layer protocol](#the-meta-layer-protocol)
+    * [The Meta-Layer Protocol](#the-meta-layer-protocol)
     * [Core type system](#core-type-system)
     * [Architectural highlights](#architectural-highlights)
     * [Heritage & foundation](#heritage--foundation)
@@ -33,7 +33,7 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
     * [Fragments](#fragments)
     * [Design Patterns](#design-patterns)
     * [The Meta-Layer Synthesis](#the-meta-layer-synthesis)
-	* [Unit Test Framework ](#unit-test-framework)
+	* [Unit Test Framework](#unit-test-framework)
     * [Industrial Potential](#industrial-potential)
 * [Part Four: Tolk - The Engine Mechanics](#part-four)
     * [Implementation](#implementation)
@@ -52,9 +52,9 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 
 ---
 
-Jolk /dʒɔːk/ (the name is a blend of 'Java' and the Dutch word 'tolk', denoting an interpreter and referencing the 'talk' in Smalltalk-80) is the formal technical specification for the architecture that reifies message-passing and behavioural semantics on top of host identities.
+Jolk /dʒɔːk/ (the name is a blend of 'Java' and the Dutch word 'tolk', denoting an interpreter and referencing the 'talk' in Smalltalk-80) is the formal specification of a language that reifies message-passing and behavioural semantics on top of the underlying Java type system.
 
-Jolk extends the research initiated in ProtoTyping[4] by implementing a unified messaging and meta-layer protocol for the Java type system. By projecting Strongtalk[5] type-lattice separation principles onto the Java type system, Jolk enforces the structural integrity of the execution model through compile-time validation of message signatures. The Tolk Engine leverages the Truffle framework to reify unified messaging within a self-optimising abstract syntax tree (AST). Through dynamic specialisation and GraalVM partial evaluation, the engine executes semantic flattening, collapsing high-level protocols into machine code to target runtime parity with native operations.
+Jolk extends the research initiated in ProtoTyping[4]. By projecting Strongtalk[5] type-lattice separation principles onto the Java type system, Jolk enforces the structural integrity of the execution model through compile-time validation of message signatures. The Tolk Engine leverages the Truffle framework to reify unified messaging within a self-optimising abstract syntax tree (AST). Through dynamic specialisation and GraalVM partial evaluation, the engine executes semantic flattening, collapsing high-level protocols into machine code to target runtime parity with native operations.
 
 The manuscript structure reflects the system architecture: Parts One and Two establish the syntax and language specifications; Part Three demonstrates system synthesis through design patterns and frameworks; and Part Four provides an analysis of the Tolk Engine mechanics and substrate implementation.
 
@@ -64,15 +64,15 @@ Jolk is a synthesis of Java’s structural discipline and Smalltalk’s dynamic 
 
 ### Principles
 
-**Object-oriented**: Everything—including closures, booleans, and the Nothing singleton—is an identity receptive to messages.
-
 **Unified messaging**: Every interaction—including instantiation, control flow, and error handling—is a formal message send.
+
+**Unified type system**: Everything—including closures, booleans, and the Nothing singleton—is an identity receptive to messages.
 
 **Data confinement**: State isolation enforced through exclusive field binding during construction and message-mediated mutation.
 
 **Strong typing**: A static protocol layer leveraging the Java type system to ensure safety prior to execution.
 
-**Syntactic alignment**: A C-derived syntax with a constrained keyword set and conventional lexical tokens.
+**Syntactic alignment**: A C-derived syntax with a restricted keyword set and standard lexical tokens.
 
 ### Architectural outcomes
 
@@ -80,7 +80,7 @@ Structural complexity is managed through the following design constraints:
 
 **Keyword minimisation**: The model achieves a syntax minimum by excluding procedural keywords and relying on a restricted palette of structural scaffolding.
 
-**Operational uniformity**: Control flow and error handling operate within the unified message-oriented paradigm. This structural integration restricts the runtime engine to a singular execution mechanic for both object evaluation and branch execution.
+**Operational uniformity**: Computation operates within the unified message-oriented paradigm. This structural integration restricts the runtime engine to a singular execution mechanic for both object evaluation and branch execution.
 
 **Semantic flattening**: Leveraging a Truffle-based implementation, the architecture targets execution parity with native JVM operations by collapsing high-level messaging protocols into optimized machine code through GraalVM’s partial evaluation of the generated Abstract Syntax Tree (AST).
 

@@ -2,11 +2,9 @@
 
 **Unified Messaging and Meta-Layer Protocol for the Java Type System**
 
-This book outlines the translation of the Smalltalk-80 execution model—defined in the 'Blue Book'[1]—onto the Java type system, formalising a message-passing evolution and establishing the conceptual foundation for these architectures. This manuscript defines the design of the Jolk language and the mechanics of its execution environment, the Tolk Engine. While industrial models treat the object as a data container and Java execution operates procedurally, Jolk enforces a semantic overlay wherein message dispatch governs behaviour and drives interactions.
+The translation of the Smalltalk-80 execution model—defined in the 'Blue Book'[1]—onto the Java type system formalises the Jolk specification as the conceptual foundation for a message-oriented paradigm with a C-family syntax structure that the Tolk Engine maps onto the underlying Java Virtual Machine. While standard industrial models treat the object as a data container and execution operates procedurally, Jolk enforces a semantic overlay wherein message dispatch governs behaviour and drives interactions.
 
 The architecture implements the computational paradigm described by Alan Kay,[2][3] wherein autonomous entities communicate through messages. Jolk enforces this design uniformly: every operational interaction—including arithmetic evaluation and control flow execution—is resolved through message dispatch.
-
-The Jolk specification integrates a message-oriented paradigm with a C-family syntax structure, which the Tolk Engine maps onto the underlying Java Virtual Machine.
 
 **Acknowledgments**
 

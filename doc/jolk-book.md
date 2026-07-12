@@ -393,7 +393,7 @@ Strict encapsulation is maintained by prohibiting direct field access. Instead, 
 
 **enum**
 
-an Enum is a specialised type representing a fixed set of shared singletons reified as uppercase Lexically Anchored identities. To maintain semantic casing, these constants function as Meta-Objects within the unified messaging protocol. Members are typically accessed by sending a Meta-Selector to the type (e.g., `Day #MO`), but importing a specific member opens a Lens on that identity. This allows the member name to be used directly, removing syntactic noise by eliminating the need for the `#` selector or the type prefix.
+an Enum is a specialised type representing a fixed set of shared singletons reified as uppercase Lexically Anchored identities. To maintain semantic casing, these constants function as Meta-Objects within the unified messaging protocol. Members are typically accessed by sending a Meta-Selector to the type (e.g., `Day #MO`), but importing a specific member opens a Lens on that identity. This allows the member name to be used directly, eliminating the need for the `#` selector or the type prefix.
 
 Structurally, enum constants use a shorthand notation for public meta constant declarations separated by semicolons. To ensure Identity Congruence, the system synthesises an immutable, canonical creation method (`#new`). Synthesises message selectors and resolvers—such as `#valueOf` ensure enums are first-class participants in the message flow.
 
@@ -593,7 +593,7 @@ Class-level constants are reified as Meta-Objects within the Meta-Object Descrip
 
 **Meta Projection (&)**
 
-The use of a meta field *Projection* through the `&` / `using meta` acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains semantic integrity by preserving the link to the parent object (e.g., Math) while removing the syntactic noise of explicit message selectors. Though it appears as a bare variable, the Tolk Engine recognises the lens and applies semantic flattening, "intrinsifying" the access.
+The use of a meta field *Projection* through the `&` / `using meta` acts as a "lens", creating a virtual local anchor that maps an identifier like PI to a constant within a remote identity. This maintains semantic integrity by preserving the link to the parent object (e.g., Math) while removing the explicit message selectors. Though it appears as a bare variable, the Tolk Engine recognises the lens and applies semantic flattening, "intrinsifying" the access.
 
 This mechanism allows for a more fluid and less verbose syntax when accessing meta-level constants or methods. For example, instead of repeatedly using `Math #PI`, you can project `PI` into the local scope, allowing direct access as `PI`. The compiler ensures that this syntactic sugar is resolved efficiently, often by inlining the access to the original meta-object. This approach enhances readability, especially in code that frequently references meta-level entities.
 

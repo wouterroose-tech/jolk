@@ -110,7 +110,7 @@ The foundations of this work derive from industrial observation within enterpris
 
 ## Grammar
 
-The grammar synthesizes the structural layout of the Java ecosystem with the dynamic fluidity of Smalltalk's message passing. It utilizes lexical anchors to guard the metaboundary and enforce encapsulation. This design allows to maintain deterministic mathematical precedence within a unified communicative field, ensuring that algebraic expressions are resolved as a sequence of optimized message dispatches.
+The grammar synthesizes the structural layout of Java with Smalltalk's message passing.
 
     (* Jolk Grammar *)
     (* ============ *)
@@ -182,7 +182,7 @@ The grammar synthesizes the structural layout of the Java ecosystem with the dyn
 	visibility_ops  = "<" | "~" | ":" | ">"
 	finality_ops    = "?" | "!"
 
-The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like `selector` (anchored by symbols or `#`) and `[ ]` for blocks, the specification enforces strict syntactic signatures. Jolk treats all interactions—unary, binary, and ternary—as unified message sends. Traditional mathematical and logical precedence is enforced as a *semantic rule* within the engine, ensuring that algebraic expectations are preserved within a flattened syntactic field.
+The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like `selector` (anchored by symbols or `#`) and `[ ]` for blocks, the specification enforces strict syntactic signatures. Jolk treats all interactions—unary, binary, and ternary—as unified message sends. Traditional mathematical and logical precedence is enforced as a semantic rule within the engine, ensuring that algebraic expectations are preserved within a flattened syntactic field.
 
 While symbolic anchors (`#<`, `#>`, and related) represent the idiomatic syntax, the grammar provides keyword aliases for `public` and `private`, and explicitly supports archetype denotations such as `class`, `extends`, and associated keywords to maintain structural familiarity with the Java ecosystem.
 
@@ -309,7 +309,7 @@ Meta-Directives establish the context that governs the relationship between the 
 
 The execution model enforces a semantic framework where the metaboundary—the absolute line between internal state and the communication protocol—remains structurally inviolable. State isolation and finality operate as deterministic execution properties.
 
-While traditional dynamic systems often permit reflection access to private fields or runtime method overrides, this architecture prioritises absolute boundary enforcement. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. The paradigm prioritises message-passing interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential metaboundary where the 'Ma' or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic protocol. By shifting the focus from the objects themselves to the precision of the messages between them, the architecture achieves a level of composition and determinism that eliminates the side effects found in less constrained environments.
+This architecture prioritises absolute boundary enforcement. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. The paradigm prioritises message-passing interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential metaboundary where the 'Ma' or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic protocol. By shifting the focus from the objects themselves to the precision of the messages between them, the architecture achieves a level of composition and determinism that eliminates the side effects found in less constrained environments.
 
 ## Design synopsis
 
@@ -643,7 +643,7 @@ Unary operators sit above arithmetic terms (addition) and factors (multiplicatio
 
 ### Mathematical and logical rules for operator order
 
-Jolk’s adoption of Java’s mathematical and logical precedence rules is a deliberate design choice to enforce compliance with algebraic conventions and established industry standards while preserving a pure object-oriented model. Unlike Smalltalk, which evaluates all binary messages strictly from left to right, Jolk enforces standard mathematical precedence. This aligns with the concept of "Message in motion" because, regardless of the grammatical order of evaluation, Jolk defines operators as selectors, meaning every mathematical or logical operation is executed as a unified message send. Consequently, an expression like `a + b * c` follows standard precedence for the developer's benefit, but is resolved by the Tolk Engine as a series of message sends where b receives the `*` message before a receives the `+` message. By embedding these rules into a deterministic grammar while maintaining a keyword-lean experience, Jolk ensures that the fluidity of messaging remains the foundational engine of the language, even when the syntax adheres to familiar imperative conventions.
+Jolk’s adoption of standard mathematical and logical precedence rules is a deliberate design choice to enforce compliance with algebraic conventions and established industry standards while preserving a pure object-oriented model. This aligns with the concept of "Message in motion" because, regardless of the grammatical order of evaluation, Jolk defines operators as selectors, meaning every mathematical or logical operation is executed as a unified message send. Consequently, an expression like `a + b * c` follows standard precedence, but is resolved by the Tolk Engine as a series of message sends where b receives the `*` message before a receives the `+` message. By embedding these rules into a deterministic grammar while maintaining a keyword-lean experience, Jolk ensures that the fluidity of messaging remains the foundational engine of the language, even when the syntax adheres to familiar imperative conventions.
 
 ### Numerical operation evaluation
 
@@ -696,7 +696,7 @@ This feature is fundamental to the *Self-Return Contract*. It guarantees that a 
 
 Operator overloading is achieved by treating symbols as unified message selectors. By including operators within the selector grammar, the language ensures that every operation is semantically resolved as a message send. This allows custom types—like ComplexNumber—to respond to standard symbols such as `+`, `-`, or `*`, providing them with the syntactic fluidness of native primitives.
 
-To implement an operator, developers define a method using the symbol as the identifier, which the Tolk Engine then maps to standard JVM operations. While these interactions are pure message sends, Jolk retains standard mathematical precedence to ensure a familiar and predictable experience for developers.
+To implement an operator, developers define a method using the symbol as the identifier, which the Tolk Engine then maps to standard JVM operations. While these interactions are pure message sends, Jolk retains standard mathematical precedence.
 
 ### Keyword Selectors
 
@@ -851,7 +851,7 @@ To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *
 
 Protocol Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in the source code) and the Atomic Identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Protocol Projection operates as a deterministic proposal strictly bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols rather than the violation of the lexical fence.
 
-If a receiver’s blueprint does not account for an identity, the projection is elevated to a deterministic failure. While the substrate produces `Nothing`, the system provides the #demand protocol to transform an unhandled handshake into a factual Interrupt or an `UnhandledIdentityException`. By unifying static and dynamic dispatch paths, Jolk ensures the unified communicative field remains a space of absolute accountability—a "Correct by Construction" environment where every signal is a verified, high-performance contract between identities.
+If a receiver’s blueprint does not account for an identity, the projection is elevated to a deterministic failure. While the substrate produces `Nothing`, the system provides the #demand protocol to transform an unhandled handshake into a factual Interrupt or an `UnhandledIdentityException`. By unifying static and dynamic dispatch paths, Jolk ensures the communicative field remains a space of absolute accountability—a "Correct by Construction" environment where every signal is a verified, high-performance contract between identities.
 
 ## Core type system
 
@@ -1485,7 +1485,7 @@ The Dynamic Message Send API respects the metaboundary fence. If a generated DAO
 
 During steady-state execution, the Graal JIT recognizes these patterns as candidates for *Speculative Pruning*. By treating the dynamic send as a candidate for *Polymorphic Inline Caching*, the dynamic dispatch is collapsed. Whether utilizing a generated DAO, a dynamic service container, or a mocking framework, the Tolk engine ensures the system operates within the highest possible performance density.
 
-Projection in Jolk offers architectural clarity that surpasses the obscurity of source-generated boilerplate. It establishes a deterministic identity, where the logic for value assignment is always a visible handshake, `Receiver #project(Identity, Value)`, eliminating the need to search through extensive generated code common in Java. Furthermore, it ensures structural clarity by making the state of an object consistently retrievable via `#stateProjection`, thereby removing the "black box" nature of generated Plain Old Java Objects (POJOs) and rendering the data flow across the unified communicative field explicit and auditable.
+Projection in Jolk offers architectural clarity that surpasses the obscurity of source-generated boilerplate. It establishes a deterministic identity, where the logic for value assignment is always a visible handshake, `Receiver #project(Identity, Value)`, eliminating the need to search through extensive generated code common in Java. Furthermore, it ensures structural clarity by making the state of an object consistently retrievable via `#stateProjection`, thereby removing the "black box" nature of generated Plain Old Java Objects (POJOs) and rendering the data flow across the communicative field explicit and auditable.
 
 ## JolkUnit, unit test framework
 
@@ -1636,7 +1636,7 @@ The `jolk.lang` class definitions for these types act as a formal bridge to the 
  
 Through *Node Rewriting* (specifically realized in `tolk.nodes.JolkDispatchNode.doLong` and `doBoolean`), the engine replaces generic dispatch nodes with these specialised variants when type stability is detected, effectively collapsing the messaging exchange into substrate-native scalar operations. During this process, the engine strips away the object headers and identity metadata to emit raw 64-bit hardware instructions.
 
-**String Identity:** The String Identity is reified through Truffle type specialisation as an irreducible leaf node within the AST. By leveraging `TruffleString`, the implementation ensures the immutable state of literal data and facilitates memory-efficient deduplication across the *unified communicative field*. This transformation is mechanically operationalised within the `tolk.nodes.JolkDispatchNode` through two distinct specialisations:
+**String Identity:** The String Identity is reified through Truffle type specialisation as an irreducible leaf node within the AST. By leveraging `TruffleString`, the implementation ensures the immutable state of literal data and facilitates memory-efficient deduplication. This transformation is mechanically operationalised within the `tolk.nodes.JolkDispatchNode` through two distinct specialisations:
 * `doTruffleString`: Serves as the high-performance fast path for guest operations, performing instructional projection for messages such as `#length` and `#isEmpty` to bypass substrate overhead while prioritizing Jolk-native extensions.
 * `doJavaString`: Manages the metaboundary by intercepting raw `java.lang.String` instances and applying Identity Restitution to lift them into the optimized `TruffleString` identity.
  
@@ -1796,6 +1796,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **Semantic Casing**: A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  
 **Semantic Flattening**: The process where the Tolk Engine utilizes dynamic node specialization to collapse high-level message-passing abstractions and patterns into optimized machine code, effectively eliminating dispatch overhead during GraalVM partial evaluation.  
 **Substrate**: Substrate VM is an Oracle internal project name for the technology behind GraalVM Native Image. 
+**Unified Communicative Field**: The environment where every operational interaction is reified as a formal exchange of messages between autonomous identities.
 
 ---
 

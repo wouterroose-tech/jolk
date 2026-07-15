@@ -110,7 +110,7 @@ The foundations of this work derive from industrial observation within enterpris
 
 ## Grammar
 
-The grammar synthesizes the structural layout of Java with Smalltalk's message passing.
+The grammar synthesises class-based structural layout with a unified message-dispatch syntax, representing entities as unified archetypes.
 
     (* Jolk Grammar *)
     (* ============ *)
@@ -184,13 +184,13 @@ The grammar synthesizes the structural layout of Java with Smalltalk's message p
 
 The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like `selector` (anchored by symbols or `#`) and `[ ]` for blocks, the specification enforces strict syntactic signatures. Jolk treats all interactions—unary, binary, and ternary—as unified message sends. Traditional mathematical and logical precedence is enforced as a semantic rule within the engine, ensuring that algebraic expectations are preserved within a flattened syntactic field.
 
-While symbolic anchors (`#<`, `#>`, and related) represent the idiomatic syntax, the grammar provides keyword aliases for `public` and `private`, and explicitly supports archetype denotations such as `class`, `extends`, and associated keywords to maintain structural familiarity with the Java ecosystem.
+While symbolic anchors (`#<`, `#>`, and related) represent the idiomatic syntax, the grammar provides keyword aliases for `public` and `private`, and supports archetype denotations such as `class`, `extends`, and associated keywords to maintain structural familiarity with class-based paradigms.
 
 The syntax for generics adopts angle brackets (`< >`), ensuring parsing stability and preventing recursive descent issues when the engine processes complex nested types.
 
-Explicit modifiers (`abstract`, `final`) enforce compile-time and runtime structural integrity. The synthesis of C-family declaration constraints with Smalltalk message-passing semantics provides a direct pathways for both syntactic validation and low-level optimisation.
+Modifiers (`abstract`, `final`) enforce compile-time structural integrity. The synthesis of of class-based declaration constraints with message-passing semantics provides pathways for both syntactic validation and static optimisation.
 
-The specification establishes a pure object-oriented syntax minimum that unifies all interactions under a single message-oriented paradigm. This layout relies on a restricted keyword palette containing exclusively structural anchors (such as `class`) and reserved identifiers (such as `self`). By restricting the assignment operator to local identifiers and requiring message-based interaction for all state changes, the messaging overlay enforces absolute encapsulation and structural isolation.
+The specification establishes a message-oriented syntax that unifies all interactions. This layout relies on a restricted keyword palette containing exclusively structural anchors (such as `class`) and reserved identifiers (such as `self`).
 
 ### Keywords
 
@@ -256,7 +256,7 @@ Reserved identifiers are tokens that occupy a middle ground between the grammar 
 
 The unified message-passing, where every interaction follows the *receiver \#message* pattern enforces strict encapsulation. Whether instantiating an object (`User #new`), accessing a property (`user #name`), executing an arithmetic operation (`1 + 2`), or evaluating control flow (`switch #case`), the underlying mechanism remains an identical message dispatch.
 
-While the assignment symbol (`=`) is used for local identifiers and object creation, it also functions as a communicative shorthand for message sends when interacting with object fields. This ensures that every state change, even those appearing as direct assignments, is mediated through the object's formal message protocol, preserving the metaboundary.
+The assignment operator (`=`) binds local identifiers. When interacting with instance fields, this construct operates as the semantic equivalent of a self-directed message dispatch (e.g., `#x(value)`). This ensures that all state modifications are mediated through the message protocol of the archetype, preserving structural isolation and encapsulation.
 
 ### Keyword-less control flow
 
@@ -356,12 +356,8 @@ A Class is a first-class Identity that acts as both a blueprint for state and a 
 	    String name;
 	
 	    // creation method  
-	    meta Person new() {  
-	        ^ super #new  
-	    }
-	
-	    Self name(String aName) {  
-	        name = aName  
+	    meta Person new(String name) {  
+	        ^ super #new #name(name)
 	    }
 	
 	    ...  
@@ -371,7 +367,7 @@ A Class is a first-class Identity that acts as both a blueprint for state and a 
 
 a Record is a specialised, immutable identity optimised for data transfer. It functions as a class where immutability is enforced by design. While field declarations follow the same syntax as regular classes—requiring a terminating semicolon and adhering to semantic casing—the compiler implicitly treats them as final. This ensures that once the state is anchored via the automatic, canonical `#new` creation method, it remains constant.
 
-Strict encapsulation is maintained by prohibiting direct field access. Instead, the system synthesises automatic message selectors for every slot, ensuring all state retrieval flows through the message protocol (e.g., `p #x`). This architecture eliminates boilerplate while ensuring compatibility with the JVM.
+Strict encapsulation is maintained by prohibiting direct field access. Instead, the system synthesises automatic message selectors for every slot, ensuring all state retrieval flows through the message protocol (e.g., `p #x`).
 
 	/// definition  
 	record Point {  
@@ -448,8 +444,10 @@ External state interaction is managed through implicit field encapsulation, a pu
 	    stable Int y;
 	
 	    // Synthesised default accessors
-	    // public Int x() { ^ x };
-	    // public x(Int value) { x = value };
+		// getter returns x
+	    // public Int x();
+		// getter sets x, returns self
+	    // public x(Int value);
 	
 	    // overridden accessors  
 	    protected Int x();  
@@ -462,9 +460,6 @@ External state interaction is managed through implicit field encapsulation, a pu
 
 			// Explicit receiver
 			self #x(self #x + dx);
-
-			// Idiomatic shorthand: The syntactic field assignment
-			x = x + dx;  
 		}
 
 	    // ...  

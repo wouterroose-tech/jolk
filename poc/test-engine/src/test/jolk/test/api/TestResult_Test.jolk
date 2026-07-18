@@ -8,18 +8,21 @@
 ///
 class TestResult_Test extends TestCase {
 
+    @Test
     testNew() {
         TestResult result = TestResult #new;
-        #assertThat(result #status #isEmpty);
+        #assertTrue(result #status #isEmpty);
         #assertEquals("", result #result);
     }
 
+    @Test
     testSuccess() {
         TestResult result = TestResult #success;
         #assertEquals(TestStatus #SUCCESS, result #status);
         #assertEquals("success", result #result);
     }
 
+    @Test
     testFault() {
         RuntimeException a = RuntimeException #new("message");
         TestResult result = TestResult #fault(a) ;
@@ -27,6 +30,7 @@ class TestResult_Test extends TestCase {
         #assertEquals("fault: message", result #result);
     }
 
+    @Test
     testFailed() {
         // RuntimeException subclassing not implemented
         // AssertionSignal a = AssertionSignal #new("message");
@@ -36,6 +40,7 @@ class TestResult_Test extends TestCase {
         #assertEquals("failure: message", result #result);
     }
 
+    @Test
     testDisabled() {
         TestResult result = TestResult #disabled;
         #assertEquals(TestStatus #DISABLED, result #status);

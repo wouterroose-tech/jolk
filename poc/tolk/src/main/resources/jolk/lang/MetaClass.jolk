@@ -64,6 +64,12 @@ class MetaClass<T extends Object> {
     /// - **Returns**: The name of the type.
     String name() { }
 
+    /// ## qualifiedName
+    /// Returns the qualifiedName of this type.
+    ///
+    /// - **Returns**: The qualifiedName of the type.
+    String qualifiedName() { }
+
     /// ## superclass
     /// Returns the `MetaClass` of the superclass.
     ///

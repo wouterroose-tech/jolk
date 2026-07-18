@@ -113,6 +113,7 @@ public class TestRunner  {
         load("/jolk/test/api/AssertionSignal.jolk");
         load("/jolk/test/api/DisabledSignal.jolk");
         load("/jolk/test/api/TimeoutSignal.jolk");
+        load("/jolk/test/engine/TestRunner.jolk");
         // examples
         load("/examples/Circle.jolk");
         load("/examples/CircleTest.jolk");
@@ -164,7 +165,7 @@ public class TestRunner  {
     
     @Test
     public void testRun() {
-        Value runner = load("/TestRunner.jolk").invokeMember("new");
+        Value runner = load("/DemoTestRunner.jolk").invokeMember("new");
         runner.invokeMember("run");
     }
 

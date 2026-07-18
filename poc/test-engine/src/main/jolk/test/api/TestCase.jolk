@@ -1,5 +1,7 @@
 ~ jolk.test.api;
 
++ java.lang.String;
++ java.util.List;
 + java.lang.RuntimeException;
 & jolk.test.api.DisabledSignal.DISABLED;
 
@@ -22,17 +24,6 @@
 /// @author Wouter Roose
 ///
 class TestCase extends Test {
-
-    meta List<String> testProtocol() {
-        // TODO in future releases protocol will return Selector
-        // -> filter public methods
-
-        // TODO replace with filter once implemented for ArrayExtension in the Jolk engine
-        // ^ #instanceProtocol #filter [ s -> s #startWith("test)")]
-        List<String> testProtocol = #[];
-        #instanceProtocol #forEach [ s -> s #startsWith("test") ? [ testProtocol #add(s)]];
-        ^ testProtocol
-    }
 
     String selector;
     
@@ -134,4 +125,5 @@ class TestCase extends Test {
     #> throw(String message) {
         AssertionSignal #new(message) #throw
     }
+
 }

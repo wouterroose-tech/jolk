@@ -12,52 +12,58 @@
 ///
 class TestCase_Test extends TestCase {
 
-    testTestProtocol() {
-        List<String> testProtocol = #class #testProtocol;
-        #assertThat(testProtocol #size == 13)
-    }
-
+    @Test
     testSuccess() {
         #success();
     }
 
+    @Test
     testFail() {
         #assertFailure [ #fail() ]
     }
 
+    @Test
     testDisabled() {
         #disabled();
     }
 
-    testAssertThat_success() {
-        #assertThat(true)
+    @Test
+    testAssertTrue_success() {
+        #assertTrue(true)
     }
     
-    testAssertThat_failure() {
-        #assertFailure [ #assertThat(false) ]
+    @Test
+    testAssertTrue_failure() {
+        #assertFailure [ #assertTrue(false) ]
     }
     
+    @Test
     testAssertSame_success() {
         String same = "same";
         #assertEquals(same, same)
     }
 
+    @Test
     testAssertSame_failure() {
         #assertFailure [ #assertSame("~~ nut but ==", "~~ but not ==") ]
     }
     
+    @Test
     testAssertEquals_success() {
         #assertEquals("Hello", "Hello")
     }
 
+    @Test
     testAssertEquals_failure() {
         #assertFailure [ #assertEquals("Hello", "World") ]
     }
 
+    @Test
     testAssertIsPresent_success() {
         #assertIsPresent("Hello")
     }
 
+    @Test
     testAssertIsPresent_failure() {
         #assertFailure [ #assertIsPresent(null) ]
     }
@@ -68,7 +74,7 @@ class TestCase_Test extends TestCase {
     }
 
     assertPossitive(Int i) {
-        #assertThat(i > 0)
+        #assertTrue(i > 0)
     }
     
     #> assertFailure(Closure test) {

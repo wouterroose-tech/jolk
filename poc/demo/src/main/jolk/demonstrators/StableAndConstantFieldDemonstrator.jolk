@@ -10,7 +10,7 @@ final class StableAndConstantFieldDemonstrator {
     stable String stableField;
 
     Self new(String value) {
-        stableField = value;
+        ^ super #new #stableField(value);
     }
 
 }

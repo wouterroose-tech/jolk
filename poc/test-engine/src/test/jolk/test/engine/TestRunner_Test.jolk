@@ -1,0 +1,23 @@
+~ jolk.test.engine;
+
++ java.lang.String;
++ java.util.List;
++ jolk.test.api.TestCase;
++ jolk.test.engine.TestRunner;
+
+/// # TestCase_Test
+///
+/// Test class for the TestRunner class.
+///
+/// @author Wouter Roose
+///
+class TestRunner_Test extends TestCase {
+
+    @Test
+    testTestProtocol() {
+        List<String> testSelectors = TestRunner #new #selectors(#class);
+        #assertEquals(1, testSelectors #size);
+        #assertEquals("testTestProtocol", testSelectors #first);
+    }
+
+}

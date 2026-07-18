@@ -436,4 +436,15 @@ public class JolkMetaClassTest extends JolcTestBase {
         assertTrue(test.invokeMember("hasSelector", "a").asBoolean());
         assertTrue(test.invokeMember("hasSelector", "b").asBoolean());
     }
+
+    @Test
+    public void testMetaProtocol() {
+        String source = """
+            ~ jolk;
+            class MyClass {
+            }""";
+        Value metaclass = eval(source);
+        assertEquals("MyClass", metaclass.invokeMember("name").asString());
+        assertEquals("jolk.MyClass", metaclass.invokeMember("qualifiedName").asString());
+    }
 }

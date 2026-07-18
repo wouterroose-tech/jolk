@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -116,6 +117,7 @@ public class TestRunner  {
         load("/jolk/test/api/TestCase_Test.jolk");
         load("/jolk/test/api/TestSuite_Test.jolk");
         load("/jolk/test/api/TestResult_Test.jolk");
+        load("/jolk/test/engine/TestRunner_Test.jolk");
     }
     
     @Test

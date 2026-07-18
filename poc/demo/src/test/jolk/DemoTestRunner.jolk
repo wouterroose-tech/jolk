@@ -1,6 +1,7 @@
 ~ jolk.test;
 
 + java.lang.System;
++ jolk.test.engine.TestRunner;
 + examples.CircleTest;
 + examples.ComplexTest;
 + demonstrators.ArchetypeClassDemonstratorTest;
@@ -17,16 +18,15 @@
 + demo.validation.rules.SsnConstraintTest;
 + demo.validation.rules.ZipConstraintTest;
 
-/// # TestRunner
+/// # DemoTestRunner
 ///
 /// Simulates the JolkTestEngine for the JUnit test framework
 ///
 /// @author Wouter Roose
 ///
-class TestRunner {
+class DemoTestRunner extends TestRunner {
 
     run() {
-        // TODO collect testsuites, run tests & sout result
         
         System #out #println("    Run All Tests");
         System #out #println("    -------------");
@@ -61,14 +61,5 @@ class TestRunner {
         #runTestCase(SsnConstraintTest);
         #runTestCase(ContactFormValidationTest);
     }
-    
-    runTestCase(MetaClass<TestCase> testClass) {
-        System #out #println(">>  " + testClass #name);
-        testClass
-            #testProtocol
-            #forEach[ s ->
-                TestResult result = testClass #new #selector(s) #run;
-                System #out #println(">>> " + s + " -> " + result #result);
-            ];
-    }
+
 }

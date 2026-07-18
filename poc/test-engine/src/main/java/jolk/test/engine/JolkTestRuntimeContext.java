@@ -165,4 +165,21 @@ public class JolkTestRuntimeContext {
         return getDefinedClass(metaClass.invokeMember("qualifiedName").asString());
     }
 
+    public Object invokeJolkTestRunner(JolkMetaClass guestTestClass, String selector) {
+        // TestResult result = testClass #new #selector(s) #run;
+        Object testInstance;
+        try {
+            // TODO this should work
+            // testInstance = guestTestClass.callMetaMember("new", new Object[]{selector});
+            testInstance = guestTestClass.callMetaMember("new");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to instantiate test class: " + guestTestClass.name, e);
+        }
+        return context.asValue(testInstance).invokeMember("selector", selector).invokeMember("run");
+    }
+
+    public boolean isSuccess(Object jolkTestResult) {
+        return context.asValue(jolkTestResult).invokeMember("status").invokeMember("isSuccess").asBoolean();
+    }
+
 }

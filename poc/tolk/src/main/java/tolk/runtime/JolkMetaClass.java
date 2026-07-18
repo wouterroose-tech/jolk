@@ -664,6 +664,11 @@ public class JolkMetaClass extends DynamicObject {
     ///
     /// Convenience method for calling meta-level messages from Java code or unit tests.
     @TruffleBoundary
+    public Object callMetaMember(String member) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
+        return callMetaMember(member, new Object[]{});
+    }
+    
+    @TruffleBoundary
     public Object callMetaMember(String member, Object[] arguments) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         return invokeMember(member, arguments, InteropLibrary.getUncached(), member, lookupMetaMember(member), DynamicObjectLibrary.getUncached());
     }

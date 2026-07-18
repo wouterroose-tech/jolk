@@ -17,20 +17,15 @@ public class JolkTestEngineExecutionContext implements EngineExecutionContext {
     }
 
     public Exception translateToHostException(Throwable guestException) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'translateToHostException'");
-    }
-
-    public boolean isSuccess(Object jolkTestResult) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'isSuccess'");
+        return (RuntimeException) guestException;
     }
 
     public Object invokeJolkTestRunner(JolkMetaClass guestTestClass, String selector) {
-        // TODO Auto-generated method stub
-        // Dispatches execution directly to the  guest Jolk validation logic:
-        // TestResult result = testClass #new #selector(s) #run;
-        throw new UnsupportedOperationException("Unimplemented method 'invokeJolkTestRunner'");
+        return runtimeContext.invokeJolkTestRunner(guestTestClass, selector);
+    }
+
+    public boolean isSuccess(Object jolkTestResult) {
+        return runtimeContext.isSuccess(jolkTestResult);
     }
 
 }

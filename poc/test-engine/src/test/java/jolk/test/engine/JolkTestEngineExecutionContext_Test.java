@@ -21,7 +21,9 @@ public class JolkTestEngineExecutionContext_Test {
         runtimeContext.loadTestFramework();
         JolkMetaClass metaClass = runtimeContext.evaluateJolkSource(Path.of("/jolk/test/api/TestCase_Test.jolk"));
         JolkTestEngineExecutionContext executionContext = new JolkTestEngineExecutionContext(runtimeContext);
-        //executionContext.invokeJolkTestRunner(metaClass, "testSuccess");
+        Object result = executionContext.invokeJolkTestRunner(metaClass, "testSuccess");
+        executionContext.isSuccess(result);
+
     }
 
 }

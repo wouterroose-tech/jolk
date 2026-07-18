@@ -34,7 +34,7 @@ class TestRunner {
         
         #selectors(testClass)
             #forEach[ s ->
-                TestResult result = testClass #new #selector(s) #run;
+                TestResult result = testClass #new(s) #run;
                 System #out #println(">>> " + s + " -> " + result #result);
             ];
     }

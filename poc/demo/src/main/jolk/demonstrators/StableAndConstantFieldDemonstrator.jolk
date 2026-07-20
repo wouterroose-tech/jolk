@@ -9,7 +9,7 @@ final class StableAndConstantFieldDemonstrator {
 
     stable String stableField;
 
-    Self new(String value) {
+    meta Self new(String value) {
         ^ super #new #stableField(value);
     }
 

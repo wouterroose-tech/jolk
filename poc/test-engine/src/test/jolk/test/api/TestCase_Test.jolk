@@ -29,7 +29,7 @@ class TestCase_Test extends TestCase {
 
     @Test
     testAssertTrue_success() {
-        #assertTrue(true)
+        #assertTrue(true);
     }
     
     @Test

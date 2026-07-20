@@ -122,8 +122,9 @@ public class TestRunner  {
     
     @Test
     public void testRun() {
-        Value runner = load("/jolk/test/engine/TestRunner.jolk").invokeMember("new");
-        runner.invokeMember("run");
+        load("/jolk/test/engine/TestRunner.jolk")
+            .invokeMember("new")
+            .invokeMember("run");
     }
 
 }

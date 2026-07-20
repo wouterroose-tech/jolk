@@ -8,6 +8,7 @@
 + jolk.test.api.TestCase_Test;
 + jolk.test.api.TestSuite;
 + jolk.test.api.TestSuite_Test;
++ jolk.test.api.TestResult;
 + jolk.test.api.TestResult_Test;
 + jolk.test.engine.TestRunner_Test;
 
@@ -32,11 +33,14 @@ class TestRunner {
     runTestCase(MetaClass<TestCase> testClass) {
         System #out #println(">>  " + testClass #name);
         
+        // TODO implement meta project
+        // testClass #beforeALL;
         #selectors(testClass)
             #forEach[ s ->
-                TestResult result = testClass #new(s) #run;
+                TestResult result = #runTest(testClass #new, s);
                 System #out #println(">>> " + s + " -> " + result #result);
             ];
+        // testClass #afterAll
     }
 
     List<String> selectors(MetaClass<TestCase> testClass) {
@@ -53,6 +57,23 @@ class TestRunner {
                 s #startsWith("test") ? [ testSelectors #add(s)]
             ];
         ^ testSelectors
+    }
+
+    TestResult runTest(TestCase test, String selector) {
+        test #beforeEach;
+        [
+            test #project(selector);
+            ^ TestResult #success
+        ]
+            #catch [e -> ^ #handle(e) ]
+            #finally [ test #afterEach ];
+    }
+
+    #> handle(RuntimeExecption e) {
+        // Exception type verified catch not yet implemented
+        (e #getMessage == "DISABLED") ? [ e ->  ^ TestResult #disabled ];
+        (e #getMessage == "FAILURE") ?  [ a -> ^ TestResult #failed(a) ];
+        ^ TestResult #fault(e)
     }
 
 }

@@ -24,12 +24,14 @@
 /// @author Wouter Roose
 ///
 class TestCase extends Test {
-
-    String selector;
     
-    before() {} 
+    meta beforeAll() {} 
+    
+    beforeEach() {} 
 
-    after() {}
+    afterEach() {}
+
+    meta afterAll() {}
 
     disabled() {
         DisabledSignal #DISABLED #throw
@@ -83,43 +85,6 @@ class TestCase extends Test {
                 (t #class == expectedException) ? [ ^ self ];
                 #throw("Assertion Mismatch: Threw unexpected exception type") ];
         #throw("Assertion Mismatch: Expected exception was not thrown")
-    }
-
-    /// demonstrator for parameterized test execution
-    /// In future releases, this will be replaced by anotation-driven test discovery and execution,
-    /// that will automatically generate parameterized test cases based on the provided data set.
-    parameterized(Closure closure, Array parameters) {
-        // TODO collect results
-        parameters #forEach [ p -> 
-            #before;
-            [ closure #apply(p) ] 
-                #finally [ #after ];
-        ]
-    }
-
-    /// demonstrator for timeout test execution
-    /// In future releases, this will be replaced by anotation-driven test discovery and execution,
-    /// that will automatically generate timeout test cases based on the provided time limit.
-    timeout(Closure closure, Long milliseconds) {
-        // TODO implement timeout via virtual thread & future
-        closure #apply(p)
-    }
-
-    TestResult run() {
-        #before;
-        [
-            #project(selector);
-            ^ TestResult #success
-        ]
-            #catch [e -> ^ #handle(e) ]
-            #finally [ #after ];
-    }
-
-    #> handle(RuntimeExecption e) {
-        // Exception type verified catch not yet implemented
-        (e #getMessage == "DISABLED") ? [ e ->  ^ TestResult #disabled ];
-        (e #getMessage == "FAILURE") ?  [ a -> ^ TestResult #failed(a) ];
-        ^ TestResult #fault(e)
     }
 
     #> throw(String message) {

@@ -165,8 +165,9 @@ public class TestRunner  {
     
     @Test
     public void testRun() {
-        Value runner = load("/DemoTestRunner.jolk").invokeMember("new");
-        runner.invokeMember("run");
+        load("/DemoTestRunner.jolk")
+            .invokeMember("new")
+            .invokeMember("run");
     }
 
 }

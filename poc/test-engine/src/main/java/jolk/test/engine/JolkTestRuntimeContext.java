@@ -4,11 +4,14 @@ package jolk.test.engine;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -122,42 +125,24 @@ public class JolkTestRuntimeContext {
         return context.eval(JolkLanguage.ID, source);
     }
 
-    /// load the Jolk test framework classes into the context
-    void loadTestFramework() {
-        load("/jolk/test/api/Test.jolk");
-        load("/jolk/test/api/TestCase.jolk");
-        load("/jolk/test/api/TestSuite.jolk");
-        load("/jolk/test/api/TestResult.jolk");
-        load("/jolk/test/api/TestStatus.jolk");
-        load("/jolk/test/api/AssertionSignal.jolk");
-        load("/jolk/test/api/DisabledSignal.jolk");
-        load("/jolk/test/api/TimeoutSignal.jolk");
-    }
-
     public List<Path> scanDirectoryForJolkSources(Path dirPath) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'scanDirectoryForJolkSources'");
     }
 
     public boolean conformsToTestProtocol(JolkMetaClass metaClass) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'conformsToTestProtocol'");
+        // alternative: extends TestCase
+        return getTestSelectors(metaClass).findAny() != null;
     }
 
-    public List<String> extractTestSelectors(JolkMetaClass metaClass) {
+    public Stream<String> getTestSelectors(JolkMetaClass metaClass) {
         // In future releases memebers will be filtered based on the @Test annotation and other test protocol rules, 
         // but for now we just return all members that start with "test"
         return metaClass
             .getInstanceMemberKeys()
             .stream()
-            .filter(s -> s.startsWith("test"))
-            .toList();
+            .filter(s -> s.startsWith("test"));
     }
-
-    public String getClassName(JolkMetaClass metaClass) {
-        return metaClass.name;
-    }
-
     
     /// Evaluate the source file into Truffle to register the live MetaClass object
     public JolkMetaClass evaluateJolkSource(Path filePath) {
@@ -169,17 +154,34 @@ public class JolkTestRuntimeContext {
         // TestResult result = testClass #new #selector(s) #run;
         Object testInstance;
         try {
-            // TODO this should work
-            // testInstance = guestTestClass.callMetaMember("new", new Object[]{selector});
             testInstance = guestTestClass.callMetaMember("new");
         } catch (Exception e) {
             throw new RuntimeException("Failed to instantiate test class: " + guestTestClass.name, e);
         }
-        return context.asValue(testInstance).invokeMember("selector", selector).invokeMember("run");
+        return context.asValue(testInstance).invokeMember(selector);
     }
 
-    public boolean isSuccess(Object jolkTestResult) {
-        return context.asValue(jolkTestResult).invokeMember("status").invokeMember("isSuccess").asBoolean();
+    public void loadDirectory(String directory) {
+        // Ensure path starts without a leading slash for ClassLoader resolution
+        String cleanDir = directory.startsWith("/") ? directory.substring(1) : directory;
+
+        try {
+            Path path = Paths.get("target/classes", cleanDir);
+            loadDirectory(path);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load from: " + directory, e);
+        }
+    }
+
+    private void loadDirectory(Path rootPath) throws URISyntaxException, IOException {
+        try (Stream<Path> stream = Files.walk(rootPath)) {
+            stream
+                .filter(Files::isRegularFile)
+                .filter(path -> path.toString().endsWith(".jolk"))
+                .sorted(Comparator.comparing(Path::toString))
+                .map(path -> path.toString())
+                .forEach(path -> load(path));
+        }
     }
 
 }

@@ -8,8 +8,8 @@ import tolk.runtime.JolkMetaClass;
 public class JolkClassTestDescriptor extends AbstractTestDescriptor {
     private final JolkMetaClass guestTestClass; // Reference to the guest-space MetaClass object
 
-    public JolkClassTestDescriptor(UniqueId uniqueId, String displayName, JolkMetaClass guestTestClass) {
-        super(uniqueId, displayName);
+    public JolkClassTestDescriptor(UniqueId uniqueId, JolkMetaClass guestTestClass) {
+        super(uniqueId, (String) guestTestClass.getMetaSimpleName());
         this.guestTestClass = guestTestClass;
     }
 

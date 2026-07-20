@@ -24,8 +24,4 @@ public class JolkTestEngineExecutionContext implements EngineExecutionContext {
         return runtimeContext.invokeJolkTestRunner(guestTestClass, selector);
     }
 
-    public boolean isSuccess(Object jolkTestResult) {
-        return runtimeContext.isSuccess(jolkTestResult);
-    }
-
 }

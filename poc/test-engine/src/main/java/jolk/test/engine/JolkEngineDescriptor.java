@@ -4,7 +4,7 @@ import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.support.descriptor.EngineDescriptor;
 
 ///
-/// Represents a Jolk test class or file container.
+/// Represents a Jolk test container.
 /// 
 /// @author Wouter Roose
 /// 

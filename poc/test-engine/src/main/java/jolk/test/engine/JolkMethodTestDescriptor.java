@@ -26,4 +26,5 @@ public class JolkMethodTestDescriptor extends AbstractTestDescriptor {
     public String getSelector() {
         return selector;
     }
+    
 }

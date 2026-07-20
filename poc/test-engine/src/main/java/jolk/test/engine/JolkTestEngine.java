@@ -1,7 +1,7 @@
 package jolk.test.engine;
 
 import java.nio.file.Path;
-import java.util.List;
+
 import org.junit.platform.engine.EngineDiscoveryRequest;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
@@ -22,34 +22,47 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
 
     // discover all .jolk files in src/test/jolk
     // load each file as a Jolk class via context.getJolkClass() 
-    // find all methods returning jolk.test.api.Test without parameters
-    // and create a TestDescriptor for each method
+    // find all test methods
+    // create a TestDescriptor for each test method
     @Override
     public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
 
         // 1. Create the persistent Truffle Context
         JolkTestRuntimeContext runtimeContext = new JolkTestRuntimeContext();
         
-        // 2. Load the core test framework first so the TestCase protocol exists
-        runtimeContext.loadTestFramework();
-        JolkEngineDescriptor rootDescriptor = new JolkEngineDescriptor(uniqueId, runtimeContext);
+        // 2. Load the Jolk test framework classes into the context
+        runtimeContext.loadDirectory("/jolk/test/api");
 
         // 3. Scan and evaluate user space file selectors
-        discoveryRequest.getSelectorsByType(FileSelector.class).forEach(selector -> {
-            Path filePath = selector.getPath();
-            if (filePath.toString().endsWith(".jolk")) {
-                evaluateAndAppendTestDescriptor(filePath, rootDescriptor, runtimeContext, uniqueId);
-            }
-        });
+        JolkEngineDescriptor rootDescriptor = new JolkEngineDescriptor(uniqueId, runtimeContext);
+        discoveryRequest
+            .getSelectorsByType(FileSelector.class)
+            .stream()
+            .map(FileSelector::getPath)
+            .filter(path -> path.toString().endsWith(".jolk"))
+            .map(path -> classDescriptor(runtimeContext, uniqueId, path))
+            .forEach(d -> rootDescriptor.addChild(d));
 
         // 4. Scan and evaluate user space directory selectors
-        discoveryRequest.getSelectorsByType(DirectorySelector.class).forEach(selector -> {
-            Path dirPath = selector.getPath();// Implement file-tree walk filtering for *.jolk files
-            List<Path> discoveredFiles = runtimeContext.scanDirectoryForJolkSources(dirPath);
-            for (Path filePath : discoveredFiles) {
-                evaluateAndAppendTestDescriptor(filePath, rootDescriptor, runtimeContext, uniqueId);
-            }
-        });
+        discoveryRequest
+            .getSelectorsByType(DirectorySelector.class)
+            .stream()
+            .map(DirectorySelector::getPath)
+            .flatMap(dirPath -> runtimeContext.scanDirectoryForJolkSources(dirPath).stream())
+            .map(path -> classDescriptor(runtimeContext, uniqueId, path))
+            .forEach(d -> rootDescriptor.addChild(d));
+
+        // 5. Handle classpath roots (e.g., Maven/Gradle test execution over target/test-classes)
+        /*
+        discoveryRequest
+            .getSelectorsByType(ClasspathRootSelector.class)
+            .stream()
+            .map(s -> s.getClasspathRoot())
+            .map(p -> Path.of(p))
+            .flatMap(rootPath -> runtimeContext.scanDirectoryForJolkSources(rootPath).stream())
+            .map(path -> classDescriptor(runtimeContext, uniqueId, path))
+            .forEach(d -> rootDescriptor.addChild(d));
+        */
         return rootDescriptor;
     }
 
@@ -60,29 +73,23 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
         return new JolkTestEngineExecutionContext(runtimeContext);
     }
 
-    private void evaluateAndAppendTestDescriptor(
-        Path filePath, 
-        JolkEngineDescriptor root, 
-        JolkTestRuntimeContext context, 
-        UniqueId baseId) {
+    JolkClassTestDescriptor classDescriptor(JolkTestRuntimeContext context, UniqueId baseId, Path filePath) {
         
         JolkMetaClass metaClass = context.evaluateJolkSource(filePath);
-        // Interrogate the live MetaClass via the meta-layer protocol to check if it conforms to TestCase
-        if (context.conformsToTestProtocol(metaClass)) {
-            String className = context.getClassName(metaClass);
-            UniqueId classDescriptorId = baseId.append("class", className);
-            JolkClassTestDescriptor classDescriptor = new JolkClassTestDescriptor(classDescriptorId, className, metaClass);
-            // Fetch the individual test method selector names via the guest #testProtocol message
-            List<String> selectors = context.extractTestSelectors(metaClass);
-            for (String selectorName : selectors) {
-                UniqueId methodDescriptorId = classDescriptorId.append("method", selectorName);
-                JolkMethodTestDescriptor methodDescriptor = new JolkMethodTestDescriptor(
-                    methodDescriptorId, selectorName, selectorName
-                );
-                classDescriptor.addChild(methodDescriptor);
-            }
-            root.addChild(classDescriptor);
-        }
+        UniqueId directoryDescriptorId = baseId.append("directory", filePath.getParent().toString());
+        UniqueId classDescriptorId = directoryDescriptorId.append("class", (String) metaClass.getMetaSimpleName());
+        JolkClassTestDescriptor classDescriptor = new JolkClassTestDescriptor(classDescriptorId, metaClass);
+        // scan the MetaClass via the meta-layer protocol to identify tests
+        context
+            .getTestSelectors(metaClass)
+            .map(s -> methodDescriptor(classDescriptorId, s))
+            .forEach(d -> classDescriptor.addChild(d));
+        return classDescriptor;
+    }
+
+    JolkMethodTestDescriptor methodDescriptor(UniqueId classDescriptorId, String selectorName) {
+        UniqueId methodDescriptorId = classDescriptorId.append("method", selectorName);
+        return new JolkMethodTestDescriptor( methodDescriptorId, selectorName, selectorName );
     }
 
 }

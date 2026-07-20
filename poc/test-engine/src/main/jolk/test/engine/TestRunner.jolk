@@ -14,6 +14,8 @@
 
 /// # TestRunner
 ///
+/// a Basic test runner.
+///
 /// Simulates the JolkTestEngine for the JUnit test framework
 ///
 /// @author Wouter Roose
@@ -33,14 +35,17 @@ class TestRunner {
     runTestCase(MetaClass<TestCase> testClass) {
         System #out #println(">>  " + testClass #name);
         
-        // TODO implement meta project
-        // testClass #beforeALL;
-        #selectors(testClass)
-            #forEach[ s ->
-                TestResult result = #runTest(testClass #new, s);
-                System #out #println(">>> " + s + " -> " + result #result);
-            ];
-        // testClass #afterAll
+        [ 
+            testClass #beforeAll;
+            #selectors(testClass)
+                #forEach[ s ->
+                    TestResult result = #runTest(testClass #new, s);
+                    System #out #println(">>> " + s + " -> " + result #result);
+                ];
+            testClass #afterAll
+        ] #catch [
+            e -> ^ TestResult #failed(e)
+        ]
     }
 
     List<String> selectors(MetaClass<TestCase> testClass) {
@@ -64,15 +69,17 @@ class TestRunner {
         [
             test #project(selector);
             ^ TestResult #success
+        ] #catch [
+            e -> ^ #handle(e)
+        ] #finally [
+            test #afterEach
         ]
-            #catch [e -> ^ #handle(e) ]
-            #finally [ test #afterEach ];
     }
 
     #> handle(RuntimeExecption e) {
         // Exception type verified catch not yet implemented
         (e #getMessage == "DISABLED") ? [ e ->  ^ TestResult #disabled ];
-        (e #getMessage == "FAILURE") ?  [ a -> ^ TestResult #failed(a) ];
+        (e #getMessage == "FAILURE") ?  [ e -> ^ TestResult #failed(e) ];
         ^ TestResult #fault(e)
     }
 

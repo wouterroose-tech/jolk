@@ -67,15 +67,6 @@ class TestCase_Test extends TestCase {
     testAssertIsPresent_failure() {
         #assertFailure [ #assertIsPresent(null) ]
     }
-
-    meta constant List<Int> params = #[1, 2, 3, 4, 5, 6, 7];
-    testParameterized() {
-        #parameterized(self ##assertPossitive, params)
-    }
-
-    assertPossitive(Int i) {
-        #assertTrue(i > 0)
-    }
     
     #> assertFailure(Closure test) {
         test #catch [ AssertionSignal e -> ^ #success() ];

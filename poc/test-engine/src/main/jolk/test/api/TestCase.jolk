@@ -10,16 +10,11 @@
 /// A class serving as a Proof of Concept (POC) demonstrator 
 /// for the JolkUnit testing framework architecture.
 ///
-/// This implementation unifies test execution, default assertions, and dynamic 
-/// metadata configuration within a single object boundary. It leverages Jolk's 
-/// zero-parameter, implicit self-return contract to handle orchestration without 
-/// relying on static reflection pipelines or declarative annotations.
+/// This implementation unifies default assertions, and 
+/// metadata configuration within a single object boundary.
 ///
 /// ## Future Architecture Note
-/// This class is a transitional blueprint designed for initial validation. In 
-/// production-grade environments, this monolithic design is replaced by a 
-/// stateless `Test` protocol paired with a thread-isolated `TestExecutionContext` 
-/// to ensure thread safety and eliminate namespace pollution.
+/// In future versions, this design is replaced by a stateless `Test` protocol.
 ///
 /// @author Wouter Roose
 ///
@@ -31,7 +26,7 @@ class TestCase extends Test {
 
     afterEach() {}
 
-    meta afterAll() {}
+    meta afterAll() {} 
 
     disabled() {
         DisabledSignal #DISABLED #throw

@@ -3,7 +3,7 @@
 + java.lang.String;
 + java.util.List;
 + java.lang.RuntimeException;
-& jolk.test.api.DisabledSignal.DISABLED;
+& jolk.test.api.DisabledSignal.DISABLED_SIGNAL;
 
 /// # TestCase
 ///
@@ -29,7 +29,7 @@ class TestCase extends Test {
     meta afterAll() {} 
 
     disabled() {
-        DisabledSignal #DISABLED #throw
+        DISABLED_SIGNAL #throw
     }
 
     disabled(Boolean condition) {
@@ -39,7 +39,7 @@ class TestCase extends Test {
     success() {}
 
     fail() {
-        #throw("Test Failure: Invariant did not hold")
+        #throw("Test Failure")
     }
 
     assertTrue(Boolean condition) {

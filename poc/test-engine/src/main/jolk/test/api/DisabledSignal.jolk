@@ -5,5 +5,5 @@
 class DisabledSignal extends RuntimeException {
 
     // RuntimeException subclassing not implemented
-    meta constant DisabledSignal DISABLED = RuntimeException #new("DISABLED");
+    meta constant DisabledSignal DISABLED_SIGNAL = RuntimeException #new("DISABLED");
 }

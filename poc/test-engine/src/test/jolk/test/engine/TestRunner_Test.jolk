@@ -3,7 +3,7 @@
 + java.lang.String;
 + java.util.List;
 + jolk.test.api.TestCase;
-+ jolk.test.engine.TestRunner;
+& jolk.test.api.DisabledSignal.DISABLED_SIGNAL;
 
 /// # TestCase_Test
 ///
@@ -14,10 +14,37 @@
 class TestRunner_Test extends TestCase {
 
     @Test
-    testTestProtocol() {
+    testCreation() {
+        TestRunner testRunner = TestRunner #new;
+        #assertIsPresent(testRunner);
+    }
+
+    @Test
+    testHandleDisabled() {
+        TestResult testResult = TestRunner #new #handle(DISABLED_SIGNAL);
+        #assertTrue(testResult #status #isDisabled);
+        #assertEquals("disabled", testResult #result);
+    }
+
+    @Test
+    testHandleFailure() {
+        TestResult testResult = TestRunner #new #handle(RuntimeException #new("FAILURE"));
+        #assertTrue(testResult #status #isFailure);
+        #assertEquals("failure: FAILURE", testResult #result);
+    }
+
+    @Test
+    testHandleFault() {
+        TestResult testResult = TestRunner #new #handle(RuntimeException #new("unknown"));
+        #assertTrue(testResult #status #isFault);
+        #assertEquals("fault: unknown", testResult #result);
+    }
+
+    @Test
+    testSelectors() {
         List<String> testSelectors = TestRunner #new #selectors(#class);
-        #assertEquals(1, testSelectors #size);
-        #assertEquals("testTestProtocol", testSelectors #first);
+        #assertEquals(5, testSelectors #size);
+        #assertTrue(testSelectors #contains ("testSelectors"));
     }
 
 }

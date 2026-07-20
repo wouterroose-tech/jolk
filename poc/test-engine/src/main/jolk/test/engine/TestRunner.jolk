@@ -3,7 +3,6 @@
 + java.lang.String;
 + java.lang.System;
 + java.util.List;
-+ jolk.test.api.Test;
 + jolk.test.api.TestCase;
 + jolk.test.api.TestCase_Test;
 + jolk.test.api.TestSuite;
@@ -78,8 +77,8 @@ class TestRunner {
 
     #> handle(RuntimeExecption e) {
         // Exception type verified catch not yet implemented
-        (e #getMessage == "DISABLED") ? [ e ->  ^ TestResult #disabled ];
-        (e #getMessage == "FAILURE") ?  [ e -> ^ TestResult #failed(e) ];
+        (e #getMessage ~~ "DISABLED") ? [ ^ TestResult #disabled ];
+        (e #getMessage ~~ "FAILURE") ? [ ^ TestResult #failed(e) ];
         ^ TestResult #fault(e)
     }
 

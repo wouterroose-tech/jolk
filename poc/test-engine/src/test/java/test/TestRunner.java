@@ -106,13 +106,13 @@ public class TestRunner  {
         context = getContext().build();
 
         // test framework
+        load("/jolk/test/api/AssertionSignal.jolk");
+        load("/jolk/test/api/DisabledSignal.jolk");
         load("/jolk/test/api/Test.jolk");
         load("/jolk/test/api/TestCase.jolk");
         load("/jolk/test/api/TestSuite.jolk");
         load("/jolk/test/api/TestResult.jolk");
         load("/jolk/test/api/TestStatus.jolk");
-        load("/jolk/test/api/AssertionSignal.jolk");
-        load("/jolk/test/api/DisabledSignal.jolk");
         load("/jolk/test/api/TimeoutSignal.jolk");
         load("/jolk/test/api/TestCase_Test.jolk");
         load("/jolk/test/api/TestSuite_Test.jolk");

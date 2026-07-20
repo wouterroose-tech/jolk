@@ -1,3 +1,4 @@
+
 ~ jolk.test.api;
 
 /// # TestResult_Test
@@ -24,8 +25,11 @@ class TestResult_Test extends TestCase {
 
     @Test
     testFault() {
+        // RuntimeException subclassing not implemented
+        // AssertionSignal a = AssertionSignal #new("message");
         RuntimeException a = RuntimeException #new("message");
         TestResult result = TestResult #fault(a) ;
+        #assertTrue(result #status #isFault);
         #assertEquals(TestStatus #FAULT, result #status);
         #assertEquals("fault: message", result #result);
     }
@@ -36,6 +40,7 @@ class TestResult_Test extends TestCase {
         // AssertionSignal a = AssertionSignal #new("message");
         RuntimeException a = RuntimeException #new("message");
         TestResult result = TestResult #failed(a) ;
+        #assertTrue(result #status #isFailure);
         #assertEquals(TestStatus #FAILURE, result #status);
         #assertEquals("failure: message", result #result);
     }
@@ -43,6 +48,7 @@ class TestResult_Test extends TestCase {
     @Test
     testDisabled() {
         TestResult result = TestResult #disabled;
+        #assertTrue(result #status #isDisabled);
         #assertEquals(TestStatus #DISABLED, result #status);
         #assertEquals("disabled", result #result);
     }

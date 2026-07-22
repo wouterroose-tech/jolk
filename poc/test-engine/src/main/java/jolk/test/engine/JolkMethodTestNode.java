@@ -23,27 +23,30 @@ public class JolkMethodTestNode implements Node<JolkTestEngineExecutionContext> 
         JolkClassTestDescriptor parent = (JolkClassTestDescriptor) descriptor.getParent().orElseThrow();
         JolkMetaClass guestTestClass = parent.getGuestTestClass();
         String selector = descriptor.getSelector();
-        JolkTestRuntimeContext runtimeContext = context.getRuntimeContext();
         InteropLibrary interop = InteropLibrary.getUncached();
 
+        // Execution the guest Jolk validation logic:
+        // TestResult result = testClass #new #selector(s) #run;
         try {
-            // Execution the guest Jolk validation logic:
-            // TestResult result = testClass #new #selector(s) #run;
             Object testInstance = interop.invokeMember(guestTestClass, "new");
-            // Orchestrate the lifecycle phases via independent host-to-guest boundaries
-            runtimeContext.invokeMember(testInstance, "#before");
-            
-            // Invoke the target test method explicitly
-            interop.invokeMember(testInstance, selector);
-            return context;
+            try {
+                // Orchestrate the lifecycle phases via independent host-to-guest boundaries
+                interop.invokeMember(testInstance, "#before");
+                
+                // Invoke the target test method explicitly
+                interop.invokeMember(testInstance, selector);
+                return context;
+            } catch (Throwable guestException) {
+                // handle Disabled
+                // handle Assertion
+                // handle 
+                throw new AssertionFailedError("Failed to execute test method", guestException);
+            } finally {
+                // Guarantee resource reclamation regardless of test execution outcome
+                interop.invokeMember(testInstance, "#after");
+            }
         } catch (Throwable guestException) {
-            // handle Disabled
-            // handle Assertion
-            // handle 
-            throw context.translateToHostException(guestException);
-        } finally {
-            // Guarantee resource reclamation regardless of test execution outcome
-            runtimeContext.invokeMember(testInstance, "#after");
+            throw new AssertionFailedError("Failed to instantiate test class", guestException);
         }
     }
 

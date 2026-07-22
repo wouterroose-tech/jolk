@@ -12,7 +12,7 @@ import tolk.runtime.JolkMetaClass;
 public class JolkTestRuntimeContext_Test {
 
     @Test
-    public void testLoadTestFramework() {
+    void testLoadTestFramework() {
         JolkTestRuntimeContext runtimeContext = new JolkTestRuntimeContext();
         runtimeContext.loadDirectory("jolk/test/api");
         JolkMetaClass metaClass = runtimeContext.getDefinedClass("jolk.test.api.TestCase");
@@ -21,7 +21,7 @@ public class JolkTestRuntimeContext_Test {
     }
 
     @Test
-    public void testEvaluateJolkSource() {
+    void testEvaluateJolkSource() {
         JolkTestRuntimeContext runtimeContext = new JolkTestRuntimeContext();
         runtimeContext.loadDirectory("jolk/test/api");
         JolkMetaClass metaClass = runtimeContext.evaluateJolkSource(Path.of("/jolk/test/api/TestCase_Test.jolk"));

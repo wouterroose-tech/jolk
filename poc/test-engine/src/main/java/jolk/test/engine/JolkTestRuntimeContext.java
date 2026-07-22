@@ -126,14 +126,22 @@ public class JolkTestRuntimeContext {
     }
 
     public List<Path> scanDirectoryForJolkSources(Path dirPath) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'scanDirectoryForJolkSources'");
+        try (Stream<Path> stream = Files.walk(dirPath)) {
+            return stream
+                .filter(Files::isRegularFile)
+                .filter(path -> path.toString().endsWith(".jolk"))
+                .sorted(Comparator.comparing(Path::toString))
+                .collect(java.util.stream.Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to scan directory for Jolk sources: " + dirPath, e);
+        }
     }
 
     public boolean conformsToTestProtocol(JolkMetaClass metaClass) {
         // alternative: extends TestCase
         return getTestSelectors(metaClass).findAny() != null;
     }
+
 
     public Stream<String> getTestSelectors(JolkMetaClass metaClass) {
         // In future releases memebers will be filtered based on the @Test annotation and other test protocol rules, 

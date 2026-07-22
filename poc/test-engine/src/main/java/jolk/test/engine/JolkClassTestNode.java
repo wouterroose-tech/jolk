@@ -16,13 +16,12 @@ public class JolkClassTestNode implements Node<JolkTestEngineExecutionContext> {
     @Override
     public JolkTestEngineExecutionContext before(JolkTestEngineExecutionContext context) throws Exception {
         Object guestTestClass = descriptor.getGuestTestClass();
-        JolkTestRuntimeContext runtimeContext = context.getRuntimeContext();
         InteropLibrary interop = InteropLibrary.getUncached();
 
         // Host-orchestrated Class Setup Phase (#beforeAll)
         // Invokes static initialisation message on the class definition object
         try {
-            runtimeContext.invokeMember(guestTestClass, "#beforeAll");
+            interop.invokeMember(guestTestClass, "#beforeAll");
         } catch (Exception e) {
             throw new AssertionFailedError("Class-level setup failed", e);
         }
@@ -42,11 +41,11 @@ public class JolkClassTestNode implements Node<JolkTestEngineExecutionContext> {
     @Override
     public void after(JolkTestEngineExecutionContext context) throws Exception {
         Object guestTestClass = descriptor.getGuestTestClass();
-        JolkTestRuntimeContext runtimeContext = context.getRuntimeContext();
+        InteropLibrary interop = InteropLibrary.getUncached();
 
         // Host-orchestrated Class Teardown Phase (#afterAll)
         try {
-            runtimeContext.invokeMember(guestTestClass, "#afterAll");
+            interop.invokeMember(guestTestClass, "#afterAll");
         } catch (Exception e) {
             throw new AssertionFailedError("Class-level teardown failed", e);
         }

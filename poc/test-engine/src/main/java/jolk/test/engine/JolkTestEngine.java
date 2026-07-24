@@ -110,7 +110,7 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
         }
     }
 
-    private void (JolkTestRuntimeContext context, JolkEngineDescriptor rootDescriptor, Path dir, Path jolkFile) {
+    private void registerFile(JolkTestRuntimeContext context, JolkEngineDescriptor rootDescriptor, Path dir, Path jolkFile) {
         Path relativePath = dir.relativize(jolkFile);
         Path parentPath = relativePath.getParent();
 

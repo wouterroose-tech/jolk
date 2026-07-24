@@ -30,8 +30,13 @@ replay_pid*
 */*/target/
 
 #local
+.kiloignore
+.kilo/
+.kilo/kilo.jsonc
 .assistant/
 .continue/
 .github/
 .vscode/
 tmp/
+PLAN.md
+

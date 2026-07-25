@@ -5,8 +5,6 @@
 + java.util.List;
 + jolk.test.api.TestCase;
 + jolk.test.api.TestCase_Test;
-+ jolk.test.api.TestSuite;
-+ jolk.test.api.TestSuite_Test;
 + jolk.test.api.TestResult;
 + jolk.test.api.TestResult_Test;
 + jolk.test.engine.TestRunner_Test;
@@ -26,7 +24,6 @@ class TestRunner {
         System #out #println("    -------------");
         System #out #println(">   " + "jolk.test.api");
         #runTestCase(TestCase_Test);
-        #runTestCase(TestSuite_Test);
         #runTestCase(TestResult_Test);
         #runTestCase(TestRunner_Test);
     }

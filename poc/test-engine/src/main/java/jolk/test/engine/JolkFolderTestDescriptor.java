@@ -10,7 +10,6 @@ public class JolkFolderTestDescriptor extends AbstractTestDescriptor {
 
 
     protected JolkFolderTestDescriptor(UniqueId uniqueId, String displayName) {
-        // TODO display name <=> full directory path
 		super(uniqueId, displayName);
 	}
 

@@ -1,4 +1,4 @@
-package test;
+package jolk.test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,11 +27,7 @@ public class TestRunner  {
     protected Context context;
     protected ByteArrayOutputStream out;
     protected ByteArrayOutputStream err;
-    protected Value testInstance;
-
-    public void setUp(String path) {
-        testInstance = load(path).invokeMember("new");
-    }
+    private Value runnerClass;
 
     protected Engine.Builder getEngine() {
         return Engine.newBuilder()
@@ -110,21 +106,19 @@ public class TestRunner  {
         load("/jolk/test/api/DisabledSignal.jolk");
         load("/jolk/test/api/Test.jolk");
         load("/jolk/test/api/TestCase.jolk");
-        load("/jolk/test/api/TestSuite.jolk");
         load("/jolk/test/api/TestResult.jolk");
         load("/jolk/test/api/TestStatus.jolk");
         load("/jolk/test/api/TimeoutSignal.jolk");
-        load("/jolk/test/api/TestCase_Test.jolk");
-        load("/jolk/test/api/TestSuite_Test.jolk");
-        load("/jolk/test/api/TestResult_Test.jolk");
-        load("/jolk/test/engine/TestRunner_Test.jolk");
+        load("/jolk/test/engine/TestRunner.jolk");
+        runnerClass = load("/jolk/test/engine/TestRunner.jolk");
     }
     
     @Test
     public void testRun() {
-        load("/jolk/test/engine/TestRunner.jolk")
-            .invokeMember("new")
-            .invokeMember("run");
+        load("/jolk/test/api/TestCase_Test.jolk");
+        load("/jolk/test/api/TestResult_Test.jolk");
+        load("/jolk/test/engine/TestRunner_Test.jolk");
+        runnerClass.invokeMember("new").invokeMember("run");
     }
 
 }

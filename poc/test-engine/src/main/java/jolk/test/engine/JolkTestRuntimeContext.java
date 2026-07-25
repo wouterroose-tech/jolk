@@ -4,12 +4,19 @@ package jolk.test.engine;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -170,14 +177,62 @@ public class JolkTestRuntimeContext {
     }
 
     public void loadDirectory(String directory) {
-        // Ensure path starts without a leading slash for ClassLoader resolution
-        String cleanDir = directory.startsWith("/") ? directory.substring(1) : directory;
-
         try {
-            Path path = Paths.get("target/classes", cleanDir);
-            loadDirectory(path);
+            // Ensure path starts without a leading slash for ClassLoader resolution
+            String normalizedPath = directory.startsWith("/") ? directory.substring(1) : directory;
+
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            if (classLoader == null) {
+                classLoader = getClass().getClassLoader();
+            }
+
+            // Retrieve ALL classpath roots containing this resource path
+            Enumeration<URL> resources = classLoader.getResources(normalizedPath);
+            boolean foundAny = false;
+
+            while (resources.hasMoreElements()) {
+                URL resourceUrl = resources.nextElement();
+                URI uri = resourceUrl.toURI();
+
+                if ("jar".equals(uri.getScheme())) {
+                    try (FileSystem fileSystem = getOrCreateJarFileSystem(uri)) {
+                        Path pathInJar = fileSystem.getPath("/" + normalizedPath);
+                        if (Files.exists(pathInJar)) {
+                            loadDirectory(pathInJar);
+                            foundAny = true;
+                        }
+                    }
+                } else {
+                    Path targetPath = Path.of(uri);
+                    if (Files.exists(targetPath)) {
+                        loadDirectory(targetPath);
+                        foundAny = true;
+                    }
+                }
+            }
+
+            // Fallback for direct execution against non-standard output directories
+            if (!foundAny) {
+                Path localTarget = Paths.get("target/classes", normalizedPath);
+                if (Files.exists(localTarget)) {
+                    loadDirectory(localTarget);
+                    foundAny = true;
+                }
+            }
+
+            if (!foundAny) {
+                throw new IllegalArgumentException("Resource path not found on classpath: " + normalizedPath);
+            }
         } catch (Exception e) {
             throw new RuntimeException("Failed to load from: " + directory, e);
+        }
+    }
+
+    private FileSystem getOrCreateJarFileSystem(URI uri) throws IOException {
+        try {
+            return FileSystems.getFileSystem(uri);
+        } catch (FileSystemNotFoundException e) {
+            return FileSystems.newFileSystem(uri, Collections.emptyMap());
         }
     }
 

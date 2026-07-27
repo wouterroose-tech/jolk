@@ -121,6 +121,44 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <!-- generate ast-signatures for optimized use in gemini -->
+                        <id>generate-ast-signatures</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.basedir}/../../.kilo/stubs" />
+                                <property name="stub.dir" location="${project.basedir}/../../.kilo/stubs" />
+
+                                <mkdir dir="${stub.dir}" />
+                                <path id="node.classes">
+                                    <fileset dir="${project.build.outputDirectory}">
+                                        <include name="tolk/nodes/**/*.class" />
+                                    </fileset>
+                                </path>
+                                <pathconvert property="class.names" refid="node.classes" pathsep=" " dirsep=".">
+                                    <globmapper from="${project.build.outputDirectory}/*.class" to="*" handledirsep="true" />
+                                </pathconvert>
+                                <!-- Invoke javap once across all targets -->
+                                <exec executable="javap" output="${stub.dir}/ast-signatures.java" failonerror="true">
+                                    <arg value="-protected" />
+                                    <arg value="-cp" />
+                                    <arg value="${project.build.outputDirectory}" />
+                                    <arg line="${class.names}" />
+                                </exec>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>

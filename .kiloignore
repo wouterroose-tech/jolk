@@ -1,0 +1,45 @@
+# To keep vector storage light and prevent Mistral from spending embedding requests on generated Java code, maintain these rules 
+
+# exlude tools directories
+.git/
+.github/
+.continue/
+.vscode/
+
+# local
+tmp/
+CONTRIBUTING.md
+LICENSE
+NOTICE
+README.md
+SECURITY.md
+STATUS.md
+
+# Exclude build output and generated classes
+**/target/
+
+# Exclude Maven configuration from vector store
+**/pom.xml
+
+# Keep code indexed, but ignore heavy data dumps
+*.log
+/dist/
+/build/
+
+# Ignore local embedding vector databases and caches
+.kilo/storage/
+.kilo/chunks/
+.kilocode/storage/
+.kilocode/vectordb/
+
+# Ignore raw AST node source implementations from automatic background context scanning
+poc/tolk/src/main/java/tolk/nodes/
+
+# Ensure the stub file is explicitly tracked/indexed
+!.kilo/stubs/ast-signatures.java
+
+# Keep high-value design specs explicit
+doc/images/
+doc/spec/
+!doc/the-book.md
+!**/jolk.g4

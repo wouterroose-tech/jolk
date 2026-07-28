@@ -325,13 +325,13 @@ The JoMoo (/ˈdʒoʊˌmoʊ/ Jolk Message-Oriented Object) serves as the primary 
 
 A rigorous metaboundary ensures absolute field privacy, meaning an object's internal state is never directly accessible from the outside. All state interaction is restricted to synthesised selectors, preserving encapsulation and rendering intrusive reflection a semantic impossibility to prevent external agents from bypassing the defined protocol.
 
-Every interaction, from arithmetic to object instantiation, follows a formal *receiver \#message* pattern. Rather than traditional construction, a JoMoo is synthesised as a complete fact via the canonical `#new` message.
+Every interaction, from arithmetic to object instantiation, follows a formal *receiver \#message* pattern. A JoMoo is synthesised via the canonical `#new` message.
 
 While the JVM manages the physical layout and integrity of objects, the Jolk type system governs their behavioral identity. By projecting Strongtalk principles onto the Java substrate, Jolk enforces a separation between implementation lineage and behavioral protocols. This allows the Tolk Engine to treat both Java and Jolk identities as congruent participants in a unified type lattice.
 
 ## Types
 
-Classes, Records, Enums, and Value Types are harmonised under a unified, 'bracket-light' syntax that prioritises a pure message-oriented paradigm. While these types are conceptually mapped to Java counterparts, they are semantically governed by Lattice separation. This ensures that an object’s role in the system is defined by its behavioral `protocol` rather than its static class lineage.
+Classes, Records, Enums, and Value Types are harmonised under a unified, 'bracket-light' syntax that prioritises a pure message-oriented paradigm. While these types are conceptually mapped to Java counterparts, they are semantically governed by Lattice separation. This ensures that an object’s role in the system is defined by its behavioral `protocol`.
 
 This alignment is anchored by semantic casing, where uppercase names signal that these types are first-class Meta-objects. Consequently, Value types offer the same 'bracket-light' accessor protocol as records but are optimised for flat memory layouts and reduced heap overhead, treating the JVM as a high-performance substrate while maintaining an object-oriented discipline.
 
@@ -600,7 +600,7 @@ This mechanism allows for a more fluid and less verbose syntax when accessing me
 
 The assignment symbol (`=`) demarcates the boundary between internal evaluation and identity definition. While the language supports syntactic field assignment, semantically the meta-layer restricts true assignment to local identifiers and object creation. By mandating that all other state changes are mediated through messages, jolk enforces local retention and encapsulation, ensuring that an identity’s internal state remains shielded.
 
-In alignment with Alan Kay’s vision to eliminate assignment altogether [9], jolk discourages the use of assignments and encourages a transition from imperative memory-overwriting to evolutionary projection. Under this protocol, assignments are ideally restricted to initial object creation. An identity does not have its state changed but instead projects a successor via the wither technique [10]. This ensures that objects remain self-contained, rendering procedural mutation technically redundant. This preference for immutability is primarily targeted at domain identities; collections remain exempt as they function as aggregators rather than representing fixed identities.
+In alignment with Alan Kay’s vision to eliminate assignment altogether [9], jolk discourages the use of assignments and encourages a transition from imperative memory-overwriting to evolutionary projection. Under this protocol, assignments are ideally restricted to initial object creation. An identity does not have its state changed but instead projects a successor via the wither technique [10]. This ensures that objects remain self-contained, rendering procedural mutation technically redundant. This preference for immutability is primarily targeted at domain identities; collections remain exempt as they function as aggregators.
 
 ## Messaging
 
@@ -620,7 +620,7 @@ Creation methods are *Class-Level Messaging* interfaces. They act as meta-method
 
 Jolk replaces scattered setup routines with a Unified Creation Block. By treating the creation method as the sole authority for object formation, the language ensures the lifecycle of an identity is defined in a single, visible sequence. This eliminates hidden execution orders, making the state of an object *predictable* and easy to trace.
 
-For class-level state, Jolk favours Expression-Based Initialisation. Complex setup is handled via direct assignment or self-contained closures. This treats static data as a discrete computation rather than a side effect of class loading, promoting a reliable, side-effect-free environment.
+For class-level state, Jolk favours Expression-Based Initialisation. Complex setup is handled via direct assignment or self-contained closures. This treats static data as a discrete computation, promoting a reliable, side-effect-free environment.
 
 The creation method serves as the exclusive Guarded Block for initialisation. This architectural clarity enables a "Solid" guarantee of Definite Assignment. Because authority over a variable is never fragmented, the system can verify that once the block closes, the object’s identity is fully and safely established.
 
@@ -673,7 +673,7 @@ Active Coercion (Narrowing): The loss of precision is treated as a semantic boun
 
 The Null-Coalescing Operator (`??`) is a specialized binary operator. It functions as a concise safeguard against null-reference propagation by providing a deterministic fallback mechanism. When an expression evaluates to null, the operator intercepts the failure and redirects execution to a secondary branch, ensuring the continuous resolution of references.
 
-In practice, the operator eliminates the syntactic density of manual identity checks. Rather than requiring a full boolean predicate—such as `condition ? value : fallback`—the `??` operator performs an implicit null-check on the left-hand operand. This allows for the chaining of safe defaults in a high-density format:
+In practice, the operator eliminates the syntactic density of manual identity checks. The `??` operator performs an implicit null-check on the left-hand operand. This allows for the chaining of safe defaults in a high-density format:
 
 	// Traditional ternary vs. Null-coalescing
 	result = data != null ? data : defaultJoMoo;
@@ -725,7 +725,7 @@ Control loops are implemented as polymorphic dispatch messages sent to objects. 
 
 **Pattern matching and safe casting** 
 
-Pattern Matching is not a rigid control structure like a `switch` statement; rather, it is an emergent protocol born from the composition of safe-casting and logical gates. It utilizes *monadic chaining* to flow an identity through a pipeline until it is refined into a specific, actionable type. Defined as the *invisible branch*, Jolk’s pattern matching is a state transition rather than a control structure. The system does not "branch"; it navigates through a sequence of negotiated outcomes where messages either realize an identity or are ignored.
+Pattern Matching is an emergent protocol born from the composition of safe-casting and logical gates. It utilizes *monadic chaining* to flow an identity through a pipeline until it is refined into a specific, actionable type. Defined as the *invisible branch*, Jolk’s pattern matching is a state transition. The system does not "branch"; it navigates through a sequence of negotiated outcomes where messages either realize an identity or are ignored.
 
 The `#case` selector acts as a logic gate that evaluates a closure only if the receiver matches the provided argument, maintaining the message-oriented paradigm. The Tolk toolchain identifies these sequences and "intrinsifies" them into native JVM switch opcodes.
 
@@ -770,7 +770,7 @@ This mechanism supports both instance-bound references (`self ##method`, `instan
 
 ### Exceptions
 
-While Jolk utilizes the standard Java Exception hierarchy, it eliminates checked exceptions. Following the design of languages like Kotlin[11], Jolk does not force the developer to catch exceptions, allowing them to propagate through the call hierarchy. In Jolk, exception handling is implemented through unified message passing rather than procedural keywords like `try`, `catch`, or `throw`. This approach treats error handling as a library feature where logic is executed by sending messages to closures. Closure is a primitive kernel class with provides `#catch`, `#finally` methods.
+While Jolk utilizes the standard Java Exception hierarchy, it eliminates checked exceptions. Following the design of languages like Kotlin[11], Jolk does not force the developer to catch exceptions, allowing them to propagate through the call hierarchy. In Jolk, exception handling is implemented through unified message passing. This approach treats error handling as a library feature where logic is executed by sending messages to closures. Closure is a primitive kernel class with provides `#try`, `#catch` and `#finally` methods.
 
 **Exception Class**
 
@@ -838,7 +838,7 @@ To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *
 		Map stateProjection() {}
 	}
 
-Protocol Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in the source code) and the Atomic Identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Protocol Projection operates as a deterministic proposal strictly bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols rather than the violation of the lexical fence.
+Protocol Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in the source code) and the Atomic Identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Protocol Projection operates as a deterministic proposal strictly bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols.
 
 If a receiver’s blueprint does not account for an identity, the projection is elevated to a deterministic failure. While the substrate produces `Nothing`, the system provides the #demand protocol to transform an unhandled handshake into a factual Interrupt or an `UnhandledIdentityException`. By unifying static and dynamic dispatch paths, Jolk ensures the communicative field remains a space of absolute accountability—a "Correct by Construction" environment where every signal is a verified, high-performance contract between identities.
 
@@ -846,7 +846,7 @@ If a receiver’s blueprint does not account for an identity, the projection is 
 
 The *Sparse Type System*: Constituted through type coalescence—the projection of the messaging protocol onto the substrate as a semantic overlay, facilitating the structural absorption of external identities into the Jolk ecosystem.
 
-The Jolk Core Type System establishes a unified foundation for the language by seamlessly integrating native Java capabilities with refined, message-based semantics. Rather than acting as a simple wrapper, this system governs the identity and behaviour of every entity through Intrinsic types and Extensions, providing the behavioral substrate for Jolk Archetypes and host identities alike.
+The Jolk Core Type System establishes a unified foundation for the language by seamlessly integrating native Java capabilities with refined, message-based semantics. This system governs the identity and behaviour of every entity through Intrinsic types and Extensions, providing the behavioral substrate for Jolk Archetypes and host identities alike.
 
 At its heart, the system treats foundational concepts like `Metaclass`, `Boolean`, and `Nothing` as First-Class Identities, ensuring that even the most basic data structures conform to Jolk's "solid" safety and ergonomic standards. By synthesising these elements, the Core Type System allows developers to leverage the full power of the JVM ecosystem while operating within a consistent, modern, and highly predictable architectural framework.
 
@@ -967,7 +967,7 @@ This architecture allows the MetaClass intrinsic to govern Identity-level logic 
 	    }  
 	}
 
-In Jolk, `#new` is a standard message defined by the MetaClass intrinsic, establishing a recursive consistency where object creation is a first-class interaction. Every Type (e.g., `User`) functions as a live identity and an instance of MetaClass, inheriting the ability to respond to `#new` as a natural method call rather than a rigid, static operation.
+In Jolk, `#new` is a standard message defined by the MetaClass intrinsic, establishing a recursive consistency where object creation is a first-class interaction. Every Type (e.g., `User`) functions as a live identity and an instance of MetaClass, inheriting the ability to respond to `#new` as a natural method call.
 
 The default implementation of `#new` is an intrinsic transformation rule within the compiler, bypassing the "static trap" of traditional JVM languages. This model allows any Type to specialise its instantiation logic by defining a custom `#new` in its meta definition. By treating types as message-receiving entities, Jolk ensures a uniform syntax where interception logic can be added without breaking the primary Unified Messaging protocol.
 
@@ -1011,7 +1011,7 @@ The *Universal Root Identity* constitutes the common denominator for all non-nul
 
 ### Type Coalescence
 
-*Type Coalescence* is the strategy for Extensions. Because a Coalesced Extension (such as an `Array` projected onto a `java.util.List`) must remain a valid Java identity for ecosystem interoperability, it cannot be erased. Types represent a hybridisation where the compiler adopts native Java structures, such as java.lang.Class, java.lang.Object or java.lang.Exception, and enhances them with JOLK-specific semantics. Rather than acting as a passive wrapper, the jolc compiler actively refines these types by injecting new, high-level selectors, enforcing null-safe intrinsic mappings for core operations like equality, and shadowing legacy Java methods that contradict JOLK’s safety model. This "Native Synthesis" ensures that every object in the ecosystem—whether native to JOLK or imported from a Java library—conforms to a consistent, modern interface.
+*Type Coalescence* is the strategy for Extensions. Because a Coalesced Extension (such as an `Array` projected onto a `java.util.List`) must remain a valid Java identity for ecosystem interoperability, it cannot be erased. Types represent a hybridisation where the compiler adopts native Java structures, such as java.lang.Class, java.lang.Object or java.lang.Exception, and enhances them with JOLK-specific semantics. The jolc compiler actively refines these types by injecting new, high-level selectors, enforcing null-safe intrinsic mappings for core operations like equality, and shadowing legacy Java methods that contradict JOLK’s safety model. This "Native Synthesis" ensures that every object in the ecosystem—whether native to JOLK or imported from a Java library—conforms to a consistent, modern interface.
 
 Jolk achieves *Shim-less* Integration by adopting native Java types for its most critical structures. `java.util.List` is augmented with the `Array` protocol, and `java.lang.Throwable` is augmented with the `Exception` protocol.
 When you interact with a Java object, the jolc compiler "sees through" the Java signature and maps Jolk messages directly to their corresponding Java methods at compile time. This means calling `#name` on a Java bean is automatically transpiled to `.name()` in the resulting bytecode. This ensures full compatibility with Java collections and libraries while maintaining Jolk's clean, message-passing syntax.
@@ -1490,7 +1490,7 @@ Testing frameworks are mirrors of a language’s foundational model. When engine
 
 Protocols with implementations solve the inheritance problem cleanly and explicitly—offering self-receiver ergonomics while respecting strict encapsulation boundaries. Jolk rejects external metadata macros and compiler transformations, maintaining total fidelity to the message-passing philosophy of JoMoo. The Trade-off: To get clean validation prose without boilerplate, the test class must announce its intent to the type system. By implementing the `protocol TestCase` mitigates the single-inheritance limitation, but the developer must still specify the intent via `implements` on the class definition boundary.
 
-Because the builder pattern operates at execution runtime rather than compilation runtime, datasets can be dynamically computed via logic, database connections, or external configuration files during the building phase, offering a major architectural advantage over static annotations. This approach solves the metadata problem natively within a message-passing layer completes a clear architectural loop. It directly evolves the original design choices of SUnit to solve the challenges of modern enterprise software.
+Because the builder pattern operates at execution runtime, datasets can be dynamically computed via logic, database connections, or external configuration files during the building phase, offering a major architectural advantage over static annotations. This approach solves the metadata problem natively within a message-passing layer completes a clear architectural loop. It directly evolves the original design choices of SUnit to solve the challenges of modern enterprise software.
 
 The Jolk unit test framework is designed as a native extension of the message-oriented paradigm. It employs a unified protocol-based approach where test case definitions, lifecycle hooks (`#before`, `#after`) , assertions and verifications, are all expressed as message dispatches. This adheres to Jolk's message-oriented paradigm, ensuring all testing constructs are first-class citizens within the language's object model. The framework's design prioritizes linguistic homogeneity and architectural purity, allowing for seamless integration with the GraalVM/Truffle runtime's optimization capabilities, such as inline caching and partial evaluation, to achieve high-performance test execution.
 
@@ -1666,7 +1666,7 @@ Through these specializations, the Tolk Engine resolves dynamic protocols into s
 
 ### The Reified Block and the Architecture of Closure Projection
 
-Closures in Jolk are reified identities defined as a reified block rather than a mere functional interface. Unlike a Java lambda, which is a discrete function pointer restricted to its own local stack frame, a Jolk closure acts as a portable block of execution that maintains a link to its origin. This distinction enables *Transparent Capture*, where closures bypass the "effectively final" constraint to maintain mutable access to their defining environment, and *Return Authority*, where a return statement (`^`) targets the lexical home of the actual defining method.
+Closures in Jolk are reified identities defined as a reified block. A Jolk closure acts as a portable block of execution that maintains a link to its origin. This distinction enables *Transparent Capture*, where closures bypass the "effectively final" constraint to maintain mutable access to their defining environment, and *Return Authority*, where a return statement (`^`) targets the lexical home of the actual defining method.
 
 The Tolk Engine performs *Contextual Projection* by evaluating the selector contract to determine the most efficient substrate strategy:
 

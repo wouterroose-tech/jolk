@@ -110,7 +110,7 @@ The foundations of this work derive from industrial observation within enterpris
 
 ## Grammar
 
-The grammar synthesises class-based structural layout with a unified message-dispatch syntax, representing entities as unified archetypes.
+The Jolk grammar defines the language's syntax, integrating class-based structural layout with a unified message-dispatch paradigm.
 
     (* Jolk Grammar *)
     (* ============ *)
@@ -182,15 +182,9 @@ The grammar synthesises class-based structural layout with a unified message-dis
 	visibility_ops  = "<" | "~" | ":" | ">"
 	finality_ops    = "?" | "!"
 
-The grammar decouples lexical primitives from functional layout rules. By isolating atomic tokens like operators and modifiers from higher-level abstractions like `selector` (anchored by symbols or `#`) and `[ ]` for blocks, the specification enforces strict syntactic signatures. Jolk treats all interactions—unary, binary, and ternary—as unified message sends. Traditional mathematical and logical precedence is enforced as a semantic rule within the engine, ensuring that algebraic expectations are preserved within a flattened syntactic field.
+The grammar synthesises class-based structural layout with message dispatch, positioning all entities as archetypes. It enforces syntactic signatures by decoupling lexical primitives from structural layout rules and isolating atomic tokens from high-level abstractions like selectors (`#`), block markers (`[ ]`) and generics (`< >`). All execution interactions are normalised as message sends, with mathematical and logical precedence operating as semantic rules within the execution engine to maintain algebraic expectations in a flat syntactic field.
 
-While symbolic anchors (`#<`, `#>`, and related) represent the idiomatic syntax, the grammar provides keyword aliases for `public` and `private`, and supports archetype denotations such as `class`, `extends`, and associated keywords to maintain structural familiarity with class-based paradigms.
-
-The syntax for generics adopts angle brackets (`< >`), ensuring parsing stability and preventing recursive descent issues when the engine processes complex nested types.
-
-Modifiers (`abstract`, `final`) enforce compile-time structural integrity. The synthesis of of class-based declaration constraints with message-passing semantics provides pathways for both syntactic validation and static optimisation.
-
-The specification establishes a message-oriented syntax that unifies all interactions. This layout relies on a restricted keyword palette containing exclusively structural anchors (such as `class`) and reserved identifiers (such as `self`).
+Symbolic anchors define access boundaries, and the grammar provides keyword aliases for visibility modification, aligning with object-oriented topologies (e.g., `#<` maps to `private`). Modifiers enforce compile-time invariants, while the synthesis of class-based declarations with message-passing semantics enables syntactic validation and static optimisation. A restricted vocabulary of structural anchors and reserved identifiers, such as `class` for type definitions and `self` for the active message receiver, unifies interaction.
 
 ### Keywords
 
@@ -232,7 +226,7 @@ Syntactic elements act as structural anchors for the parser.
 
 **& operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a composition of protocols while reinforcing the separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
-**Generic type brackets** The syntax adopts `< >` for generics.
+**Generic type brackets** The syntax adopts angle brackets (`< >`) for generics.
 
 **Syntactic geometry**: Notational exclusivity ensures that the semantic interpretation of every structural boundary remains absolute and invariant. The grammar defines a unique token geometry to each structural construct: `< >` for generics, `{ }` for structural bounds, `[ ]` for closuress, and `( )` for parameters.
 

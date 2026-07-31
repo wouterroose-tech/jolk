@@ -9,10 +9,9 @@
 ///
 public class ArchetypeRecordDemonstratorTest extends TestCase {
 
-    ArchetypeRecordDemonstrator demonstrator = ArchetypeRecordDemonstrator #new;
-
-    testRunCanonicalNew() {
-        Issue issue = demonstrator #runCanonicalNew;
+    @Test
+    testCanonicalNew() {
+        Issue issue = Issue #new("Identity", "Validation failed", Level #ERROR);
         #assertIsPresent(issue);
         #assertTrue(issue #isPresent);
         #assertEquals("Identity", issue #subject);
@@ -20,19 +19,16 @@ public class ArchetypeRecordDemonstratorTest extends TestCase {
         #assertEquals(Level #ERROR, issue #level);
     }
 
-    testRunAccessors() {
-        #assertEquals("Message Content", demonstrator #runAccessors);
+    @Test
+    testAccessors() {
+        Issue issue = Issue #new("Subject", "Message Content", Level #WARNING);
+        #assertEquals("Message Content", issue #message);
+        #assertEquals(Level #WARNING, issue #level);
     }
 
-    testRunVariable() {
-        #assertEquals("Variable Test", demonstrator #runVariable);
-    }
-
-    testRunConstant() {
-        #assertEquals("Constant Test", demonstrator #runConstant);
-    }
-
+    @Test
     testRunToString() {
-        #assertEquals("Issue[subject=Target, message=String representation, level=INFO]", demonstrator #runToString);
+        Issue issue = Issue #new("Target", "String representation", Level #INFO);
+        #assertEquals("Issue[subject=Target, message=String representation, level=INFO]", issue #toString);
     }
 }

@@ -2,29 +2,53 @@
 
 + jolk.test.api.TestCase;
 
+/// # ClosureDemonstrator
+///
+/// Demonstrates the usage of Closures and Method References in Jolk.
+///
+/// Closures are reified blocks `[ args -> body ]`.
+/// Method references use `##`.
 ///
 /// @author Wouter Roose
 ///
 public class ClosureDemonstratorTest extends TestCase {
     
+    @Test
     testRunClosureParam() {
-        #assertEquals(42, ClosureDemonstrator #new #runClosureParam(42));
-        #assertEquals(0, ClosureDemonstrator #new #runClosureParam(1));
+        Closure c = [ v -> v == 42 ? 42 : 0 ];
+        #assertEquals(42, self #run(42, c));
+        #assertEquals(0, self #run(21, c));
     }
 
+    @Test
     testRunMethodReference_self() {
-        #assertEquals(42, ClosureDemonstrator #new #runMethodReference_self(21));
-        #assertEquals(0, ClosureDemonstrator #new #runMethodReference_self(0));
+        #assertEquals(42, #run(21, self ##doubleValue));
+        #assertEquals(0, #run(0, self ##doubleValue));
     }
 
+    @Test
     testRunMethodReference_meta() {
-        #assertEquals(42, ClosureDemonstrator #new #runMethodReference_meta(21));
-        #assertEquals(0, ClosureDemonstrator #new #runMethodReference_meta(0));
+        #assertEquals(42, self #run(21, ClosureDemonstrator ##doubleValue));
+        #assertEquals(0, self #run(0, ClosureDemonstrator ##doubleValue));
     }
 
+    @Test
     testRunMethodReference_instance() {
-        #assertEquals(42, ClosureDemonstrator #new #runMethodReference_instance(21));
-        #assertEquals(0, ClosureDemonstrator #new #runMethodReference_instance(0));
+        ClosureDemonstrator instance = Self #new;
+        #assertEquals(42, self #run(21, instance ##doubleValue));
+        #assertEquals(0, self #run(0, instance ##doubleValue));
+    }
+    
+    Long run(Long v, Closure c) {
+        ^ c #apply(v)
+    }
+
+    Long doubleValue(Long l) {
+        ^ 2 * l
+    }
+
+    meta Long doubleValue(Long l) {
+        ^ 2 * l
     }
     
 }

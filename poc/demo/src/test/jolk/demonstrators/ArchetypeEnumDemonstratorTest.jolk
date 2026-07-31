@@ -3,34 +3,39 @@
 + demo.validation.engine.Level;
 + jolk.test.api.TestCase;
 
+/// # ArchetypeEnumDemonstrator
+///
+/// Demonstrates various Jolk archetype features using the `Level` enum.
+///
+/// This class showcases:
+/// * Accessing enum constants via meta-selectors on the Type identity.
+/// * Accessing synthesized enum components (like `#name`).
+/// * Declaration of local variables for enums.
+/// * Standard protocol messaging (`#toString`).
 ///
 /// @author Wouter Roose
 ///
 public class ArchetypeEnumDemonstratorTest extends TestCase {
 
-    ArchetypeEnumDemonstrator demonstrator = ArchetypeEnumDemonstrator #new;
     
-    testRunAccessConstant() {
-        Level level = demonstrator #runAccessConstant;
+    testAccessConstant() {
+        Level level = Level #ERROR;
         #assertIsPresent(level);
         #assertTrue(level #isPresent);
         #assertEquals("ERROR", level #name);
     }
 
-    testRunName() {
-        #assertEquals("ERROR", demonstrator #runName);
+    testName() {
+        #assertEquals("ERROR", Level #ERROR #name);
     }
 
-    testRunVariable() {
-        #assertEquals("WARNING", demonstrator #runVariable);
+    testVariable() {
+        Level level = Level #WARNING;
+        #assertEquals("WARNING", level #name);
     }
 
-    testRunConstant() {
-        #assertEquals("INFO", demonstrator #runConstant);
-    }
-
-    testRunToString() {
-        #assertEquals("ERROR", demonstrator #runToString);
+    testToString() {
+        #assertEquals("ERROR", Level #ERROR #toString);
     }
 
 }

@@ -54,11 +54,8 @@ public class TestRunner extends jolk.test.TestRunner {
         
         // demonstrators
         load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeEnumDemonstrator.jolk");
         load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeRecordDemonstrator.jolk");
         load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
-        load("/demonstrators/ClosureDemonstrator.jolk");
         load("/demonstrators/ClosureDemonstratorTest.jolk");
         load("/demonstrators/CollectionLiteralDemonstrator.jolk");
         load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");

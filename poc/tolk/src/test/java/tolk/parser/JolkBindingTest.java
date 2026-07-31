@@ -112,7 +112,7 @@ public class JolkBindingTest extends JolcTestBase {
             class MyClass {
                 meta Long X = 0; 
                 meta Long val() { ^ self #X }
-                Long val() { ^ Self #X }
+                Long val() { ^ self #class #X }
                 meta Self val(Long x) { ^ self #X(x)}
             }""";
         Value meta = eval(source);
@@ -121,6 +121,7 @@ public class JolkBindingTest extends JolcTestBase {
         assertEquals(0L, meta.invokeMember("X").asLong());
         assertEquals(0L, meta.invokeMember("val").asLong());
         assertEquals(0L, instance.invokeMember("val").asLong());
+        
         assertEquals(meta, meta.invokeMember("val", 42L)); 
         assertEquals(42L, meta.invokeMember("X").asLong());
         assertEquals(42L, meta.invokeMember("val").asLong());

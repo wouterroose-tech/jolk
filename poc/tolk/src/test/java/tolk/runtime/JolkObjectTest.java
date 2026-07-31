@@ -554,6 +554,38 @@ public class JolkObjectTest extends JolcTestBase {
     }
     
     @Test
+    void testSelfReturn() {
+        String source = """
+            class ClassA {
+                Double x;
+                // self return meta method
+                meta new(Double d) { ^ super #new #x(d) }
+                // self return instance method
+                setX(Double d) { ^ self #x(d) }
+            }""";
+        Value instance = eval(source).invokeMember("new", 42.0);
+        assertEquals(42.0, instance.invokeMember("x").asDouble());
+        instance = instance.invokeMember("setX", 0);
+        assertEquals(0, instance.invokeMember("x").asDouble());
+    }
+    
+    @Test
+    void testSelfReciever() {
+        String source = """
+            class ClassA {
+                Double x;
+                // self receiver on metaClass
+                meta Self getNew(Double d) { ^ #new #x(d) }
+                // self receivier on instance
+                Self setX(Double d) { ^ #x(d) }
+            }""";
+        Value instance = eval(source).invokeMember("getNew", 42.0);
+        assertEquals(42.0, instance.invokeMember("x").asDouble());
+        instance = instance.invokeMember("setX", 0);
+        assertEquals(0, instance.invokeMember("x").asDouble());
+    }
+    
+    @Test
     void testSamePackage() {
         String source = """
             ~ test.a;

@@ -1,0 +1,46 @@
+~ demonstrators;
+
++ java.lang.RuntimeException;
++ java.lang.IllegalArgumentException;
++ java.lang.IllegalStateException;
++ jolk.test.api.TestCase;
+
+/// Demonstrates Jolk's unified message-passing syntax for exception handling.
+///
+/// This class showcases:
+/// * Catching a single exception with `#catch`.
+/// * Handling multiple, distinct exceptions with chained `#catch` messages.
+/// * Ensuring cleanup logic execution with `#finally`.
+///
+/// @author Wouter Roose
+///
+public class ExceptionHandlingDemonstratorTest extends TestCase {
+
+    @Test
+    testCatch() {
+        String status = "Start";
+        [ RuntimeException #new #throw ] 
+            #catch [ RuntimeException e ->  status = "Caught"  ];
+        #assertEquals("Caught", status);
+    }
+
+    @Test
+    testCatchFinally() {
+        String status = "Start";
+        [ RuntimeException #new #throw ]
+            #catch [ RuntimeException e -> status = status + " -> Catch" ]
+            #finally [ status = status + " -> Finally" ];
+        #assertEquals("Start -> Catch -> Finally", status);
+    }
+
+    @Test
+    testTryCatchFinally() {
+        String status = "Start";
+        [ status = status + " -> Try" ]
+            #try [ RuntimeException #new #throw ]
+            #catch [ RuntimeException e -> status = status + " -> Catch" ]
+            #finally [ status = status + " -> Finally" ];
+        #assertEquals("Start -> Try -> Catch -> Finally", status);
+    }
+
+}

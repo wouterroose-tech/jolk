@@ -24,73 +24,73 @@ public class CoreCollectionDemonstratorTest extends TestCase {
         #assertEquals("red", list #at(0));
     }
 
-    /*
     testRunArrayAt() {
-        Value result = getDemonstrator().invokeMember("runArrayAt");
-        assertNotNull(result);
-        assertEquals("green", result.asString());
+        String result = demonstrator #runArrayAt;
+        #assertIsPresent(result);
+        #assertEquals("green", result);
     }
 
+    /*
     testRunMapNew() {
         Value result = getDemonstrator().invokeMember("runMapNew");
-        assertNotNull(result);
-        assertEquals(0, result.invokeMember("size").asLong());
+        #assertNotNull(result);
+        #assertEquals(0, result.invokeMember("size").asLong());
     }
 
     testRunMapewLiteral() {
         Value result = getDemonstrator().invokeMember("runMapLiteral");
-        assertNotNull(result);
-        assertEquals(3, result.invokeMember("size").asLong());
+        #assertNotNull(result);
+        #assertEquals(3, result.invokeMember("size").asLong());
     }
 
     testRunArrayPut() {
         ArrayList result = (ArrayList) getDemonstrator().invokeMember("runArrayPut").asHostObject();
-        assertNotNull(result);
-        assertEquals(3, result.size());
-        assertEquals("yellow", result.get(1).toString());
+        #assertNotNull(result);
+        #assertEquals(3, result.size());
+        #assertEquals("yellow", result.get(1).toString());
     }
 
     testRunArraySize() {
         Value result = getDemonstrator().invokeMember("runArraySize");
-        assertNotNull(result);
-        assertEquals(3L, result.asLong());
+        #assertNotNull(result);
+        #assertEquals(3L, result.asLong());
     }
 
     testRunArrayToString() {
         Value result = getDemonstrator().invokeMember("runArrayToString");
-        assertNotNull(result);
-        assertEquals("[red, green, blue]", result.asString());
+        #assertNotNull(result);
+        #assertEquals("[red, green, blue]", result.asString());
     }
 
     testRunArrayReduce() {
         Value result = getDemonstrator().invokeMember("runArrayReduce");
-        assertNotNull(result);
-        assertEquals("redgreenblue", result.asString());
+        #assertNotNull(result);
+        #assertEquals("redgreenblue", result.asString());
     }
 
     testRunArrayForEach() {
         Value result = getDemonstrator().invokeMember("runArrayForEach");
-        assertNotNull(result);
-        assertEquals("redgreenblue", result.asString());
+        #assertNotNull(result);
+        #assertEquals("redgreenblue", result.asString());
     }
 
     testRunMapMap() {
         #disabled; //Map not yet supported in Jolk"
         Value result = getDemonstrator().invokeMember("runMapMap");
-        assertNotNull(result);
+        #assertNotNull(result);
         // map produces Array of "key:value" strings
-        assertEquals(3, result.invokeMember("size").asLong());
+        #assertEquals(3, result.invokeMember("size").asLong());
         String first = result.invokeMember("get", 0).asString();
-        assertNotNull(first);
+        #assertNotNull(first);
         // one of the entries should be "red:#FF0000"
-        assertTrue(first.contains("red:") || result.invokeMember("contains", "red:#FF0000").asBoolean());
+        #assertTrue(first.contains("red:") || result.invokeMember("contains", "red:#FF0000").asBoolean());
     }
 
     testRunMapForEach() {
         Value result = getDemonstrator().invokeMember("runMapForEach");
-        assertNotNull(result);
+        #assertNotNull(result);
         // concatenation of key+value for three entries
-        assertEquals("red#FF0000green#00FF00blue#0000FF", result.asString());
+        #assertEquals("red#FF0000green#00FF00blue#0000FF", result.asString());
     }
     */
 }

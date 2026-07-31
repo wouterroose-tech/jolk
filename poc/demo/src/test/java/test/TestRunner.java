@@ -53,7 +53,6 @@ public class TestRunner extends jolk.test.TestRunner {
         load("/demo/validation/rules/ContactFormValidationTest.jolk");
         
         // demonstrators
-        load("/demonstrators/ArchetypeClassDemonstrator.jolk");
         load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
         load("/demonstrators/ArchetypeEnumDemonstrator.jolk");
         load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
@@ -66,6 +65,7 @@ public class TestRunner extends jolk.test.TestRunner {
         load("/demonstrators/CoreCollectionDemonstrator.jolk");
         load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
         load("/demonstrators/EqualityDemonstratorTest.jolk");
+        load("/demonstrators/ExceptionHandlingDemonstratorTest.jolk");
     }
     
     @Test

@@ -7,40 +7,32 @@
 /// @author Wouter Roose
 ///
 final class ArchetypeClassDemonstratorTest extends TestCase {
-
-    ArchetypeClassDemonstrator demonstrator = ArchetypeClassDemonstrator #new;
     
-    testBasicNew() {
-        Person p = demonstrator #runBasicNew;
+    testNew() {
+        Person p = Person #new;
         #assertIsPresent(p);
         #assertTrue(p != null);
     }
 
-    testRunCanonicalNew() {
-        Person p = demonstrator #runCanonicalNew;
+    testCanonicalNew() {
+        Person p = Person #new(123456789, "John", "Doe");
         #assertEquals(123456789, p #ssn);
         #assertEquals("John", p #firstName);
         #assertEquals("Doe", p #lastName);
     }
 
-    testRunFluid() {
-        String s = demonstrator #runFluid;
+    testFluid() {
+        String s =  Person #new
+            #ssn(987654321)
+            #firstName("Jane")
+            #lastName("Doe")
+            #name;
         #assertEquals("Jane Doe", s);
-    }
-
-    testRunVariable() {
-        String s = demonstrator #runVariable;
-        #assertEquals("Jane", s);
-    }
-    
-    testRunConstant() {
-        String s = demonstrator #runConstant;
-        #assertEquals("Jane", s);
     }
     
     testRunToString() {
-        String s = demonstrator #runToString;
-        #assertEquals("Person[ssn=123456789, firstName=John, lastName=Doe]", s);
+        Person person = Person #new(123456789, "John", "Doe");
+        #assertEquals("Person[ssn=123456789, firstName=John, lastName=Doe]", person #toString);
     }
 
 }

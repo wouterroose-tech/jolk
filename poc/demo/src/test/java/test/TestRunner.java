@@ -21,25 +21,13 @@ public class TestRunner extends jolk.test.TestRunner {
         load("/examples/CircleTest.jolk");
         load("/examples/Complex.jolk");
         load("/examples/ComplexTest.jolk");
-        // demonstrators
-        load("/demonstrators/ArchetypeClassDemonstrator.jolk");
-        load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeEnumDemonstrator.jolk");
-        load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeRecordDemonstrator.jolk");
-        load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
-        load("/demonstrators/ClosureDemonstrator.jolk");
-        load("/demonstrators/ClosureDemonstratorTest.jolk");
-        load("/demonstrators/CollectionLiteralDemonstrator.jolk");
-        load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
-        load("/demonstrators/CoreCollectionDemonstrator.jolk");
-        load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
         
         // domain
         load("/demo/validation/domain/Person.jolk");
         load("/demo/validation/domain/PersonTest.jolk");
         load("/demo/validation/domain/ContactForm.jolk");
         load("/demo/validation/domain/ContactFormTest.jolk");
+
         // validation engine
         load("/demo/validation/engine/Level.jolk");
         load("/demo/validation/engine/LevelTest.jolk");
@@ -63,6 +51,21 @@ public class TestRunner extends jolk.test.TestRunner {
         load("/demo/validation/rules/ZipConstraintTest.jolk");
         load("/demo/validation/rules/ContactFormValidation.jolk");
         load("/demo/validation/rules/ContactFormValidationTest.jolk");
+        
+        // demonstrators
+        load("/demonstrators/ArchetypeClassDemonstrator.jolk");
+        load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeEnumDemonstrator.jolk");
+        load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeRecordDemonstrator.jolk");
+        load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
+        load("/demonstrators/ClosureDemonstrator.jolk");
+        load("/demonstrators/ClosureDemonstratorTest.jolk");
+        load("/demonstrators/CollectionLiteralDemonstrator.jolk");
+        load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
+        load("/demonstrators/CoreCollectionDemonstrator.jolk");
+        load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
+        load("/demonstrators/EqualityDemonstratorTest.jolk");
     }
     
     @Test

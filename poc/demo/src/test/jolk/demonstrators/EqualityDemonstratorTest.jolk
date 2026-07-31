@@ -1,0 +1,62 @@
+~ demonstrators;
+
++ demo.validation.domain.Person;
++ jolk.test.api.TestCase;
+
+///
+/// Demonstrates Jolk's identity ( `==` and `!=`) equivalence operators (`~~` and `!~`).
+///
+/// Jolk distinguishes between identity (`==`) and equivalence (`~~`).
+/// * Jolk `a ~~ b` -> Java `Objects.equals(a, b)`
+/// * Jolk `a !~ b` -> Java `!Objects.equals(a, b)`
+///
+/// @author Wouter Roose
+///
+public class EqualityDemonstratorTest extends TestCase {
+
+    Person p1 = Person #new(123456789, "John", "Doe");
+    Person p2 = Person #new(123456789, "John", "Doe");
+    Person p3 = Person #new(987654321, "Jane", "Di");
+
+    @Test
+    testEquals() {
+        #assertTrue(p1 == p1); // Same instance
+        #assertFalse(p1 == p2); // Different instances, same content
+        #assertFalse(p1 == p3); // Different content
+    }
+
+    @Test
+    testNotEquals() {
+        #assertFalse(p1 != p1);
+        #assertTrue(p1 != p2);
+        #assertTrue(p1 != p3);
+    }
+
+    @Test
+    testEquivalent() {
+        #assertTrue(p1 ~~ p1); // Same instance
+        #assertTrue(p1 ~~ p2); // Different instances, same content
+        #assertFalse(p1 ~~ p3); // Different content
+    }
+
+    @Test
+    testNotEquivalent() {
+        #assertFalse(p1 !~ p1);
+        #assertFalse(p1 !~ p2);
+        #assertTrue(p1 !~ p3);
+    }
+
+    @Test
+    testEquivalentithNull() {
+        #assertFalse(p1 ~~ null);
+        #assertFalse(null ~~ p1);
+        #assertTrue(null ~~ null);
+    }
+
+    @Test
+    testNotEquvalentWithNull() {
+        #assertTrue(p1 !~ null);
+        #assertTrue(null !~ p1);
+        #assertFalse(null !~ null);
+    }
+}

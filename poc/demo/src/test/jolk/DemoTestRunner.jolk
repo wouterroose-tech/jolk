@@ -10,6 +10,7 @@
 + demonstrators.ClosureDemonstratorTest;
 + demonstrators.CollectionLiteralDemonstratorTest;
 + demonstrators.CoreCollectionDemonstratorTest;
++ demonstrators.EqualityDemonstratorTest;
 + demo.validation.domain.PersonTest;
 + demo.validation.domain.ContactFormTest;
 + demo.validation.engine.IssueTest;
@@ -42,6 +43,7 @@ class DemoTestRunner extends TestRunner {
         #runTestCase(ClosureDemonstratorTest);
         #runTestCase(CollectionLiteralDemonstratorTest);
         #runTestCase(CoreCollectionDemonstratorTest);
+        #runTestCase(EqualityDemonstratorTest);
         // TODO add more demonstrators
 
         System #out #println("    -------------");

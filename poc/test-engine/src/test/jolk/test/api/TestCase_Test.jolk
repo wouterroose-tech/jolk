@@ -14,22 +14,22 @@ class TestCase_Test extends TestCase {
 
     @Test
     testSuccess() {
-        #success();
+        #success
     }
 
     @Test
     testFail() {
-        #assertFailure [ #fail() ]
+        #assertFailure [ #fail ]
     }
 
     @Test
     testDisabled() {
-        #disabled();
+        #disabled
     }
 
     @Test
     testAssertTrue_success() {
-        #assertTrue(true);
+        #assertTrue(true)
     }
     
     @Test

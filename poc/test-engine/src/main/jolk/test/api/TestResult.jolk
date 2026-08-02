@@ -2,9 +2,9 @@
 
 + java.lang.RuntimeException;
 
-& jolk.test.api.TestStatus.SUCCESS;
-& jolk.test.api.TestStatus.ERROR;
 & jolk.test.api.TestStatus.FAILURE;
+& jolk.test.api.TestStatus.FAULT;
+& jolk.test.api.TestStatus.SUCCESS;
 
 /// # TestResult
 ///

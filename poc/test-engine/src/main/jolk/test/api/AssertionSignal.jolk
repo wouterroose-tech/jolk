@@ -6,7 +6,7 @@ class AssertionSignal extends RuntimeException {
 
     meta new(String message) {
         // RuntimeException subclassing not implemented
-        ^ RuntimeException #new(message)
+        ^ RuntimeException #new("FAILURE: " + message)
     }
 
 }

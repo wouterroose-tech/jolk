@@ -75,7 +75,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <plugins>
             <plugin>
@@ -125,6 +124,9 @@
                 <version>3.1.0</version>
                 <executions>
                     <execution>
+                        <!--
+                        <m2e ignore>
+                        -->
                         <!-- generate ast-signatures for optimized use in gemini -->
                         <id>generate-ast-signatures</id>
                         <phase>process-classes</phase>

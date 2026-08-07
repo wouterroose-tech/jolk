@@ -4,20 +4,43 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
+
+import org.graalvm.polyglot.Value;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.EngineDiscoveryRequest;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.discovery.ClasspathRootSelector;
 import org.junit.platform.engine.discovery.DirectorySelector;
 import org.junit.platform.engine.discovery.FileSelector;
+import org.junit.platform.engine.support.descriptor.ClassSource;
+import org.junit.platform.engine.support.descriptor.CompositeTestSource;
+import org.junit.platform.engine.support.descriptor.FilePosition;
+import java.util.Arrays;
+import java.util.List;
+import org.junit.platform.engine.support.descriptor.FileSource;
 import org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine;
+
 import tolk.language.JolkLanguage;
-import tolk.runtime.JolkMetaClass;
 
 public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecutionContext> {
+
+    
+    final JolkTestRuntimeContext runtimeContext;
+
+    public JolkTestEngine() {
+        super();
+        // 1. Create the persistent Truffle Context
+        runtimeContext = new JolkTestRuntimeContext();
+
+        // 2. Load the Jolk test framework classes into the context
+        runtimeContext.loadDirectory("/jolk/test/api");
+        runtimeContext.loadDirectory("/jolk/test/engine");
+    }
 
     @Override
     public String getId() {
@@ -27,6 +50,10 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
     @Override
     protected JolkTestEngineExecutionContext createExecutionContext(ExecutionRequest request) {
         TestDescriptor root = request.getRootTestDescriptor();
+        // Traverse up the descriptor parent chain to obtain the top-level root (JolkEngineDescriptor)
+        while (root.getClass() != JolkEngineDescriptor.class && root.getParent().isPresent()) {
+            root = root.getParent().get();
+        }
         JolkTestRuntimeContext runtimeContext = ((JolkEngineDescriptor) root).getRuntimeContext();
         return new JolkTestEngineExecutionContext(runtimeContext);
     }
@@ -38,18 +65,10 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
     @Override
     public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
 
-        // 1. Create the persistent Truffle Context
-        JolkTestRuntimeContext runtimeContext = new JolkTestRuntimeContext();
-        
-        // 2. Load the Jolk test framework classes into the context
-        runtimeContext.loadDirectory("/jolk/test/api");
-
-        // 3. Scan and evaluate user space file selectors
         JolkEngineDescriptor rootDescriptor = new JolkEngineDescriptor(uniqueId, runtimeContext);
         processFileSelectors(discoveryRequest, runtimeContext, uniqueId, rootDescriptor);
         processDirectorySelectors(discoveryRequest, runtimeContext, rootDescriptor);
         processClasspathRootSelectors(discoveryRequest, runtimeContext, rootDescriptor);
-
         return rootDescriptor;
     }
 
@@ -59,11 +78,12 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
             .map(FileSelector::getPath)
             .filter(path -> path.toString().endsWith(".jolk"))
             .forEach(path -> {
+                // TODO or not? calculate rootdir here for proper test discovery
                 Path parentDir = path.getParent();
                 if (parentDir != null) {
                     registerFile(runtimeContext, rootDescriptor, parentDir, path);
                 } else {
-                    rootDescriptor.addChild(classDescriptor(runtimeContext, uniqueId, path));
+                    rootDescriptor.addChild(classDescriptor(runtimeContext, uniqueId, parentDir, path));
                 }
             });
     }
@@ -97,67 +117,71 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
         if (!Files.exists(dir)) {
             return;
         }
-        
+        Path root = dir.toAbsolutePath();
         // Recursive Traversal: Files.walk handles deep recursive directory descent
-        try (Stream<Path> stream = Files.walk(dir)) {
+        try (Stream<Path> stream = Files.walk(root)) {
             stream.filter(Files::isRegularFile)
-                  .filter(path -> path.toString().endsWith(".jolk"))
+                  .filter(file -> file.toString().endsWith(".jolk"))
                   .sorted(Comparator.comparing(Path::toString))
                   // Branch Attachment: Process each recursively discovered file
-                  .forEach(filePath -> registerFile(context, rootDescriptor, dir, filePath));
+                  .forEach(file -> registerFile(context, rootDescriptor, root, file));
         } catch (IOException e) {
             throw new RuntimeException("Failed to scan directory: " + dir.toAbsolutePath(), e);
         }
     }
 
-    private void registerFile(JolkTestRuntimeContext context, JolkEngineDescriptor rootDescriptor, Path dir, Path jolkFile) {
-        Path relativePath = dir.relativize(jolkFile);
-        Path parentPath = relativePath.getParent();
-
-        TestDescriptor parentDescriptor = rootDescriptor;
-
-        // Iterates through path segments (e.g., "api" -> "internal" -> "v1")
-        // parentPath may be null if jolkFile is directly in rootDir
-        if (parentPath != null) {
-            for (Path segment : parentPath) {
-                String segmentName = segment.toString();
-                parentDescriptor = folderDescriptor(parentDescriptor, segmentName);
-            }
-        }
-
-        // Attach leaf descriptor
-        parentDescriptor.addChild(classDescriptor(context, parentDescriptor.getUniqueId(), jolkFile));
+    private void registerFile(JolkTestRuntimeContext context, JolkEngineDescriptor rootDescriptor, Path root, Path file) {
+        rootDescriptor.addChild(classDescriptor(context, rootDescriptor.getUniqueId(), root,file));
     }
 
-    TestDescriptor folderDescriptor(TestDescriptor parent, String folderName) {
-        return parent
-            .getChildren().stream()
-            .map(child -> (TestDescriptor) child)
-            .filter(child -> child.getLegacyReportingName().equals(folderName))
-            .findFirst()
-            .orElseGet(() -> {
-                UniqueId containerId = parent.getUniqueId().append("directory", folderName);
-                JolkFolderTestDescriptor container = new JolkFolderTestDescriptor(containerId, folderName);
-                parent.addChild(container);
-                return container;
-            });
-    }
+    JolkClassTestDescriptor classDescriptor(JolkTestRuntimeContext context, UniqueId parentId, Path root, Path file) {
+        Value metaClass = context.evaluateJolkSource(file);
+        
+        // Derive FQCN(Fully Qualified Class Name) to ensure unique IDs across subdirectories
+        // relative to classpath root (e.g., "jolk.test.api.TestCase_Test")
+        String fqcn = extractClassName(root, file);
+        UniqueId classDescriptorId = parentId.append("class", fqcn);
+        List<TestSource> testSources = Arrays.asList(
+                ClassSource.from(fqcn),
+                FileSource.from(file.toAbsolutePath().toFile()));
+        CompositeTestSource fileSource = CompositeTestSource.from(testSources);
+        JolkClassTestDescriptor classDescriptor = new JolkClassTestDescriptor(classDescriptorId, metaClass, fileSource);
 
-    JolkClassTestDescriptor classDescriptor(JolkTestRuntimeContext context, UniqueId parentId, Path filePath) {
-        JolkMetaClass metaClass = context.evaluateJolkSource(filePath);
-        UniqueId classDescriptorId = parentId.append("class", (String) metaClass.getMetaSimpleName());
-        JolkClassTestDescriptor classDescriptor = new JolkClassTestDescriptor(classDescriptorId, metaClass);
+        // Line counter initialized to start at line 10
+        AtomicInteger lineOffset = new AtomicInteger(1);
+
         // scan the MetaClass via the meta-layer protocol to identify tests
         context
-            .getTestSelectors(metaClass)
-            .map(s -> methodDescriptor(classDescriptorId, s))
-            .forEach(d -> classDescriptor.addChild(d));
+            .getTestSelectors(context.getDefinedClass(metaClass)).map(selector -> methodDescriptor(
+                classDescriptorId, 
+                selector, 
+                file, 
+                lineOffset.getAndIncrement()))
+            .forEach(classDescriptor::addChild);
         return classDescriptor;
     }
 
-    JolkMethodTestDescriptor methodDescriptor(UniqueId classDescriptorId, String selectorName) {
-        UniqueId methodDescriptorId = classDescriptorId.append("method", selectorName);
-        return new JolkMethodTestDescriptor( methodDescriptorId, selectorName, selectorName );
+    JolkMethodTestDescriptor methodDescriptor(UniqueId classDescriptorId, String selectorName, Path filePath, int lineNumber) {
+        // Use "test" as segment type for dynamic non-Java methods
+        // to prevent vscode-java-test from forcing Java reflection resolution.
+        UniqueId methodDescriptorId = classDescriptorId.append("test", selectorName);
+        FilePosition position = FilePosition.from(lineNumber);
+        FileSource source = FileSource.from(filePath.toAbsolutePath().toFile(), position);
+        return new JolkMethodTestDescriptor( methodDescriptorId, selectorName, source);
+    }
+
+    private String extractClassName(Path rootDir, Path filePath) {
+        Path absRoot = rootDir.toAbsolutePath().normalize();
+        Path absFile = filePath.toAbsolutePath().normalize();
+
+        Path relativePath = absRoot.relativize(absFile);
+        String pathString = relativePath.toString();
+
+        if (pathString.endsWith(".jolk")) {
+            pathString = pathString.substring(0, pathString.length() - ".jolk".length());
+        }
+
+        return pathString.replace('/', '.').replace('\\', '.');
     }
 
 }

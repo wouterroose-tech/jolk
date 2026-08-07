@@ -15,7 +15,8 @@ public class JolkTestRuntimeContext_Test {
     void testLoadTestFramework() {
         JolkTestRuntimeContext runtimeContext = new JolkTestRuntimeContext();
         runtimeContext.loadDirectory("jolk/test/api");
-        JolkMetaClass metaClass = runtimeContext.getDefinedClass("jolk.test.api.TestCase");
+        // TODO change to lookup a laded class
+        JolkMetaClass metaClass = runtimeContext.getDefinedClass(runtimeContext.evaluateJolkSource(Path.of("/jolk/test/api/TestCase.jolk")));
         assertNotNull(metaClass);
         assertEquals("jolk.test.api.TestCase", metaClass.name);
     }
@@ -24,25 +25,21 @@ public class JolkTestRuntimeContext_Test {
     void testEvaluateJolkSource() {
         JolkTestRuntimeContext runtimeContext = new JolkTestRuntimeContext();
         runtimeContext.loadDirectory("jolk/test/api");
-        JolkMetaClass metaClass = runtimeContext.evaluateJolkSource(Path.of("/jolk/test/api/TestCase_Test.jolk"));
+        JolkMetaClass metaClass = runtimeContext.getDefinedClass(runtimeContext.evaluateJolkSource(Path.of("/jolk/test/api/TestCase_Test.jolk")));
         assertNotNull(metaClass);
         assertEquals("jolk.test.api.TestCase_Test", metaClass.name);
-        assertEquals(11, runtimeContext.getTestSelectors(metaClass).count());
     }
 
     @Test
     void testExtractTestSelectors() {
         JolkTestRuntimeContext runtimeContext = new  JolkTestRuntimeContext();
         runtimeContext.loadDirectory("jolk/test/api");
-        runtimeContext.load("/jolk/test/api/TestCase_test.jolk");
-        JolkMetaClass metaClass = runtimeContext.getDefinedClass("jolk.test.api.TestCase_Test");
-        assertNotNull(metaClass);
-        assertEquals("jolk.test.api.TestCase_Test", metaClass.name);
+        JolkMetaClass metaClass = runtimeContext.getDefinedClass(runtimeContext.evaluateJolkSource(Path.of("/jolk/test/api/TestCase_Test.jolk")));
 
         // Extract test selectors from the TestCase class
         var selectors = runtimeContext.getTestSelectors(metaClass).toList();
         assertNotNull(selectors);
-        assertEquals(11, selectors.size());
+        assertEquals(12, selectors.size());
         // check if selectors contain the expected test method name "testSuccess"
         assertNotNull(selectors.contains("testSuccess"));
     }

@@ -62,48 +62,20 @@ public class JolkTestEngine_Test {
 
         // Level 3: Get 'test' directory node under 'Jolk Test Engine'
         Set<TestIdentifier> jolkEngineChildren = testPlan.getChildren(jolkEngineNode);
-        assertEquals(1, jolkEngineChildren.size());
-        TestIdentifier testDirNode = jolkEngineChildren.iterator().next();
-        assertEquals("test", testDirNode.getDisplayName());
+        assertTrue(
+                jolkEngineChildren.stream().noneMatch(id -> id.getDisplayName().equals("test")),
+                "Directory container 'test' must not exist in a flattened descriptor tree"
+                );
 
-        // Level 4: Get 'api' and 'engine' directory containers under 'test'
-        Set<TestIdentifier> testDirChildren = testPlan.getChildren(testDirNode);
-        assertEquals(2, testDirChildren.size(), "The 'test' directory must contain exactly 2 package folders");
-
-        assertTrue(testDirChildren.stream().anyMatch(id -> id.getDisplayName().equals("api")));
-        assertTrue(testDirChildren.stream().anyMatch(id -> id.getDisplayName().equals("engine")));
-        TestIdentifier apiContainer = findIdentifierByDisplayName(testPlan, testDirChildren, "api");
-        TestIdentifier engineContainer = findIdentifierByDisplayName(testPlan, testDirChildren, "engine");
-
-        // Verify children of 'api' container (3 children)
-        Set<TestIdentifier> apiChildren = testPlan.getChildren(apiContainer);
-        assertEquals(2, apiChildren.size(), "The 'api' container must contain exactly 2 tests");
-        assertTrue(containsDisplayName(apiChildren, "TestCase_Test"));
-        assertTrue(containsDisplayName(apiChildren, "TestResult_Test"));
-
-        // Verify children of 'engine' container (1 child)
-        Set<TestIdentifier> engineChildren = testPlan.getChildren(engineContainer);
-        assertEquals(1, engineChildren.size(), "The 'engine' container must contain exactly 1 test");
-        assertTrue(containsDisplayName(engineChildren, "TestRunner_Test"));
-    }
-
-    private TestIdentifier findIdentifierByDisplayName(TestPlan testPlan, Set<TestIdentifier> identifiers, String expectedDisplayName) {
-        return identifiers.stream()
-            .filter(id -> id.getDisplayName().equals(expectedDisplayName))
-            .findFirst()
-            .orElseGet(() -> {
-                // If not found in immediate set, search descendants recursively
-                return identifiers.stream()
-                        .flatMap(parent -> testPlan.getChildren(parent).stream())
-                        .filter(id -> id.getDisplayName().equals(expectedDisplayName))
-                        .findFirst()
-                        .orElseThrow(() -> new AssertionError("Expected container or test with display name '" + expectedDisplayName + "' not found"));
-            });
-    }
-    
-    private boolean containsDisplayName(Set<TestIdentifier> identifiers, String displayName) {
-        return identifiers.stream()
-                .anyMatch(id -> id.getDisplayName().equals(displayName));
+        // Verify immediate class children under the engine node
+        // should contain 3 classes
+        assertEquals(3, jolkEngineChildren.size());
+        boolean hasApiClass = jolkEngineChildren.stream()
+                .anyMatch(id -> id.getLegacyReportingName().equals("TestCase_Test"));
+        assertTrue(hasApiClass, "Engine root must contain 'jolk.test.api.TestCase_Test' directly");
+        boolean hasEngineClass = jolkEngineChildren.stream()
+                .anyMatch(id -> id.getLegacyReportingName().equals("TestRunner_Test"));
+        assertTrue(hasEngineClass, "Engine root must contain engine test classes directly");
     }
 
     /// Test unit test discovery for single file selection
@@ -147,27 +119,19 @@ public class JolkTestEngine_Test {
         assertTrue(hierarchyRoot.getChildren().stream()
                 .anyMatch(TestDescriptor::isContainer));
 
-        TestDescriptor jolkTestContainer = hierarchyRoot.getChildren().stream()
-                .filter(d -> d.getDisplayName().equals("test"))
-                .findFirst().orElseThrow();
-        assertNotNull(jolkTestContainer);
-        assertEquals(2, jolkTestContainer.getChildren().size()); // api and engine
-
-        TestDescriptor apiContainer = jolkTestContainer.getChildren().stream()
-                .filter(d -> d.getDisplayName().equals("api"))
-                .findFirst().orElseThrow();
-        assertNotNull(apiContainer);
-        assertEquals(2, apiContainer.getChildren().size()); // TestCase_Test, Test, TestCase
-        assertTrue(apiContainer.getChildren().stream()
-                .anyMatch(d -> d.getDisplayName().equals("TestCase_Test")));
-
-        TestDescriptor engineContainer = jolkTestContainer.getChildren().stream()
-                .filter(d -> d.getDisplayName().equals("engine"))
-                .findFirst().orElseThrow();
-        assertNotNull(engineContainer);
-        assertEquals(1, engineContainer.getChildren().size()); // TestRunner_Test
-        assertTrue(engineContainer.getChildren().stream()
-                .anyMatch(d -> d.getDisplayName().equals("TestRunner_Test")));
+        // 3. Find the target class descriptor directly via its FQCN display name or ID
+        Set<? extends TestDescriptor> children = hierarchyRoot.getChildren();
+        assertEquals(3, children.size());
+        TestDescriptor testCaseClassDescriptor = children.stream()
+                .filter(d -> d.getDisplayName().contains("TestCase_Test"))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(testCaseClassDescriptor, "Class descriptor for 'TestCase_Test' not found");
+        testCaseClassDescriptor = children.stream()
+                .filter(d -> d.getDisplayName().contains("TestRunner_Test"))
+                .findFirst()
+                .orElse(null);
+        assertNotNull(testCaseClassDescriptor, "Class descriptor for 'TestRunner_Test' not found");
     }
 
     /// Test unit test discovery classpath root directory hierarchy selection
@@ -177,30 +141,20 @@ public class JolkTestEngine_Test {
     }
 
     @Test
-    void testFolderDescriptor() {
-        JolkTestRuntimeContext context = new JolkTestRuntimeContext();
-        //load superclasses;
-        context.load("jolk/test/api/Test.jolk");
-        context.load("jolk/test/api/TestCase.jolk");
-        UniqueId baseId = UniqueId.forEngine("TestEngine");
-        JolkEngineDescriptor rootDescriptor = new JolkEngineDescriptor(baseId, context);
-        TestDescriptor folderDescriptor = testEngine.folderDescriptor(rootDescriptor, "jolk\\test\\api");
-        assertEquals("[engine:TestEngine]/[directory:jolk\\test\\api]", folderDescriptor.getUniqueId().toString());
-    }
-
-    @Test
     void testClassDescriptor() {
         JolkTestRuntimeContext context = new JolkTestRuntimeContext();
         //load superclasses;
         context.load("jolk/test/api/Test.jolk");
         context.load("jolk/test/api/TestCase.jolk");
         UniqueId baseId = UniqueId.forEngine("TestEngine");
-        UniqueId folderId = baseId.append("directory", "jolk\\test\\api");
+        UniqueId folderId = baseId.append("directory", "jolk.test.api");
+        Path rootDir = Path.of("/jolk/");
         Path path = Path.of("/jolk/test/api/TestCase_Test.jolk");
-        JolkClassTestDescriptor testDescriptor = testEngine.classDescriptor(context, folderId, path);
+        JolkClassTestDescriptor testDescriptor = testEngine.classDescriptor(context, folderId, rootDir, path);
         assertEquals("TestCase_Test", testDescriptor.getDisplayName());
-        assertEquals("[engine:TestEngine]/[directory:jolk\\test\\api]/[class:TestCase_Test]", testDescriptor.getUniqueId().toString());
-        assertEquals(11, testDescriptor.getChildren().size());
+        UniqueId expectedId = folderId.append("class", "test.api.TestCase_Test");
+        assertEquals(expectedId, testDescriptor.getUniqueId());
+        assertEquals(12, testDescriptor.getChildren().size());
     }
 
     @Test
@@ -208,9 +162,10 @@ public class JolkTestEngine_Test {
         JolkTestEngine testEngine = new JolkTestEngine();
         UniqueId baseId = UniqueId.forEngine("TestEngine");
         UniqueId classId = baseId.append("class", "TestClass");
-        JolkMethodTestDescriptor testDescriptor = testEngine.methodDescriptor(classId, "testCase");
+        Path path = Path.of("src/test/jolk/test/api/TestClass.jolk");
+        JolkMethodTestDescriptor testDescriptor = testEngine.methodDescriptor(classId, "testCase", path, 10);
         assertEquals("testCase", testDescriptor.getDisplayName());
-        assertEquals("[engine:TestEngine]/[class:TestClass]/[method:testCase]", testDescriptor.getUniqueId().toString());
+        assertEquals("[engine:TestEngine]/[class:TestClass]/[test:testCase]", testDescriptor.getUniqueId().toString());
     }
 
 }

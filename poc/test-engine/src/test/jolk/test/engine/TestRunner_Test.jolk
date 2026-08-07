@@ -1,8 +1,11 @@
 ~ jolk.test.engine;
 
++ java.lang.RuntimeException;
 + java.lang.String;
 + java.util.List;
 + jolk.test.api.TestCase;
++ jolk.test.engine.TestRunner;
+
 & jolk.test.api.DisabledSignal.DISABLED_SIGNAL;
 
 /// # TestCase_Test

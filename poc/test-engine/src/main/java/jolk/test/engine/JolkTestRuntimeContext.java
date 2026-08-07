@@ -75,11 +75,11 @@ public class JolkTestRuntimeContext {
         return eval(readResource(path));
     }
 
-    public JolkMetaClass getDefinedClass(String className) {
+    public JolkMetaClass getDefinedClass(Value metaClass) {
         // Enter the Polyglot context before interacting with the guest language's internal context
         this.context.enter();
         try {
-            return (JolkMetaClass) JolkLanguage.getContext().getDefinedClass(className);
+            return (JolkMetaClass) JolkLanguage.getContext().getDefinedClass(metaClass.invokeMember("qualifiedName").asString());
         } finally {
             // Always ensure the context is left, even if an error occurs
             this.context.leave();
@@ -160,9 +160,9 @@ public class JolkTestRuntimeContext {
     }
     
     /// Evaluate the source file into Truffle to register the live MetaClass object
-    public JolkMetaClass evaluateJolkSource(Path filePath) {
-        Value metaClass = load(filePath.toString()); 
-        return getDefinedClass(metaClass.invokeMember("qualifiedName").asString());
+    public Value evaluateJolkSource(Path filePath) {
+        return load(filePath.toString()); 
+        //return getDefinedClass(metaClass.invokeMember("qualifiedName").asString());
     }
 
     public Object invokeJolkTestRunner(JolkMetaClass guestTestClass, String selector) {

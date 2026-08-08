@@ -1,0 +1,80 @@
+~ jolk.test.api;
+
+/// # TestCase_Test
+///
+/// Self-testing validation for the Jolk test protocol.
+///
+/// This class verifies the `TestCase` protocol by running assertion patterns, 
+/// failure injections, and condition checks against the testing framework itself,
+/// all within Jolk's message-passing paradigm.
+///
+/// @author Wouter Roose
+///
+class TestCase_Test extends TestCase {
+
+    @Test
+    testSuccess() {
+        #success
+    }
+    
+    @Test
+    testFail() {
+        #fail
+    }
+
+    @Test
+    testDisabled() {
+        #disabled
+    }
+
+    @Test
+    testAssertFailure() {
+        #assertFailure [ #fail ]
+    }
+
+    @Test
+    testAssertTrue_success() {
+        #assertTrue(true)
+    }
+    
+    @Test
+    testAssertTrue_failure() {
+        #assertFailure [ #assertTrue(false) ]
+    }
+    
+    @Test
+    testAssertSame_success() {
+        String same = "same";
+        #assertEquals(same, same)
+    }
+
+    @Test
+    testAssertSame_failure() {
+        #assertFailure [ #assertSame("~~ nut but ==", "~~ but not ==") ]
+    }
+    
+    @Test
+    testAssertEquals_success() {
+        #assertEquals("Hello", "Hello")
+    }
+
+    @Test
+    testAssertEquals_failure() {
+        #assertFailure [ #assertEquals("Hello", "World") ]
+    }
+
+    @Test
+    testAssertIsPresent_success() {
+        #assertIsPresent("Hello")
+    }
+
+    @Test
+    testAssertIsPresent_failure() {
+        #assertFailure [ #assertIsPresent(null) ]
+    }
+    
+    #> assertFailure(Closure test) {
+        test #catch [ AssertionSignal e -> ^ #success() ];
+        #fail
+    }
+}

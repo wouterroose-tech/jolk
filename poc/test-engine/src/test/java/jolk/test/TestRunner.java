@@ -9,9 +9,8 @@ import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.HostAccess;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import tolk.language.JolkLanguage;
 
 /// # TestRunner
@@ -20,16 +19,16 @@ import tolk.language.JolkLanguage;
 ///
 /// @author Wouter Roose
 ///
-public class TestRunner  {
+public abstract class TestRunner  {
     
+    private static Engine engine;
+    private static Context context;
+    private static ByteArrayOutputStream out;
+    private static ByteArrayOutputStream err;
+    protected static Value runnerClass;
     protected Value test;
-    protected Engine engine;
-    protected Context context;
-    protected ByteArrayOutputStream out;
-    protected ByteArrayOutputStream err;
-    private Value runnerClass;
 
-    protected Engine.Builder getEngine() {
+    static Engine.Builder getEngine() {
         return Engine.newBuilder()
                 .allowExperimentalOptions(true)
                 // allow System #out #println
@@ -37,7 +36,7 @@ public class TestRunner  {
                 .err(err);
     }
 
-    protected Context.Builder getContext() {
+    static Context.Builder getContext() {
         return Context.newBuilder(JolkLanguage.ID)
                 .engine(engine)                
                 .allowAllAccess(true)
@@ -47,32 +46,21 @@ public class TestRunner  {
                 .allowHostClassLookup(className -> true);
     }
 
-
-    @AfterEach
-    public void tearDown() {
-        if (context != null) { // context can be null if setUp fails
-            context.close();
-        }
-        if (engine != null) { // engine can be null if setUp fails
-            engine.close();
-        }
-    }
-
-    protected Value eval(String source) {
+    protected static Value eval(String source) {
         return context.eval(JolkLanguage.ID, source);
     }
 
     /// ### readResource
     /// 
     /// Utility to read a Jolk source file from the classpath resources.
-    protected String readResource(String path) {
+    protected static String readResource(String path) {
         // Try to load via the thread context class loader (robust for polyglot scenarios)
         String cpPath = path.startsWith("/") ? path.substring(1) : path;
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(cpPath);
         
         if (is == null) {
             // Fallback to instance class-relative lookup
-            is = getClass().getResourceAsStream(path);
+            is = TestRunner.class.getResourceAsStream(path);
         }
 
         if (is == null) {
@@ -89,13 +77,13 @@ public class TestRunner  {
     /// ### load
     ///
     /// Helper method to load the class from the Jolk source file for testing purposes.
-    protected Value load(String path) {
+    protected static Value load(String path) {
         String source = readResource(path);
         return eval(source);
     }
 
-    @BeforeEach
-    public void setUp() {
+    @BeforeAll
+    public static void setUp() {
         out = new ByteArrayOutputStream();
         err = new ByteArrayOutputStream();
         engine = getEngine().build();
@@ -112,13 +100,19 @@ public class TestRunner  {
         load("/jolk/test/engine/TestRunner.jolk");
         runnerClass = load("/jolk/test/engine/TestRunner.jolk");
     }
-    
-    @Test
-    public void testRun() {
-        load("/jolk/test/api/TestCase_Test.jolk");
-        load("/jolk/test/api/TestResult_Test.jolk");
-        load("/jolk/test/engine/TestRunner_Test.jolk");
-        runnerClass.invokeMember("new").invokeMember("run");
+
+    @AfterAll
+    public static void tearDown() {
+        if (context != null) { // context can be null if setUp fails
+            context.close();
+        }
+        if (engine != null) { // engine can be null if setUp fails
+            engine.close();
+        }
+    }
+
+    protected void runTestClass(Value testClass) {
+        runnerClass.invokeMember("new").invokeMember("runTestCase", testClass);
     }
 
 }

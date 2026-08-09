@@ -3,6 +3,7 @@ package jolk.test;
 import jolk.test.engine.EmptyConfigurationParameters;
 import jolk.test.engine.JolkTestEngine;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
@@ -25,6 +26,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+
+///
+/// # JolkTestRunner
+/// 
+/// Temporary: The static Java anchor for VS Code.
+/// 
+/// @author Wouter Roose
+/// 
+// Disabled, test now run via the JolkTestEngine for the JUnit test framework
+@Disabled
 public class JolkTestRunner {
 
     private final JolkTestEngine engine = new JolkTestEngine();
@@ -78,7 +89,6 @@ public class JolkTestRunner {
                 .map(src -> ((FileSource) src).getUri());
     }
 
-
     private void executeSingleNode(TestDescriptor targetNode) throws Throwable {
 
         // Capture execution failures reported by the engine
@@ -129,7 +139,6 @@ public class JolkTestRunner {
             if (failure instanceof TestSkippedException skipped) {
                 throw new TestAbortedException(skipped.getMessage(), skipped);
             }
-
             throw failure;
         }
     }

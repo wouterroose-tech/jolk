@@ -34,10 +34,10 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
 
     public JolkTestEngine() {
         super();
-        // 1. Create the persistent Truffle Context
+        // Create the Truffle Context
         runtimeContext = new JolkTestRuntimeContext();
 
-        // 2. Load the Jolk test framework classes into the context
+        // Load the Jolk test framework classes into the context
         runtimeContext.loadDirectory("/jolk/test/api");
         runtimeContext.loadDirectory("/jolk/test/engine");
     }
@@ -64,16 +64,15 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
     // create a TestDescriptor for each test method
     @Override
     public TestDescriptor discover(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId) {
-
         JolkEngineDescriptor rootDescriptor = new JolkEngineDescriptor(uniqueId, runtimeContext);
-        processFileSelectors(discoveryRequest, runtimeContext, uniqueId, rootDescriptor);
-        processDirectorySelectors(discoveryRequest, runtimeContext, rootDescriptor);
-        processClasspathRootSelectors(discoveryRequest, runtimeContext, rootDescriptor);
+        processFileSelectors(discoveryRequest, uniqueId, rootDescriptor);
+        processDirectorySelectors(discoveryRequest, rootDescriptor);
+        processClasspathRootSelectors(discoveryRequest, rootDescriptor);
         return rootDescriptor;
     }
-
+    
     /// Scan and evaluate user space file selectors
-    void processFileSelectors(EngineDiscoveryRequest discoveryRequest, JolkTestRuntimeContext runtimeContext, UniqueId uniqueId, JolkEngineDescriptor rootDescriptor) {
+    void processFileSelectors(EngineDiscoveryRequest discoveryRequest, UniqueId uniqueId, JolkEngineDescriptor rootDescriptor) {
         getSelectors(discoveryRequest, FileSelector.class)
             .map(FileSelector::getPath)
             .filter(path -> path.toString().endsWith(".jolk"))
@@ -81,7 +80,7 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
                 // TODO or not? calculate rootdir here for proper test discovery
                 Path parentDir = path.getParent();
                 if (parentDir != null) {
-                    registerFile(runtimeContext, rootDescriptor, parentDir, path);
+                    registerFile(rootDescriptor, parentDir, path);
                 } else {
                     rootDescriptor.addChild(classDescriptor(runtimeContext, uniqueId, parentDir, path));
                 }
@@ -89,19 +88,19 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
     }
 
     /// Scan and evaluate user space directory selectors
-    void processDirectorySelectors(EngineDiscoveryRequest discoveryRequest, JolkTestRuntimeContext runtimeContext, JolkEngineDescriptor rootDescriptor) {
+    void processDirectorySelectors(EngineDiscoveryRequest discoveryRequest, JolkEngineDescriptor rootDescriptor) {
         getSelectors(discoveryRequest, DirectorySelector.class)
             .map(DirectorySelector::getPath)
-            .forEach(dirPath -> scanDirectory(runtimeContext, rootDescriptor, dirPath));
+            .forEach(dirPath -> scanDirectory(rootDescriptor, dirPath));
     }
 
     /// Scan and evaluate user space classpath root selectors
     /// e.g., Maven/Gradle test execution over target/test-classes
-    void processClasspathRootSelectors(EngineDiscoveryRequest discoveryRequest, JolkTestRuntimeContext runtimeContext, JolkEngineDescriptor rootDescriptor) {
+    void processClasspathRootSelectors(EngineDiscoveryRequest discoveryRequest, JolkEngineDescriptor rootDescriptor) {
         getSelectors(discoveryRequest, ClasspathRootSelector.class)
             .map(s -> s.getClasspathRoot())
             .map(Path::of)
-            .forEach(rootPath -> scanDirectory(runtimeContext, rootDescriptor, rootPath));
+            .forEach(rootPath -> scanDirectory(rootDescriptor, rootPath));
     }
 
     <T extends DiscoverySelector> Stream<T> getSelectors(EngineDiscoveryRequest discoveryRequest, Class<T> selectorType) {
@@ -113,7 +112,7 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
     /// This is the primary mechanism by which JolkTestEngine creates the execution tree
     /// for each test class. Contains only namespaces/folders that directly lead to 
     /// discovered test files. Empty intermediate packages are omitted.
-     void scanDirectory(JolkTestRuntimeContext context, JolkEngineDescriptor rootDescriptor, Path dir) {
+     void scanDirectory(JolkEngineDescriptor rootDescriptor, Path dir) {
         if (!Files.exists(dir)) {
             return;
         }
@@ -124,14 +123,14 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
                   .filter(file -> file.toString().endsWith(".jolk"))
                   .sorted(Comparator.comparing(Path::toString))
                   // Branch Attachment: Process each recursively discovered file
-                  .forEach(file -> registerFile(context, rootDescriptor, root, file));
+                  .forEach(file -> registerFile(rootDescriptor, root, file));
         } catch (IOException e) {
             throw new RuntimeException("Failed to scan directory: " + dir.toAbsolutePath(), e);
         }
     }
 
-    private void registerFile(JolkTestRuntimeContext context, JolkEngineDescriptor rootDescriptor, Path root, Path file) {
-        rootDescriptor.addChild(classDescriptor(context, rootDescriptor.getUniqueId(), root,file));
+    private void registerFile(JolkEngineDescriptor rootDescriptor, Path root, Path file) {
+        rootDescriptor.addChild(classDescriptor(runtimeContext, rootDescriptor.getUniqueId(), root,file));
     }
 
     JolkClassTestDescriptor classDescriptor(JolkTestRuntimeContext context, UniqueId parentId, Path root, Path file) {

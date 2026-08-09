@@ -29,7 +29,6 @@
 class DemoTestRunner extends TestRunner {
 
     run() {
-        
         System #out #println("    Run All Tests");
         System #out #println("    -------------");
         System #out #println(">   " + "examples");

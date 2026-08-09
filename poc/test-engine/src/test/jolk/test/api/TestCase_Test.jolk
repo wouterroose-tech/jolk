@@ -19,12 +19,14 @@ class TestCase_Test extends TestCase {
 
     @Test
     testFail() {
-        #fail
+        // uncomment if wanting to see a failing test in MVN or IDE
+        //#fail
     }
 
     @Test
     testDisabled() {
-        #disabled
+        // uncomment if wanting to see a disabled test in MVN or IDE
+        //#disabled
     }
 
     @Test

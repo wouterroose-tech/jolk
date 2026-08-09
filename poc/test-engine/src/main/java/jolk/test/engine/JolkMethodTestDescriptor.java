@@ -12,8 +12,6 @@ import org.opentest4j.TestSkippedException;
 
 import com.oracle.truffle.api.interop.InteropLibrary;
 
-import tolk.runtime.JolkMetaClass;
-
 ///
 /// Represents an individual test method selector (leaf node)
 /// 
@@ -47,8 +45,6 @@ public class JolkMethodTestDescriptor extends AbstractTestDescriptor implements 
                     "Parent descriptor for " + getUniqueId() + " is not a valid JolkClassTestDescriptor"));
 
         Value guestTestClass = parent.getGuestTestClass();
-        org.graalvm.polyglot.Context polyglotContext = context.getRuntimeContext().context;
-        InteropLibrary interop = InteropLibrary.getUncached();
 
         // Explicitly enter the Truffle context for the duration of the interop dispatches
         //polyglotContext.enter();

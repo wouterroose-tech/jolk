@@ -1,13 +1,13 @@
 package demonstrators;
 
-import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+public class CoreProtocolDemonstratorTest {
 
-public class PresenceDemonstratorTest {
     
     /*
+    // PatternMatching Demonstrator
+    //TODO
+
+    // Presence Demonstrator
     private final PresenceDemonstrator demo = new PresenceDemonstrator();
     private final jolk.lang.Object presentObject = new jolk.lang.Object();
     private final jolk.lang.Object emptyObject = null;
@@ -35,5 +35,7 @@ public class PresenceDemonstratorTest {
         assertEquals("Present", demo.runIfEmpty(presentObject));
         assertEquals("Empty", demo.runIfEmpty(emptyObject));
     }
+
     */
+
 }

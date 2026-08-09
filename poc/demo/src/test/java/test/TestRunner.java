@@ -1,6 +1,8 @@
 package test;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /// # TestRunner
@@ -11,22 +13,13 @@ import org.junit.jupiter.api.Test;
 ///
 public class TestRunner extends jolk.test.TestRunner {
 
-    @BeforeEach
-    public void setUp() {
-        super.setUp();
-
-        // test framework
-        // examples
-        load("/examples/Circle.jolk");
-        load("/examples/CircleTest.jolk");
-        load("/examples/Complex.jolk");
-        load("/examples/ComplexTest.jolk");
+    @BeforeAll
+    public static void setUp() {
+        jolk.test.TestRunner.setUp();
         
         // domain
         load("/demo/validation/domain/Person.jolk");
-        load("/demo/validation/domain/PersonTest.jolk");
         load("/demo/validation/domain/ContactForm.jolk");
-        load("/demo/validation/domain/ContactFormTest.jolk");
 
         // validation engine
         load("/demo/validation/engine/Level.jolk");
@@ -44,32 +37,94 @@ public class TestRunner extends jolk.test.TestRunner {
         // business services
         load("/demo/validation/services/City.jolk");
         load("/demo/validation/services/GeoGraphicalService.jolk");
-        // business validation rules
-        load("/demo/validation/rules/SsnConstraint.jolk");
-        load("/demo/validation/rules/SsnConstraintTest.jolk");
-        load("/demo/validation/rules/ZipConstraint.jolk");
-        load("/demo/validation/rules/ZipConstraintTest.jolk");
-        load("/demo/validation/rules/ContactFormValidation.jolk");
-        load("/demo/validation/rules/ContactFormValidationTest.jolk");
-        
-        // demonstrators
-        load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
-        load("/demonstrators/ClosureDemonstratorTest.jolk");
-        load("/demonstrators/CollectionLiteralDemonstrator.jolk");
-        load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
-        load("/demonstrators/CoreCollectionDemonstrator.jolk");
-        load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
-        load("/demonstrators/EqualityDemonstratorTest.jolk");
-        load("/demonstrators/ExceptionHandlingDemonstratorTest.jolk");
     }
     
     @Test
-    public void testRun() {
+    @Disabled
+    public void runAllTests() {
         load("/DemoTestRunner.jolk")
             .invokeMember("new")
             .invokeMember("run");
+    }
+    
+    @Test
+    public void runDemonstratorTest() {
+        Value testClass;
+        load("/demonstrators/CollectionLiteralDemonstrator.jolk");
+        testClass = load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
+        runTestClass(testClass);
+
+        load("/demonstrators/CoreCollectionDemonstrator.jolk");
+        testClass = load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/ClosureDemonstratorTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/EqualityDemonstratorTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/ExceptionHandlingDemonstratorTest.jolk");
+        runTestClass(testClass);
+    }
+    
+    // examples
+    @Test
+    public void runCircleTest() {
+        load("/examples/Circle.jolk");
+        Value testClass = load("/examples/CircleTest.jolk");
+        runTestClass(testClass);
+    }
+    
+    @Test
+    public void runComplexTest() {
+        load("/examples/Complex.jolk");
+        Value testClass = load("/examples/ComplexTest.jolk");
+        runTestClass(testClass);
+    }
+    
+    @Test
+    public void runDomainTest() {
+        Value personTest = load("/demo/validation/domain/PersonTest.jolk");
+        runTestClass(personTest);
+
+        Value contactFormTest = load("/demo/validation/domain/ContactFormTest.jolk");
+        runTestClass(contactFormTest);
+    }
+    
+    @Test
+    public void runValidationTest() {
+        Value testClass;
+        load("/demo/validation/rules/SsnConstraint.jolk");
+        testClass = load("/demo/validation/rules/SsnConstraintTest.jolk");
+        runTestClass(testClass);
+
+        load("/demo/validation/rules/ZipConstraint.jolk");
+        testClass = load("/demo/validation/rules/ZipConstraintTest.jolk");
+        runTestClass(testClass);
+
+        load("/demo/validation/rules/ContactFormValidation.jolk");
+        testClass = load("/demo/validation/rules/ContactFormValidationTest.jolk");
+        runTestClass(testClass);
+    }
+    
+    @Test
+    public void runValidationEngineTest() {
+        Value testClass;
+        testClass = load("/demo/validation/engine/LevelTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demo/validation/engine/IssueTest.jolk");
+        runTestClass(testClass);
     }
 
 }

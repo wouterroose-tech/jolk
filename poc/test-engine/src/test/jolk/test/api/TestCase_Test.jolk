@@ -44,15 +44,17 @@ class TestCase_Test extends TestCase {
         #assertFailure [ #assertTrue(false) ]
     }
     
+    /// Test failure of #assertSame
     @Test
     testAssertSame_success() {
         String same = "same";
-        #assertEquals(same, same)
+        #assertSame(same, same)
     }
 
+    /// Test failure of #assertSame
     @Test
     testAssertSame_failure() {
-        #assertFailure [ #assertSame("~~ nut but ==", "~~ but not ==") ]
+        #assertFailure [ #assertSame("~~", "==") ]
     }
     
     @Test

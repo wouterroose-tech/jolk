@@ -10,8 +10,6 @@ import org.opentest4j.AssertionFailedError;
 import org.opentest4j.TestAbortedException;
 import org.opentest4j.TestSkippedException;
 
-import com.oracle.truffle.api.interop.InteropLibrary;
-
 ///
 /// Represents an individual test method selector (leaf node)
 /// 
@@ -29,9 +27,12 @@ public class JolkMethodTestDescriptor extends AbstractTestDescriptor implements 
 
     @Override
     public Type getType() {
-        return Type.TEST; // Allows lazy hook attachments or plain execution
+        return Type.TEST;
     }
     
+    /// Execution the guest Jolk validation logic:
+    /// TestResult result = testClass #new #beforeEach #selector(s) #afterEach;
+    /// 
     @Override
     public JolkTestEngineExecutionContext execute(
             JolkTestEngineExecutionContext context, 
@@ -46,11 +47,6 @@ public class JolkMethodTestDescriptor extends AbstractTestDescriptor implements 
 
         Value guestTestClass = parent.getGuestTestClass();
 
-        // Explicitly enter the Truffle context for the duration of the interop dispatches
-        //polyglotContext.enter();
-
-        // Execution the guest Jolk validation logic:
-        // TestResult result = testClass #new #selector(s) #run;
         Value testInstance;
         try {
             testInstance = guestTestClass.invokeMember("new");
@@ -58,9 +54,9 @@ public class JolkMethodTestDescriptor extends AbstractTestDescriptor implements 
             throw new AssertionFailedError("Failed to instantiate test class", guestException);
         }
         try {
-            // Orchestrate the lifecycle phases via independent host-to-guest boundaries
+            // The lifecycle phase beforeEach
             testInstance.invokeMember("beforeEach");
-            // Invoke the target test method explicitly
+            // Invoke the target test method
             testInstance.invokeMember(selector);
             return context;
         } catch (Throwable throwable) {
@@ -76,7 +72,7 @@ public class JolkMethodTestDescriptor extends AbstractTestDescriptor implements 
             }
             throw throwable;
         } finally {
-            // Guarantee resource reclamation regardless of test execution outcome
+            // The lifecycle phase afterEach
             testInstance.invokeMember("afterEach");
         }
     }

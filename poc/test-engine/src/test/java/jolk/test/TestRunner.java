@@ -15,7 +15,7 @@ import tolk.language.JolkLanguage;
 
 /// # TestRunner
 ///
-/// run the jolk TestRunner, will be replaced by the JolkTestEngine for the JUnit test framework
+/// run a jolk TestClass, will be replaced by the JolkTestEngine for the JUnit test framework
 ///
 /// @author Wouter Roose
 ///

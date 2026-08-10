@@ -1,29 +1,18 @@
 package jolk.test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-
 import org.graalvm.polyglot.Value;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.HostAccess;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import tolk.language.JolkLanguage;
 
-/// # TestRunner
+/// # TestFramework_Test
 ///
-/// run the jolk TestRunner
+/// run the jolk tests for the Jolk test framework
 ///
 /// @author Wouter Roose
 ///
 // Disabled, test now run via the JolkTestEngine for the JUnit test framework
 @Disabled
-public class TestJolkTestFramework extends TestRunner  {
+public class TestFramework_Test extends TestRunner  {
     
     @Test
     public void testTestCase_Test() {

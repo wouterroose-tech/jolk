@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 /// 
 // Disabled, test now run via the JolkTestEngine for the JUnit test framework
 @Disabled
-public class JolkTestRunner {
+public class TestFactoryRunner {
 
     private final JolkTestEngine engine = new JolkTestEngine();
 

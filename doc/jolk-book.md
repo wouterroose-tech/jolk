@@ -2,9 +2,9 @@
 
 **Unified Messaging and Metaobject Protocol for the Java Type System**
 
-The Jolk specification formalises the translation of a messaging model onto the Java type system, establishing the conceptual foundation for this architecture. It integrates a messaging model with a C-family syntax structure, which the Tolk Engine maps onto the underlying Java Virtual Machine. While mainstream industrial models treat the object as a data container and execution operates procedurally, Jolk enforces a semantic overlay wherein message dispatch governs behaviour and drives interactions.
+The Jolk specification formalises the translation of a messaging model onto the Java type system, establishing the conceptual foundation for this architecture. It integrates a messaging model with a C-family syntax structure, which the Tolk Engine maps onto the underlying Java Virtual Machine. Message dispatch governs execution semantics within the runtime overlay. Object interactions proceed via message resolution.
 
-The architecture implements the computational paradigm described by Alan Kay,[2][3] wherein autonomous entities communicate through messages. Jolk enforces this design uniformly: every operational interaction—including instantiation and control flow execution—is resolved through message dispatch.
+The execution model adheres to the message-passing computational paradigm described by Alan Kay.[1] Jolk enforces this design uniformly. Every operation, including object instantiation and control flow resolution, proceeds through message dispatch mechanisms.
 
 **Acknowledgments**
 
@@ -52,9 +52,9 @@ Bedankt Wilfried Verachtert, voor de vele sessies waarin we sinds ons eerste kan
 
 ---
 
-Jolk /dʒɔːk/ (the name is a blend of 'Java' and the Dutch word 'tolk', denoting an interpreter and referencing the 'talk' in Smalltalk-80) is the formal specification of a language that reifies message-passing and behavioural semantics on top of the underlying Java type system.
+Jolk /dʒɔːk/ (the name is a blend of 'Java' and the Dutch word 'tolk', denoting an interpreter and referencing the 'talk' in Smalltalk-80[2]) is the formal specification of a language that reifies message-passing and behavioural semantics on top of the underlying Java type system.
 
-Jolk extends the research initiated in ProtoTyping[4]. By projecting Strongtalk[5] type-lattice separation principles onto the Java type system, Jolk enforces the structural integrity of the execution model through compile-time validation of message signatures. The Tolk Engine leverages the Truffle framework to reify unified messaging within a self-optimising abstract syntax tree (AST). Through dynamic specialisation and GraalVM partial evaluation, the engine executes semantic flattening, collapsing high-level protocols into machine code to target runtime parity with native operations.
+Jolk extends the research initiated in ProtoTyping[3]. By projecting Strongtalk[4] type-lattice separation principles onto the Java type system, Jolk enforces the structural integrity of the execution model through compile-time validation of message signatures. The Tolk Engine leverages the Truffle framework to reify unified messaging within a self-optimising abstract syntax tree (AST). Through dynamic specialisation and GraalVM partial evaluation, the engine executes semantic flattening, collapsing high-level protocols into machine code to target runtime parity with native operations.
 
 The manuscript structure reflects the system architecture: Parts One and Two establish the syntax and language specifications; Part Three demonstrates system synthesis through design patterns and frameworks; and Part Four provides an analysis of the Tolk Engine mechanics and substrate implementation.
 
@@ -64,7 +64,7 @@ Jolk is a convergent architecture synthesizing C-family syntax with messaging se
 
 ### Core Principles
 
-**Unified messaging:** Every interaction—including object creation, arithmetic evaluation, control flow, and error handling—is a formal message send.
+**Unified messaging:** Every interaction—including object instantiation, arithmetic evaluation, control flow, and error handling—is a formal message send.
 
 **Unified Type System:** Every entity—including closures, booleans, the Nothing bottom-type singleton, and classes via their metaclasses—is an identity receptive to messages.
 
@@ -84,19 +84,19 @@ Structural complexity is managed through the following design constraints:
 
 **Semantic flattening:** Leveraging a Truffle-based implementation, the architecture targets execution parity with native JVM operations by collapsing high-level messaging protocols into optimized machine code through GraalVM’s partial evaluation of the generated abstract syntax tree (AST).
 
-**Interoperability:** By targeting the GraalVM ecosystem, the platform achieves zero-copy integration with host Java types, ensuring stable interaction within the JVM.
+**Interoperability:** By targeting the GraalVM ecosystem, the platform achieves integration with host Java types, ensuring stable interaction within the JVM.
 
 **Ecosystem alignment:** The specification is designed for forward-compatibility with evolving JVM features, specifically Project Valhalla (Value Objects) and Project Amber (Pattern Matching).
 
 This unified messaging model ensures that every state transition and control branch is a negotiable handshake, allowing the Tolk engine to specialize dynamic logic into high-performance machine code.
 
-The foundations of this work derive from industrial observation within enterprise software engineering. Comparative research[6] indicates that structural quality correlates with paradigm simplicity and expressiveness. This initiative treats the unified communicative model as a facilitator of sustained system quality.
+Empirical software engineering literature demonstrates that lexical token density correlates with defect frequency [5] and object-oriented complexity metrics correlate with defect density [6]. Comparative research indicates that higher programming language levels reduce statement volume, yielding lower defect rates per functional unit [7]. The unified messaging model eliminates explicit operator syntax and structural overhead, aligning language mechanics with these defect reduction parameters.
 
 ## The unified communicative engine
 
 *Jolk defines the object not as a container, but as an identity manifested through message-driven interactions.*
 
-*The Receiver constitutes the terminus for invocations. The metaobject protocol provides the intrinsic reflection necessary to map high-level abstractions to the JVM. The Identity asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a Metaboundary that enforces local retention, thereby effecting the 'disappearance of data.'* 
+*The Receiver constitutes the terminus for invocations. The metaobject protocol[17] provides the intrinsic reflection necessary to map high-level abstractions to the JVM. The Identity asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a meta-level boundary that enforces local retention, thereby effecting the 'disappearance of data.'* 
 
 *The message-oriented paradigm subsumes keyword-driven control flow with an exchange of messages, formalising branching as a first-class participant within a unified communicative field.*
 
@@ -138,8 +138,8 @@ The Jolk grammar defines the language's syntax, integrating class-based structur
 	assignment      = "=" message
 	field           = [ "stable" | "lazy" ] type identifier [ assignment ]
 	enum            = meta_id [ arguments ] ";"
-	method          = [ "lazy" ] [ type_args ] [ type ] selector_id "(" [ typed_params ] ")" ( block | ";" )
-	selector_id     = identifier | operator
+	method          = [ "lazy" ] [ type_args ] [ type ] method_id "(" [ typed_params ] ")" ( block | ";" )
+	method_id       = identifier | operator
 	typed_params    = annotated_type ( instance_id { "," annotated_type instance_id } [ "," annotated_type vararg_id ] |  vararg_id )
 	annotated_type  = { annotation } type
 	annotation      = "@" identifier [ "(" ... ")" ]
@@ -151,10 +151,9 @@ The Jolk grammar defines the language's syntax, integrating class-based structur
 	statements      = statement { ";" statement } [ ";" ]
 	statement       = state | binding | [ "^" ] message
 	binding         = identifier assignment
-	message         = ( primary | ( "!" | "-" ) message ) { selector [ payload ] }
-	selector        = "#" identifier | operator
+	message         = ( primary | ( "!" | "-" ) message ) { (selector | operator) [ payload ] }
 	primary         = reserved | identifier | literal | list_literal | "(" message ")" | closure | method_ref
-	closure         = "[" [ stat_params lambdaOp ] [ statements ] "]"
+	closure         = "[" [ stat_params "->" ] [ statements ] "]"
 	method_ref      = [ identifier | reserved ] "##" identifier
 	payload         = arguments | closure | message
 	arguments       = "(" [ message { "," message } ] ")"
@@ -250,7 +249,7 @@ Reserved identifiers are tokens that occupy a middle ground between the grammar 
 
 The unified message-passing, where every interaction follows the *receiver \#message* pattern enforces strict encapsulation. Whether instantiating an object (`User #new`), accessing a property (`user #name`), executing an arithmetic operation (`1 + 2`), or evaluating control flow (`switch #case`), the underlying mechanism remains an identical message dispatch.
 
-The assignment operator (`=`) binds local identifiers. When interacting with instance fields, this construct operates as the semantic equivalent of a self-directed message dispatch (e.g., `#x(value)`). This ensures that all state modifications are mediated through the message protocol of the archetype, preserving structural isolation and encapsulation.
+The assignment operator (`=`) performs local variable binding and field initialisation at declaration. Object state modifications post-declaration proceed through self-directed message dispatch (e.g., `#x(value)`). This ensures that all state modifications are mediated through the message protocol defined by the type, preserving structural isolation and encapsulation.
 
 ### Keyword-less control flow
 
@@ -272,7 +271,7 @@ All identifiers defined within a parameter\_list are implicitly immutable. Any a
 
 The type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the archetypes—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the grammar.
 
-Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[7], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
+Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[8], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
 
 **Identity congruence** is the foundational architectural mandate that ensures a singular logical representation for all entities—including complex objects, primitives, and the absence of value—regardless of their physical storage format. It establishes a mathematical alignment between the abstract identity defined by the programmer in the source code and the physical representation chosen by the machine in the substrate.
 
@@ -301,17 +300,17 @@ Meta-Directives establish the context that governs the relationship between the 
 
 ### Architectural integrity
 
-The execution model enforces a semantic framework where the metaboundary—the absolute line between internal state and the communication protocol—remains structurally inviolable. State isolation and finality operate as deterministic execution properties.
+The execution model enforces a semantic framework where the message boundary—the line between internal state and the communication protocol—remains structurally inviolable. State isolation and finality operate as deterministic execution properties.
 
-This architecture prioritises absolute boundary enforcement. No external agent can bypass an object's defined protocol, thereby preserving the integrity of its state. The paradigm prioritises message-passing interaction over internal state transition; this focus targets the messaging interface—what Alan Kay described as the essential metaboundary where the 'Ma' or interstitial space of communication resides[2]. In this model, computation is viewed as a deterministic protocol. By shifting the focus from the objects themselves to the precision of the messages between them, the architecture achieves a level of composition and determinism that eliminates the side effects found in less constrained environments.
+This architecture prioritises absolute boundary enforcement. External agents cannot bypass defined object protocols, preserving internal state integrity. The paradigm prioritises message-passing interaction over direct state manipulation, targeting the messaging interface as the primary meta-level boundary where communication resides. By shifting emphasis from concrete object instances to message protocol precision, the architecture achieves structural composition without exposing implementation details to external callers.
 
 ## Design synopsis
 
-The specification defines a pure object-oriented evolution for the JVM that fuses the *message-oriented* paradigm of Smalltalk with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send while enforcing standard mathematical precedence as a *semantic rule*, Jolk establishes a single semantic paradigm for all operations without discarding existing industrial conventions. The orthogonal design decouples lexical primitives from underlying semantic protocols like message dispatches or array literals and achieves a syntax minimum through a lean keyword palette and a semantic casing rule.
+The specification defines a pure object-oriented evolution for the JVM that fuses the *message-oriented* paradigm of Smalltalk-80 with the structural rigour of the C-family. By treating every interaction—from basic arithmetic to complex control flow—as a unified message send while enforcing standard mathematical precedence as a *semantic rule*, Jolk establishes a single semantic paradigm for all operations without discarding existing industrial conventions. The orthogonal design decouples lexical primitives from underlying semantic protocols like message dispatches or array literals and achieves a syntax minimum through a lean keyword palette and a semantic casing rule.
 
-Encapsulation is enforced via a metaboundary that separates an object’s internal state from the external environment. To ensure total structural clarity, the model utilizes 'lexical fences'—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve zero token ambiguity. This enables deterministic, linear-time parsing and prevents structural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
+Encapsulation is enforced via a message boundary that separates an object’s internal state from the external environment. To ensure total structural clarity, the model utilizes 'lexical fences'—such as the hashtag selector (`#`) and the assignment operator (`=`)—to achieve zero token ambiguity. This enables deterministic, linear-time parsing and prevents structural erosion without complex symbol table lookups. Within this framework, the absence of a value is handled not as a system-collapsing null, but as a valid singleton instance (`null`) that behaves as a first-class object.
 
-Computation transcends rigid procedural calls to become a protocol-driven flow where logic is an emergent property of object interaction. Control flow is implemented as a library feature; branching and looping are reified through messages sent to Booleans, Integers, or Closures. Furthermore, protocol conjunctions (`&`) represent the composition of behavioural contracts. This ensures that while the developer experiences the receiver-centric flexibility of late-bound messaging, the Tolk Engine performs semantic flattening to target high-performance execution.
+Computation transcends procedural calls to become a protocol-driven flow where logic is an emergent property of object interaction. Control flow is implemented as a library feature; branching and looping are reified through messages sent to Booleans, Integers, or Closures. Furthermore, protocol conjunctions (`&`) represent the composition of behavioural contracts. This ensures that while the developer experiences the receiver-centric flexibility of late-bound messaging, the Tolk Engine performs semantic flattening to target high-performance execution.
 
 ---
 
@@ -321,9 +320,9 @@ Computation transcends rigid procedural calls to become a protocol-driven flow w
 
 ---
 
-A Moo (Message-Oriented Object) serves as the primary manifestation of the it's core axioms, defined as a coordinate in the message substrate that prioritises communication over internal properties. Jolk does not replace the Java type system; instead, it acts as a semantic overlay. This message-oriented paradigm achieves archetypal rigidity by harmonising diverse Java structures under a single, consistent messaging protocol.
+A Moo (Message-Oriented Object) serves as the primary manifestation of it's core axioms, defined as a coordinate in the message substrate that prioritises communication over internal properties. Jolk does not replace the Java type system; instead, it acts as a semantic overlay. This message-oriented paradigm achieves archetypal rigidity by harmonising diverse Java structures under a single, consistent messaging protocol.
 
-A rigorous metaboundary ensures absolute field privacy, meaning an object's internal state is never directly accessible from the outside. All state interaction is restricted to synthesised selectors, preserving encapsulation and rendering intrusive reflection a semantic impossibility to prevent external agents from bypassing the defined protocol.
+A rigorous message boundary ensures absolute field privacy, meaning an object's internal state is never directly accessible from the outside. All state interaction is restricted to synthesised selectors, preserving encapsulation and rendering intrusive reflection a semantic impossibility to prevent external agents from bypassing the defined protocol.
 
 Every interaction, from arithmetic to object instantiation, follows a formal `receiver #message` pattern. An object is synthesised via the canonical `#new` message.
 
@@ -335,7 +334,7 @@ Classes, Records, Enums, and Value Types are harmonised under a unified, 'bracke
 
 This alignment is anchored by semantic casing, where uppercase names signal that these types are first-class Meta-objects. Consequently, Value types offer the same 'bracket-light' accessor protocol as records but are optimised for flat memory layouts and reduced heap overhead, treating the JVM as a high-performance substrate while maintaining an object-oriented discipline.
 
-By the application of implicit field encapsulation and standardising core capabilities like equivalence across every archetype, the model achieves *behavioral integrity*. Jolk supports parameterised types through generics and (F-)Bounded quantification[8]. Unlike Java interfaces, which are nominal, Jolk protocols use the `&` operator to represent behavioral conjunctions within the subtype lattice. Finally, extension protocols allow behavior to be 'bolted on' to existing final types without modifying source code.
+By the application of implicit field encapsulation and standardising core capabilities like equivalence across every archetype, the model achieves *behavioral integrity*. Jolk supports parameterised types through generics and (F-)Bounded quantification[9]. Unlike Java interfaces, which are nominal, Jolk protocols use the `&` operator to represent behavioral conjunctions within the subtype lattice. Finally, extension protocols allow behavior to be 'bolted on' to existing final types without modifying source code.
 
 ### Archetypes
 
@@ -426,7 +425,7 @@ A Jolk protocol acts as a contract. It defines a set of messages (methods) that 
 
 ### State
 
-To maintain rigorous encapsulation, fields are absolutely private. While jolk supports syntactic field assignment, this is an ergonomic layer; every such interaction is semantically reified as a formal message send. An assignment (e.g., `x = 5`) is semantically identical to the message send `self #x(5)`. By mediating familiar assignment syntax through the object's message protocol, jolk provides an ergonomic transition from industrial languages without compromising its core philosophy of state isolation. This ensures that the metaboundary is never bypassed, as all state transitions—even those appearing as assignments—remain formal communicative acts governed by the object's protocol.
+To maintain rigorous encapsulation, fields are absolutely private. While jolk supports syntactic field assignment, this is an ergonomic layer; every such interaction is semantically reified as a formal message send. An assignment (e.g., `x = 5`) is semantically identical to the message send `self #x(5)`. By mediating familiar assignment syntax through the object's message protocol, jolk provides an ergonomic transition from industrial languages without compromising its core philosophy of state isolation. This ensures that the message boundary is never bypassed, as all state transitions—even those appearing as assignments—remain formal communicative acts governed by the object's protocol.
 
 To facilitate a fluid conversation with self, jolk supports the implicit self-receiver. When a message begins directly with a selector hashtag (e.g., `#name`), the receiver is implicitly resolved to `self`. This provides a high-density idiomatic shorthand for internal state management: retrieval remains a unary message (e.g., `^ #name`), and mutation remains a keyword-style message (e.g., `#name(newValue)`). By retaining the `#` anchor, the language preserves the lexical fence—visually distinguishing state interaction from local stack variables—while eliminating redundant repetition.
 
@@ -475,9 +474,7 @@ This distinction allows the binding production to function exclusively as a stat
 
 ### Standard Protocol
 
-The _Jolk Core Protocol_ establishes the _Jolk Object Foundation_, ensuring every instance is operationally complete and predictable from the moment of instantiation. This foundation is anchored by high-density selectors that govern state and flow: _Equivalence_ (`~~` / `!~`), _Identification_ (`#hash`), _Pattern Matching_ (`#isInstance` / `#instanceOf`), _Representation_ (`#toString`), _Identity State_ (`#isPresent` / `#isEmpty`), and _Flow Control_ (`#ifPresent` / `#ifEmpty`).
-
-By treating object creation via the intrinsic `#new` method as a formal capability, the protocol ensures that archetype-specific behaviours—such as the immutable, cached-hash nature of _Records_ or the identity-optimised constants of _Enums_—are applied. This unified model shifts the focus from internal storage to external capability through protocol standardisation across all archetypes.
+The _Jolk Core Protocol_ establishes the _Jolk Object Foundation_, ensuring every instance is operationally complete and predictable from the moment of instantiation. This foundation is anchored by intrinsic selectors that govern state and flow: _object instantiation_ (`#new`), _Equivalence_ (`~~` / `!~`), _Identification_ (`#hash`), _Pattern Matching_ (`#isInstance` / `#instanceOf`), _Representation_ (`#toString`), _Identity State_ (`#isPresent` / `#isEmpty`), and _Flow Control_ (`#ifPresent` / `#ifEmpty`).
 
 ### Modifiers
 
@@ -528,31 +525,30 @@ The Self Type Alias: Distinct from `self` (the instance), `Self` serves as a dyn
 
 **Super class**
 
-At the meta-level, super functions as a contextual reference within the `MetaClass`, enabling class-level inheritance through a model where the metaclass hierarchy runs parallel to the standard class hierarchy. This architecture defines the object via message-driven interactions to ensure that when super is invoked at the class level—such as in a meta `#new` method—the Tolk Engine resolves the message within the metaclass hierarchy of the parent class.
+At the meta-level, super functions as a contextual reference within the `MetaClass`, enabling class-level inheritance through a model where the metaclass hierarchy runs parallel to the standard class hierarchy. This architecture defines the object via message-driven interactions to ensure that when super is invoked at the class level the Tolk Engine resolves the message within the metaclass hierarchy of the parent class.
 
-**Object creation**
+**Object instantiation**
 
-Object creation is a unified message send following the `Receiver #message` pattern  via the `Metaclass` hierarchy. The Class-as-Object architecture treats every class as an identity—an instance of the singular `MetaClass` intrinsic. The canonical creation message is `#new`.
+Object instantiation operates as a uniform message dispatch via the `Metaclass` hierarchy following the `Receiver #message` pattern. The metaclass architecture treats every class as an individual identity—an instance of the singular `MetaClass` intrinsic—exposing the root allocation method `#new`. Decoupling memory allocation (`MetaClass #new`) from object initialisation enables flexible creation mechanics mediated through the metaobject protocol, while compiler semantic checks guarantee structural safety during construction.
 
-	class Person {
-	
-	    // creation method  
-	    meta Person new() { ^ super #new }
-	
-	    // ...  
-	}
+Classes function intrinsically as class factories. Developers can define custom factory selectors on the MetaClass to orchestrate input validation, raw allocation (`super #new`), and state binding within an atomic sequence. These custom creation methods compose directly with covariant self-return and implicit receiver mechanics.
 
-The creation displacement rule: If a Type defines an explicit creation method, the visibility of the generic `#new` protocols is restricted to `#>` (`private`). This ensures safe object creation.
+Under the Creation Displacement Rule, defining an explicit creation method automatically restricts the visibility of the intrinsic `#new` protocol to `private`. This enforces governed instantiation, preventing uninitialised objects from entering the execution field.
 
 	class Person {
 	
 	    String name;
 	
-	    // canonical creation method    
-	    meta Person new(String aName) { ^ super #new #name(aName) }
+	    // creation method    
+	    meta new(String name) {
+			^ #new #name(name)
+		}
 
 		// ...
 	}
+
+Treating object instantiation as a formal capability ensures that type-specific behaviours—such as cached hashing in records or constant identity optimization in enumerations—are applied uniformly across all archetypes.
+
 
 **Collection creation**
 
@@ -598,15 +594,13 @@ This mechanism allows for a more fluid and less verbose syntax when accessing me
 
 **Assignment**
 
-The assignment symbol (`=`) demarcates the boundary between internal evaluation and identity definition. While the language supports syntactic field assignment, semantically the meta-layer restricts true assignment to local identifiers and object creation. By mandating that all other state changes are mediated through messages, jolk enforces local retention and encapsulation, ensuring that an identity’s internal state remains shielded.
-
-In alignment with Alan Kay’s vision to eliminate assignment altogether [9], jolk discourages the use of assignments and encourages a transition from imperative memory-overwriting to evolutionary projection. Under this protocol, assignments are ideally restricted to initial object creation. An identity does not have its state changed but instead projects a successor via the wither technique [10]. This ensures that objects remain self-contained, rendering procedural mutation technically redundant. This preference for immutability is primarily targeted at domain identities; collections remain exempt as they function as aggregators.
+The assignment symbol (`=`) demarcates the boundary between internal evaluation and identity definition. While the language supports syntactic field assignment, semantically the meta-layer restricts assignment to local variables and field initialisation at declaration. By mandating that all other state changes are mediated through messages, jolk enforces local retention and encapsulation, ensuring that an identity’s internal state remains shielded.
 
 ## Messaging
 
 Jolk achieves syntactic uniformity through a pure object-oriented model where operators, control flow, and error handling are implemented as library-level protocols. By defining mathematical and logical symbols like `+` and `~~` as unified message selectors, Jolk allows custom types to interact with the same fluidity as native primitives.
 
-This communicative field is further refined by allowing the omission of the explicit `self` receiver (the implicit self-receiver) and the `Self` return type (the implicit self-return), Jolk enables high-density messaging. This allows internal logic to be expressed with conciseness—such as `#x(#x + 1)`—without sacrificing the lexical fence or the metaboundary.
+This communicative field is further refined by permitting the omission of the explicit `self` receiver and the `Self` return type. When a message selector appears without an explicit receiver, the compiler binds the invocation to the implicit self-receiver. This enables high-density internal messaging—such as `#x(#x + 1)`—while preserving the lexical fence and message boundary. Local variable bindings shadow implicit self dispatches, maintaining unambiguous scope resolution.
 
 This architectural choice establishes a syntax minimum by replacing traditional keywords with polymorphic dispatch. The absence of `if`, `else`, and `while` is compensated by sending selectors like `?`, `:`, and `#while` directly to Boolean singletons or Closures. Similarly, error handling dispenses with try/catch in favour of `#catch` and `#finally` messages sent to closure objects.
 
@@ -616,13 +610,11 @@ This architecture allows the language to remain a minimalist, "growable" system.
 
 ### Creation Method
 
-Creation methods are *Class-Level Messaging* interfaces. They act as meta-methods on the type itself, providing a controlled, atomic transition from a blueprint to a "Solid" identity through an Explicit Linear Flow.
+Creation methods are *Class-Level Messaging* interfaces. They act as meta-methods on the type itself, providing a controlled, atomic transition from a blueprint to a solid identity through an explicit linear flow. By treating the creation method as the sole authority for object formation, the language ensures the lifecycle of an identity is defined in a single, visible sequence. This eliminates hidden execution orders, making the state of an object *predictable* and easy to trace.
 
-Jolk replaces scattered setup routines with a Unified Creation Block. By treating the creation method as the sole authority for object formation, the language ensures the lifecycle of an identity is defined in a single, visible sequence. This eliminates hidden execution orders, making the state of an object *predictable* and easy to trace.
+For class-level state, Jolk favours expression-based initialisation. Complex setup is handled via direct assignment or self-contained closures. This treats static data as a discrete computation, promoting a reliable, side-effect-free environment.
 
-For class-level state, Jolk favours Expression-Based Initialisation. Complex setup is handled via direct assignment or self-contained closures. This treats static data as a discrete computation, promoting a reliable, side-effect-free environment.
-
-The creation method serves as the exclusive Guarded Block for initialisation. This architectural clarity enables a "Solid" guarantee of Definite Assignment. Because authority over a variable is never fragmented, the system can verify that once the block closes, the object’s identity is fully and safely established.
+The creation method serves as the exclusive guarded block for initialisation. This architectural clarity enables a guarantee of definite assignment. Because authority over a variable is never fragmented, the system can verify that once the block closes, the object’s identity is fully and safely established.
 
 ### Unary operators
 
@@ -752,7 +744,7 @@ For closures and logic blocks, Jolk adheres to the principle of implicit express
 
 In Jolk, the method boundary establishes the lexical limit for this behavior. The `Self` return type is essentially optional: when a method omits a return type, or explicitly specifies `Self` (or the name of the defining class), the Tolk Engine classifies it as a command and enforces an implicit return of `self`, sustaining a fluent API. Conversely, methods with other explicit return types require the mandatory use of the return operator (`^`). If execution reaches the end of such a block without a return, the semantic analyzer raises a type mismatch error.
 
-The method boundary also serves as the anchor for non-local returns. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing boundary as its *lexical home*, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the metaboundary to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the method boundary acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
+The method boundary also serves as the anchor for non-local returns. When a caret (`^`) is used inside a nested closure, it targets the nearest enclosing boundary as its *lexical home*, allowing the closure to terminate the defining method even from several stack frames deep. However, this return authority is strictly guest-local; if a closure crosses the guest-host language boundary to be used as an opaque Java Functional Interface (such as a `java.util.function.Predicate`), the method boundary acts as a hard stop. In these opaque contexts, non-local returns are prohibited.
 
 By combining these rules—explicit carets, implicit self-returns, the `Self` alias, and block-level evaluation—Jolk achieves a keyword-lean flow that remains semantically clear while adhering to its unified messaging model.
 
@@ -813,7 +805,7 @@ For code that must execute regardless of whether an error occurred, Jolk uses th
 
 Protocol projection and the metaobject protocol establish the rules for communication within the unified mssage-passing. By treating classes as first-class identities, Jolk replaces static keywords and traditional reflection with a unified, recursive protocol. In this architecture, the MetaClass is not merely a static descriptor but a sovereign identity; as a first-class object adhering to the foundational messaging protocol, the blueprint itself can receive any message defined in the root substrate, including those within the metaobject protocol.
 
-Within this substrate, messages such as `#new` are standard signals transmitted to a class identity. Because the class operates as an instance of a `MetaClass`, it possesses the meta-awareness required to execute its own allocation logic. This transition from introspective observation to constructive projection ensures dispatch invariability. Whether synthesised as a mock or a serialiser, every Object exists as a native fact with a fixed coordinate, rendering runtime bytecode manipulation and reflective proxies obsolete.
+Within this substrate, messages such as `#new` are standard signals transmitted to a class identity. Because the class operates as an instance of a `MetaClass`, it possesses the meta awareness required to execute its own allocation logic. This transition from introspective observation to constructive projection ensures dispatch invariability. Whether synthesised as a mock or a serialiser, every Object exists as a native fact with a fixed coordinate, rendering runtime bytecode manipulation and reflective proxies obsolete.
 
 To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *Intrinsic Synthesis Protocol*. Through the `@Intrinsic` directive, the compiler performs mapping of protocol constants during the build phase, flattening dynamic message-passing. This process elides the abstraction layer, allowing the Graal JIT[12] to apply speculative pruning and polymorphic inline caching. Consequently, dynamic projections achieve the same performance density as static execution.
 
@@ -852,7 +844,7 @@ At its heart, the system treats foundational concepts like `Metaclass`, `Boolean
 
 ### Intrinsic types
 
-An Intrinsic Type refers to foundational kernel objects—such as `Long`, `Boolean` or `Closure`—that appear as first-class, message-receiving entities, marked with the `@Intrinsic` annotation. but are treated as Pseudo-Identifiers at the bytecode level. Intrinsic Types constitute the Meta-Awareness of Jolk’s object model, serving as the reflective substrate required to map abstract interactions directly onto the physical realities of the JVM. `Boolean` and numerical types are treated as non-nullable identities. 
+An Intrinsic Type refers to foundational kernel objects—such as `Long`, `Boolean` or `Closure`—that appear as first-class, message-receiving entities, marked with the `@Intrinsic` annotation. but are treated as Pseudo-Identifiers at the bytecode level. Intrinsic Types constitute the meta awareness of Jolk’s object model, serving as the reflective substrate required to map abstract interactions directly onto the physical realities of the JVM. `Boolean` and numerical types are treated as non-nullable identities. 
 
 While the Tolk Engine performs semantic flattening to map interactions directly to native JVM opcodes, these shadow classes serve as the formal "Anchor Point" in the symbol table for tooling like IDEs and JolkDoc. This duality preserves the “everything is an Object” characteristic by treating types like `Int` or `Bool` as first-class identities with a discoverable messaging protocol, even though their "object-ness" is a compile-time abstraction that vanishes into high-performance bytecode at runtime.
 
@@ -938,9 +930,11 @@ In Jolk the distinction between *Intrinsic*, *Transparent*, and *Opaque* selecto
 
 **MetaClass**
 
-The MetaClass establishes every Type as a first-class citizen by centralising the Type Protocol (e.g., `#new`, `#name`). Jolk reifies each class as a first-class Meta-Object. While standard Java resolves meta calls via early binding—preventing method overriding—Jolk treats every Type as an instance of the MetaClass intrinsic, enabling Virtual Static Dispatch.
+Jolk implements an ObjVlisp metaclass model[18] where `Metaclass` functions as an intrinsic entity. Every class exists as a direct instance of `Metaclass`. These metalevel instances form a distinct parent-child metaclass inheritance tree that mirrors the primary domain-level hierarchy. To close the reflexive instantiation loop, `Metaclass` exists as an instance of itself.
 
-This architecture allows the MetaClass intrinsic to govern identity-level logic through a formal hierarchy. When a subclass invokes `super #new()`, the system routes the message to the parent identity’s meta-level. Consequently, class-level behaviours like object creation participate in an inheritance model, ensuring instantiation is a flexible, message-driven process.
+This architecture establishes types as first-class meta-objects, centralising the type protocol (e.g., `#new`, `#name`). Class-side invocations execute via message dispatch on `Metaclass` instances, enabling virtual static dispatch. Class-side method lookup traverses the primary domain hierarchy.
+
+Object instantiation executes via the `#new` message defined on `Metaclass`. The default `#new` implementation operates as an intrinsic compiler transformation rule. Classes specialise instantiation behaviour by overriding `#new` within their meta-definition, integrating allocation logic into the unified messaging protocol.
 
 	@Intrinsic
 	class MetaClass<T extends Object> {
@@ -966,12 +960,6 @@ This architecture allows the MetaClass intrinsic to govern identity-level logic 
 	        // return T.getSuperclass();  
 	    }  
 	}
-
-In Jolk, `#new` is a standard message defined by the MetaClass intrinsic, establishing a recursive consistency where object creation is a first-class interaction. Every Type (e.g., `User`) functions as a live identity and an instance of MetaClass, inheriting the ability to respond to `#new` as a natural method call.
-
-The default implementation of `#new` is an intrinsic transformation rule within the compiler, bypassing the "static trap" of traditional JVM languages. This model allows any Type to specialise its instantiation logic by defining a custom `#new` in its meta definition. By treating types as message-receiving entities, Jolk ensures a uniform syntax where interception logic can be added without breaking the primary Unified Messaging protocol.
-
-This architecture leverages dual-level resolution to resolve class-level super calls within the parent’s metaclass layer. Ultimately, `#new` is treated as a standard message that leverages intrinsic knowledge to reconcile raw data with a specific identity.
 
 **Object**
 
@@ -1020,7 +1008,7 @@ Because this approach is binary-compatible, you can pass Jolk objects into exist
 
 **Collection Types**
 
-Jolk provides three fundamental collection protocols, each anchored by a unique lexical shorthand that mirrors its mathematical origin. Since Jolk adopts the Java Collections Framework natively, these protocols are projected onto host types via Implicit Extensions.
+Jolk provides three fundamental collection protocols, each anchored by a unique lexical shorthand that mirrors its mathematical origin. Since Jolk adopts the Java Collections Framework natively, these protocols are projected onto host types via implicit extensions.
 
 The `Array` is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at`) and stream-based protocol (`#map`).
 
@@ -1070,17 +1058,19 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 *Guided coercion*: A mechanism governing numeric transitions between augmented primitives, providing automatic promotion for widening and requiring explicit guidance for narrowing.
 
-*Identity restitution*: A dual-layer protocol at the metaboundary that "lifts" raw JVM nulls into a meta-aware singleton and "lowers" them back for Java interoperability.
+*Identity restitution*: A dual-layer protocol at the guest-host language boundary that "lifts" raw JVM nulls into a meta-aware singleton and "lowers" them back for Java interoperability.
 
 *Local retention*: A strict encapsulation principle that restricts the assignment operator to local identifiers within an object's internal context.
 
-*Metaboundary*: The enforcement of receiver-centric interaction, prioritizing communication protocols over internal properties to ensure state isolation.
+*Message boundary*: The enforcement of receiver-centric interaction, prioritizing communication protocols over internal properties to ensure state isolation.
 
 *Modifiers*: The model distinguishes structural constraints (`final`) from value stability (`constant`) and instance-level stability (`stable`), utilising `public` defaults for types and methods to maximise structural density—reflecting the industrial reality of 80%—while enforcing encapsulation through a `private` default for fields; however, meta constants permit direct access through import lenses.
 
 *Non-local returns*: The ability of a closure to command its defining method to finish immediately, even across different stack frames.
 
-*Null object pattern*: The reification of "nothingness" as an atomic identity (Nothing), ensuring uninitialized states can safely respond to messages.
+*Null object pattern*: The reification of "nothingness" as an atomic identity (`Nothing`), ensuring uninitialized states can safely respond to messages.
+
+**Object Instantiation**: Decoupling object creation via intrinsic #new from object initialisation achieves flexible construction through the metaobject protocol. Compiler semantic checks guarantee structural safety throughout the instantiation lifecycle.
 
 *Predicate assertion*: A message signifier (`?` / `?!`) that merges a state query with a logical expectation, allowing the compiler to branch execution directly from the message intent without procedural negation.
 
@@ -1104,23 +1094,23 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 Jolk is a convergent architecture where the static safety of Java acts as the gatekeeper for a Smalltalk-inspired runtime. The Java influence provides the structure—nominal typing, curly-brace scoping, and visibility modifiers—utilising factory patterns as a core construct to govern object lifecycles. The Smalltalk influence provides the execution via the messaging kernel. Beyond these primary anchors, Jolk’s design is further inspired by the pragmatic ergonomics of Kotlin, the symbolic density of C#, and the pioneering meta-object research of Self and Lisp.
 
-*Smalltalk-80[1]*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic exchange of messages". It utilizes keyword selectors (using a `#` hashtag anchor) and closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately. Unlike Smalltalk, which operates in a closed image, Jolk must respect the JVM stack. Non-local returns are permitted within the guest environment but are strictly forbidden when a closure is projected as an opaque Java Functional Interface.
+*Smalltalk-80*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic exchange of messages"[2]. It utilizes keyword selectors (using a `#` hashtag anchor) and closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately. Unlike Smalltalk, which operates in a closed image, Jolk must respect the JVM stack. Non-local returns are permitted within the guest environment but are strictly forbidden when a closure is projected as an opaque Java Functional Interface.
 
-*The Self language[14]*: The Tolk Engine’s strategy of semantic flattening is the spiritual successor to the optimization techniques developed for the Self language.
+*The Self language*: The Tolk Engine’s strategy of semantic flattening is the spiritual successor to the optimization techniques developed for the Self language[10].
 
-*Strongtalk[5]*: Jolk projects several key principles from Strongtalk onto the Java type system to achieve a more precise behavioral contract. It explicitly separates the behavioral protocol from the class hierarchy through the use of the `protocol` archetype, a concept known as *lattice separation*. Jolk employs Strongtalk-inspired type-checking to statically validate messages, ensuring a receiver can understand a message before execution. While Java focuses on integrity, Jolk leverages Strongtalk to focus on behavioral integrity. This is reinforced by the ampersand (`&`) operator, which reifies *conjunction types* for behavioral composition, and `< >` delimiters for *F-bounded quantification*, ensuring that methods returning `Self` remain type-safe across the inheritance tree.
+*Strongtalk*: Jolk applies principles from Strongtalk to achieve structural type constraints within the host environment[5]. The runtime explicitly separates behavioral protocols from the class hierarchy through the use of the `protocol` archetype, a concept known as *lattice separation*. Jolk employs Strongtalk-inspired type-checking to statically validate messages, ensuring a receiver can understand a message before execution. Jolk leverages Strongtalk to focus on behavioral integrity. This is reinforced by the ampersand (`&`) operator, which reifies *conjunction types* for behavioral composition, and `< >` delimiters for *F-bounded quantification*, ensuring that methods returning `Self` remain type-safe across the inheritance tree.
 
 *Java and JVM*: The syntax for structural scaffolding—including package, import, and class—is intentionally aligned with Java. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
 
-*Kotlin [11]*: Jolk synthesizes Kotlin's pragmatic ergonomics with Smalltalk's foundational principles. Features like null safety, exceptions, and predicates are re-imagined through a dual heritage. Jolk's `Nothing` identity, rooted in Smalltalk's reified absence, aligns with Kotlin's emphasis on preventing `NullPointerException`s. Similarly, the elimination of checked exceptions mirrors Kotlin's approach, while Jolk's message-passing for control flow (using closures as predicates) draws from both Smalltalk's blocks and Kotlin's functional patterns.
+*Kotlin*: Jolk synthesizes Kotlin's pragmatic ergonomics with Smalltalk's foundational principles. Features like null safety, exceptions, and predicates are re-imagined through a dual heritage. Jolk's `Nothing` identity, rooted in Smalltalk's reified absence, aligns with Kotlin's emphasis on preventing `NullPointerException`s. Similarly, the elimination of checked exceptions mirrors Kotlin's approach, while Jolk's message-passing for control flow (using closures as predicates) draws from both Smalltalk's blocks and Kotlin's functional patterns.
 
-*Scala*: The *Monadic Chaining* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types[20]. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.  While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization.
+*Scala*: The *Monadic Chaining* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.  While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization.
 
-*C#*: The `??` operator for null-coalescing[15], providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging. The `using` directive[16] for vocabulary expansion, aliasing and constant projection.
+*C#*: The `??` operator for null-coalescing, providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging. The `using` directive for vocabulary expansion, aliasing and constant projection.
 
 *Extension*: While the syntax borrows from the ergonomics of Dart, the semantics are more Lisp-centric.
 
-*Encapsulation*: Jolk synthesises the Open Message Passing of Smalltalk and Ruby with the Strict Encapsulation of C\#. The symbolic notation derives from the visibility and variability (finality) facet of the ProtoTyping[4] research—a study on typed object-oriented languages—and corresponds to the sigil-based conventions found in UML[17], Ruby[18] and Perl[19].
+*Encapsulation*: Jolk synthesises message passing with strict encapsulation. The symbolic notation derives from the visibility and variability (finality) facet of the ProtoTyping research study on typed object-oriented languages[3].
 
 *Guided coercion* is based on the generality principles of the past (Java & Smalltalk-80) but adds a semantic layer of protection to ensure that data transitions are as mathematically sound as they are performant.
 
@@ -1413,7 +1403,7 @@ The Tolk Engine establishes a unified messaging model where type-level interacti
 *   **Orchestration:** Dependency containers and configuration frameworks can leverage the `#project` message for both instance and meta-object configuration. 
 *   **Verification:** Mocking frameworks and other verification tools can rely on Jolk's robust identity and equivalence protocols.
 
-Crucially, Jolk's architecture explicitly prevents intrusive reflection. There are no guest-level primitives capable of bypassing the defined protocol to interrogate the object's structure. Every interaction, including object creation, is a negotiable handshake managed by the Tolk Engine, ensuring structural integrity across the substrate.
+Crucially, Jolk's architecture explicitly prevents intrusive reflection. There are no guest-level primitives capable of bypassing the defined protocol to interrogate the object's structure. Every interaction, including object instantiation, is a negotiable handshake managed by the Tolk Engine, ensuring structural integrity across the substrate.
 
 ### Dependency Injection
 
@@ -1468,7 +1458,7 @@ Multi-environment and test configurations are managed through Specialization and
 
 Within the Jolk engine, the Metaobject protocol serves as the bridge between static structural definitions and dynamic runtime orchestration, resolving the tension between pre-compiled safety and runtime fluidity by treating the `MetaClass` instance as the unit of communication. This synthesis is operationalized through source generation, which provides a deterministic, type-safe API for formal vocabularies—such as REST APIs or database schemas—by defining the architectural "slots" utilized by `#project` during hydration, and identity projection, which facilitates total architectural fluidity for orchestration tools by enabling the runtime discovery of identities through `#instanceProtocol` and the reification of strings into active selectors via the `meta #selector` handshake.
 
-The MetaObjet protocol respects the metaboundary fence. If a generated DAO marks a field as private, the `#project` message will result in an exception. Furthermore only verified participants can initiate a meta-layer handshake through a reified selector. Because a `selector` in Jolk is a constant, the engine treats the `#project(identity, value)` message as a stable interaction. 
+The MetaObjet protocol respects the message boundary fence. If a generated DAO marks a field as private, the `#project` message will result in an exception. Furthermore only verified participants can initiate a meta-layer handshake through a reified selector. Because a `selector` in Jolk is a constant, the engine treats the `#project(identity, value)` message as a stable interaction. 
 
 During steady-state execution, the Graal JIT recognizes these patterns as candidates for *Speculative Pruning*. By treating the dynamic send as a candidate for *Polymorphic Inline Caching*, the dynamic dispatch is collapsed. Whether utilizing a generated DAO, a dynamic service container, or a mocking framework, the Tolk engine ensures the system operates within the highest possible performance density.
 
@@ -1532,9 +1522,9 @@ Through this host-bridge design, the framework retains its message-oriented para
 
 ## Industrial potential 
 
-Jolk adopts Kay’s vision by viewing computation as an emergent protocol where every interaction, from object creation to control flow, is a message send. This model allows developers to build 'great and growable' systems by shifting the focus from internal structure and composition to the fluidity of communication. By protecting metaboundaries with lexical fences, Jolk preserves a 'Security of Meaning'. Developers can build powerful, resilient JVM components by mastering the protocols of interaction.
+Jolk adopts Kay’s vision by viewing computation as an emergent protocol where every interaction, from object instantiation to control flow, is a message send. This model allows developers to build 'great and growable' systems by shifting the focus from internal structure and composition to the fluidity of communication. By protecting metaboundaries with lexical fences, Jolk preserves a 'Security of Meaning'. Developers can build powerful, resilient JVM components by mastering the protocols of interaction.
 
-Jolk achieves a syntax minimum of keywords, reducing redundant structure and making the communicative flow immediately transparent. Through lexical and semantic anchoring, the language utilizes the hashtag selector (`#`) and semantic casing to transform the source code into a deterministic map of intent. By replacing rigid control-flow structures with polymorphic message sends, Jolk allows the developer to read the system as a series of conversations between identities. Developers gain reliability as the Nothing singleton replaces failure-prone nulls, transforming system crashes into message dispatches. This results in code that is not only shorter but inherently more secure, as the syntax itself forbids the violation of the metaboundary.
+Jolk achieves a syntax minimum of keywords, reducing redundant structure and making the communicative flow immediately transparent. Through lexical and semantic anchoring, the language utilizes the hashtag selector (`#`) and semantic casing to transform the source code into a deterministic map of intent. By replacing rigid control-flow structures with polymorphic message sends, Jolk allows the developer to read the system as a series of conversations between identities. Developers gain reliability as the Nothing singleton replaces failure-prone nulls, transforming system crashes into message dispatches. This results in code that is not only shorter but inherently more secure, as the syntax itself forbids the violation of the message boundary.
 
 ---
 
@@ -1629,7 +1619,7 @@ Through *Node Rewriting* (specifically realized in `tolk.nodes.JolkDispatchNode.
 
 **String Identity:** The String Identity is reified through Truffle type specialisation as an irreducible leaf node within the AST. By leveraging `TruffleString`, the implementation ensures the immutable state of literal data and facilitates memory-efficient deduplication. This transformation is mechanically operationalised within the `tolk.nodes.JolkDispatchNode` through two distinct specialisations:
 * `doTruffleString`: Serves as the high-performance fast path for guest operations, performing instructional projection for messages such as `#length` and `#isEmpty` to bypass substrate overhead while prioritizing Jolk-native extensions.
-* `doJavaString`: Manages the metaboundary by intercepting raw `java.lang.String` instances and applying Identity Restitution to lift them into the optimized `TruffleString` identity.
+* `doJavaString`: Manages the guest-host language boundary by intercepting raw `java.lang.String` instances and applying Identity Restitution to lift them into the optimized `TruffleString` identity.
  
 This architecture allows the engine to treat text as a specialized primitive, maintaining full compatibility with the host JVM through automated lifting and lowering.
 
@@ -1720,51 +1710,40 @@ Within this `get` method, the Tolk Engine orchestrates the on-demand execution o
 
 # References
 
-[1]: Goldberg, A.; Robson, D. (1983). Smalltalk-80: The Language and its Implementation. Addison Wesley. ISBN:978-0-201-11371-6.
+[1]: Kay, Alan (1996). The early history of Smalltalk | History of programming languages Pages 511 - 598. ACM. ([ISBN:0201895021](https://dl.acm.org/doi/epdf/10.1145/234286.1057828))
 
-[2]: Kay, A. (1998). prototypes vs classes. The Squeaks Foundation. ([https://lists.squeakfoundation.org/pipermail/squeak-dev/1998-October/017019.html](https://lists.squeakfoundation.org/pipermail/squeak-dev/1998-October/017019.html)).
+[2]: Goldberg, A.; Robson, D. (1983). Smalltalk-80: The Language and its Implementation. Addison Wesley. ISBN:978-0-201-11371-6.
 
-[3]: Kay, A. (2003). Clarification of "object-oriented". Internet Archive. ([https://www.purl.org/stefan\_ram/pub/doc\_kay\_oop\_en](https://www.purl.org/stefan_ram/pub/doc_kay_oop_en))
+[3]: Roose, W.; Verachtert, W. (1988). Een andere kijk op object georiënteerdheid ([biblio.vub.ac.be/opac/3/200467](http://biblio.vub.ac.be/opac/3/200467)) \[Proefschrift, VUB\]. VUB Universiteitsbibliotheek
 
-[4]: Roose, W.; Verachtert, W. (1988). Een andere kijk op object georiënteerdheid ([biblio.vub.ac.be/opac/3/200467](http://biblio.vub.ac.be/opac/3/200467)) \[Proefschrift, VUB\]. VUB Universiteitsbibliotheek
+[4]: Bracha, G.; Griswold, D. (1993)  Strongtalk: Typechecking Smalltalk in a Production Environment. OOPSLA ‘93.
 
-[5]: Bracha, G.; Griswold, D. (1993)  Strongtalk: Typechecking Smalltalk in a Production Environment. OOPSLA ‘93.
+[5]: Halstead, M. H. (1977). Elements of Software Science. Elsevier North-Holland. ISBN: 978-0-444-00205-1.
 
-[6]: Jones, C. (2010). Scoring and Evaluating Software Methods, Practices, and Results (Version 3.1). Namcook Analytics LLC.
+[6]: Chidamber, S. R.; Kemerer, C. F. (1994). A Metrics Suite for Object Oriented Design. IEEE Transactions on Software Engineering, 20(6), pp. 476–493. doi:10.1109/32.295895.
+
+[7]: Jones, C. (2010). Scoring and Evaluating Software Methods, Practices, and Results (Version 3.1). Namcook Analytics LLC.
 
 [7]: Schärli, N.; Ducasse, S.; Nierstrasz, O.; Black, A. P. (2003). Traits: Composable Units of Behaviour. ECOOP 2003.
 
-[8]: Canning, P. S.; Cook, W. R.; Hill, W. L.; Mitchell, J. C.; Olthoff, W. (1989). F-bounded polymorphism for object-oriented programming. In Conference on Functional Programming Languages and Computer Architecture.
+[9]: Canning, P. S.; Cook, W. R.; Hill, W. L.; Mitchell, J. C.; Olthoff, W. (1989). F-bounded polymorphism for object-oriented programming. In Conference on Functional Programming Languages and Computer Architecture.
 
-[9] Kay, Alan (1996). The early history of Smalltalk | History of programming languages Pages 511 - 598. ACM. ([ISBN:0201895021](https://dl.acm.org/doi/epdf/10.1145/234286.1057828))
-
-[10] Bierman, G. ; Goetz, B. (2023). Derived Record- Creation. ([JEP 468](https://openjdk.org/jeps/468))
-
-[11]: Kotlin. Language guide. ([https://kotlinlang.org/docs/home.html](https://kotlinlang.org/docs/home.html)). 
+[10]: Chambers, C.; Ungar, D. (1989). Customization: Optimizing Compiler Technology for Self, a Dynamically-Typed Object-Oriented Programming Language. In PLDI '89 (pp. 146–160).
 
 [12]: Würthinger, T., et al. (2013). One VM to Rule Them All. ([Proceedings of the 2013 ACM International Symposium on New Ideas, New Paradigms, and Reflections on Programming & Software (Onward!)](https://lafo.ssw.uni-linz.ac.at/pub/papers/2013_Onward_OneVMToRuleThemAll.pdf))
 
 [13]: Woolf, B. (1998). Null Object. Pattern Languages of Program Design 3. Addison-Wesley.
 
-[14]: Chambers, C., & Ungar, D. (1989). Customization: Optimizing Compiler Technology for Self, a Dynamically-Typed Object-Oriented Programming Language. In PLDI '89 (pp. 146–160).
+[17]: Kiczales, G.; des Rivieres J.; Bobrow D. (1991). The Art of the Metaobject Protocol. The MIT Press. ISBN 978-0262610742. 
 
-[15]: Microsoft. (2005). C# Language Specification 2.0. ([The Null Coalescing Operator](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/operators/null-coalescing-operator))
-
-[16]: Microsoft. (2026). C# language reference. ([C# The using directive](https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/using-directive))
-
-[17]:  Unified Modeling Language 2.5.1. Object Management Group Document Number formal/2017-12-05. Object Management Group Standards Development Organization. December 2017. ([https://www.omg.org/spec](https://www.omg.org/spec))
-
-[18]: Ruby,  Syntax Assignments ([https://docs.ruby-lang.org/en/master/syntax/assignment\_rdoc.html](https://docs.ruby-lang.org/en/master/syntax/assignment_rdoc.html))
-
-[19]: Perl, Naming Conventions. ([https://en.wikibooks.org/wiki/Perl\_Programming/Scalar\_variables\#Naming\_Conventions](https://en.wikibooks.org/wiki/Perl_Programming/Scalar_variables#Naming_Conventions))
-
-[20]: Chiusano, P.; Bjarnason, R. (2014). Functional Programming in Scala. Manning Publications. ISBN: 978-1-617-29065-7. (The "Red Book": Defining the monadic data-flow patterns evolved by the Jolk Match protocol).
+[18]: Cointe, P (1987). "Metaclasses are first class: The ObjVlisp Model". ACM SIGPLAN Notices. 22 (12): 156–162. doi:10.1145/38807.38822. ISSN 0362-1340.
 
 [21]: Oracle. Truffle Language Implementation Framework. GraalVM Documentation. ([https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework](https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework))
 
 [22]: Roose, W. (2026). The Jolk ANTLR4 Grammar (`jolk.g4`). (https://github.com/wouterroose-tech/jolk/blob/main/poc/grammar/src/main/antlr4/tolk/grammar/jolk.g4)
 
 [23]: Beck, K. (1998). Kent Beck's Guide to Better Smalltalk chapter 30 "Simple Smalltalk Testing". Cambridge University Press. ISBN 978-0-521-64437-2
+
 
 ---
 
@@ -1786,7 +1765,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **MetaClass:** The intrinsic root identity (`MetaClass<T>`) representing the reified type archetype in Jolk. Every class is a live singleton instance of `MetaClass`, allowing class-level (`meta`) methods, factory creation methods, and constants to participate in standard polymorphic message dispatch.
 **Metaobject protocol (MOP):** A metaobject protocol provides the vocabulary to access and manipulate the structure and behaviour of systems of objects.
 **Nothing:** A reified, first-class Atomic Identity representing the fact of absence and referred to by the reserved object identifier `null`.  
-**Receiver Retention:** A metaboundary protocol to ensure the receiver (`self`) is returned for chaining after interacting with Java `void` methods.  
+**Receiver Retention:** A meta-level protocol to ensure the receiver (`self`) is returned for chaining after interacting with Java `void` methods.  
 **Semantic Casing:** A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  
 **Semantic Flattening:** The process where the Tolk Engine utilizes dynamic node specialization to collapse high-level message-passing abstractions and patterns into optimized machine code, effectively eliminating dispatch overhead during GraalVM partial evaluation.  
 **Substrate:** Substrate VM is an Oracle internal project name for the technology behind GraalVM Native Image. 

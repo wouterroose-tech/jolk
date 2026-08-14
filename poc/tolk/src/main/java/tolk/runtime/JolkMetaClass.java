@@ -42,7 +42,7 @@ import java.util.Set;
 /// primitives capable of bypassing the defined protocol to interrogate the object's 
 /// structural black box.
 ///
-/// Every Type is treated as a live Identity within the **JoMoo** continuum.
+/// Every Type is treated as an identity within the Tolk engine.
 /// 
 /// @author Wouter Roose
 @ExportLibrary(InteropLibrary.class)

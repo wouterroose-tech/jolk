@@ -17,6 +17,12 @@
 @Intrinsic
 extension ObjectExtension on java.lang.Object {
 
+    /// ## new
+    /// Creates a new instance of the receiving type.
+    ///
+    /// - **Returns**: A new instance of the receiving type.
+	meta Self new() { }
+
     /// ## ~~
     /// Performs a semantic equivalent check.
     ///

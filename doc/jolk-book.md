@@ -2,9 +2,9 @@
 
 **Unified Messaging and Metaobject Protocol for the Java Type System**
 
-The Jolk specification formalises the translation of the Smalltalk-80 model—defined in the 'Blue Book'[1]—onto the Java type system, establishing the conceptual foundation for this architecture. It integrates a messaging model with a C-family syntax structure, which the Tolk Engine maps onto the underlying Java Virtual Machine. While mainstream industrial models treat the object as a data container and execution operates procedurally, Jolk enforces a semantic overlay wherein message dispatch governs behaviour and drives interactions.
+The Jolk specification formalises the translation of a messaging model onto the Java type system, establishing the conceptual foundation for this architecture. It integrates a messaging model with a C-family syntax structure, which the Tolk Engine maps onto the underlying Java Virtual Machine. While mainstream industrial models treat the object as a data container and execution operates procedurally, Jolk enforces a semantic overlay wherein message dispatch governs behaviour and drives interactions.
 
-The architecture implements the computational paradigm described by Alan Kay,[2][3] wherein autonomous entities communicate through messages. Jolk enforces this design uniformly: every operational interaction—including arithmetic evaluation and control flow execution—is resolved through message dispatch.
+The architecture implements the computational paradigm described by Alan Kay,[2][3] wherein autonomous entities communicate through messages. Jolk enforces this design uniformly: every operational interaction—including instantiation and control flow execution—is resolved through message dispatch.
 
 **Acknowledgments**
 
@@ -64,7 +64,7 @@ Jolk is a convergent architecture synthesizing C-family syntax with messaging se
 
 ### Core Principles
 
-**Unified messaging:** Every interaction—including object creation, control flow, and error handling—is a formal message send.
+**Unified messaging:** Every interaction—including object creation, arithmetic evaluation, control flow, and error handling—is a formal message send.
 
 **Unified Type System:** Every entity—including closures, booleans, the Nothing bottom-type singleton, and classes via their metaclasses—is an identity receptive to messages.
 
@@ -297,7 +297,7 @@ A closure's return value is governed by its lexical context, the result is the e
 
 ### Meta-directives
 
-Meta-Directives establish the context that governs the relationship between the source and the platform. *Expansion* via the `+` / `using` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Projection* through the `&` / `using meta` lens, which projects platform facts—whether static constants or functional methods—and as local symbols. *Visibility* (e.g., `private`/ `#>`) and *Finality* (e.g., `final` / `#!`) are structural properties which mandate the state of access and identity.
+Meta-Directives establish the context that governs the relationship between the source and the platform. *Expansion* via the `+` / `using` anchor incorporates external archetypes into the local vocabulary by mapping a terminal identity to a fully qualified path. This is augmented by *Projection* through `&` / `using meta`, which projects platform facts—whether static constants or functional methods—and as local symbols. *Visibility* (e.g., `private`/ `#>`) and *Finality* (e.g., `final` / `#!`) are structural properties which mandate the state of access and identity.
 
 ### Architectural integrity
 
@@ -481,7 +481,7 @@ By treating object creation via the intrinsic `#new` method as a formal capabili
 
 ### Modifiers
 
-The Lexical Anchors designate the Membership Scope of an identifier, establishing the lexical fence that regulates message reception and the valid reach of the identity. These symbols function as absolute structural coordinates, maintaining semantic parity with their Java counterparts; for convenience Jolk permits the use of keywords as aliases for the Lexical Anchors.
+The Lexical Anchors designate the membership scope of an identifier, establishing the lexical fence that regulates message reception and the valid reach of the identity. These symbols function as absolute structural coordinates, maintaining semantic parity with their Java counterparts; for convenience Jolk permits the use of keywords as aliases for the Lexical Anchors.
 
 Visibility :`#<` (`public`), `#~` (`package`), `#:` (`protected`), `#>` (`private`)  
 Structural Finality: `#?` (`abstract`) , `#!` (`final`)  

@@ -67,7 +67,7 @@ class ContactFormValidationTest extends TestCase {
 
     #> ExecutionContext validate(ContactForm form) {
         ExecutionContext context = ExecutionContext #new;
-        ContactFormValidation #new #validate(form, context);
+        ContactFormValidation #setup #validate(form, context);
         ^context
     }
 

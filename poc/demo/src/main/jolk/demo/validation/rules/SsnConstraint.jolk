@@ -19,7 +19,7 @@
     }
 
     #: Boolean isValid(Person person) {
-        ^ self #isValid(person #ssn)
+        ^ #isValid(person #ssn)
     }
 
     #> Boolean isValid(Long ssn) {

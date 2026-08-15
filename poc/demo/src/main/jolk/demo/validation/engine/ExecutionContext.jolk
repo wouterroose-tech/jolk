@@ -18,31 +18,31 @@ class ExecutionContext {
     }
 
     /// Adds an issue for the given subject.
-    Self add(Object subject, Issue issue) {
-        self #issues #add(issue)
+    add(Object subject, Issue issue) {
+        #issues #add(issue)
     }
 
     /// Returns true if any issue has been reported.
     Boolean hasIssue() {
-        ^ !self #issues #isEmpty
+        ^ ! #issues #isEmpty
     }
     
     /// Returns true if any error has been reported.
     Boolean hasError() {
-        ^ self #hasMatch [ i -> i #level #isError ]
+        ^ #hasMatch [ i -> i #level #isError ]
     }
 
     /// Returns true if any warning has been reported.
     Boolean hasWarning() {
-        ^ self #hasMatch [ i -> i #match(WARNING) ]
+        ^ #hasMatch [ i -> i #match(WARNING) ]
     }
 
     /// Returns true if any issue was reported for the given subject.
     Boolean hasIssue(Object subject) {
-        ^ self #hasMatch [ i -> i #concerns(subject)]
+        ^ #hasMatch [ i -> i #concerns(subject)]
     }
 
-    private Boolean hasMatch(Predicate<Issue> p) {
+    #! Boolean hasMatch(Predicate<Issue> p) {
         ^ issues #anyMatch(p)
     }
 

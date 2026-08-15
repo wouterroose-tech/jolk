@@ -11,17 +11,17 @@
 
     /// Returns a string representation of the contact form.
     String toString() {
-        ^ "ContactForm[person=" + self #person + ", description=" + self #description + ", zipCode=" + self #zipCode + ", email=" + self #email + "]"
+        ^ "ContactForm[person=" + #person + ", description=" + #description + ", zipCode=" + #zipCode + ", email=" + #email + "]"
     }
 
     /// Performs a structural equivalence check.
     Boolean ~~(Object other) {
         (self == other) ? [ ^true ];
         other #instanceOf(ContactForm) #ifPresent [ f -> 
-            ^ (self #person ~~ f #person)
-                && (self #description ~~ f #description)
-                && (self #zipCode ~~ f #zipCode)
-                && (self #email ~~ f #email)
+            ^ (#person ~~ f #person)
+                && (#description ~~ f #description)
+                && (#zipCode ~~ f #zipCode)
+                && (#email ~~ f #email)
             ];
         ^ false
     }

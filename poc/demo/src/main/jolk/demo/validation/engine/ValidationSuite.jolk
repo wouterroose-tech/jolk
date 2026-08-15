@@ -22,23 +22,23 @@ abstract class ValidationSuite<T> extends Validation<T> {
 
     /// Adds a validation constraint to this ruleset.
     final add(Constraint<T> constraint) {
-        self #nodes #add(constraint)
+        #nodes #add(constraint)
     }
 
     /// Adds a nested ruleset for a single child object, allowing hierarchical composition of validations.
     final <R> add(Validation<R> validation, Function<T, R> supplier) {
-        self #nodes #add(ChildValidation<T, R> #new(supplier, validation))
+        #nodes #add(ChildValidation<T, R> #new(supplier, validation))
     }
 
     /// Adds a nested ruleset for a collection of child objects, allowing hierarchical composition of validations.
     final <R> add(Validation<R> validation, Function<T, List<R>> supplier) {
-        self #nodes #add(ChildrenValidation<T, R> #new(supplier, validation))
+        #nodes #add(ChildrenValidation<T, R> #new(supplier, validation))
     }
 
     /// Validates the subject by recursively visiting each element in the ruleset.
     /// Any [ValidationInterruptException] at the root level is caught and ignored.
     final validate(T subject, ExecutionContext executionContext) {
-        [ self #accept(subject, executionContext) ]
+        [ #accept(subject, executionContext) ]
            #catch [ Interrupt e -> /* ignore */ ]
     }
 

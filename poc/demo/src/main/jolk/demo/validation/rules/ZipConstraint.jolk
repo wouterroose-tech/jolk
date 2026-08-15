@@ -20,10 +20,10 @@
     }
 
     #: Boolean isValid(ContactForm form) {
-        ^ self #isMalinesArea(form #zipCode)
+        ^ #isMalinesArea(form #zipCode)
     }
 
-    #> Boolean isMalinesArea(Int zipCode) {
+    #< Boolean isMalinesArea(Int zipCode) {
         ^ GeoGraphicalService #GGS #exists(zipCode) && MECHELEN #contains(zipCode)
     }
 

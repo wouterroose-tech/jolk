@@ -22,7 +22,7 @@ abstract class Constraint<T> extends Validation<T> {
     package final doAccept(T subject, ExecutionContext executionContext) {
         #isValid(subject) ? [ ^ self ];
         executionContext #add(subject, #getIssue(subject, executionContext));
-        self #interrupt #ifPresent [ i -> i #throw ]
+        #interrupt #ifPresent [ i -> i #throw ]
     }
 
     /// Returns true when the constraint is violated for the given subject.

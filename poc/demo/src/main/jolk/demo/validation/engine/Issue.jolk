@@ -11,11 +11,11 @@ record Issue {
 
     /// Returns true if the issue concerns the given subject.
     Boolean concerns(Object subject) {
-        ^ self #subject == subject
+        ^ #subject == subject
     }
 
     /// Returns true if the issue concerns the given level.
     Boolean match(Level level) {
-        ^ self #level == level
+        ^ #level == level
     }
 }

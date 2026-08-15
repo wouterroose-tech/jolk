@@ -38,8 +38,7 @@ public class JolkTestEngine extends HierarchicalTestEngine<JolkTestEngineExecuti
         runtimeContext = new JolkTestRuntimeContext();
 
         // Load the Jolk test framework classes into the context
-        runtimeContext.loadDirectory("/jolk/test/api");
-        runtimeContext.loadDirectory("/jolk/test/engine");
+        runtimeContext.loadDirectory("/jolk/test");
     }
 
     @Override

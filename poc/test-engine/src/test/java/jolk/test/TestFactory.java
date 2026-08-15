@@ -3,11 +3,9 @@ package jolk.test;
 import jolk.test.engine.EmptyConfigurationParameters;
 import jolk.test.engine.JolkTestEngine;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicContainer;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.TestFactory;
 import org.junit.platform.engine.EngineExecutionListener;
 import org.junit.platform.engine.ExecutionRequest;
 import org.junit.platform.engine.TestDescriptor;
@@ -28,22 +26,19 @@ import java.util.stream.Stream;
 
 
 ///
-/// # JolkTestRunner
+/// # TestEngineRunner
 /// 
 /// Temporary: The static Java anchor for VS Code.
 /// 
 /// @author Wouter Roose
 /// 
-// Disabled, test now run via the JolkTestEngine for the JUnit test framework
-@Disabled
-public class TestFactoryRunner {
+public abstract class TestFactory {
 
     private final JolkTestEngine engine = new JolkTestEngine();
 
-    @TestFactory
-    Stream<DynamicNode> discoverJolkTests() {
+    protected Stream<DynamicNode> discoverJolkTests(String path) {
         var request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(DiscoverySelectors.selectDirectory(Path.of("src/test/jolk").toFile()))
+                .selectors(DiscoverySelectors.selectDirectory(Path.of(path).toFile()))
                 .build();
 
         UniqueId baseId = UniqueId.forEngine(engine.getId());

@@ -5,13 +5,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import jolk.test.TestRunner;
+
 /// # TestRunner
 ///
 /// run the jolk TestRunner, will be replaced by the JolkTestEngine for the JUnit test framework
 ///
 /// @author Wouter Roose
 ///
-public class TestRunner extends jolk.test.TestRunner {
+public class DemoTestSuite extends TestRunner {
 
     @BeforeAll
     public static void setUp() {
@@ -72,9 +74,11 @@ public class TestRunner extends jolk.test.TestRunner {
         
         testClass = load("/demonstrators/EqualityDemonstratorTest.jolk");
         runTestClass(testClass);
-        
+
         testClass = load("/demonstrators/ExceptionHandlingDemonstratorTest.jolk");
         runTestClass(testClass);
+
+        load("/demonstrators/StableAndConstantFieldDemonstrator.jolk");
     }
     
     // examples

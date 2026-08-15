@@ -320,7 +320,7 @@ Computation transcends procedural calls to become a protocol-driven flow where l
 
 ---
 
-A Moo (Message-Oriented Object) serves as the primary manifestation of it's core axioms, defined as a coordinate in the message substrate that prioritises communication over internal properties. Jolk does not replace the Java type system; instead, it acts as a semantic overlay. This message-oriented paradigm achieves archetypal rigidity by harmonising diverse Java structures under a single, consistent messaging protocol.
+A Message-Oriented Object serves as the primary manifestation of it's core axioms, defined as a coordinate in the message substrate that prioritises communication over internal state. Jolk does not replace the Java type system; instead, it acts as a semantic overlay. This message-oriented paradigm achieves archetypal rigidity by harmonising diverse Java structures under a single, consistent messaging protocol.
 
 A rigorous message boundary ensures absolute field privacy, meaning an object's internal state is never directly accessible from the outside. All state interaction is restricted to synthesised selectors, preserving encapsulation and rendering intrusive reflection a semantic impossibility to prevent external agents from bypassing the defined protocol.
 
@@ -598,13 +598,13 @@ The assignment symbol (`=`) demarcates the boundary between internal evaluation 
 
 ## Messaging
 
-Jolk achieves syntactic uniformity through a pure object-oriented model where operators, control flow, and error handling are implemented as library-level protocols. By defining mathematical and logical symbols like `+` and `~~` as unified message selectors, Jolk allows custom types to interact with the same fluidity as native primitives.
+Jolk achieves syntactic uniformity through a pure message-oriented model where operators, control flow, and error handling are implemented as library-level protocols. By defining mathematical and logical symbols like `+` and `~~` as unified message selectors, Jolk allows custom types to interact with the same fluidity as native primitives.
 
 This communicative field is further refined by permitting the omission of the explicit `self` receiver and the `Self` return type. When a message selector appears without an explicit receiver, the compiler binds the invocation to the implicit self-receiver. This enables high-density internal messaging—such as `#x(#x + 1)`—while preserving the lexical fence and message boundary. Local variable bindings shadow implicit self dispatches, maintaining unambiguous scope resolution.
 
 This architectural choice establishes a syntax minimum by replacing traditional keywords with polymorphic dispatch. The absence of `if`, `else`, and `while` is compensated by sending selectors like `?`, `:`, and `#while` directly to Boolean singletons or Closures. Similarly, error handling dispenses with try/catch in favour of `#catch` and `#finally` messages sent to closure objects.
 
-The Unified Messaging Model "opens up" the language by transforming fundamental operations into extensible library features. By adhering to the vision that computation is a dynamic flow of polymorphic dispatch messages between autonomous objects, Jolk shifts the focus to the communication.
+The unified messaging model "opens up" the language by transforming fundamental operations into extensible library features. By adhering to the vision that computation is a flow of polymorphic dispatch messages between autonomous objects, Jolk shifts the focus to the communication.
 
 This architecture allows the language to remain a minimalist, "growable" system. Because even basic logic and arithmetic are resolved as messages, the core design remains invariant while the engine implementation expands, ensuring that new protocols integrate seamlessly into the unified communicative flow.
 

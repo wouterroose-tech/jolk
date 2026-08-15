@@ -13,7 +13,7 @@
 /// 
 /// @author Wouter Roose
 
-final class Circle {
+#! class Circle {
 
     Double radius;
 
@@ -35,11 +35,11 @@ final class Circle {
     ///
     /// Calculates the area of the circle instance.
     Double area() {
-        ^ PI * self #radius ** 2
+        ^ PI * #radius ** 2
     }
 
     Double circumference() {
-        ^ TWO_PI * self #radius
+        ^ TWO_PI * #radius
     }
 
     /// ### * (Scaling)

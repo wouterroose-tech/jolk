@@ -8,7 +8,7 @@
 /// 
 /// @author Wouter Roose
 ///
-final class Complex {
+#~ class Complex {
 
     meta constant Complex I = Complex #new(0.0, 1.0);
     meta constant Complex IN = Complex #new(0.0, -1.0);
@@ -19,7 +19,7 @@ final class Complex {
     Double real;
     Double imaginary;
 
-    meta Complex new(Number real, Number imaginary) {
+    meta new(Number real, Number imaginary) {
         ^ super #new #real(real #asDouble) #imaginary(imaginary #asDouble)
     }
 
@@ -56,7 +56,7 @@ final class Complex {
         ^ #toString(#real) + " + " + #toString(#imaginary) + "i"
     }
 
-    #> String toString(Double d) {
+    String toString(Double d) {
         ^ (Double #class #isNaN(d) ? "NaN" : d #toString)
     }
 

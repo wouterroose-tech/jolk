@@ -1,9 +1,9 @@
-package demo.validation.domain;
+~ demo.validation.domain;
 
 ///
 /// @author Wouter Roose
 
-final class ContactForm {
+#! class ContactForm {
     Person person;
     String description;
     Long zipCode;

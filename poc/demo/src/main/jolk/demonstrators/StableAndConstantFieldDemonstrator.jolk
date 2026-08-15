@@ -1,4 +1,4 @@
-~ demonstrators
+~ demonstrators;
 
 
 final class StableAndConstantFieldDemonstrator {
@@ -9,8 +9,8 @@ final class StableAndConstantFieldDemonstrator {
 
     stable String stableField;
 
-    meta Self new(String value) {
-        ^ super #new #stableField(value);
+    meta Self new(String val) {
+        ^ super #new #stableField(val);
     }
 
 }

@@ -1,9 +1,9 @@
-package demo.validation.domain;
+~ demo.validation.domain;
 
 ///
 /// @author Wouter Roose
 
-public class Person {
+class Person {
     Long ssn;
     String firstName;
     String lastName;

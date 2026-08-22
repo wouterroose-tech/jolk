@@ -1,0 +1,21 @@
+~ jolk.lang;
+
+/// # MetaClassTestExtension
+///
+/// Extension methods for the [jolk.lang.MetaClass] class.
+///
+/// This extension augments the [jolk.lang.MetaClass] class with additional 
+/// methods for working with test selectors to support the JUnit test framework.
+///
+/// @author Wouter Roose
+
+@Inline
+extension MetaClassTestExtension on jolk.lang.MetaClass<T extends TestCase> {
+
+    List<Selector> testSelectors() {
+        // basic implementation for now
+        // future filtering will be based on the @Test annotation
+        ^ #methods #filter [ m -> m #name #startsWith("test") ]
+    }
+
+}

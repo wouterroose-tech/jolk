@@ -19,6 +19,7 @@
 + demo.validation.rules.ContactFormValidationTest;
 + demo.validation.rules.SsnConstraintTest;
 + demo.validation.rules.ZipConstraintTest;
++ mock.MockTest;
 
 /// # DemoTestRunner
 ///
@@ -63,6 +64,10 @@ class DemoTestRunner extends TestRunner {
         #runTestCase(ZipConstraintTest);
         #runTestCase(SsnConstraintTest);
         #runTestCase(ContactFormValidationTest);
+
+        System #out #println("    -------------");
+        System #out #println(">   " + "mock");
+        #runTestCase(MockTest);
     }
 
 }

@@ -1,0 +1,36 @@
+~ mock;
+
++ demo.validation.domain.User;
++ demo.validation.services.UserRepository;
++ java.util.function.Producer;
+
+/// # UserRepositoryMock
+///
+/// @author Wouter Roose
+///
+class UserRepositoryMock extends UserRepository {
+
+    stable Map<String, Producer> stubs = #();
+    stable Map<String, Boolean> calls = #();
+    
+     User findById(Long id) {
+        String selector = "findById(" + id + ")";
+        calls #put(selector , true);
+        ^ #stubs
+            #at(selector)
+            #apply
+    }
+
+    /// Minimalist implementation of the Mockable interface for demonstrator purposes
+    
+    /// Register a stub closure for this mock instance and selector
+    stub(String selector, Producer behavior, Object... args) {
+        stubs #put(selector + "(" + args #toString + ")", behavior)
+    }
+
+    Boolean verify(String selector, Object... args) {
+        ^ #calls
+            #at(selector + "(" + args #toString + ")" )
+            #isPresent
+    }
+}

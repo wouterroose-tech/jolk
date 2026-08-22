@@ -20,14 +20,13 @@ public class DemoTestSuite extends TestRunner {
         jolk.test.TestRunner.setUp();
         
         // domain
-        load("/demo/validation/domain/Person.jolk");
         load("/demo/validation/domain/ContactForm.jolk");
+        load("/demo/validation/domain/Person.jolk");
+        load("/demo/validation/domain/User.jolk");
 
         // validation engine
         load("/demo/validation/engine/Level.jolk");
-        load("/demo/validation/engine/LevelTest.jolk");
         load("/demo/validation/engine/Issue.jolk");
-        load("/demo/validation/engine/IssueTest.jolk");
         load("/demo/validation/engine/Interrupt.jolk");
         load("/demo/validation/engine/ExecutionContext.jolk");
         load("/demo/validation/engine/Node.jolk");
@@ -39,11 +38,19 @@ public class DemoTestSuite extends TestRunner {
         // business services
         load("/demo/validation/services/City.jolk");
         load("/demo/validation/services/GeoGraphicalService.jolk");
+        load("/demo/validation/services/UserManager.jolk");
+        load("/demo/validation/services/UserRepository.jolk");
     }
     
     @Test
     @Disabled
     public void runAllTests() {
+        //TODO load all tests
+        load("/demo/validation/engine/LevelTest.jolk");
+        load("/demo/validation/engine/IssueTest.jolk");
+
+        load("/mock/UserRepositoryMock.jolk");
+        load("/mock/MockTest.jolk");
         load("/DemoTestRunner.jolk")
             .invokeMember("new")
             .invokeMember("run");
@@ -128,6 +135,14 @@ public class DemoTestSuite extends TestRunner {
         runTestClass(testClass);
         
         testClass = load("/demo/validation/engine/IssueTest.jolk");
+        runTestClass(testClass);
+    }
+    
+    @Test
+    public void runMockTest() {
+        Value testClass;
+        load("/mock/UserRepositoryMock.jolk");
+        testClass = load("/mock/MockTest.jolk");
         runTestClass(testClass);
     }
 

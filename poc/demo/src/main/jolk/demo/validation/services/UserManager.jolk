@@ -1,0 +1,22 @@
+~ demo.validation.services;
+
++ demo.validation.domain.User;
++ demo.validation.services.UserRepository;
+
+/// # UserManager
+///
+/// @author Wouter Roose
+///
+class UserManager {
+
+    UserRepository repo;
+    
+    meta new(UserRepository repo) {
+        ^ super #new #repo(repo)
+    }
+
+    User find(Long id) {
+        ^ repo #findById(id)
+    }
+
+}

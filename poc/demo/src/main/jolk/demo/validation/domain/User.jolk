@@ -1,0 +1,9 @@
+~ demo.validation.domain;
+
+///
+/// @author Wouter Roose
+
+record User {
+    Long id;
+    String name;
+}

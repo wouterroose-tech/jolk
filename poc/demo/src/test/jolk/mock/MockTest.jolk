@@ -1,0 +1,62 @@
+~ mock;
+
++ demo.validation.domain.User;
++ demo.validation.services.UserManager;
++ demo.validation.services.UserRepository;
+
+/// # MockTest
+///
+/// Demonstrator for the Mockable interface
+///
+/// @author Wouter Roose
+///
+class MockTest extends TestCase {
+
+    UserRepository repo = UserRepositoryMock #new;
+    
+    @Test
+    testMockCreation() {
+        UserRepository repo = #mock(UserRepository);
+        #assertIsPresent(repo);
+    }
+
+    @Test
+    testStubWithReturnValue() {
+        repo #stub("findById", self ##returnUser, 42);
+
+        // test & verify
+        User user = UserManager #new(repo) #find(42);
+        #assertIsPresent(user);
+        #assertEquals("Alice", user #name);
+        #assertTrue(repo #verify("findById", 42));
+    }
+
+    @Test
+    testStubWithNull() {
+        // setup
+        repo #stub("findById", self ##userNotFound, 42);
+        UserManager manager = UserManager #new(repo);
+
+        // test & verify
+        #assertThrows(self ##find, RuntimeException );
+        #assertTrue(repo #verify("findById", 42));
+    }
+
+    User find() {
+        ^ UserManager #new(repo) #find(42)
+    }
+
+    User returnUser() {
+        ^ User #new(42, "Alice");
+    }
+
+    User userNotFound() {
+        RuntimeException #new("User not found") #throw
+    }
+
+    <T> T mock(MetaClass<T> clazz) {
+        clazz == UserRepository ? [ ^ UserRepositoryMock #new ] ;
+        RuntimeException #new("Unnsupported class for mocking: " + clazz);
+    }
+
+}

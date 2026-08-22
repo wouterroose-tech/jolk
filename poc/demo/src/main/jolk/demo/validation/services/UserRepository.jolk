@@ -1,0 +1,15 @@
+~ demo.validation.services;
+
++ demo.validation.domain.User;
+
+/// # UserRepository
+///
+/// @author Wouter Roose
+///
+class UserRepository {
+
+     User findById(Long id) {
+        RuntimeException #new("Unsupported") #throw
+    }
+
+}

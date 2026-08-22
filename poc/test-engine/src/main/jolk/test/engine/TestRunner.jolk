@@ -46,9 +46,9 @@ class TestRunner {
         ]
     }
 
+    // to be replaced with Metaclass#testSelectors in a future release
     List<String> selectors(MetaClass<TestCase> testClass) {
         // TODO in future releases protocol will return Selector
-        // -> filter public methods
         // -> filter methods with @Test annotation
 
         // TODO replace with filter once implemented for ArrayExtension in the Jolk engine

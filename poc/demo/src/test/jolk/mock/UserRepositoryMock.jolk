@@ -6,6 +6,9 @@
 
 /// # UserRepositoryMock
 ///
+/// Implements stubbing for demonstration purposes
+/// final implementation will be via a Mockable protocol
+///
 /// @author Wouter Roose
 ///
 class UserRepositoryMock extends UserRepository {

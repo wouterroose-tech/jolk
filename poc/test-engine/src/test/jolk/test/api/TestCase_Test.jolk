@@ -76,6 +76,11 @@ class TestCase_Test extends TestCase {
     testAssertIsPresent_failure() {
         #assertFailure [ #assertIsPresent(null) ]
     }
+
+    @Test
+    testAssertThrows() {
+        #assertThrows([ #fail ] , RuntimeException)
+    }
     
     #> assertFailure(Closure test) {
         test #catch [ AssertionSignal e -> ^ #success() ];

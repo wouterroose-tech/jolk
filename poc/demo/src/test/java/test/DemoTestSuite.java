@@ -43,7 +43,7 @@ public class DemoTestSuite extends TestRunner {
     }
     
     @Test
-    @Disabled
+    //@Disabled
     public void runAllTests() {
         //TODO load all tests
         load("/demo/validation/engine/LevelTest.jolk");

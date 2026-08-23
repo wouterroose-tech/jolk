@@ -18,12 +18,13 @@ public class DemoTestSuite extends TestRunner {
     @BeforeAll
     public static void setUp() {
         jolk.test.TestRunner.setUp();
-        
+        // examples
+        load("/examples/Circle.jolk");
+        load("/examples/Complex.jolk");
         // domain
         load("/demo/validation/domain/ContactForm.jolk");
         load("/demo/validation/domain/Person.jolk");
         load("/demo/validation/domain/User.jolk");
-
         // validation engine
         load("/demo/validation/engine/Level.jolk");
         load("/demo/validation/engine/Issue.jolk");
@@ -40,16 +41,38 @@ public class DemoTestSuite extends TestRunner {
         load("/demo/validation/services/GeoGraphicalService.jolk");
         load("/demo/validation/services/UserManager.jolk");
         load("/demo/validation/services/UserRepository.jolk");
+        // mock
+        load("/mock/UserRepositoryMock.jolk");
+        // demonstrators
+        load("/demonstrators/CollectionLiteralDemonstrator.jolk");
+        load("/demonstrators/CoreCollectionDemonstrator.jolk");
+        // validation rules
+        load("/demo/validation/rules/SsnConstraint.jolk");
+        load("/demo/validation/rules/ZipConstraint.jolk");
+        load("/demo/validation/rules/ContactFormValidation.jolk");
     }
     
     @Test
-    //@Disabled
+    @Disabled
     public void runAllTests() {
-        //TODO load all tests
+        load("/examples/CircleTest.jolk");
+        load("/examples/ComplexTest.jolk");
+        load("/demo/validation/domain/PersonTest.jolk");
+        load("/demo/validation/domain/ContactFormTest.jolk");
+        load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
+        load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
+        load("/demonstrators/ClosureDemonstratorTest.jolk");
+        load("/demonstrators/EqualityDemonstratorTest.jolk");
+        load("/demonstrators/ExceptionHandlingDemonstratorTest.jolk");
         load("/demo/validation/engine/LevelTest.jolk");
         load("/demo/validation/engine/IssueTest.jolk");
-
-        load("/mock/UserRepositoryMock.jolk");
+        load("/demo/validation/rules/SsnConstraint.jolk");
+        load("/demo/validation/rules/SsnConstraintTest.jolk");
+        load("/demo/validation/rules/ZipConstraintTest.jolk");
+        load("/demo/validation/rules/ContactFormValidationTest.jolk");
         load("/mock/MockTest.jolk");
         load("/DemoTestRunner.jolk")
             .invokeMember("new")
@@ -59,11 +82,9 @@ public class DemoTestSuite extends TestRunner {
     @Test
     public void runDemonstratorTest() {
         Value testClass;
-        load("/demonstrators/CollectionLiteralDemonstrator.jolk");
         testClass = load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
         runTestClass(testClass);
 
-        load("/demonstrators/CoreCollectionDemonstrator.jolk");
         testClass = load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
         runTestClass(testClass);
         
@@ -141,7 +162,6 @@ public class DemoTestSuite extends TestRunner {
     @Test
     public void runMockTest() {
         Value testClass;
-        load("/mock/UserRepositoryMock.jolk");
         testClass = load("/mock/MockTest.jolk");
         runTestClass(testClass);
     }

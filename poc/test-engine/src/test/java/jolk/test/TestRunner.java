@@ -94,6 +94,7 @@ public abstract class TestRunner  {
         load("/jolk/test/api/DisabledSignal.jolk");
         load("/jolk/test/api/Test.jolk");
         load("/jolk/test/api/TestCase.jolk");
+        load("/jolk/test/api/TestSuite.jolk");
         load("/jolk/test/api/TestResult.jolk");
         load("/jolk/test/api/TestStatus.jolk");
         load("/jolk/test/api/TimeoutSignal.jolk");
@@ -113,6 +114,10 @@ public abstract class TestRunner  {
 
     protected void runTestClass(Value testClass) {
         runnerClass.invokeMember("new").invokeMember("runTestCase", testClass);
+    }
+
+    protected void run(Value runnerClass) {
+        runnerClass.invokeMember("new").invokeMember("run");
     }
 
 }

@@ -21,18 +21,21 @@
 ///
 class TestRunner {
 
-    run() {
+    run(Array<TestSuite> suites) {
         System #out #println("    Run All Tests");
+        suites #forEach [ s -> #runTestSuite(s) ]
+    }
+
+    runTestSuite(TestSuite suite) {
         System #out #println("    -------------");
-        System #out #println(">   " + "jolk.test.api");
-        #runTestCase(TestCase_Test);
-        #runTestCase(TestResult_Test);
-        #runTestCase(TestRunner_Test);
+        System #out #println(">   " + suite #name);
+        suite
+            #tests
+            #forEach [ test -> #runTestCase(test) ]; 
     }
     
     runTestCase(MetaClass<TestCase> testClass) {
         System #out #println(">>  " + testClass #name);
-        
         [ 
             testClass #beforeAll;
             #selectors(testClass)
@@ -41,8 +44,8 @@ class TestRunner {
                     System #out #println(">>> " + s + " -> " + result #result);
                 ];
             testClass #afterAll
-        ] #catch [
-            e -> ^ TestResult #failed(e)
+        ] #catch [ e ->
+            System #out #println((">>  " + testClass #name + " -> fault" + e #getMessage));
         ]
     }
 

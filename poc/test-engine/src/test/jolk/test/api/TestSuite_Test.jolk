@@ -1,0 +1,22 @@
+~ jolk.test.api;
+
+/// # TestSuite_Test
+///
+/// TODO
+///
+/// @author Wouter Roose
+///
+class TestSuite_Test extends TestCase {
+
+    @Test
+    test() {
+        TestSuite testSuite = TestSuite
+            #new("jolk.test.api")
+            #addTestCase(TestCase_Test)
+            #addTestCase(TestResult_Test)
+            #addTestCase(TestRunner_Test);
+        #assertIsPresent(testSuite);
+        #assertEquals("jolk.test.api", testSuite #name);
+        #assertEquals(3, testSuite #tests #size);
+    }
+}

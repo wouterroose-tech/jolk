@@ -1,0 +1,24 @@
+~ jolk.test.api;
+
+/// # TestSuite
+///
+/// TODO
+///
+/// @author Wouter Roose
+///
+class TestSuite extends Test {
+
+    Array<MetaClass<TestCase>> tests;
+    
+    meta new(String name) {
+        ^ super
+            #new
+            #tests(#[])
+            #name(name)
+    }
+
+    addTestCase(MetaClass<TestCase> testCase) {
+        tests #add(testCase);
+    }
+    
+}

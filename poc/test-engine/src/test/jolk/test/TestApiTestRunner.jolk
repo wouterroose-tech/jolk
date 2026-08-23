@@ -1,0 +1,32 @@
+~ jolk.test;
+
++ jolk.test.api.TestSuite;
++ jolk.test.api.TestCase_Test;
++ jolk.test.api.TestSuite_Test;
++ jolk.test.api.TestResult_Test;
++ jolk.test.engine.TestRunner_Test;
++ jolk.test.engine.TestRunner;
+
+& jolk.test.api.DisabledSignal.DISABLED_SIGNAL;
+
+/// # TestApiTestRunner
+///
+/// TODO
+///
+/// @author Wouter Roose
+///
+class TestApiTestRunner extends  TestRunner {
+
+    run() {
+        TestSuite testSuite = TestSuite
+            #new("jolk.test.api")
+            #addTestCase(TestCase_Test)
+            #addTestCase(TestSuite_Test)
+            #addTestCase(TestResult_Test)
+            #addTestCase(TestRunner_Test);
+        Array<TestSuite> suites = #[testSuite];
+
+        super #run(suites);
+    }
+    
+}   

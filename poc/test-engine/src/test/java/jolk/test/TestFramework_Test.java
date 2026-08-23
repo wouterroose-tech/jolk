@@ -27,9 +27,25 @@ public class TestFramework_Test extends TestRunner  {
     }
     
     @Test
+    public void testTestSuite_Test() {
+        Value testClass = load("/jolk/test/api/TestSuite_Test.jolk");
+        runTestClass(testClass);
+    }
+    
+    @Test
     public void testTestRunner_Test() {
         Value testClass = load("/jolk/test/engine/TestRunner_Test.jolk");
         runTestClass(testClass);
+    }
+    
+    @Test
+    public void testTestApiTestRunner() {
+        load("/jolk/test/api/TestCase_Test.jolk");
+        load("/jolk/test/api/TestResult_Test.jolk");
+        load("/jolk/test/api/TestSuite_Test.jolk");
+        load("/jolk/test/engine/TestRunner_Test.jolk");
+        Value testClass = load("/jolk/test/TestApiTestRunner.jolk");
+        run(testClass);
     }
 
 }

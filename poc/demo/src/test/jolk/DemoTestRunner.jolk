@@ -1,6 +1,7 @@
 ~ jolk.test;
 
 + java.lang.System;
++ jolk.test.api.TestSuite;
 + jolk.test.engine.TestRunner;
 + examples.CircleTest;
 + examples.ComplexTest;
@@ -30,44 +31,64 @@
 class DemoTestRunner extends TestRunner {
 
     run() {
-        System #out #println("    Run All Tests");
-        System #out #println("    -------------");
-        System #out #println(">   " + "examples");
-        #runTestCase(CircleTest);
-        #runTestCase(ComplexTest);
+        Array<TestSuite> suites = #[];
+        suites #add(#examples);
+        suites #add(#demonstrators);
+        suites #add(#domain);
+        suites #add(#engine);
+        suites #add(#rules);
+        suites #add(#mock);
 
-        System #out #println("    -------------");
-        System #out #println(">   " + "demonstrators");
-        #runTestCase(ArchetypeClassDemonstratorTest);
-        #runTestCase(ArchetypeEnumDemonstratorTest);
-        #runTestCase(ArchetypeRecordDemonstratorTest);
-        #runTestCase(ClosureDemonstratorTest);
-        #runTestCase(CollectionLiteralDemonstratorTest);
-        #runTestCase(CoreCollectionDemonstratorTest);
-        #runTestCase(EqualityDemonstratorTest);
-        #runTestCase(ExceptionHandlingDemonstratorTest);
-        // TODO add more demonstrators
+        super #run(suites);
+    }
 
-        System #out #println("    -------------");
-        System #out #println(">   " + "demo.validation.domain");
-        #runTestCase(PersonTest);
-        #runTestCase(ContactFormTest);
+    TestSuite examples() {
+        ^ TestSuite
+            #new("examples")
+            #addTestCase(CircleTest)
+            #addTestCase(ComplexTest)
+    }
 
-        System #out #println("    -------------");
-        System #out #println(">   " + "demo.validation.engine");
-        #runTestCase(LevelTest);
-        #runTestCase(IssueTest);
+    TestSuite demonstrators() {
+        ^ TestSuite
+            #new("demonstrators")
+            #addTestCase(ArchetypeClassDemonstratorTest)
+            #addTestCase(ArchetypeEnumDemonstratorTest)
+            #addTestCase(ArchetypeRecordDemonstratorTest)
+            #addTestCase(ClosureDemonstratorTest)
+            #addTestCase(CollectionLiteralDemonstratorTest)
+            #addTestCase(CoreCollectionDemonstratorTest)
+            #addTestCase(EqualityDemonstratorTest)
+            #addTestCase(ExceptionHandlingDemonstratorTest)
+    }
+
+    TestSuite domain() {
+        ^ TestSuite
+            #new("demo.validation.domain")
+            #addTestCase(PersonTest)
+            #addTestCase(ContactFormTest)
+    }
+
+    TestSuite engine() {
         // TODO add tests for each engine class
+        ^ TestSuite
+            #new("demo.validation.engine")
+            #addTestCase(LevelTest)
+            #addTestCase(IssueTest)
+    }
 
-        System #out #println("    -------------");
-        System #out #println(">   " + "demo.validation.rules");
-        #runTestCase(ZipConstraintTest);
-        #runTestCase(SsnConstraintTest);
-        #runTestCase(ContactFormValidationTest);
+    TestSuite rules() {
+        ^ TestSuite
+            #new("demo.validation.rules")
+            #addTestCase(ZipConstraintTest)
+            #addTestCase(SsnConstraintTest)
+            #addTestCase(ContactFormValidationTest)
+    }
 
-        System #out #println("    -------------");
-        System #out #println(">   " + "mock");
-        #runTestCase(MockTest);
+    TestSuite mock() {
+        ^ TestSuite
+            #new("mock")
+            #addTestCase(MockTest)
     }
 
 }

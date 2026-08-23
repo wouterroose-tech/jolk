@@ -30,12 +30,12 @@ class MockTest extends TestCase {
     @Test
     testGivenThenThrow() {
         repo = #mock(UserRepository);
-        #given [repo #findById(0)] #throw(RuntimeException);
+        #given [repo #findById(42)] #throw(RuntimeException);
 
         // test & verify
-        Closure find = [ UserManager #new(repo) #find(0)];
+        Closure find = [ UserManager #new(repo) #find(42)];
         #assertThrows(find, RuntimeException );
-        #assertTrue(repo #verify("findById", 0));
+        #assertTrue(repo #verify("findById", 42));
     }
     
     @Test

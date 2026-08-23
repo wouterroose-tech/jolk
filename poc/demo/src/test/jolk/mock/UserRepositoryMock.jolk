@@ -12,9 +12,16 @@
 ///
 class UserRepositoryMock {
 
-    stable Map<String, Closure> stubs = #();
-    stable Map<String, Boolean> calls = #();
+    Map<String, Closure> stubs;
+    Map<String, Boolean> calls;
     String pending;
+
+    meta new() {
+        ^ super
+            #new
+            #stubs(#())
+            #calls(#())
+    }
     
     Object findById(Long id) {
         String selector = "findById(" + id #toString + ")";

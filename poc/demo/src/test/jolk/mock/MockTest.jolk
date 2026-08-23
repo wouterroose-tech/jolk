@@ -11,18 +11,14 @@
 /// @author Wouter Roose
 ///
 class MockTest extends TestCase {
-
-    UserRepository repo = UserRepositoryMock #new;
-    
-    @Test
-    testMockCreation() {
-        UserRepository repo = #mock(UserRepository);
-        #assertIsPresent(repo);
-    }
+        
+    UserRepository repo;
 
     @Test
-    testStubWithReturnValue() {
-        repo #stub("findById", self ##returnUser, 42);
+    testGivenThenReturn() {
+        repo = #mock(UserRepository);
+        User alice  = User #new(42, "Alice");
+        #given [repo #findById(42)] #then(alice);
 
         // test & verify
         User user = UserManager #new(repo) #find(42);
@@ -32,31 +28,30 @@ class MockTest extends TestCase {
     }
 
     @Test
-    testStubWithNull() {
-        // setup
-        repo #stub("findById", self ##userNotFound, 42);
-        UserManager manager = UserManager #new(repo);
+    testGivenThenThrow() {
+        repo = #mock(UserRepository);
+        #given [repo #findById(0)] #throw(RuntimeException);
 
         // test & verify
-        #assertThrows(self ##find, RuntimeException );
-        #assertTrue(repo #verify("findById", 42));
+        Closure find = [ UserManager #new(repo) #find(0)];
+        #assertThrows(find, RuntimeException );
+        #assertTrue(repo #verify("findById", 0));
+    }
+    
+    @Test
+    testMockCreation() {
+        UserRepository repo = #mock(UserRepository);
+        #assertIsPresent(repo);
     }
 
-    User find() {
-        ^ UserManager #new(repo) #find(42)
-    }
-
-    User returnUser() {
-        ^ User #new(42, "Alice");
-    }
-
-    User userNotFound() {
-        RuntimeException #new("User not found") #throw
-    }
-
+    /// Simulate mock API
     <T> T mock(MetaClass<T> clazz) {
         clazz == UserRepository ? [ ^ UserRepositoryMock #new ] ;
         RuntimeException #new("Unnsupported class for mocking: " + clazz);
+    }
+    
+    UserRepositoryMock given(Closure closure) {
+        ^ repo #given(closure);
     }
 
 }

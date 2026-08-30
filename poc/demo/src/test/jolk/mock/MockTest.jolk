@@ -16,12 +16,12 @@ class MockTest extends TestCase {
 
     @Test
     testGivenThenReturn() {
-        repo = #mock(UserRepository);
-        User alice  = User #new(42, "Alice");
-        #given [repo #findById(42)] #then(alice);
+        #repo(#mock(UserRepository));
+        alice = User #new(42, "Alice");
+        #given [#repo #findById(42)] #then(alice);
 
         // test & verify
-        User user = UserManager #new(repo) #find(42);
+        user = UserManager #new(#repo) #find(42);
         #assertIsPresent(user);
         #assertEquals("Alice", user #name);
         #assertTrue(repo #verify("findById", 42));
@@ -29,13 +29,13 @@ class MockTest extends TestCase {
 
     @Test
     testGivenThenThrow() {
-        repo = #mock(UserRepository);
-        #given [repo #findById(42)] #throw(RuntimeException);
+        #repo(#mock(UserRepository));
+        #given [#repo #findById(42)] #throw(RuntimeException);
 
         // test & verify
-        Closure find = [ UserManager #new(repo) #find(42)];
+        find = [ UserManager #new(#repo) #find(42)];
         #assertThrows(find, RuntimeException );
-        #assertTrue(repo #verify("findById", 42));
+        #assertTrue(#repo #verify("findById", 42));
     }
     
     @Test
@@ -51,7 +51,7 @@ class MockTest extends TestCase {
     }
     
     UserRepositoryMock given(Closure closure) {
-        ^ repo #given(closure);
+        ^ #repo #given(closure);
     }
 
 }

@@ -3,6 +3,7 @@ package tolk.parser;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -77,13 +78,32 @@ public class JolkBindingTest extends JolcTestBase {
     }
 
     @Test
+    @Disabled("field assignment not supported yet")
+    void testFieldAssignment() {
+        String source = """
+            class MyClass {
+                Long x = 0; 
+                Long val() {
+                    x = 42;
+                    ^ #x
+                }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        
+        // field access in method
+        assertEquals(42L, instance.invokeMember("x").asLong());
+        assertEquals(42L, instance.invokeMember("val").asLong());
+    }
+
+    @Test
     void testVariableBinding() {
         String source = """
             class MyClass {
                 Long run(Object obj) {
                     Long x = 0; 
                     obj #ifEmpty [ x = 42 ];
-                    ^x
+                    ^ x
                 }
             }""";
         Value meta = eval(source);
@@ -93,7 +113,21 @@ public class JolkBindingTest extends JolcTestBase {
         Object nothing = JolkNothing.INSTANCE;
         assertEquals(42L, instance.invokeMember("run", nothing).asLong());
         assertEquals(42L, instance.invokeMember("run", (Object) null).asLong());
+    }
 
+    @Test
+    void testVariableBindingWithInferredType() {
+        String source = """
+            class MyClass {
+                Long run(Object obj) { x = 42; ^ x }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        
+        // field access in method
+        Object nothing = JolkNothing.INSTANCE;
+        assertEquals(42L, instance.invokeMember("run", nothing).asLong());
+        assertEquals(42L, instance.invokeMember("run", (Object) null).asLong());
     }
 
     @Test
@@ -136,17 +170,17 @@ public class JolkBindingTest extends JolcTestBase {
                 Long getValue() { ^ self #value }
                 Long getValue(Long x) {
                     Long value = x;
-                    ^ self #value
+                    ^ #value
                 }
                 Long run() {
-                    ^self #getValue(self #value)
+                    ^ self #getValue(self #value)
                 }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
         assertEquals(42L, instance.invokeMember("value").asLong());
         assertEquals(42L, instance.invokeMember("getValue").asLong());
-        assertEquals(42L, instance.invokeMember("getValue", 42L).asLong());
+        assertEquals(42L, instance.invokeMember("getValue", 0).asLong());
         assertEquals(42L, instance.invokeMember("run").asLong());
     }
 

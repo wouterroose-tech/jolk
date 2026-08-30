@@ -595,6 +595,14 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             return new JolkWriteLocalVariableNode(info.index, info.depth, expression);
         }
 
+        // If inside a method/closure, this is a local variable declaration
+        if (!scopes.isEmpty() && !resolveField(name)) {
+            List<String> currentScope = scopes.peek();
+            currentScope.add(name);
+            info = resolveLocal(name);
+            return new JolkWriteLocalVariableNode(info.index, info.depth, expression);
+        } 
+        
         // Syntactic field assignment (implicit messaging)
         // To reduce the "verbosity tax," Jolk allows bare identifiers to 
         // appear as the target of an assignment. This is purely syntactic; 
@@ -602,6 +610,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         // This ensures the metaboundary is preserved, as the "assignment" 
         // is still mediated through the object's message protocol.
         return JolkMessageSendNodeGen.create(name, new JolkNode[]{expression}, visitReservedSelf());
+        
+    }
+
+    private boolean resolveField(String name) {
+        // TODO Auto-generated method stub
+        return false;
     }
 
     @Override

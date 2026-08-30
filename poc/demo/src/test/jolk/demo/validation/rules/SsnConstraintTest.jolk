@@ -13,8 +13,10 @@ class SsnConstraintTest extends TestCase {
 
     /// Verifies that the `#accept` protocol succeeds for a valid `Person` ssn.
     test_accept_success() {
-        ExecutionContext context = ExecutionContext #new;
-        Person person = Person #new #ssn(800101035);
+        // type inference
+        context = ExecutionContext #new;
+        person = Person #new #ssn(800101035);
+        // test 
         SsnConstraint #new #accept(person, context);
         #assertFalse(context #hasIssue)
     }

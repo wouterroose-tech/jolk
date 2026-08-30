@@ -14,7 +14,7 @@ class ExecutionContext {
     ArrayList<Issue> issues;
 
     meta new() {
-        ^super #new #issues(#[])
+        ^ super #new #issues(#[])
     }
 
     /// Adds an issue for the given subject.
@@ -43,7 +43,7 @@ class ExecutionContext {
     }
 
     #! Boolean hasMatch(Predicate<Issue> p) {
-        ^ issues #anyMatch(p)
+        ^ #issues #anyMatch(p)
     }
 
 }

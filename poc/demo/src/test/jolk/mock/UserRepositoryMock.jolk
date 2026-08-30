@@ -17,14 +17,13 @@ class UserRepositoryMock {
     String pending;
 
     meta new() {
-        ^ super
-            #new
+        ^ #new
             #stubs(#())
             #calls(#())
     }
     
     Object findById(Long id) {
-        String selector = "findById(" + id #toString + ")";
+        selector = "findById(" + id #toString + ")";
         #stubs #at(selector) #ifPresent [ v -> 
             #calls #put(selector , true);
             ^ v #apply ];

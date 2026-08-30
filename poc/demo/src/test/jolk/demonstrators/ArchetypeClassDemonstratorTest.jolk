@@ -9,29 +9,29 @@
 final class ArchetypeClassDemonstratorTest extends TestCase {
     
     testNew() {
-        Person p = Person #new;
-        #assertIsPresent(p);
-        #assertTrue(p != null);
+        person = Person #new;
+        #assertIsPresent(person);
+        #assertTrue(person != null);
     }
 
     testCanonicalNew() {
-        Person p = Person #new(123456789, "John", "Doe");
-        #assertEquals(123456789, p #ssn);
-        #assertEquals("John", p #firstName);
-        #assertEquals("Doe", p #lastName);
+        person = Person #new(123456789, "John", "Doe");
+        #assertEquals(123456789, person #ssn);
+        #assertEquals("John", person #firstName);
+        #assertEquals("Doe", person #lastName);
     }
 
     testFluid() {
-        String s =  Person #new
+        string =  Person #new
             #ssn(987654321)
             #firstName("Jane")
             #lastName("Doe")
             #name;
-        #assertEquals("Jane Doe", s);
+        #assertEquals("Jane Doe", string);
     }
     
     testRunToString() {
-        Person person = Person #new(123456789, "John", "Doe");
+        person = Person #new(123456789, "John", "Doe");
         #assertEquals("Person[ssn=123456789, firstName=John, lastName=Doe]", person #toString);
     }
 

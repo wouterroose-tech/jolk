@@ -46,7 +46,7 @@
     ///
     /// Returns a new Circle scaled by the provided factor.
     Circle *(Number factor) {
-        ^ Circle #new(self #radius * factor)
+        ^ Circle #new(#radius * factor)
     }
 
     /// ### ~~ (Equivalence)
@@ -56,7 +56,7 @@
         (self == other) ? [ ^ true ];
         // Use pattern matching to safely compare properties
         other #instanceOf(Circle)
-            #ifPresent [ c ->  ^ self #radius == c #radius ];
+            #ifPresent [ c ->  ^ #radius == c #radius ];
         ^ false
     }
 
@@ -64,7 +64,7 @@
     ///
     /// Returns a standardized string representation of the circle.
     String toString() {
-        ^ "Circle[radius=" + self #radius #toString + "]"
+        ^ "Circle[radius=" + #radius #toString + "]"
     }
 
 }

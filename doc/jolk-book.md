@@ -96,7 +96,7 @@ Empirical software engineering literature demonstrates that lexical token densit
 
 *Jolk defines the object not as a container, but as an identity manifested through message-driven interactions.*
 
-*The Receiver constitutes the terminus for invocations. The metaobject protocol[17] provides the intrinsic reflection necessary to map high-level abstractions to the JVM. The Identity asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a meta-level boundary that enforces local retention, thereby effecting the 'disappearance of data.'* 
+*The Receiver constitutes the terminus for invocations. The metaobject protocol[11] provides the intrinsic reflection necessary to map high-level abstractions to the JVM. The Identity asserts the instance as a first-class, non-nullable entity. Adherent to Kay’s vision, these components are mediated by a meta-level boundary that enforces local retention, thereby effecting the 'disappearance of data.'* 
 
 *The message-oriented paradigm subsumes keyword-driven control flow with an exchange of messages, formalising branching as a first-class participant within a unified communicative field.*
 
@@ -288,7 +288,7 @@ The modifier protocol defines a specification for member management:
 
 ### The Self type alias
 
-`Self` serves as a dynamic reference to the current type definition, acting as a recursive alias that automatically resolves to the specific class or protocol being implemented. Unlike a fixed class name, `Self` is context-aware; it ensures that method returns and parameter requirements adapt to inheritance, allowing a subclass to automatically inherit a 'self-referencing' signature without manual overrides. By distinguishing `Self` (the type) from `self` (the instance) through casing, the model provides a clear visual hierarchy that prevents confusion between meta-level definitions and runtime values. This design allows for more expressive protocols and factory methods, as the type can refer to its own identity in a stable, name-independent manner.
+The `Self` reserved type alias functions as a context-aware reference to the active type definition. `Self` resolves to the specific class or protocol being implemented. Based on Bruce’s `MyType` theorem[15], the `Self` type alias enforces type safety for self-referencing return signatures, type-safe binary operations, factory creation methods, and fluent interfaces across inheritance hierarchies, eliminating manual method signature overrides in subtypes. The distinction between `Self` (the type) and `self` (the instance) adheres to the semantic casing rule. In method return signatures, `Self` enforces an implicit return of self, assuring that subclass invocations yield the specialized subtype identity. Using `Self` as a method parameter type introduces covariant parameter specialization; to preserve static type safety within the subtype lattice, parameter references to `Self` are restricted to final methods or final archetypes. 
 
 ### Closure
 
@@ -330,11 +330,11 @@ While the JVM manages the physical layout and integrity of objects, the Jolk typ
 
 ## Types
 
-Classes, Records, Enums, and Value Types are harmonised under a unified, 'bracket-light' syntax that prioritises a pure message-oriented paradigm. While these types are conceptually mapped to Java counterparts, they are semantically governed by Lattice separation. This ensures that an object’s role in the system is defined by its behavioral `protocol`.
+Classes, Records, Enums, and Value Types are harmonised under a unified, 'bracket-light' syntax that prioritises a pure message-oriented paradigm. While these types are conceptually mapped to Java counterparts, they are semantically governed by Lattice separation. This ensures that an object’s role in the system is defined by its behavioral `protocol`. By the application of implicit field encapsulation and standardising core capabilities like equivalence across every archetype, the model achieves *behavioral integrity*.
 
-This alignment is anchored by semantic casing, where uppercase names signal that these types are first-class Meta-objects. Consequently, Value types offer the same 'bracket-light' accessor protocol as records but are optimised for flat memory layouts and reduced heap overhead, treating the JVM as a high-performance substrate while maintaining an object-oriented discipline.
+This alignment is anchored by semantic casing, where uppercase names signal that these types are first-class Meta-objects. Consequently, Value types offer the same 'bracket-light' accessor protocol as records but are optimised for flat memory layouts and reduced heap overhead, treating the JVM as a high-performance substrate while maintaining an object-oriented discipline. 
 
-By the application of implicit field encapsulation and standardising core capabilities like equivalence across every archetype, the model achieves *behavioral integrity*. Jolk supports parameterised types through generics and (F-)Bounded quantification[9]. Unlike Java interfaces, which are nominal, Jolk protocols use the `&` operator to represent behavioral conjunctions within the subtype lattice. Finally, extension protocols allow behavior to be 'bolted on' to existing final types without modifying source code.
+Jolk supports parameterised types through generics and (F-)Bounded polymorphism[9]. Jolk protocols use the `&` operator to represent behavioral conjunctions within the subtype lattice. Finally, extension protocols allow behavior to be 'bolted on' to existing final types without modifying source code.
 
 ### Archetypes
 
@@ -521,7 +521,7 @@ Jolk’s meta-layer, governed by its metaclass architecture, defines super-class
 
 **Self**
 
-The Self Type Alias: Distinct from `self` (the instance), `Self` serves as a dynamic, context-aware reference to the current type definition. It acts as a recursive alias that resolves to the specific class or protocol being implemented, ensuring method returns and parameter requirements adapt to inheritance without manual overrides. By referencing its own identity in a name-independent manner, `Self` facilitates more expressive factory methods and protocols that remain type-safe throughout the inheritance hierarchy. 
+The Self type alias `Self` serves as a dynamic, context-aware reference to the current type definition. It acts as an alias that resolves to the specific class or protocol being implemented, ensuring method returns and parameter requirements adapt to inheritance without manual overrides. By referencing its own identity in a name-independent manner, `Self` facilitates expressive factory methods and protocols that remain type-safe throughout the inheritance hierarchy. `Self` resolves to the class when a `meta` method returns the class receiver or to the instance when it returns an allocated instance.
 
 **Super class**
 
@@ -762,7 +762,7 @@ This mechanism supports both instance-bound references (`self ##method`, `instan
 
 ### Exceptions
 
-While Jolk utilizes the standard Java Exception hierarchy, it eliminates checked exceptions. Following the design of languages like Kotlin[11], Jolk does not force the developer to catch exceptions, allowing them to propagate through the call hierarchy. In Jolk, exception handling is implemented through unified message passing. This approach treats error handling as a library feature where logic is executed by sending messages to closures. Closure is a primitive kernel class with provides `#try`, `#catch` and `#finally` methods.
+While Jolk utilizes the standard Java Exception hierarchy, it eliminates checked exceptions. Jolk does not force the developer to catch exceptions, allowing them to propagate through the call hierarchy. In Jolk, exception handling is implemented through unified message passing. This approach treats error handling as a library feature where logic is executed by sending messages to closures. Closure is a primitive kernel class with provides `#try`, `#catch` and `#finally` methods.
 
 **Exception Class**
 
@@ -936,7 +936,7 @@ In Jolk the distinction between *Intrinsic*, *Transparent*, and *Opaque* selecto
 
 **MetaClass**
 
-Jolk implements an ObjVlisp metaclass model[18] where `Metaclass` functions as an intrinsic entity. Every class exists as a direct instance of `Metaclass`. These metalevel instances form a distinct parent-child metaclass inheritance tree that mirrors the primary domain-level hierarchy. To close the reflexive instantiation loop, `Metaclass` exists as an instance of itself.
+Jolk implements an ObjVlisp metaclass model[14] where `Metaclass` functions as an intrinsic entity. Every class exists as a direct instance of `Metaclass`. These metalevel instances form a distinct parent-child metaclass inheritance tree that mirrors the primary domain-level hierarchy. To close the reflexive instantiation loop, `Metaclass` exists as an instance of itself.
 
 This architecture establishes types as first-class meta-objects, centralising the type protocol (e.g., `#new`, `#name`). Class-side invocations execute via message dispatch on `Metaclass` instances, enabling virtual static dispatch. Class-side method lookup traverses the primary domain hierarchy.
 
@@ -1102,9 +1102,9 @@ Jolk is a convergent architecture where the static safety of Java acts as the ga
 
 *Smalltalk-80*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic exchange of messages"[2]. It utilizes keyword selectors (using a `#` hashtag anchor) and closures (`[ ]`) as first-class identities to manage control flow. Similar to Smalltalk, it provides Non-Local Returns, allowing a closure to command its defining method to finish immediately. Unlike Smalltalk, which operates in a closed image, Jolk must respect the JVM stack. Non-local returns are permitted within the guest environment but are strictly forbidden when a closure is projected as an opaque Java Functional Interface.
 
-*The Self language*: The Tolk Engine’s strategy of semantic flattening is the spiritual successor to the optimization techniques developed for the Self language[10].
+*Strongtalk*: Jolk applies principles from Strongtalk to achieve structural type constraints within the host environment[4]. The runtime explicitly separates behavioral protocols from the class hierarchy through the use of the `protocol` archetype, a concept known as *lattice separation*. Jolk employs Strongtalk-inspired type-checking to statically validate messages, ensuring a receiver can understand a message before execution. Jolk leverages Strongtalk to focus on behavioral integrity. This is reinforced by the ampersand (`&`) operator, which reifies *conjunction types* for behavioral composition, and the `Self` type alias, which ensures that methods returning `Self` remain type-safe across the inheritance tree.
 
-*Strongtalk*: Jolk applies principles from Strongtalk to achieve structural type constraints within the host environment[5]. The runtime explicitly separates behavioral protocols from the class hierarchy through the use of the `protocol` archetype, a concept known as *lattice separation*. Jolk employs Strongtalk-inspired type-checking to statically validate messages, ensuring a receiver can understand a message before execution. Jolk leverages Strongtalk to focus on behavioral integrity. This is reinforced by the ampersand (`&`) operator, which reifies *conjunction types* for behavioral composition, and `< >` delimiters for *F-bounded quantification*, ensuring that methods returning `Self` remain type-safe across the inheritance tree.
+*The Self language*: The Tolk Engine’s strategy of semantic flattening is the spiritual successor to the optimization techniques developed for the Self language[10].
 
 *Java and JVM*: The syntax for structural scaffolding—including package, import, and class—is intentionally aligned with Java. Jolk integrates with the Java Collections Framework and supports both annotations and Java Generics. Furthermore, the language is designed to leverage emerging JVM features, specifically Project Valhalla for Value Objects, Project Loom for Structured Concurrency, and Project Amber for Pattern Matching.
 
@@ -1142,7 +1142,7 @@ The framework provides a set of abstract & final classes that are the basis for 
 
 **class \- Node, ChildValidation, Validation, Suite, Constraint, Interrupt**
 
-Demonstrated language concepts: generics, Self Type alias, message chaining for control and exception flow, null object pattern
+Demonstrated language concepts: generics, Self type alias, message chaining for control and exception flow, null object pattern
 
 	//
 	package abstract class Node<T> {
@@ -1474,7 +1474,7 @@ Projection in Jolk offers architectural clarity that surpasses the obscurity of 
 
 The discovery and execution model of the Jolk unit test framework relies on the Jolk metaobject protocol and is integrated into the JUnit Platform via a custom test engine implementation. This incubator implementation serves as the reference architecture for message-driven test discovery, registration, execution, and lifecycle management within JVM test runners.
 
-Inspired by Alan Kay’s “The big idea is messaging” and Kent Beck’s `SUnit` [23], the architecture of JolkUnit unifies structural exploration with message-oriented execution. The test engine dispatches messages to a `MetaClass` to resolve test definitions. Test configurations, parameter models, and lifecycles are implemented trough a metaobject protocol, establishing the framework as a participant within the messaging model.
+Inspired by Alan Kay’s “The big idea is messaging” and Kent Beck’s `SUnit` [22], the architecture of JolkUnit unifies structural exploration with message-oriented execution. The test engine dispatches messages to a `MetaClass` to resolve test definitions. Test configurations, parameter models, and lifecycles are implemented trough a metaobject protocol, establishing the framework as a participant within the messaging model.
 
 The unit testing framework is synthesized as a direct manifestation of the language's message-dispatch mechanics and embodies this principle by leveraging Jolk's meta-layer capabilities for test discovery and configuration. When a test method evaluates, it naturally updates an execution context. This framework handles verification constraints entirely through messaging and Metaobject protocols. By utilizing a stateless protocol with default method implementations, JolkUnit serves as a flexible trait interface, bypassing single-inheritance limitations without resorting to external metadata markers.
 
@@ -1583,7 +1583,7 @@ testGivenThenThrow() {
 While initial explorations considered a static bytecode compiler targeting `.class` files, the inherent tension between Jolk’s late-bound messaging ergonomics and the rigid constraints of traditional JVM compilation necessitated an architectural evolution. The transition to the Truffle framework ensures that the language’s fluid semantics are preserved while leveraging
 specialization to achieve execution parity with native substrate operations.
 
-The Tolk Project is the engineering framework for implementing Jolk on the JVM. It is composed of three primary pillars: the Jolk specification, which defines the formal grammar for fluid method chaining and strict type-safety; `jolk.lang`, the kernel library containing the core identities and intrinsic primitives necessary for branching, iteration, error recovery, and structural concurrency, while serving as the bridge to the Java ecosystem; and the Tolk Engine. The selection of the Truffle framework[21] is a strategic architectural decision to reconcile Jolk’s message-passing semantics with industrial-grade performance. This enables the engine to perform semantic flattening, collapsing high-level abstractions into optimized machine code through node specialization. While Jolk provides the high-level message-passing syntax, Tolk ensures that complex logic, concurrent execution, and *shim-less* Java interoperability are specialised for peak performance within the GraalVM runtime.
+The Tolk Project is the engineering framework for implementing Jolk on the JVM. It is composed of three primary pillars: the Jolk specification, which defines the formal grammar for fluid method chaining and strict type-safety; `jolk.lang`, the kernel library containing the core identities and intrinsic primitives necessary for branching, iteration, error recovery, and structural concurrency, while serving as the bridge to the Java ecosystem; and the Tolk Engine. The selection of the Truffle framework[20] is a strategic architectural decision to reconcile Jolk’s message-passing semantics with industrial-grade performance. This enables the engine to perform semantic flattening, collapsing high-level abstractions into optimized machine code through node specialization. While Jolk provides the high-level message-passing syntax, Tolk ensures that complex logic, concurrent execution, and *shim-less* Java interoperability are specialised for peak performance within the GraalVM runtime.
 
 The implementation of the *Jolk Messaging Protocol* is operationalised through the *Truffle DSL*, where the *Sparse Type System* is realised as a specialised abstract syntax tree (AST). Within this architecture, every identity exists as a node in a dynamic, self-optimising graph. The *Universal Root Identity* is reified as the base `JolkNode`, providing the foundational infrastructure for the *Intrinsic Object protocol*. This base node enforces a unified dispatch interface across the entire graph, utilizing `@Specialization` annotations to map Jolk message selectors to executable logic. By rooting all entities in this single base class, the execution engine maintains *Identity Congruence*, treating native structures and coalesced external objects as uniform participants within the messaging exchange.
 
@@ -1599,7 +1599,7 @@ The Tolk Project implements the Jolk grammar by harmonising its human-centric de
 
 To manage the shared prefixes inherent in the specification—where annotations and modifiers may initiate both types and members—the project utilizes an LL(k) strategy with a lookahead of $k > 1$. This approach facilitates the resolution of overlapping structural paths without compromising the original design, while enhancing the precision of syntax diagnostics by deferring decisions until sufficient context is established. Within the construction of the abstract syntax tree (AST), the implementation mandates right-associativity for the power operator and the flattening of deeply nested expression hierarchies into N-ary nodes to optimise memory efficiency and traversal velocity.
 
-While Jolk philosophy posits that "everything is a message," the implementation in `jolk.g4`[22] utilizes a *stratified grammar*. This technical refinement—visible in the tiered expression productions—is the mechanism used to enforce standard mathematical precedence. 
+While Jolk philosophy posits that "everything is a message," the implementation in `jolk.g4`[21] utilizes a *stratified grammar*. This technical refinement—visible in the tiered expression productions—is the mechanism used to enforce standard mathematical precedence. 
 
 The `JolkVisitor` is responsible for bridging this technical necessity with the semantic core. It visits these hierarchical tiers and reifies them into `JolkMessageSendNode` instances. This process, referred to as *semantic flattening*, ensures that while the parser understands the "layers" of an expression, the Tolk engine executes them as a singular, fluid communicative flow.
 
@@ -1681,7 +1681,7 @@ This architecture allows the engine to treat text as a specialized primitive, ma
 **stable**
 
 ### Semantic Flattening
-This is the mechanical process of collapsing high-level messaging protocols into optimized machine code. The foundations of this process trace back to the *Self Language (1989)*[13], which pioneered "Maps" (the conceptual predecessor to Truffle Shapes) to flatten object dispatch. Tolk evolves this by utilizing the *Truffle framework's* implementation of *Partial Evaluation*—the mathematical realization of the Futamura Projections. By taking the generic Jolk interpreter and the specific execution path of a Jolk source file, the engine "collapses" the high-level AST into specialized instructions through the following mechanisms:
+This is the mechanical process of collapsing high-level messaging protocols into optimized machine code. The foundations of this process trace back to the *Self Language (1989)*[10], which pioneered "Maps" (the conceptual predecessor to Truffle Shapes) to flatten object dispatch. Tolk evolves this by utilizing the *Truffle framework's* implementation of *Partial Evaluation*—the mathematical realization of the Futamura Projections. By taking the generic Jolk interpreter and the specific execution path of a Jolk source file, the engine "collapses" the high-level AST into specialized instructions through the following mechanisms:
 
 **Registry Initialisation:** In the `JolkMetaClass` implementation, the engine avoids the overhead of recursive hierarchy walks during message dispatch. Through the `ensureHydrated()` protocol, complex inheritance trees are collapsed into a consolidated, flattened registry. This transforms what would traditionally be a costly search into a deterministic lookup. By deferring this initialisation until the first message is sent, the engine resolves forward references and dynamic extensions without sacrificing runtime density.
 
@@ -1768,25 +1768,27 @@ Within this `get` method, the Tolk Engine orchestrates the on-demand execution o
 
 [7]: Jones, C. (2010). Scoring and Evaluating Software Methods, Practices, and Results (Version 3.1). Namcook Analytics LLC.
 
-[7]: Schärli, N.; Ducasse, S.; Nierstrasz, O.; Black, A. P. (2003). Traits: Composable Units of Behaviour. ECOOP 2003.
+[8]: Schärli, N.; Ducasse, S.; Nierstrasz, O.; Black, A. P. (2003). Traits: Composable Units of Behaviour. ECOOP 2003.
 
 [9]: Canning, P. S.; Cook, W. R.; Hill, W. L.; Mitchell, J. C.; Olthoff, W. (1989). F-bounded polymorphism for object-oriented programming. In Conference on Functional Programming Languages and Computer Architecture.
 
 [10]: Chambers, C.; Ungar, D. (1989). Customization: Optimizing Compiler Technology for Self, a Dynamically-Typed Object-Oriented Programming Language. In PLDI '89 (pp. 146–160).
 
+[11]: Kiczales, G.; des Rivieres J.; Bobrow D. (1991). The Art of the Metaobject Protocol. The MIT Press. ISBN 978-0262610742. 
+
 [12]: Würthinger, T., et al. (2013). One VM to Rule Them All. ([Proceedings of the 2013 ACM International Symposium on New Ideas, New Paradigms, and Reflections on Programming & Software (Onward!)](https://lafo.ssw.uni-linz.ac.at/pub/papers/2013_Onward_OneVMToRuleThemAll.pdf))
 
 [13]: Woolf, B. (1998). Null Object. Pattern Languages of Program Design 3. Addison-Wesley.
 
-[17]: Kiczales, G.; des Rivieres J.; Bobrow D. (1991). The Art of the Metaobject Protocol. The MIT Press. ISBN 978-0262610742. 
+[14]: Cointe, P (1987). "Metaclasses are first class: The ObjVlisp Model". ACM SIGPLAN Notices. 22 (12): 156–162. doi:10.1145/38807.38822. ISSN 0362-1340.
 
-[18]: Cointe, P (1987). "Metaclasses are first class: The ObjVlisp Model". ACM SIGPLAN Notices. 22 (12): 156–162. doi:10.1145/38807.38822. ISSN 0362-1340.
+[15]: Bruce, K. B. (2002). Foundations of Object-Oriented Languages: Types and Semantics. MIT Press.
 
-[21]: Oracle. Truffle Language Implementation Framework. GraalVM Documentation. ([https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework](https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework))
+[20]: Oracle. Truffle Language Implementation Framework. GraalVM Documentation. ([https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework](https://www.graalvm.org/latest/graalvm-as-a-platform/language-implementation-framework))
 
-[22]: Roose, W. (2026). The Jolk ANTLR4 Grammar (`jolk.g4`). (https://github.com/wouterroose-tech/jolk/blob/main/poc/grammar/src/main/antlr4/tolk/grammar/jolk.g4)
+[21]: Roose, W. (2026). The Jolk ANTLR4 Grammar (`jolk.g4`). (https://github.com/wouterroose-tech/jolk/blob/main/poc/grammar/src/main/antlr4/tolk/grammar/jolk.g4)
 
-[23]: Beck, K. (1998). Kent Beck's Guide to Better Smalltalk chapter 30 "Simple Smalltalk Testing". Cambridge University Press. ISBN 978-0-521-64437-2
+[22]: Beck, K. (1998). Kent Beck's Guide to Better Smalltalk chapter 30 "Simple Smalltalk Testing". Cambridge University Press. ISBN 978-0-521-64437-2
 
 
 ---

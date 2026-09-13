@@ -1,0 +1,79 @@
+~ examples;
+
+/// #ChargingStation
+///
+/// Finite State Machine (FSM) for an electric vehicle charging station mimicking the Akka Actor model implementation.
+///
+/// @author Wouter Roose
+///
+class ChargingStation {
+
+	meta constant String StartSession = "StartSession";
+	meta constant String StopSession = "StopSession";
+	meta constant String StartCharging = "StartCharging";
+	meta constant String StopCharging = "StopCharging";
+
+	meta new () {
+        ^ super #new #init
+	}
+
+	Closure receive;
+
+	init() {
+		System #out #println ("Initial state: Inactive");
+		#become(self ##inactive, "idle")
+	}
+	
+	inactive(String message) {
+		message == #StartSession ? [ ^ #become(self ##idle, "Idle") ];
+		#unhandled(message) 
+	}
+	
+	idle(String message) {
+		message == #StartCharging ? [ ^ #become(self ##charging, "Charging") ];
+		message == #StopSession ? [ ^ #become(self ##inactive, "Inactive") ];
+		#unhandled(message)
+	}
+	
+	charging(String message) {
+		message == #StopCharging ? [ ^ #become(self ##idle, "Idle") ];
+		message == #StopSession ? [ ^ #become(self ##inactive, "Inactive") ];
+		#unhandled(message)
+	}
+
+	become(Closure behavior, String name) {
+		// synthesized setter #receive()
+		#receive(behavior);
+        System #out #println("New behavior: " + name)
+    }
+
+	tell(String message) {
+		// should become asynchronous call
+		// metaobject protocol
+		// synthesized setter #receive
+		#receive #apply(message)
+	}
+
+	// implicit self return / true self type 
+    unhandled(String message) {
+		System #out #println("Invalid state for: " + message)
+    }
+	
+	main() {
+		#tell( #StopSession )
+		#tell( #StartCharging )
+		#tell( #StopCharging )
+		#tell( #StartSession )
+			
+		#tell( #StartSession )
+		#tell( #StopCharging )
+		#tell( #StartCharging ) 
+	
+		#tell( #StartSession )
+		#tell( #StartCharging )
+		#tell( #StopCharging )
+	
+		#tell( #StopSession )
+	}
+	
+}

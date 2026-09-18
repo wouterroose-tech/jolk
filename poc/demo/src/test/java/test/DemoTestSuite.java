@@ -106,6 +106,12 @@ public class DemoTestSuite extends TestRunner {
         testClass = load("/demonstrators/ExceptionHandlingTest.jolk");
         runTestClass(testClass);
         
+        testClass = load("/demonstrators/MetaFieldProjectionTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/PatternMatchingTest.jolk");
+        runTestClass(testClass);
+        
         testClass = load("/demonstrators/ExpressionTest.jolk");
         runTestClass(testClass);
 

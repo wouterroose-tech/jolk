@@ -1,16 +1,86 @@
 ~ demonstrators;
 
++ demo.validation.domain.Person;
 + jolk.test.api.TestCase;
 
-
+/// Demonstrates Jolk's pattern matching capabilities.
+///
+/// Jolk replaces traditional `instanceof` checks and casts with a fluid,
+/// message-passing syntax. This ensures type-safe execution without breaking
+/// the message chain.
+///
+/// ### #instanceOf
+/// *   **Jolk**: `subject #instanceOf(Person) #ifPresent [ p -> p #... ]`
+/// *   **Java**: `if (subject instanceof Person p) { p... }`
+///
+/// ### #as
+/// *   **Jolk**: `subject #as(Person) #...`
+/// *   **Java**: `((Person) subject)...`
+///
+/// ### #isInstance
+/// *   **Jolk**: `Person #isInstance(subject)`
+/// *   **Java**: `Person.class.isInstance(subject)`
+///
+/// @author Wouter Roose
+///
 final class PatternMatchingTest extends TestCase {
 
     PatternMatchingDemonstrator demonstrator = PatternMatchingDemonstrator #new;
 
+    /// Demonstrates `#instanceOf` with `#isPresent` and `#isEmpty` for a boolean check.
     @Test
-    testRunInstanceOf() {
-        #assertTrue(demonstrator #runInstanceOf("red"));
-        #assertFalse(demonstrator #runInstanceOf(1));
+    testInstanceOfIsPresent() {
+        Object subject;
+        #assertFalse(subject #instanceOf(Person) #isPresent);
+        #assertTrue(subject #instanceOf(Person) #isEmpty);
+
+        subject = Object #new;
+        #assertFalse(subject #instanceOf(Person) #isPresent);
+        #assertTrue(subject #instanceOf(Person) #isEmpty);
+
+        Object subject = Person #new;
+        #assertTrue(subject #instanceOf(Person) #isPresent);
+        #assertFalse(subject #instanceOf(Person) #isEmpty);
+    }
+
+    /// Demonstrates `#instanceOf` with `#ifPresent` and `#ifEmpty` for closure execution.
+    @Test
+    testInstanceOfIfPresent() {
+        Object subject;
+        #assertFalse(subject #instanceOf(Person) #ifPresent [ p -> true ] #ifEmpty [ false ]);
+
+        subject = Object #new;
+        #assertFalse(subject #instanceOf(Person) #ifPresent [ p -> true ] #ifEmpty [ false ]);
+
+        Object subject = Person #new;
+        #assertTrue(subject #instanceOf(Person) #ifPresent [ p -> true ] #ifEmpty [ false ]);
+    }
+
+    /// Demonstrates `#isInstance`, which is equivalent to `Class.isInstance()` in Java.
+    @Test
+    testIsInstance() {
+        Object subject;
+        #assertFalse(Person #isInstance(subject));
+
+        subject = Object #new;
+        #assertFalse(Person #isInstance(subject));
+
+        subject = Person #new;
+        #assertTrue(Person #isInstance(subject));
+    }
+
+    /// Demonstrates a hard cast using `#as`.
+    /// `#as` returns Nothing if the subject is not a Person.
+    @Test
+    testAs() {
+        Object subject;
+        #assertIsEmpty(subject #as(Person));
+
+        subject = Object #new;
+        #assertIsEmpty(subject #as(Person));
+
+        Object subject = Person #new;
+        #assertTrue(subject #as(Person) #instanceOf(Person));
     }
     
 }

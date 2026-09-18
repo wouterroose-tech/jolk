@@ -52,7 +52,8 @@
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
-            </resource><resource>
+            </resource>
+            <resource>
                 <directory>src/main/jolk</directory>
             </resource>
         </resources>

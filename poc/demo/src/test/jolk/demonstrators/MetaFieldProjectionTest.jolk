@@ -1,0 +1,33 @@
+~ demonstrators;
+
++ demo.examples.Circle;
++ jolk.test.api.TestCase;
+
+& java.lang.Math.PI;
+& TWO_PI = java.lang.Math.TAU;
+
+/// # MetaFieldProjectionTest
+///
+/// Verifies the interaction with Meta field Projection.
+///
+/// @author Wouter Roose
+///
+class MetaFieldProjectionTest extends TestCase {
+
+    @Test
+    testProject() {
+        #assertTrue(3.141592653589793 == PI);
+
+        // TODO: fix
+        //#assertEquals(3.141592653589793, PI );
+    }
+
+    @Test
+    testProjectAlias() {
+        #assertTrue(2 * PI == TWO_PI);
+
+        // TODO: fix
+        //#assertEquals(2 * PI, TWO_PI);
+    }
+
+}

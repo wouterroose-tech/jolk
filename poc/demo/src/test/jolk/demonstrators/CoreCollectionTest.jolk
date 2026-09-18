@@ -6,7 +6,7 @@
 ///
 /// @author Wouter Roose
 ///
-public class CoreCollectionDemonstratorTest extends TestCase {
+public class CoreCollectionTest extends TestCase {
 
     CoreCollectionDemonstrator demonstrator = CoreCollectionDemonstrator #new;
 

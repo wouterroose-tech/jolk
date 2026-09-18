@@ -1,0 +1,105 @@
+~ demonstrators;
+
++ jolk.test.api.TestCase;
+
+/// Demonstrates Jolk's Ternary (`?` and `?!`) expressions.
+///
+/// Jolk unifies control flow into expression-based message passing.
+/// * `?` is the "if-true" operator.
+/// * `?!` is the "if-not-true" operator.
+/// * `condition ? trueVal : falseVal` is transpiled to a Java ternary expression.
+/// * `condition ? [ ... ]` is transpiled to a Java if-statement.
+///
+/// @author Wouter Roose
+
+final class TernaryExpressionTest extends TestCase {
+
+    String runReturn(Boolean condition) {
+        ^ condition ? "True" : "False"
+    }
+
+    String runAssignment(Boolean condition) {
+        String result = condition ? "A" : "B";
+        ^ result
+    }
+
+    String runAssignmentIfNot(Boolean c) {
+        String x = c ?! "A" : "B";
+        ^x
+    }
+
+    String runChain(Int val) {
+        ^ (val > 10) ? "High"
+            : (val > 5) ? "Medium"
+            : "Low"
+    }
+
+    String runOneBranch(Boolean condition) {
+        condition ? [ ^ "Hit" ];
+        ^ "Miss"
+    }
+
+    Boolean runIfNotThen(Boolean cond) {
+        cond ?! [ ^ false ];
+        ^ true
+    }
+
+    Boolean runIfNotThenElse(Boolean cond) {
+        cond ?! [ ^ false ] : [ ^ true ]
+    }
+
+    Int runBlockAssignment(Boolean condition) {
+        condition
+            ? [ Int x = 1; ^x ]
+            : [ Int x = 2; ^x ]
+    }
+
+    @Test
+    public testRunReturn() {
+        #assertEquals("True", #runReturn(true));
+        #assertEquals("False", #runReturn(false));
+    }
+
+    @Test
+    public testRunAssignment() {
+        #assertEquals("A", #runAssignment(true));
+        #assertEquals("B", #runAssignment(false));
+    }
+
+    @Test
+    public testRunAssignmentIfNot() {
+        #assertEquals("A", #runAssignmentIfNot(false));
+        #assertEquals("B", #runAssignmentIfNot(true));
+    }
+
+    @Test
+    public testRunChain() {
+        #assertEquals("High", #runChain(20));
+        #assertEquals("Medium", #runChain(10));
+        #assertEquals("Low", #runChain(5));
+    }
+
+    @Test
+    public testRunOneBranch() {
+        #assertEquals("Hit", #runOneBranch(true));
+        #assertEquals("Miss", #runOneBranch(false));
+    }
+
+    @Test
+    public testRunIfNotThen() {
+        #assertTrue(#runIfNotThen(true));
+        #assertFalse(#runIfNotThen(false));
+    }
+
+    @Test
+    public testRunIfNotThenElse() {
+        #assertTrue(#runIfNotThenElse(true));
+        #assertFalse(#runIfNotThenElse(false));
+    }
+
+    @Test
+    public testRunBlockAssignment() {
+        #assertEquals(1, #runBlockAssignment(true));
+        #assertEquals(2, #runBlockAssignment(false));
+    }
+}

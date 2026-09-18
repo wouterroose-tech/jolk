@@ -6,7 +6,7 @@
 ///
 /// @author Wouter Roose
 ///
-final class ArchetypeClassDemonstratorTest extends TestCase {
+final class ClassTest extends TestCase {
     
     testNew() {
         person = Person #new;

@@ -7,7 +7,7 @@
 ///
 /// @author Wouter Roose
 ///
-public class CollectionLiteralDemonstratorTest extends TestCase {
+public class CollectionLiteralTest extends TestCase {
 
     CollectionLiteralDemonstrator demonstrator = CollectionLiteralDemonstrator #new;
 

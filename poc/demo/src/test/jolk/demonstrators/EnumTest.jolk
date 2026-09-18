@@ -3,7 +3,7 @@
 + demo.validation.engine.Level;
 + jolk.test.api.TestCase;
 
-/// # ArchetypeEnumDemonstrator
+/// # EnumTest
 ///
 /// Demonstrates various Jolk archetype features using the `Level` enum.
 ///
@@ -15,7 +15,7 @@
 ///
 /// @author Wouter Roose
 ///
-public class ArchetypeEnumDemonstratorTest extends TestCase {
+public class EnumTest extends TestCase {
 
     
     testAccessConstant() {

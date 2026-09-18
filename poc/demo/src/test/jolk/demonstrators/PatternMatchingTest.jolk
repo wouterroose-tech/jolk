@@ -1,0 +1,16 @@
+~ demonstrators;
+
++ jolk.test.api.TestCase;
+
+
+final class PatternMatchingTest extends TestCase {
+
+    PatternMatchingDemonstrator demonstrator = PatternMatchingDemonstrator #new;
+
+    @Test
+    testRunInstanceOf() {
+        #assertTrue(demonstrator #runInstanceOf("red"));
+        #assertFalse(demonstrator #runInstanceOf(1));
+    }
+    
+}

@@ -5,14 +5,14 @@
 + jolk.test.engine.TestRunner;
 + examples.CircleTest;
 + examples.ComplexTest;
-+ demonstrators.ArchetypeClassDemonstratorTest;
-+ demonstrators.ArchetypeEnumDemonstratorTest;
-+ demonstrators.ArchetypeRecordDemonstratorTest;
-+ demonstrators.ClosureDemonstratorTest;
-+ demonstrators.CollectionLiteralDemonstratorTest;
-+ demonstrators.CoreCollectionDemonstratorTest;
-+ demonstrators.EqualityDemonstratorTest;
-+ demonstrators.ExceptionHandlingDemonstratorTest;
++ demonstrators.ClassTest;
++ demonstrators.ClosureTest;
++ demonstrators.CollectionLiteralTest;
++ demonstrators.EnumTest;
++ demonstrators.CoreCollectionTest;
++ demonstrators.EqualityTest;
++ demonstrators.ExceptionHandlingTest;
++ demonstrators.RecordTest;
 + demo.validation.domain.PersonTest;
 + demo.validation.domain.ContactFormTest;
 + demo.validation.engine.IssueTest;
@@ -52,14 +52,14 @@ class DemoTestRunner extends TestRunner {
     TestSuite demonstrators() {
         ^ TestSuite
             #new("demonstrators")
-            #addTestCase(ArchetypeClassDemonstratorTest)
-            #addTestCase(ArchetypeEnumDemonstratorTest)
-            #addTestCase(ArchetypeRecordDemonstratorTest)
-            #addTestCase(ClosureDemonstratorTest)
-            #addTestCase(CollectionLiteralDemonstratorTest)
-            #addTestCase(CoreCollectionDemonstratorTest)
-            #addTestCase(EqualityDemonstratorTest)
-            #addTestCase(ExceptionHandlingDemonstratorTest)
+            #addTestCase(ClassTest)
+            #addTestCase(EnumTest)
+            #addTestCase(RecordTest)
+            #addTestCase(ClosureTest)
+            #addTestCase(CollectionLiteralTest)
+            #addTestCase(CoreCollectionTest)
+            #addTestCase(EqualityTest)
+            #addTestCase(ExceptionHandlingTest)
     }
 
     TestSuite domain() {

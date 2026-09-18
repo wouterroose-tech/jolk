@@ -1,0 +1,58 @@
+~ demonstrators;
+
++ jolk.test.api.TestCase;
+
+
+/// Demonstrates Jolk's presence and emptiness selectors.
+///
+/// Jolk treats `null` as a first-class object (`Nothing`) that responds to messages.
+/// This avoids `NullPointerException` and allows for fluid, safe message chains.
+///
+/// * Jolk `subject #isPresent` ~~ `subject != null`
+/// * Jolk `subject #isEmpty`   ~~ `subject == null`
+/// * Jolk `subject #ifPresent [ ... ]` ~~ (subject != null) ? [ ... ]`
+/// * Jolk `subject #ifEmpty [ ... ]`   ~~ `(subject == null)? [ ... ]`
+///
+/// @author Wouter Roose
+
+public class PresencyTest extends TestCase {
+
+    Object presentObject = Object #new;
+    Object emptyObject = null;
+
+    Boolean runIfPresent(Object subject) {
+        subject #ifPresent [ ^ true ];
+        ^ false
+    }
+
+    Boolean runIfEmpty(Object subject) {
+        subject #ifEmpty [ ^ false ];
+        ^ true
+    }
+
+    @Test
+    public testRunIsPresent() {
+        #assertTrue(#presentObject #isPresent);
+        #assertFalse(#emptyObject #isPresent);
+    }
+
+    @Test
+    public testRunIsEmpty() {
+        #assertFalse(#presentObject #isEmpty);
+        #assertTrue(#emptyObject #isEmpty);
+    }
+
+    @Test
+    public testRunIfPresent() {
+        #assertTrue(#runIfPresent(#presentObject));
+        #assertFalse(#runIfPresent(#emptyObject));
+
+    }
+
+    @Test
+    public testRunIfEmpty() {
+        #assertTrue(#runIfEmpty(#presentObject));
+        #assertFalse(#runIfEmpty(#emptyObject));
+    }
+
+}

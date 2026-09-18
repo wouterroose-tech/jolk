@@ -1,0 +1,43 @@
+~ demonstrators;
+
++ jolk.test.api.TestCase;
+
+/// # ExpressionDemonstrator
+///
+/// Demonstrates Jolk's expression capabilities.
+///
+/// * **Null-Coalescing**: The `??` operator provides a concise fallback for null values.
+///
+/// @author Wouter Roose
+
+public class ExpressionTest extends TestCase {
+
+    String runNullCoalescing(String s) {
+        ^ s ?? "Default"
+    }
+
+    String runNullCoalescingChain(String s1, String s2) {
+        ^ s1 ?? s2 ?? "Fallback"
+    }
+
+    @Test
+    public testRunNullCoalescing() {
+        #assertEquals("Value", #runNullCoalescing("Value"));
+        #assertEquals("Default", #runNullCoalescing(null));
+    }
+
+    @Test
+    public testRunNullCoalescingChain() {
+        #assertEquals("Value1", #runNullCoalescingChain("Value1", "Value2"));
+        #assertEquals("Value2", #runNullCoalescingChain(null, "Value2"));
+        #assertEquals("Fallback", #runNullCoalescingChain(null, null));
+    }
+
+    /*
+
+    // TODO GuidedCoercion Demonstrator
+
+  
+        
+    */
+}

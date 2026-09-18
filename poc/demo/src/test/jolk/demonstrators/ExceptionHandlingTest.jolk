@@ -14,7 +14,7 @@
 ///
 /// @author Wouter Roose
 ///
-public class ExceptionHandlingDemonstratorTest extends TestCase {
+public class ExceptionHandlingTest extends TestCase {
 
     @Test
     testCatch() {

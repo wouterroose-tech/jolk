@@ -59,14 +59,15 @@ public class DemoTestSuite extends TestRunner {
         load("/examples/ComplexTest.jolk");
         load("/demo/validation/domain/PersonTest.jolk");
         load("/demo/validation/domain/ContactFormTest.jolk");
-        load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
-        load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
-        load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
-        load("/demonstrators/ClosureDemonstratorTest.jolk");
-        load("/demonstrators/EqualityDemonstratorTest.jolk");
-        load("/demonstrators/ExceptionHandlingDemonstratorTest.jolk");
+        load("/demonstrators/ArchetypeClassTest.jolk");
+        load("/demonstrators/ArchetypeEnumTest.jolk");
+        load("/demonstrators/ArchetypeRecordTest.jolk");
+        load("/demonstrators/ClosureTest.jolk");
+        load("/demonstrators/CollectionLiteralTest.jolk");
+        load("/demonstrators/CoreCollectionTest.jolk");
+        load("/demonstrators/CoreProtocolTest.jolk");
+        load("/demonstrators/EqualityTest.jolk");
+        load("/demonstrators/ExceptionHandlingTest.jolk");
         load("/demo/validation/engine/LevelTest.jolk");
         load("/demo/validation/engine/IssueTest.jolk");
         load("/demo/validation/rules/SsnConstraint.jolk");
@@ -81,32 +82,44 @@ public class DemoTestSuite extends TestRunner {
     
     @Test
     public void runDemonstratorTest() {
+        
         Value testClass;
-        testClass = load("/demonstrators/CollectionLiteralDemonstratorTest.jolk");
+
+        testClass = load("/demonstrators/ClassTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/ClosureTest.jolk");
         runTestClass(testClass);
 
-        testClass = load("/demonstrators/CoreCollectionDemonstratorTest.jolk");
-        runTestClass(testClass);
-        
-        testClass = load("/demonstrators/ArchetypeClassDemonstratorTest.jolk");
-        runTestClass(testClass);
-        
-        testClass = load("/demonstrators/ArchetypeEnumDemonstratorTest.jolk");
-        runTestClass(testClass);
-        
-        testClass = load("/demonstrators/ArchetypeRecordDemonstratorTest.jolk");
-        runTestClass(testClass);
-        
-        testClass = load("/demonstrators/ClosureDemonstratorTest.jolk");
-        runTestClass(testClass);
-        
-        testClass = load("/demonstrators/EqualityDemonstratorTest.jolk");
+        testClass = load("/demonstrators/CollectionLiteralTest.jolk");
         runTestClass(testClass);
 
-        testClass = load("/demonstrators/ExceptionHandlingDemonstratorTest.jolk");
+        testClass = load("/demonstrators/CoreCollectionTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/EnumTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/EqualityTest.jolk");
         runTestClass(testClass);
 
-        load("/demonstrators/StableAndConstantFieldDemonstrator.jolk");
+        testClass = load("/demonstrators/ExceptionHandlingTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/ExpressionTest.jolk");
+        runTestClass(testClass);
+
+        load("/demonstrators/StableAndConstantFieldTest.jolk");
+        runTestClass(testClass);
+
+        testClass = load("/demonstrators/PresenceTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demonstrators/RecordTest.jolk");
+        runTestClass(testClass);
+
+        testClass = load("/demonstrators/TernaryExpressionTest.jolk");
+        runTestClass(testClass);
     }
     
     // examples

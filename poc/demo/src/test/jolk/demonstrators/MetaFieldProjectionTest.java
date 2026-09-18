@@ -11,7 +11,7 @@ import util.JolkTestBase;
 ///
 /// Verifies the interaction with Meta-Level Projection lenses as showcased 
 /// by the [MetaFieldProjectionDemonstrator].
-public class MetaFieldProjectionDemonstratorTest extends JolkTestBase {
+public class MetaFieldProjectionTest extends JolkTestBase {
 
     private Value getDemonstrator() {
         Value demonstrator = load("/demonstrators/MetaFieldProjectionDemonstrator.jolk");

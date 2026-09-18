@@ -16,6 +16,8 @@ public class DemoTestFactory extends jolk.test.TestFactory {
         // load jolk classes
         discoverJolkTests("src/main/jolk/examples");
         discoverJolkTests("src/main/jolk/demonstrators");
+
+        // issue with SsnConstraintTest test_accept_failure => class not loaded ???
         discoverJolkTests("src/main/jolk/demo");
         // load jolk test classes
         return discoverJolkTests("src/test/jolk");

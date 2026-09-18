@@ -1,0 +1,32 @@
+~ demonstrators;
+
++ jolk.test.api.TestCase;
+
+
+final class StableAndConstantFieldTest extends TestCase {
+
+    meta constant String constantMetaField = "constantMetaFieldValue";
+
+    meta Self new(String val) {
+        ^ super #new #stableField(val)
+    }
+    
+    constant String constantField = "constantFieldValue";
+    stable String stableField;
+
+    @Test
+    testConstantMetaField() {
+        #assertEquals("constantMetaFieldValue", #constantMetaField)
+    }
+
+    @Test
+    testConstantField() {
+        #assertEquals("constantFieldValue", #constantField)
+    }
+
+    @Test
+    testStableField() {
+        #assertEquals("stable", Self #new("stable") #stableField)
+    }
+
+}

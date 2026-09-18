@@ -12,7 +12,7 @@
 ///
 /// @author Wouter Roose
 ///
-public class EqualityDemonstratorTest extends TestCase {
+public class EqualityTest extends TestCase {
 
     Person p1 = Person #new(123456789, "John", "Doe");
     Person p2 = Person #new(123456789, "John", "Doe");

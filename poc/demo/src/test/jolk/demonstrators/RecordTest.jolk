@@ -7,7 +7,7 @@
 ///
 /// @author Wouter Roose
 ///
-public class ArchetypeRecordDemonstratorTest extends TestCase {
+public class RecordTest extends TestCase {
 
     @Test
     testCanonicalNew() {

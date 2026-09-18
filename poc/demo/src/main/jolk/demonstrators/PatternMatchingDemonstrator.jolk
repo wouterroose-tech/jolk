@@ -57,9 +57,9 @@ final class PatternMatchingDemonstrator {
     String runAsIfPresent(Object subject) {
         String result = "Cast failed or was null";
         [
-            subject #as(Person) #ifPresent [ s ->
-                result = "Got a Person: " + s
-            ]
+            subject
+                #as(Person)
+                #ifPresent [ s -> result = "Got a Person: " + s ]
         ] #catch [ ClassCastException e ->
             // The cast failed, result remains "Cast failed or was null"
         ];

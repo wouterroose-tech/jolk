@@ -2,7 +2,7 @@
 
 + jolk.test.api.TestCase;
 
-/// # ClosureDemonstrator
+/// # ClosureTest
 ///
 /// Demonstrates the usage of Closures and Method References in Jolk.
 ///
@@ -11,7 +11,7 @@
 ///
 /// @author Wouter Roose
 ///
-public class ClosureDemonstratorTest extends TestCase {
+public class ClosureTest extends TestCase {
     
     @Test
     testRunClosureParam() {

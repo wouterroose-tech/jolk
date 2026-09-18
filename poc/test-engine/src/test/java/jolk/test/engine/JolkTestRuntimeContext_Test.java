@@ -39,7 +39,7 @@ public class JolkTestRuntimeContext_Test {
         // Extract test selectors from the TestCase class
         var selectors = runtimeContext.getTestSelectors(metaClass).toList();
         assertNotNull(selectors);
-        assertEquals(12, selectors.size());
+        assertEquals(13, selectors.size());
         // check if selectors contain the expected test method name "testSuccess"
         assertNotNull(selectors.contains("testSuccess"));
     }

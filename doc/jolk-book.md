@@ -194,8 +194,8 @@ Symbolic anchors define access boundaries, and the grammar provides keyword alia
 * `self`: Represents the current instance.  
 * `super`: Represents the parent context/identity.  
 * `Self`: Represents the reflective identity of the type.  
-* `null`: (The refined replacement for null) representing the absence of an object.  
-* `true` / `false`: The fundamental boolean object literals.
+* `null`: Represents the absence of an object value.  
+* `true` / `false`: The boolean object literals.
 
 **Structural scaffolding:** These markers establish the structural boundaries for static organization without participating in the runtime message-passing flow.
 
@@ -271,15 +271,17 @@ All identifiers defined within a parameter\_list are implicitly immutable. Any a
 
 ### Type system
 
-The type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the archetypes—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the grammar.
+**Archetypes**: The language specification defines the structural constructs `class`, `enum`, `record`, `value`, and `protocol`. The type system integrates these archetypes with a messaging protocol layer defined using standard generic type bounds syntax.
 
-Protocol conjunctions utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[8], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
+The type system defines a messaging protocol layer expressed through Java generic syntax. The specification distinguishes between the **archetypes**—`class`, `enum`, `record`, `value` , and `protocol`—which are the structural anchors for the grammar.
+
+**Protocol conjunctions** utilize the ampersand operator (`&`) to create 'branded' types that represent an intersection of contracts. Aligning with the concept of Traits[8], this facilitates the composition of behaviour without the state conflicts inherent in multiple inheritance. This provides a structural guarantee ensuring the identity of the participant and the contract of the message remain transparent and secure, preventing semantically incompatible objects from matching based on syntax alone. Finally, the syntax supports extensions, permitting type expansion via new message protocols.
 
 **Identity congruence** is the foundational architectural mandate that ensures a singular logical representation for all entities—including complex objects, primitives, and the absence of value—regardless of their physical storage format. It establishes an alignment between the abstract identity defined by the programmer and the physical representation in the runtime engine.
 
 **Intrinsic primitives** like `Boolean`, `Long` and `String`- are first-class identities that participate in the messaging protocol.
 
-**The reification of absence:** The traditional `null` pointer is replaced by a formal identity. The absence of a value—represented by the reserved literal `null`—is a singleton instance of the `Nothing` class. By reifying nothingness as a first-class identity, every identity remains a valid receiver, shifting failures from runtime crashes to predictable semantic responses.
+**Absence reification:** The literal `null` represents the absence of a value as a singleton instance of the `Nothing` class. By implementing `null` as a first-class object identity, all values act as valid message receivers, ensuring that operations on absent values resolve through defined protocols rather than NullPointerExceptions.
 
 The modifier protocol defines a specification for member management:
 
@@ -832,7 +834,7 @@ To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *
 		Map stateProjection() {}
 	}
 
-Protocol Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in the source code) and the Atomic Identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Protocol Projection operates as a deterministic proposal bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols.
+Protocol Projection serves as the manifestation of this handshake, acting as a deterministic bridge between the Nominal Path (the string in the source code) and the atomic identity (the Selector in the engine). Unlike traditional reflection, which breaches encapsulation to interrogate internals, Protocol Projection operates as a deterministic proposal bound by the lexical fence. The `#project` message is physically incapable of accessing internal state; the system necessitates the extension of protocols.
 
 If a receiver’s blueprint does not account for an identity, the projection is elevated to a deterministic failure. While the substrate produces `Nothing`, the system provides the #demand protocol to transform an unhandled handshake into a factual Interrupt or an `UnhandledIdentityException`. By unifying static and dynamic dispatch paths, Jolk ensures the communicative field remains a space of absolute accountability—a "Correct by Construction" environment where every signal is a verified, high-performance contract between identities.
 
@@ -858,7 +860,7 @@ While the Tolk Engine performs semantic flattening to map interactions directly 
 
 **First-class Identities** 
 
-`true`, `false`, and `null` are atomic First-class Identities.
+`true`, `false`, and `null` are atomic first-class identities.
 
 *Boolean \- true | false*
 
@@ -866,9 +868,9 @@ Jolk transitions Booleans from binary primitives into identities of choice, reif
 
 *Nothing \- null*
 
-The *Nullity Identity* reifies the null pointer into `Nothing`—a first-class identity represented by the reserved literal `null`. It constitutes the terminal state of the messaging exchange, implementing a structural Null Object Pattern[13]. As the meta-aware singleton, it serves as the default state for all uninitialised references. By transforming a hardware-level void into an identity, Jolk enforces a universal receiver contract, ensuring every reference can receive any message without causing a substrate-level crash.
+The `Nothing` class represents the absence of a value, identifiers by the reserved literal `null`. Implemented as a singleton at the bottom of the type lattice, `null` is a first-class object that implements the structural Null Object Pattern[13]. Because `null` conforms to the universal receiver contract, message dispatches targeting it execute methods defined on `Nothing` rather than throwing NullPointerException errors.
 
-Jolk achieves safe navigation through identity-level polymorphism. By consuming an incoming message and returning itself, the `Nothing` identity allows message chains to collapse gracefully without defensive branching. This neutral response model preserves the messaging architecture without the overhead of wrappers or the lexical clutter of null-checks. Jolk facilitates this through a protocol within the dispatch cycle that neutralises subsequent operations, designating the absence of a result as a predictable signal that forces the acknowledgement of an undefined state.
+Message dispatch to `null` relies on identity-level polymorphism. When `Nothing` receives a message, its implementation returns `null`, enabling chained message dispatches (`object.first().second()`) to evaluate without conditional branching or explicit wrapper types. This short-circuiting behavior preserves message evaluation across missing values and produces a deterministic `null` result at the termination of the expression.
 
 *MessageNotUnderstood*
 

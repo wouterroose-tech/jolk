@@ -22,7 +22,7 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies the creation of an empty map literal.
         String source = """ 
             class MyClass {
-                HashMap<Object, Object> emptyMap = HashMap #new;
+                HashMap[Object, Object] emptyMap = HashMap #new;
                 Long size() { ^ self #emptyMap #size }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -34,7 +34,7 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies the creation of an empty map literal.
         String source = """ 
             class MyClass {
-                HashMap<Object, Object> emptyMap = #();
+                HashMap[Object, Object] emptyMap = #();
                 Long size() { ^ self #emptyMap #size }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -46,7 +46,7 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies that a map literal can be used to initialize a field.
         String source = """ 
             class MyClass {
-                stable HashMap<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
+                stable HashMap[String, Long] ages = #("Alice" -> 30, "Bob" -> 25);
                 Long getAge(String name) { ^ self #ages #at(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -61,7 +61,7 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies the #at(key) method for retrieving values.
         String source = """ 
             class MyClass {
-                Map<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
+                Map[String, Long] ages = #("Alice" -> 30, "Bob" -> 25);
                 Long getAge(String name) { ^ self #ages #at(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -74,8 +74,8 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies the #put(key, value) method for adding/updating entries.
         String source = """ 
             class MyClass {
-                Map<String, Long> ages = #("Alice" -> 30);
-                Map<String, Long> setAge(String name, Long age) { ^ self #ages #put(name, age) }
+                Map[String, Long] ages = #("Alice" -> 30);
+                Map[String, Long] setAge(String name, Long age) { ^ self #ages #put(name, age) }
                 Long getAge(String name) { ^ self #ages #at(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -92,7 +92,7 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies the #containsKey(key) method.
         String source = """ 
             class MyClass {
-                Map<String, Long> ages = #("Alice" -> 30);
+                Map[String, Long] ages = #("Alice" -> 30);
                 Boolean hasKey(String name) { ^ self #ages #containsKey(name) }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -105,10 +105,10 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies the #forEach(closure) method for iterating over entries.
         String source = """ 
             class MyClass {
-                Map<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
+                Map[String, Long] ages = #("Alice" -> 30, "Bob" -> 25);
                 String collectEntries() {
                     String result = "";
-                    self #ages #forEach [ k, v -> result = result + k + ":" + v #toString + ";" ];
+                    self #ages #forEach { k, v -> result = result + k + ":" + v #toString + ";" };
                     ^ result
                 }
             }""";
@@ -123,9 +123,9 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies the #map(closure) method for transforming entries.
         String source = """ 
             class MyClass {
-                Map<String, Long> ages = #("Alice" -> 30, "Bob" -> 25);
-                Array<String> collectEntryStrings() {
-                    ^ self #ages #map [ k, v -> k + ":" + v #toString ];
+                Map[String, Long] ages = #("Alice" -> 30, "Bob" -> 25);
+                Array[String] collectEntryStrings() {
+                    ^ self #ages #map { k, v -> k + ":" + v #toString };
                 }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -139,7 +139,7 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies that maps correctly handle Long keys and retrieval.
         String source = """
             class MapLongTest {
-                Map<Long, String> names = #(1 -> "one", 2 -> "two");
+                Map[Long, String] names = #(1 -> "one", 2 -> "two");
                 String getName(Long id) { ^ self #names #at(id) }
             }""";
         Value instance = eval(source).invokeMember("new");
@@ -153,7 +153,7 @@ public class JolkMapTest extends JolcTestBase {
         /// Verifies that maps can be nested and accessed.
         String source = """
             class NestedMapTest {
-                Map<String, Map<String, Long>> data = #( "outer" -> #( "inner" -> 42 ) );
+                Map[String, Map[String, Long]] data = #( "outer" -> #( "inner" -> 42 ) );
                 Long getInner() { ^ self #data #at("outer") #at("inner") }
             }""";
         Value instance = eval(source).invokeMember("new");

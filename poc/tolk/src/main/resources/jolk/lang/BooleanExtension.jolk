@@ -37,15 +37,15 @@ extension BooleanExtension on java.lang.Boolean {
 
     /// Executes the provided closure if this identity is true.
     /// Corresponds to the `?` operator in the expression grammar.
-    Self ?(Closure<Self> action) { }
+    Self ?(Closure[Self] action) { }
 
     /// Executes the provided closure if this identity is false.
     /// Corresponds to the `?!` operator in the expression grammar.
-    Self ?!(Closure<Self> action) { }
+    Self ?!(Closure[Self] action) { }
 
     /// Represents the alternative branch in a message chain.
     /// Typically sent following a `?` or `?!` message to implement else-logic.
-    Self :(Closure<Self> action) { }
+    Self :(Closure[Self] action) { }
 
     /// Returns a string representation of this boolean identity.
     /// Results in either "true" or "false".

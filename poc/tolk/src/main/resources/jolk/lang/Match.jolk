@@ -16,15 +16,15 @@
 /// @author Wouter Roose
 
 @Intrinsic
-public final class Match<T> {
+public final class Match[T] {
 
     /// ## with
     /// Creates a Match containing the given value.
-    package meta Match<T> with(T value) { }
+    package meta Match[T] with(T value) { }
 
     /// ## empty
     /// Creates an empty Match.
-    package meta Match<T> empty() { }
+    package meta Match[T] empty() { }
 
     /// ## ifPresent
     /// Executes the action if the match contains a value.
@@ -32,11 +32,11 @@ public final class Match<T> {
 
     /// ## filter
     /// Applies a predicate to the value. If it matches, returns self; otherwise returns empty.
-    Match<T> filter(Closure predicate) { }
+    Match[T] filter(Closure predicate) { }
 
     /// ## map
     /// Transforms the value if present.
-    <U> Match<U> map(Closure<U> mapper) { }
+    [U] Match[U] map(Closure[U] mapper) { }
     
     /// ## get
     /// Returns the value if present, otherwise returns Nothing.

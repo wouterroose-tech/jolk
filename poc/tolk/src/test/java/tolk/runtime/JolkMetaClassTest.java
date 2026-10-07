@@ -429,7 +429,7 @@ public class JolkMetaClassTest extends JolcTestBase {
         source = """
             class Test {
                 Boolean hasSelector(String selector) { 
-                    ^ ToTest #instanceProtocol #anyMatch [ s -> s ~~ selector];
+                    ^ ToTest #instanceProtocol #anyMatch { s -> s ~~ selector };
                 } 
             }""";
         Value test = eval(source).invokeMember("new");

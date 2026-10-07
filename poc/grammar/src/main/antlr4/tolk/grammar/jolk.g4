@@ -9,12 +9,12 @@ grammar jolk;
 // Parser rules
 unit             : package_decl? expansion* projection* annotation* ( type_decl | extension_decl)? EOF;
 
-package_decl     : (PACKAGE | TILDE) namespace ';' ;
+package_decl     : (PACKAGE | TILDE) namespace SEMI ;
 expansion        : (USING | ADD) inclusion ;
 projection       : (USING META | AMP) inclusion ;
-inclusion        : alias? namespace ('.' MUL)? ';' ;
+inclusion        : alias? namespace (DOT MUL)? SEMI ;
 alias            : MetaId ASSIGN ;
-namespace        : identifier ('.' identifier)* ;
+namespace        : identifier (DOT identifier)* ;
 
 type_decl        : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
 modifiers        : visibility? finality? | MODIFIER ;
@@ -23,7 +23,7 @@ finality         : ABSTRACT | FINAL ;
 archetype        : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
 type_bound       : type type_contracts? ;
 type             : self_type | (identifier DOT)* MetaId type_args? ;
-type_args        : LT type_bound (COMMA type_bound)* GT ;
+type_args        : LBRACK type_bound (COMMA type_bound)* RBRACK ;
 type_contracts   : EXTENDS type (IMPLEMENTS type (AMP type)*)?
                  | IMPLEMENTS type (AMP type)* ;
 
@@ -34,9 +34,9 @@ constant         : CONSTANT type identifier assignment ;
 field            : (STABLE | LAZY)? type identifier assignment? ;
 binding          : identifier assignment ;
 assignment       : ASSIGN expression ;
-enum_constant    : MetaId arguments? ';' ;
+enum_constant    : MetaId arguments? SEMI ;
 
-method           : LAZY? type_args? type? selector_id LPAREN typed_params? RPAREN ( block | ';' ) ;
+method           : LAZY? type_args? type? selector_id LPAREN typed_params? RPAREN ( block | SEMI ) ;
 selector_id      : identifier | operator ;
 typed_params     : annotated_type ( InstanceId (COMMA annotated_type InstanceId)* (COMMA annotated_type vararg_id)? | vararg_id ) ;
 annotated_type   : annotation* type ;
@@ -51,7 +51,7 @@ annotation_arg   : identifier ASSIGN annotation_val ;
 annotation_val   : literal | annotation | LBRACE (annotation_val (COMMA annotation_val)*)? RBRACE ;
 
 block            : LBRACE statements? RBRACE ;
-statements       : statement (';' statement)* ';'?;
+statements       : statement (SEMI statement)* SEMI?;
 statement        : state | binding | returnOp? expression ;
 expression       : logic_or (condOp expression (COLON expression)?)? ;
 logic_or         : logic_and (OR logic_and)* ;
@@ -76,7 +76,7 @@ primary          : method_reference
                  | LPAREN expression RPAREN
                  | closure ;
 method_reference : ( identifier | reserved ) HASH_HASH identifier ;
-closure          : LBRACK (stat_params LAMBDA)? statements? RBRACK ;
+closure          : LBRACE (stat_params LAMBDA)? statements? RBRACE ;
 payload          : arguments | closure ;
 arguments        : LPAREN (expression (COMMA expression)*)? RPAREN ;
 stat_params      : typed_params | inferred_params ;

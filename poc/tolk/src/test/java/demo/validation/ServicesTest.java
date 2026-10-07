@@ -18,7 +18,7 @@ public class ServicesTest extends JolcTestBase {
         String source = """
             final class GeoGraphicalService {
                 
-                meta constant Array<Int> MECHELEN = #[2800, 2801, 2811, 2812];
+                meta constant Array[Int] MECHELEN = #[2800, 2801, 2811, 2812];
 
                 // Caching the external service
                 meta stable GeoGraphicalService GGS = GeoGraphicalService #new;

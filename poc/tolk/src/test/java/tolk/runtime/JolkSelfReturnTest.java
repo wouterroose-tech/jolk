@@ -25,7 +25,7 @@ public class JolkSelfReturnTest extends JolcTestBase {
     void test_2() {
         String source = """
             class TestClass {
-                Array<String> nodes = #[];
+                Array[String] nodes = #[];
                 add() { self #nodes #add("ok") }
             }""";
         Value instance = eval(source).invokeMember("new");

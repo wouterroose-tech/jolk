@@ -102,7 +102,7 @@ public class JolkBindingTest extends JolcTestBase {
             class MyClass {
                 Long run(Object obj) {
                     Long x = 0; 
-                    obj #ifEmpty [ x = 42 ];
+                    obj #ifEmpty { x = 42 };
                     ^ x
                 }
             }""";

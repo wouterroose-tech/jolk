@@ -10,7 +10,7 @@
 /// @author Wouter Roose
 
 @Intrinsic
-class MetaClass<T extends Object> {
+final class MetaClass[T extends Object] {
 
     /// ## class
     /// Transforms a path into a Meta-Class identity.
@@ -30,13 +30,13 @@ class MetaClass<T extends Object> {
     /// Identifies the available handshake surface for instances.
     ///
     /// - **Returns**: A list of selectors representing the instance-level protocol.
-    List<Selector> instanceProtocol() {}
+    List[Selector] instanceProtocol() {}
 
     /// ## metaProtocol
     /// Identifies factory and configuration messages for the Class.
     ///
     /// - **Returns**: A list of selectors representing the meta-level protocol.
-    List<Selector> metaProtocol() { }
+    List[Selector] metaProtocol() { }
 
     /// ## project
     /// Handshake for Materialisation and Orchestration.
@@ -74,7 +74,7 @@ class MetaClass<T extends Object> {
     /// Returns the `MetaClass` of the superclass.
     ///
     /// - **Returns**: The `MetaClass` of the superclass.
-    <S extends MetaClass<T>> S superclass() { }
+    [S extends MetaClass[T]] S superclass() { }
 
     /// ## isInstance
     /// Checks if an object is an instance of this `MetaClass`'s type.

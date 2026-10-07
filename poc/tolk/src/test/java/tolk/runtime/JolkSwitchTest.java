@@ -19,10 +19,10 @@ public class JolkSwitchTest extends JolcTestBase {
             class SwithTest {
                 String run(String color) {
                     ^ color
-                        #case("red") #do ["RED"]
-                        #case("blue") #do ["BLUE"]
-                        #case("green") #do ["GREEN"]
-                        #default ["unknown"];
+                        #case("red") #do {"RED"}
+                        #case("blue") #do {"BLUE"}
+                        #case("green") #do {"GREEN"}
+                        #default {"unknown"};
                 }
             }""";
         Value instance = eval(source).invokeMember("new");

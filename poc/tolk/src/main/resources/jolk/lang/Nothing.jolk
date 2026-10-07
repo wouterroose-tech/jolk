@@ -92,14 +92,14 @@ final class Nothing extends Object {
     /// Returns the class object representing the type of the receiver.
     ///
     /// - **Returns**: The `MetaClass` for `Nothing`.
-    MetaClass<Self> class() { }
+    MetaClass[Self] class() { }
 
     /// ## instanceOf
     /// The Jolk Type pattern match.
     ///
     /// - **type**: The type to check against.
     /// - **Returns**: A `Match` containing `self` if the type is `Nothing` or `Object`, otherwise an empty `Match`.
-    <T> Match<T> instanceOf(Type<T> type) {
+    [T] Match[T] instanceOf(Type[T] type) {
         ^ super #instanceOf(type)
     } 
 

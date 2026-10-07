@@ -22,7 +22,7 @@ public class RulesTest extends JolcTestBase {
 
     private Value contactFormValidation() {
         String source = """
-            class ContactFormValidation extends ValidationSuite<ContactForm> {
+            class ContactFormValidation extends ValidationSuite[ContactForm] {
                 meta constant Interrupt FORM_INTERRUPT = Interrupt #new;
 
                 meta lazy ContactFormValidation new() {
@@ -36,7 +36,7 @@ public class RulesTest extends JolcTestBase {
 
     private Value zipConstraint() {
         String source = """
-            #! class ZipConstraint extends Constraint<ContactForm> {
+            #! class ZipConstraint extends Constraint[ContactForm] {
                 Boolean satisfiesPreCondition(ContactForm form, ExecutionContext executionContext) {
                     ^ form #zipCode #isPresent
                 }
@@ -58,7 +58,7 @@ public class RulesTest extends JolcTestBase {
 
     private Value ssnConstraint() {
         String source = """
-            #! class SsnConstraint extends Constraint<Person> {
+            #! class SsnConstraint extends Constraint[Person] {
                 Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
                     ^ person #ssn #isPresent
                 }

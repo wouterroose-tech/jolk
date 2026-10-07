@@ -28,10 +28,10 @@ public class JolkExpressionTest extends JolcTestBase {
             Long val11() { ^ 1 != 2 ? 1 : 0 }
             Long val12() { ^ true ?! 42 : 0}
             Long val13() { ^ false ?! 42 : 0}
-            Long val14() { true ? [^42] : [^0] }
-            Long val15() { true ?! [^42] : [^0] }
-            Long val16() { false ? [^42] : [^0] }
-            Long val17() { false ?! [^42] : [^0] }
+            Long val14() { true ? {^42} : {^0} }
+            Long val15() { true ?! {^42} : {^0} }
+            Long val16() { false ? {^42} : {^0} }
+            Long val17() { false ?! {^42} : {^0} }
             Long val18() { ^ 1 < 2 ? 42 : 0 }
             Long val19() { ^ 1 > 2 ? 42 : 0 }
             Long val20() { ^ (! false) ? 42 : 0 }
@@ -66,7 +66,7 @@ public class JolkExpressionTest extends JolcTestBase {
             class FlowPresentTest {
                 Long val() {
                     Long x = 1; 
-                    null #ifPresent [ x = 2 ];
+                    null #ifPresent { x = 2 };
                     ^x }
             }""";
         Value meta1 = eval(sourceIfPresent);
@@ -77,7 +77,7 @@ public class JolkExpressionTest extends JolcTestBase {
             class FlowEmptyTest {
                 Long val() {
                     Long x = 1; 
-                    null #ifEmpty [ x = 2 ];
+                    null #ifEmpty { x = 2 };
                     ^x }
             }""";
         Value meta2 = eval(sourceIfEmpty);
@@ -91,7 +91,7 @@ public class JolkExpressionTest extends JolcTestBase {
             class FlowTest {
                 Int check(Boolean b) {
                     Int res = 0;
-                    b ? [ res = 1 ] : [ res = 2 ];
+                    b ? { res = 1 } : { res = 2 };
                     ^ res
                 }
             }
@@ -105,10 +105,10 @@ public class JolkExpressionTest extends JolcTestBase {
     void testControlFlow_2() {
         String source = """
             class MyClass {
-                Long ifPresentTrue() { Long x = 21; x #ifPresent [v -> x = v * 2 ]; ^x }
-                Long ifPresentFalse() { Long x = 42; null #ifPresent [v -> x = 0 ]; ^x }
-                Long ifEmptyTrue() { Long x = 0; null #ifEmpty [ x = 42 ]; ^x }
-                Long ifEmptyFalse() { Long x = 42; x #ifEmpty [ x = 0 ]; ^x }
+                Long ifPresentTrue() { Long x = 21; x #ifPresent {v -> x = v * 2 }; ^x }
+                Long ifPresentFalse() { Long x = 42; null #ifPresent {v -> x = 0 }; ^x }
+                Long ifEmptyTrue() { Long x = 0; null #ifEmpty { x = 42 }; ^x }
+                Long ifEmptyFalse() { Long x = 42; x #ifEmpty { x = 0 }; ^x }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");  

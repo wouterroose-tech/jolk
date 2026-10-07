@@ -101,7 +101,7 @@ public class JolkEnumTest extends JolcTestBase {
             class MyClass {
                 String run() {
                     Level level = Level #ERROR;
-                    level #ifPresent [ l -> ^l #isError ? l #name ];
+                    level #ifPresent { l -> ^l #isError ? l #name };
                     ^null;
                 }
             }""";

@@ -38,7 +38,7 @@ public class SsnConstraintTest  extends JolcTestBase {
             & java.util.ArrayList;
             & demo.validation.engine.Level.WARNING;
             class ExecutionContext {
-                stable ArrayList<Issue> issues = #[];
+                stable ArrayList[Issue] issues = #[];
                 Self add(Object subject, Issue issue) {
                     self #issues #add(issue)
                 }
@@ -46,15 +46,15 @@ public class SsnConstraintTest  extends JolcTestBase {
                     ^ !self #issues #isEmpty
                 }
                 Boolean hasError() {
-                    ^ self #hasMatch [i -> i #level #isError ]
+                    ^ self #hasMatch {i -> i #level #isError }
                 }
                 Boolean hasWarning() {
-                    ^ self #hasMatch [i -> i #match(WARNING) ]
+                    ^ self #hasMatch {i -> i #match(WARNING) }
                 }
                 Boolean hasIssue(Object subject) {
-                    ^ self #hasMatch [i -> i #concerns(subject)]
+                    ^ self #hasMatch {i -> i #concerns(subject) }
                 }
-                private Boolean hasMatch(Predicate<Issue> p) {
+                private Boolean hasMatch(Predicate[Issue] p) {
                     ^ self #issues #anyMatch(p)
                 }
             }""";  
@@ -75,13 +75,13 @@ public class SsnConstraintTest  extends JolcTestBase {
 
     private Value validation() {
         String source = """
-            package abstract class Validation<T> {
+            package abstract class Validation[T] {
                 protected Boolean satisfiesPreCondition(T subject, ExecutionContext executionContext) {
                     ^ true
                 }
                 @Override
                 package final accept(T subject, ExecutionContext executionContext) {
-                    self #satisfiesPreCondition(subject, executionContext) ? [ self #doAccept(subject, executionContext) ]
+                    self #satisfiesPreCondition(subject, executionContext) ? { self #doAccept(subject, executionContext) }
                 }
                 package abstract doAccept(T subject, ExecutionContext executionContext);
                 protected Interrupt interrupt() {
@@ -93,11 +93,11 @@ public class SsnConstraintTest  extends JolcTestBase {
 
     private Value constraint() {
         String source = """
-            abstract class Constraint<T> extends Validation<T> {
+            abstract class Constraint[T] extends Validation[T] {
                 package final doAccept(T subject, ExecutionContext executionContext) {
-                    #isValid(subject) ? [ ^ self ];
+                    #isValid(subject) ? { ^ self };
                     executionContext #add(subject, #getIssue(subject, executionContext));
-                    self #interrupt #ifPresent [ i -> i #throw ]
+                    self #interrupt #ifPresent { i -> i #throw }
                 }
                 protected abstract Boolean isValid(T subject);
                 protected abstract Issue getIssue(T subject, ExecutionContext executionContext);
@@ -108,7 +108,7 @@ public class SsnConstraintTest  extends JolcTestBase {
     private Value SsnConstraint() {
         String source = """
             + demo.validation.domain.Person;
-            #! class SsnConstraint extends Constraint<Person> {
+            #! class SsnConstraint extends Constraint[Person] {
                 #: Boolean isValid(Person person) {
                     ^ self #isValid(person #ssn)
                 }

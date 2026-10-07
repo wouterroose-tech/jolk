@@ -8,10 +8,10 @@
 /// @author Wouter Roose
 
 @Intrinsic
-extension IteratorExtension<T> on java.util.Iterator<T> {
+extension IteratorExtension[T] on java.util.Iterator[T] {
 
     /// Creates an iterable containing the provided elements.
-    meta Iterator<T> new(T... elements) { }
+    meta Iterator[T] new(T... elements) { }
 
     /// Returns the next element in the iteration.
     T next() { }
@@ -23,7 +23,7 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
     /// have been processed or the action throws an exception.
     ///
     /// @param action The action to be performed for each element
-    Self forEach(Closure<T> action) {
+    Self forEach(Closure[T] action) {
         [ self #hasNext ] #while [ action #apply(self #next) ]
     }
 
@@ -32,7 +32,7 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
     ///
     /// - **mapper**: A Closure that defines the transformation.
     /// - **Returns**: A transformed Iterator.
-    <R> Iterator<R> map(Closure<R> mapper) { }
+    [R] Iterator[R] map(Closure[R] mapper) { }
 
     /// ## filter
     /// Returns a new Iterator that lazily skips elements that do not satisfy 
@@ -40,5 +40,5 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
     ///
     /// - **predicate**: A Closure returning true for elements to include.
     /// - **Returns**: A filtered Iterator.
-    Iterator<T> filter(Closure<Boolean> predicate) { }
+    Iterator[T] filter(Closure<Boolean> predicate) { }
 }

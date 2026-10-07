@@ -209,8 +209,8 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     void testNewArray() {
         String source = """
             class MyClass {
-                ArrayList<Long> longList = ArrayList #new; 
-                ArrayList<Long> run() { ^ ArrayList<Long> #new }
+                ArrayList[Long] longList = ArrayList #new; 
+                ArrayList[Long] run() { ^ ArrayList[Long] #new }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -231,7 +231,7 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     void testVariadicNewArray() {
         String source = """
             class MyClass {
-                ArrayList<Long> longList = ArrayList #new(1, 2, 3);
+                ArrayList[Long] longList = ArrayList #new(1, 2, 3);
                 Long run(Int key) { ^ self #longList #at(key) }
             }""";
         Value meta = eval(source);
@@ -247,9 +247,9 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     void testArrayLiteral() {
         String source = """
             class ArrayLiteralTest {
-                ArrayList<Long> emptyList = #[];
-                ArrayList<Long> longList = #[1, 2, 3];
-                ArrayList<String> colors = #["red", "green", "blue"];
+                ArrayList[Long] emptyList = #[];
+                ArrayList[Long] longList = #[1, 2, 3];
+                ArrayList[String] colors = #["red", "green", "blue"];
                 Long run(Int key) { ^ self #longList #at(key) }  
                 Long run() { ^ self #longList #put(1, 42) #at(1) } 
                 String run(Int key, String color) { ^ self #colors #put(key, color) #at(key) }                
@@ -272,8 +272,8 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     void testAnyMatch_2() {
         String source = """
             class AnyMatchTest {
-                ArrayList<Long> elements = #[1, 2, 3];
-                Boolean run(Long x) { ^ self #elements #anyMatch [s -> s == x] }          
+                ArrayList[Long] elements = #[1, 2, 3];
+                Boolean run(Long x) { ^ self #elements #anyMatch { s -> s == x } }          
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -285,8 +285,8 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     void testFindFirst() {
         String source = """
             class FindFirstTest {
-                ArrayList<Long> elements = #[1, 2, 3];
-                Long run(Long x) { ^ self #elements #findFirst [s -> s == x] }          
+                ArrayList[Long] elements = #[1, 2, 3];
+                Long run(Long x) { ^ self #elements #findFirst { s -> s == x } }          
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -299,8 +299,8 @@ public class JolkArrayExtensionTest extends JolcTestBase {
     void testFilter() {
         String source = """
             class FindFirstTest {
-                ArrayList<Long> elements = #[1, 2, 3];
-                Boolean test(Long x) { ^ self #elements #filter [s -> s == x] #size == 1}          
+                ArrayList[Long] elements = #[1, 2, 3];
+                Boolean test(Long x) { ^ self #elements #filter { s -> s == x } #size == 1}
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -314,8 +314,8 @@ public class JolkArrayExtensionTest extends JolcTestBase {
             + java.util.ArrayList;
             class Test {
                 String run() {
-                    ArrayList<String> colors = Array #new("red", "green", "blue");
-                    ^ colors #stream #reduce("", [ reduced, reducing -> reduced + reducing ])
+                    ArrayList[String] colors = Array #new("red", "green", "blue");
+                    ^ colors #stream #reduce("", { reduced, reducing -> reduced + reducing } )
                 }
                 String reduce(String reduced, String reducing) {
                     ^ reduced + reducing

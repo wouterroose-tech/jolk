@@ -29,12 +29,12 @@ public class DomainTest extends JolcTestBase {
                     ^ "Person[ssn=" + self #ssn + ", firstName=" + self #firstName + ", lastName=" + self #lastName + "]"
                 }
                 Boolean ~~(Object other) {
-                    (self == other) ? [ ^true ];
-                    other #instanceOf(Person) #ifPresent [ p -> 
+                    (self == other) ? { ^true };
+                    other #instanceOf(Person) #ifPresent { p -> 
                         ^ (self #ssn == p #ssn)
                             && (self #firstName ~~ p #firstName)
                             && (self #lastName ~~ p #lastName)
-                        ];
+                        };
                     ^ false
                 }
             }""";
@@ -51,12 +51,12 @@ public class DomainTest extends JolcTestBase {
                     ^ "ContactForm[person=" + self #person + ", description=" + self #description + ", zipCode=" + self #zipCode + "]"
                 }
                 Boolean ~~(Object other) {
-                    (self == other) ? [ ^true ];
-                    other #instanceOf(ContactForm) #ifPresent [ f -> 
+                    (self == other) ? { ^true };
+                    other #instanceOf(ContactForm) #ifPresent { f -> 
                         ^ (self #person ~~ f #person)
                             && (self #description ~~ f #description)
                             && (self #zipCode ~~ f #zipCode)
-                        ];
+                        };
                     ^ false
                 }
             }""";

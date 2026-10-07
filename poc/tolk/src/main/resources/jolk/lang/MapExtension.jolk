@@ -10,14 +10,14 @@
 /// @author Wouter Roose
 
 @Intrinsic
-extension MapExtension<K, V> on java.util.Map<K, V> {
+extension MapExtension[K, V] on java.util.Map[K, V] {
 
     /// ## map
     /// Transforms the entries of the map into a new Array of results.
     ///
     /// - **mapper**: A Closure receiving (K key, V value).
     /// - **Returns**: An Array of the results.
-    <R> Array<R> map(Closure<R> mapper) { }
+    [R] Array[R] map(Closure[R] mapper) { }
 
     /// ## forEach
     /// Iterates over every entry in the map.

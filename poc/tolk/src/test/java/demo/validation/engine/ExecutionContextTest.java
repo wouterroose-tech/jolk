@@ -40,7 +40,7 @@ public class ExecutionContextTest  extends JolcTestBase {
             & java.util.ArrayList;
             & demo.validation.engine.Level.WARNING;
             class ExecutionContext {
-                stable ArrayList<Issue> issues = #[];
+                stable ArrayList[Issue] issues = #[];
                 Self add(Object subject, Issue issue) {
                     self #issues #add(issue)
                 }
@@ -48,15 +48,15 @@ public class ExecutionContextTest  extends JolcTestBase {
                     ^ !self #issues #isEmpty
                 }
                 Boolean hasError() {
-                    ^ self #hasMatch [i -> i #level #isError ]
+                    ^ self #hasMatch { i -> i #level #isError }
                 }
                 Boolean hasWarning() {
-                    ^ self #hasMatch [i -> i #match(WARNING) ]
+                    ^ self #hasMatch { i -> i #match(WARNING) }
                 }
                 Boolean hasIssue(Object subject) {
-                    ^ self #hasMatch [i -> i #concerns(subject)]
+                    ^ self #hasMatch { i -> i #concerns(subject) }
                 }
-                private Boolean hasMatch(Predicate<Issue> p) {
+                private Boolean hasMatch(Predicate[Issue] p) {
                     ^ self #issues #anyMatch(p)
                 }
             }""";  

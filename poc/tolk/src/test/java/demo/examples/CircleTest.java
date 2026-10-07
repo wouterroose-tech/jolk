@@ -84,7 +84,7 @@ public class CircleTest  extends JolcTestBase {
             Double radius;
             lazy Double diameter = self #radius * 2;
             meta Circle new(Double r) {
-                (r < 0) ? [ Exception #throw("Radius cannot be negative") ];
+                (r < 0) ? { Exception #throw("Radius cannot be negative") };
                 ^ super #new #radius(r)
             }
             Double area() {
@@ -100,10 +100,10 @@ public class CircleTest  extends JolcTestBase {
                 ^ Circle #new(self #radius * factor)
             }
             Boolean ~~(Object other) {
-                (self == other) ? [ ^ true ];
+                (self == other) ? { ^ true };
                 // Use pattern matching to safely compare properties
                 other #instanceOf(Circle)
-                    #ifPresent [ c ->  ^ self #radius == c #radius ];
+                    #ifPresent { c ->  ^ self #radius == c #radius };
                 ^ false
             }
         }""";

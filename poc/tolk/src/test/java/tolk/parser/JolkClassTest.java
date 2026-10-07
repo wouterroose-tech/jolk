@@ -193,10 +193,10 @@ public class JolkClassTest extends JolcTestBase {
                 Int y;
 
                 Boolean ~~(Object other) {
-                    (self == other) ? [ ^true ];
-                    other #as(Point) #ifPresent [ p ->
+                    (self == other) ? { ^true };
+                    other #as(Point) #ifPresent { p ->
                         ^ (self #x == p #x) && (self #y == p #y)
-                    ];
+                    };
                     ^ false
                 }
             }

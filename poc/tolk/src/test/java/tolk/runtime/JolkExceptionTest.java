@@ -99,7 +99,7 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.lang.RuntimeException;
             class MyClass {
                 Long run() {
-                    [ RuntimeException #new #throw ] #catch [RuntimeException e ->  ^ 42 ];
+                    { RuntimeException #new #throw } #catch {RuntimeException e ->  ^ 42 };
                     ^ 0
                 }
         }""";
@@ -114,9 +114,9 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.lang.IllegalArgumentException;
             class MyClass {
                 Long run() {
-                    [ IllegalArgumentException #new #throw ] 
-                        #catch [IllegalArgumentException e -> 
-                            (e #class == IllegalArgumentException) ? [^ 42 ] ];
+                    { IllegalArgumentException #new #throw } 
+                        #catch {IllegalArgumentException e -> 
+                            (e #class == IllegalArgumentException) ? {^ 42 } };
                     ^ 0
                 }
         }""";
@@ -132,9 +132,9 @@ public class JolkExceptionTest extends JolcTestBase {
             class MyClass {
                 Long run() {
                     Long reult = 0;
-                    [ NumberFormatException #new #throw ]
-                        #catch [ e ->  /* ignore */ ]
-                        #finally [ ^ 42 ];
+                    { NumberFormatException #new #throw }
+                        #catch { e ->  /* ignore */ }
+                        #finally { ^ 42 };
                     ^ 0
                 }
             } """;
@@ -150,8 +150,8 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.util.concurrent.StructuredTaskScope;
             class MyClass {
                 Long run() {
-                    [ StructuredTaskScope #open ]
-                        #try [ scope -> /* ignore */ ];
+                    { StructuredTaskScope #open }
+                        #try { scope -> /* ignore */ };
                     ^ 0
                 }
             }""";
@@ -167,9 +167,9 @@ public class JolkExceptionTest extends JolcTestBase {
             +  java.util.concurrent.StructuredTaskScope;
             class MyClass {
                 Long run() {
-                    ^ [ StructuredTaskScope #open ]
-                        #try [ scope -> 10 ]
-                        #catch [ RuntimeException e -> 0 ];
+                    ^ { StructuredTaskScope #open }
+                        #try { scope -> 10 }
+                        #catch { RuntimeException e -> 0 };
                     
                 }
             }""";
@@ -185,9 +185,9 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.util.concurrent.StructuredTaskScope;
             class MyClass {
                 Long run() {
-                    [ StructuredTaskScope #open ]
-                        #try [ scope -> RuntimeException #new #throw ]
-                        #catch [ RuntimeException e -> ^ 42 ];
+                    { StructuredTaskScope #open }
+                        #try { scope -> RuntimeException #new #throw }
+                        #catch { RuntimeException e -> ^ 42 };
                     ^ 0
                 }
             }""";
@@ -203,11 +203,11 @@ public class JolkExceptionTest extends JolcTestBase {
             + java.util.concurrent.StructuredTaskScope;
             class MyClass {
                 Long run() {
-                    [ StructuredTaskScope #open ]
-                        #try [ scope ->
-                            10 #times [ scope #fork [  Thread #sleep(100) ] ];
+                    { StructuredTaskScope #open }
+                        #try { scope ->
+                            10 #times { scope #fork {  Thread #sleep(100) } };
                             scope #join
-                            ]; 
+                            }; 
                     ^ 42
                 }
             } """;
@@ -220,8 +220,8 @@ public class JolkExceptionTest extends JolcTestBase {
         String myClass = """
             class MyClass {
                 Long run() {
-                    [ Object #undefinedMessage ]
-                        #catch [ MessageNotUnderstood e -> ^ 42 ]
+                    { Object #undefinedMessage }
+                        #catch { MessageNotUnderstood e -> ^ 42 }
                 }
             } """;
         Value instance = eval(myClass).invokeMember("new");

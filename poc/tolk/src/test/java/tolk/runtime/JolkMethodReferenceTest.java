@@ -17,7 +17,7 @@ public class JolkMethodReferenceTest extends JolcTestBase {
                 String run() {
                     ^ self #call(String ##toUpperCase)
                 }
-                String call(Function<String, String> func) {
+                String call(Function[String, String] func) {
                     ^ func #apply("called")
                 }
             }""";
@@ -33,7 +33,7 @@ public class JolkMethodReferenceTest extends JolcTestBase {
                 String run() {
                     ^ self #call(String ##valueOf)
                 }
-                String call(Function<Class, Integer> func) {
+                String call(Function[Class, Integer] func) {
                     ^ func #apply(123)
                 }
             }""";
@@ -52,7 +52,7 @@ public class JolkMethodReferenceTest extends JolcTestBase {
                 String doRun() {
                     ^ "called"
                 }
-                String call(Supplier<String> supplier) {
+                String call(Supplier[String] supplier) {
                     ^ supplier #get + " from call"
                 }
             }""";
@@ -71,7 +71,7 @@ public class JolkMethodReferenceTest extends JolcTestBase {
                 String doRun() {
                     ^ "called"
                 }
-                String call(Function<Test, String> func) { // Change to Function
+                String call(Function[Test, String] func) { // Change to Function
                     ^ func #apply(self) + " from call" // Pass 'self' as the receiver
                 }
             }""";
@@ -87,7 +87,7 @@ public class JolkMethodReferenceTest extends JolcTestBase {
                 String run() {
                     ^ self #call(Self ##new)
                 }
-                String call(Supplier<Test> supplier) {
+                String call(Supplier[Test] supplier) {
                     ^ supplier #get + " from call"
                 }
             }""";
@@ -107,7 +107,7 @@ public class JolkMethodReferenceTest extends JolcTestBase {
             + java.util.ArrayList;
             class Test {
                 String run() {
-                    ArrayList<String> colors = Array #new("red", "green", "blue");
+                    ArrayList[String] colors = Array #new("red", "green", "blue");
                     ^ colors #stream #reduce("", Test ##reduce)
                 }
                 String reduce(String reduced, String reducing) {

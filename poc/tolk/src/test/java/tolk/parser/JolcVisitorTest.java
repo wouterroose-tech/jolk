@@ -105,7 +105,7 @@ public class JolcVisitorTest extends JolcTestBase {
 
     @Test
     void testVisitClosure() {
-        String source = "class MyClass { run() { [ item -> item #process ] } }";
+        String source = "class MyClass { run() { { item -> item #process } } }";
         eval(source);
     }
 
@@ -130,10 +130,10 @@ public class JolcVisitorTest extends JolcTestBase {
                 Int y;
 
                 Boolean ~~(Object other) {
-                    (self == other) ? [ ^true ];
-                    other #as(Point) #ifPresent [ p ->
+                    (self == other) ? { ^true };
+                    other #as(Point) #ifPresent { p ->
                         ^ (self #x == p #x) && (self #y == p #y)
-                    ];
+                    };
                     ^ false
                 }
             }
@@ -145,8 +145,8 @@ public class JolcVisitorTest extends JolcTestBase {
     void testVisitNonLocalReturn() {
         String source = """
             class Search {
-                Object find(Array<Int> list) {
-                    list #forEach [ x -> x > 10 ? [ ^ x ] ];
+                Object find(Array[Int] list) {
+                    list #forEach { x -> x > 10 ? { ^ x } };
                     ^ null
                 }
             }
@@ -225,13 +225,13 @@ public class JolcVisitorTest extends JolcTestBase {
     @Test
     void testVisitClosureVariations() {
         // Empty
-        eval("class MyClass { run() { [] } }");
+        eval("class MyClass { run() { {} } }");
         // No parameters
-        eval("class MyClass { run() { [ 1 + 2 ] } }");
+        eval("class MyClass { run() { { 1 + 2 } } }");
         // Inferred parameters
-        eval("class MyClass { run() { [ a, b -> a + b ] } }");
+        eval("class MyClass { run() { { a, b -> a + b } } }");
         // Typed parameters
-        eval("class MyClass { run() { [ Int a, Int b -> a + b ] } }");
+        eval("class MyClass { run() { { Int a, Int b -> a + b } } }");
     }
 
     @Test

@@ -16,7 +16,7 @@ public class JolkClosureTest extends JolcTestBase {
                 Long x;
                 // TODO: what is the advise on the implementation of closure to support this:
                 apply(Closure closure) { closure #apply() }
-                run(Long v) { self #apply [ self #x(v) ] }
+                run(Long v) { self #apply { self #x(v) } }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -30,7 +30,7 @@ public class JolkClosureTest extends JolcTestBase {
             class MyClass {
                 Long x;
                 apply(Closure closure) { closure #apply(42) }
-                run() { self #apply [ Long v -> self #x(v) ] }
+                run() { self #apply { Long v -> self #x(v) } }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -44,7 +44,7 @@ public class JolkClosureTest extends JolcTestBase {
             class MyClass {
                 Long x;
                 apply(Closure closure) { closure #apply(40, 2) }
-                run() { self #apply [ Long a, Long b -> self #x(a + b) ] }
+                run() { self #apply { Long a, Long b -> self #x(a + b) } }
             }""";
         Value meta = eval(source);
         Value instance = meta.invokeMember("new");
@@ -56,9 +56,9 @@ public class JolkClosureTest extends JolcTestBase {
     void testFunction() {
         String source = """
             class MyClass {
-                Function<T, R> supplier;
+                Function[T, R] supplier;
                 Long run() {
-                    self #supplier [ Long b -> b + 2 ];
+                    self #supplier { Long b -> b + 2 };
                     ^ self #supplier #apply(40);
                 }
             }""";

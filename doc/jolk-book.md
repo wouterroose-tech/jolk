@@ -129,7 +129,7 @@ The Jolk grammar defines the language's syntax, integrating class-based structur
 	type_category         = "class" | "value" | "record" | "enum" | "protocol"
 	type_bound            = type [ type_contracts ]
 	type                  = "Self" | [ namespace ] meta_id [ type_arguments ]
-	type_arguments        = "<" type_bound { "," type_bound } ">"
+	type_arguments        = "[" type_bound { "," type_bound } "]"
 	type_contracts        = [ "extends" type ] [ "implements" type { "&" type } ]
 	type_member           = { annotation } ( member | enum )
 	member                = ( [ "meta" ] state ";" | [ visibility ] [ finality ] [ "meta" ] method )	
@@ -147,13 +147,13 @@ The Jolk grammar defines the language's syntax, integrating class-based structur
 	extension_declaration = "extension" meta_id "on" type "{" { extension_member } "}"
 	extension_member      = { annotation } [ visibility ] [finality] method
 
-	block                 = "{" [ statements ] "}"
-	statements            = statement { ";" statement } [ ";" ]
+	block                 = "{" statements "}"
+	statements            = { statement ";" } [ statement [ ";" ] ]
 	statement             = state | binding | [ "^" ] message
 	binding               = identifier assignment
 	message               = ( primary | ( "!" | "-" ) message ) { (selector | operator) [ payload ] }
 	primary               = reserved | identifier | literal | list_literal | "(" message ")" | closure | method_ref
-	closure               = "[" [ stat_params "->" ] [ statements ] "]"
+	closure               = "{" [ stat_params "->" ] statements "}"
 	method_ref            = [ identifier | reserved ] "##" identifier
 	payload               = arguments | closure | message
 	arguments             = "(" [ message { "," message } ] ")"
@@ -181,7 +181,7 @@ The Jolk grammar defines the language's syntax, integrating class-based structur
 	visibility_ops        = "<" | "~" | ":" | ">"
 	finality_ops          = "?" | "!"
 
-The grammar synthesises class-based structural layout with message dispatch, positioning all entities as types. It enforces syntactic signatures by decoupling lexical primitives from structural layout rules and isolating atomic tokens from high-level abstractions like selectors (`#`), block markers (`[ ]`) and generics (`< >`). All execution interactions are normalised as message sends, with mathematical and logical precedence operating as semantic rules within the execution engine to maintain algebraic expectations in a flat syntactic field.
+The grammar synthesises class-based structural layout with message dispatch, positioning all entities as types. It enforces syntactic signatures by decoupling lexical primitives from structural layout rules and isolating atomic tokens from high-level abstractions like selectors (`#`), block markers (`{ }`) and generics (`[ ]`). All execution interactions are normalised as message sends, with mathematical and logical precedence operating as semantic rules within the execution engine to maintain algebraic expectations in a flat syntactic field.
 
 Symbolic anchors define access boundaries, and the grammar provides keyword aliases for visibility modification, aligning with object-oriented topologies (e.g., `#<` maps to `private`). Modifiers enforce compile-time invariants, while the synthesis of class-based declarations with message-passing semantics enables syntactic validation and static optimisation. A restricted vocabulary of structural anchors and reserved identifiers, such as `class` for type definitions and `self` for the active message receiver, unifies interaction.
 
@@ -227,12 +227,12 @@ Syntactic elements act as structural anchors for the parser.
 
 **& operator** instead of a comma for protocol implementation emphasizes that a type is a logical conjunction of behavioral contracts, shifting the focus from a procedural list to a composition of protocols while reinforcing the separation between a singular implementation lineage (inheritance) and a multi-faceted subtyping lattice (protocols).
 
-**Generic type brackets** The syntax adopts angle brackets (`< >`) for generics.
+**Generic type brackets** The syntax adopts angle brackets (`[ ]`) for generics.
 
-**Syntactic geometry:** Notational exclusivity ensures that the semantic interpretation of every structural boundary remains absolute and invariant. The grammar defines a unique token geometry to each structural construct: `< >` for generics, `{ }` for structural bounds, `[ ]` for closuress, and `( )` for parameters.
+**Syntactic geometry:** Notational exclusivity ensures that the semantic interpretation of every structural boundary remains absolute and invariant. The grammar defines a unique token geometry to each structural construct: `[ ]` for generics, `{ }` for structural bounds and closures, and `( )` for parameters.
 
-	List<Result> process(List<Signal> signals) {
-		^ signals #map [ s -> Result #new(s #id) ]
+	List[Result] process(List[Signal] signals) {
+		^ signals #map { s -> Result #new(s #id) }
 	}
 
 **Collection literals:** A collection literal (Array `#[ ]`, Set `#{ }` or Map `#( )`) is a shorthand for the underlying message-based variadic creation of a primary object. 
@@ -488,7 +488,7 @@ To maintain encapsulation, fields default to `private` visibility, requiring a `
 
 ### Generics
 
-Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that distinguishes the protocol from the implementation lattice. This ensures that an object’s behavioural protocol is verified independently of its implementation lineage. Jolk employs a protocol specification that treats type arguments as first-class, reified components of an identity’s behavioural contract. The architecture utilizes angle bracket notation `< >` as the primary Lexical Anchor to define these generic protocols.
+Jolk incorporates the Strongtalk heritage by enforcing a rigorous static type system that distinguishes the protocol from the implementation lattice. This ensures that an object’s behavioural protocol is verified independently of its implementation lineage. Jolk employs a protocol specification that treats type arguments as first-class, reified components of an identity’s behavioural contract. The architecture utilizes square bracket notation `[ ]` as the lexical anchor to define these generic protocols.
 
 ### Extension
 
@@ -550,13 +550,13 @@ Treating object instantiation as a formal capability ensures that type-specific 
 
 **Collection creation**
 
-Literal collection creation methods utilize the `#` anchor as a shorthand for message-based instantiation. This notation allows for the concise creation of collections, such as `Array<String> colors = #["red", "green", "blue"]`, serving as a minimalist alternative to the variadic new with the varargs pattern: `Array #new("red", "green", "blue")`.
+Literal collection creation methods utilize the `#` anchor as a shorthand for message-based instantiation. This notation allows for the concise creation of collections, such as `Array[String] colors = #["red", "green", "blue"]`, serving as a minimalist alternative to the variadic new with the varargs pattern: `Array #new("red", "green", "blue")`.
 
     // variadic creation method  
-    Array<String> colors = Array #new("red", "green", "blue");
+    Array[String] colors = Array #new("red", "green", "blue");
 
     // literal anchor shortcut  
-    Array<String> colors = #["red", "green", "blue"];
+    Array[String] colors = #["red", "green", "blue"];
 
 By implementing these as literal anchors, Jolk remains "bracket-light" while upholding the Unified Messaging principle. Because these literals are reified as underlying messages, the resulting collection is immediately ready to participate in a message chain. This ensures that every interaction remains a formal message send, maintaining the messaging architecture.
 
@@ -699,19 +699,19 @@ Branching is formalised as a recursive Message Expression sent to Boolean identi
 
     // Multi-branch logic using ? and :
 
-    (score >= 90) ? [ Grade #A ]   
-        : (score >= 80) ? [ Grade #B ]  
-        : [ Grade #F ];
+    (score >= 90) ? { Grade #A }   
+        : (score >= 80) ? { Grade #B }  
+        : { Grade #F };
 
 While the Jolk grammar facilitates recursive expression branching through both positive (`?`) and negative (`?!`) operators, structural integrity is best preserved by maintaining unipolar cascades. Mixed-polarity expressions introduce cognitive friction by pivoting the logical meaning of the colon (`:`) branch, potentially obscuring the precision of the state.
 
 **Control loops** 
 
-Control loops are implemented as polymorphic dispatch messages sent to objects. By removing procedural keywords such as while and for, Jolk achieves a minimalist grammar where looping is an emergent protocol. This design allows for highly readable, message-based iterations: a fixed count is handled by an Integer receiving the `#times` message (e.g., `10 #times [ ... ]`), while conditional logic is expressed through chains like `#repeat` and `#until` and the `#forEach` loop is implemented as a polymorphic message send to a collection object.
+Control loops are implemented as polymorphic dispatch messages sent to objects. By removing procedural keywords such as while and for, Jolk achieves a minimalist grammar where looping is an emergent protocol. This design allows for highly readable, message-based iterations: a fixed count is handled by an Integer receiving the `#times` message (e.g., `10 #times { ... }`), while conditional logic is expressed through chains like `#repeat` and `#until` and the `#forEach` loop is implemented as a polymorphic message send to a collection object.
 
     // A while  loop  
     counter = 0;  
-    [ counter < 5 ] #while [ counter = counter + 1 ]
+    { counter < 5 } #while { counter = counter + 1 }
 
 **Pattern matching and safe casting** 
 
@@ -720,19 +720,19 @@ Pattern Matching is an emergent protocol born from the composition of safe-casti
 The `#case` selector acts as a logic gate that evaluates a closure only if the receiver matches the provided argument, maintaining the message-oriented paradigm. The Tolk toolchain identifies these sequences and "intrinsifies" them into native JVM switch opcodes.
 
     ^ status  
-        #case(200) #do ["Success"]         /// Returns if 200, or passes along  
-        #case(404) #do ["Not Found"]       /// Returns if 404, or passes along  
-        #default ["Unknown Error"]         /// default
+        #case(200) #do {"Success"}         /// Returns if 200, or passes along  
+        #case(404) #do {"Not Found"}       /// Returns if 404, or passes along  
+        #default {"Unknown Error"}         /// default
 
 Safe casting is facilitated through the `#as(Type)` and `#instanceOf(Type)` messages, which bridge the gap between abstract protocols and concrete identities. In Jolk, `#instanceOf` is a projection mechanism. It serves as an instrument for *type narrowing* at runtime, ensuring that casting is a communicative act that results in a manageable `Match` container. If the identity doesn't adhere to the proposed protocol, the result resolves to `Nothing`.
 
-The pattern matching choreography relies on these safe-casting messages. Instead of returning a raw pointer or throwing a cast exception, they perform a type-safe narrowing and return a `Match<T>` container. This enables *Monadic Chaining* through a sequence of `#filter`, `#map`, or `#ifPresent` messages, transforming imperative branching into a declarative data flow.
+The pattern matching choreography relies on these safe-casting messages. Instead of returning a raw pointer or throwing a cast exception, they perform a type-safe narrowing and return a `Match[T]` container. This enables *Monadic Chaining* through a sequence of `#filter`, `#map`, or `#ifPresent` messages, transforming imperative branching into a declarative data flow.
 
-    ^ x #as(String)                            // Returns Match<String> with the value or Nothing
-        #filter [ s -> !(s #isEmpty) ]         // If false the content of Selection is dropped  
-        #map [ s -> System #out #println(s) ]  // It was a non-empty String so it gets printed
+    ^ x #as(String)                            // Returns Match[String] with the value or Nothing
+        #filter { s -> !(s #isEmpty) }         // If false the content of Selection is dropped  
+        #map { s -> System #out #println(s) }  // It was a non-empty String so it gets printed
 
-Pattern Matching results in a `Match<T>` to drive logic flow through a message chain, whereas `Optional<T>` is used to represent the state of a value that may be absent over time.
+Pattern Matching results in a `Match[T]` to drive logic flow through a message chain, whereas `Optional[T]` is used to represent the state of a value that may be absent over time.
 
 ### Return & Implicit Self-Return
 
@@ -808,7 +808,7 @@ Messages such as `#new` are transmitted to a class identity. Because the class o
 To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *Intrinsic Synthesis Protocol*. Through the `@Intrinsic` directive, the compiler performs mapping of protocol constants during the build phase, flattening dynamic message-passing. This process elides the abstraction layer, allowing the Graal JIT[12] to apply speculative pruning and polymorphic inline caching. Consequently, dynamic projections achieve the same performance density as static execution.
 
 	@Intrinsic
-	class MetaClass<T extends Object> { 
+	class MetaClass[T extends Object] { 
 
 		/// The metaobject protocol
 
@@ -818,9 +818,9 @@ To achieve industrial-tier efficiency, the Tolk Engine employs the generalised *
 		meta Selector #message(String name);
 
 		/// Identifies the available handshake surface for instances.
-		List<Selector> instanceProtocol() {}
+		List[Selector] instanceProtocol() {}
 		/// Identifies factory and configuration messages for the Class.
-		List<Selector> metaProtocol() {}
+		List[Selector] metaProtocol() {}
 		
 		/// Handshake for Materialisation and Orchestration
 		T project(Selector s, Object... args) {}
@@ -906,7 +906,7 @@ In Jolk, a closure is not a "function pointer" or a simple callback; it is a *Re
 Syntactically, closures are defined by a brace-centric `[ ]` boundary. Parameters are declared as a raw list separated from the body by an arrow `->`. If no parameters are required, the arrow is omitted. Jolk favors functional exclusion, where closures are typically not embedded within a parenthesized argument list (e.g., `#do(param, [ ... ] )`). Instead, the language encourages selector refining, where the closure is the sole payload of a dedicated message (e.g., `#with(param) #do [ ... ]`). This nested builder pattern ensures that logic is never a secondary attribute but always the focus of the interaction.
 
 	@Intrinsic  
-	class Closure<T> {
+	class Closure[T] {
 	
 	    // Catch specific types by passing the Meta-ID and a handler  
 	    Self catch(Type errorType, Closure handler) { }
@@ -925,9 +925,9 @@ To enable custom control structures, the `Closure` type provides `@Intrinsic` se
 This architecture allows developers to define templates like `#withLock` that behave like native language keywords.
 
 	@Inline
-	T #withLock(Closure<T> logic) {
+	T #withLock(Closure[T] logic) {
 		self #lock;
-		[ ^ logic #call ] #finally [ self #unlock ]
+		{ ^ logic #call } #finally { self #unlock }
 	}
 
 In Jolk the distinction between *Intrinsic*, *Transparent*, and *Opaque* selectors defines the boundary between structural control and functional data. This division allows the Jolk developer to extend the language with custom control structures (Transparent).
@@ -941,7 +941,7 @@ This architecture establishes types as first-class meta-objects, centralising th
 Object instantiation executes via the `#new` message defined on `Metaclass`. The default `#new` implementation operates as an intrinsic compiler transformation rule. Classes specialise instantiation behaviour by overriding `#new` within their meta-definition, integrating allocation logic into the unified messaging protocol.
 
 	@Intrinsic
-	class MetaClass<T extends Object> {
+	class MetaClass[T extends Object] {
 
 		/// The metaObject protocol
 		...
@@ -959,7 +959,7 @@ Object instantiation executes via the `#new` message defined on `Metaclass`. The
 	    }
 	
 	    /// Returns the Type Identity that this one extends  
-	    <S extends MetaClass<T>> S superclass() {  
+	    [S extends MetaClass[T]] S superclass() {  
 	        // java pseudocode  
 	        // return T.getSuperclass();  
 	    }  
@@ -986,17 +986,17 @@ The *Universal Root Identity* constitutes the common denominator for all non-nul
 	    Self ifEmpty(Closure action) { }
 	
 	    // Context-aware type reference  
-	    Metaclass<Self> getClass() { /* this.getClass() */ }
+	    Metaclass[Self] getClass() { /* this.getClass() */ }
 	
 		// Safe Casting: Narrow the identity into a specific protocol.
-		Match<T> instanceOf(Type<T> type) { }
-		Match<T> as(Type<T> type) { }
+		Match[T] instanceOf(Type[T] type) { }
+		Match[T] as(Type[T] type) { }
 
 		// Predicate: Verify if the identity adheres to a specific protocol.
-		Boolean isInstance(Type<T> type) { }
+		Boolean isInstance(Type[T] type) { }
 	
 	    Self #project(Map[String, Object] fields) { 
-	        fields #forEach [ String key, Object value -> self #put(key, value) ];  
+	        fields #forEach { String key, Object value -> self #put(key, value) };  
 	    }
 	
 	}
@@ -1017,12 +1017,12 @@ Jolk provides three fundamental collection protocols, each anchored by a unique 
 The `Array` is a linear continuum of ordered facts, serving as the primary vehicle for sequential logic. Its literal form, `#[ ]`, is anchored by the square bracket—the universal symbol for the matrix and vector. This liberates the symbol to serve a singular purpose: the variadic birth of an ordered sequence. Every element is indexed by its position. It responds to positional messages (`#at`) and stream-based protocol (`#map`).
 
 	@Intrinsic
-	extension ArrayExtension<T> on java.util.List<T> { {
+	extension ArrayExtension[T] on java.util.List[T] {
 	
-	    meta Array<T> new(T... elements) { }
+	    meta Array[T] new(T... elements) { }
 	    T at(Int index) { }
 	    Self put(Int index, T element) { }
-	    <R> Array<R> map(Closure<R> mapper) { }
+	    [R] Array[R] map(Closure[R] mapper) { }
 	}
 
 The `Set` represents a collection of unique identities, excising duplication and disregarding ordinality. Its literal, `#{ }`, uses the brace, the canonical symbol of Set Theory.  Membership is defined by identity, not position. It responds to membership queries (`#includes:`) and mathematical unions.
@@ -1039,7 +1039,7 @@ To support the seamless integration of Java's iteration patterns into Jolk's mes
 
 ```jolk
 @Intrinsic
-extension IteratorExtension<T> on java.util.Iterator<T> {
+extension IteratorExtension[T] on java.util.Iterator[T] {
     
     /// Yields the next identity in the sequence.
     T next() { }
@@ -1048,8 +1048,8 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
     Boolean hasNext() { }
 
     /// Consumes the remaining flow via a closure.
-    Self forEach(Closure<T> action) { 
-        [ self #hasNext ] #while [ action #apply(self #next) ]
+    Self forEach(Closure[T] action) { 
+        { self #hasNext } #while { action #apply(self #next) }
     }
 }
 ```
@@ -1098,7 +1098,7 @@ extension IteratorExtension<T> on java.util.Iterator<T> {
 
 Jolk is a convergent architecture where the static safety of Java acts as the gatekeeper for a Smalltalk-inspired runtime. The Java influence provides the structure—nominal typing, curly-brace scoping, and visibility modifiers—utilising factory patterns as a core construct to govern object lifecycles. The Smalltalk influence provides the execution via the messaging kernel. Beyond these primary anchors, Jolk’s design is further inspired by the pragmatic ergonomics of Kotlin, the symbolic density of C#, and the pioneering meta-object research of Self and Lisp.
 
-*Smalltalk-80*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic exchange of messages"[2]. It utilizes keyword selectors (using a `#` hashtag anchor) and closures (`[ ]`) as first-class identities to manage control flow. Methods implicitly return `self` upon completion unless an explicit return (`^`) is specified. Non-local returns allow a closure to command its defining method to terminate immediately. Unlike Smalltalk, which operates in a closed image, Jolk must respect the JVM stack. Non-local returns are permitted within the guest environment but are forbidden when a closure is projected as an opaque Java Functional Interface.
+*Smalltalk-80*: Jolk adopts the core philosophy that "everything is an object" and computation is a "dynamic exchange of messages"[2]. It utilizes keyword selectors (using a `#` hashtag anchor) and closures (`{ }`) as first-class identities to manage control flow. Methods implicitly return `self` upon completion unless an explicit return (`^`) is specified. Non-local returns allow a closure to command its defining method to terminate immediately. Unlike Smalltalk, which operates in a closed image, Jolk must respect the JVM stack. Non-local returns are permitted within the guest environment but are forbidden when a closure is projected as an opaque Java Functional Interface.
 
 *Strongtalk*: Jolk applies principles from Strongtalk to achieve structural type constraints within the host environment[4]. The runtime explicitly separates behavioral protocols from the class hierarchy through the use of `protocol`, a concept known as *lattice separation*. Jolk employs Strongtalk-inspired type-checking to statically validate messages, ensuring a receiver can understand a message before execution. Jolk leverages Strongtalk to focus on behavioral integrity. This is reinforced by the ampersand (`&`) operator, which reifies *conjunction types* for behavioral composition, and the `Self` type alias, which ensures that methods returning `Self` remain type-safe across the inheritance tree.
 
@@ -1108,7 +1108,7 @@ Jolk is a convergent architecture where the static safety of Java acts as the ga
 
 *Kotlin*: Jolk synthesizes Kotlin's pragmatic ergonomics with Smalltalk's foundational principles. Features like null safety, exceptions, and predicates are re-imagined through a dual heritage. Jolk's `Nothing` identity, rooted in Smalltalk's reified absence, aligns with Kotlin's emphasis on preventing `NullPointerException`s. Similarly, the elimination of checked exceptions mirrors Kotlin's approach, while Jolk's message-passing for control flow (using closures as predicates) draws from both Smalltalk's blocks and Kotlin's functional patterns.
 
-*Scala*: The *Monadic Chaining* of the `Match<T>` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.  While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization.
+*Scala*: The *Monadic Chaining* of the `Match[T]` container is a direct evolution of the functional patterns popularized by Scala's `Option` and `Try` types. Jolk adopts the semantic rigor of monadic data-flow—chaining logic through containers—while utilizing the Tolk Engine to elide the associated allocation overhead.  While Jolk’s `lazy` mechanism resembles Scala's `lazy val` in its memoized behaviour, it functions as a primitive for resource management and memoization.
 
 *C#*: The `??` operator for null-coalescing, providing a concise, expression-based mechanism for handling null values that aligns perfectly with Jolk's fluid messaging. The `using` directive for vocabulary expansion, aliasing and constant projection.
 
@@ -1142,31 +1142,31 @@ The framework provides a set of abstract & final classes that are the basis for 
 Demonstrated language concepts: generics, Self type alias, message chaining for control and exception flow, null object pattern
 
 	//
-	package abstract class Node<T> {
+	package abstract class Node[T] {
 		package abstract Self accept(T subject, ExecutionContext context);
 	}
 
 	//
-	package final class ChildValidation<T, R> extends Node<T> {
+	package final class ChildValidation[T, R] extends Node[T] {
 
-		Function<T, R> supplier;  
-		Validation<R> validation;
+		Function[T, R] supplier;  
+		Validation[R] validation;
 
-		meta ChildValidation new(Function<T, R> supplier, Validation<R> validation) {
+		meta ChildValidation new(Function[T, R] supplier, Validation[R] validation) {
 			^ self #new
 				#supplier(supplier)
 				#validation(validation)
 		}
 
 		package Self accept(T subject, ExecutionContext context) {  
-			supplier #value(subject) #ifPresent [ child -> validation #accept(child, context) ]  
+			supplier #value(subject) #ifPresent { child -> validation #accept(child, context) }  
 		}  
 	}
 
-	package abstract class Validation<T> extends Node<T> {
+	package abstract class Validation[T] extends Node[T] {
 
 		package final Self accept(T subject, ExecutionContext context) {  
-			(self #satisfiesPreCondition(subject, context)) ? [ self #doAccept(subject, context) ]  
+			(self #satisfiesPreCondition(subject, context)) ? { self #doAccept(subject, context) }  
 		}
 
 		protected Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
@@ -1177,12 +1177,12 @@ Demonstrated language concepts: generics, Self type alias, message chaining for 
 	}
 
 	//
-	abstract class Constraint<T> extends Validation<T> {
+	abstract class Constraint[T] extends Validation[T] {
 
 		package final Self doAccept(T subject, ExecutionContext context) {  
-			self #isValid(subject) ? [ ^ self ];  
+			self #isValid(subject) ? { ^ self };  
 			context #add(subject, self #getIssue(subject, context));  
-			self #interrupt #ifPresent [ e -> e #throw ]  
+			self #interrupt #ifPresent { e -> e #throw }  
 		}
 
 		package abstract Boolean isValid(T subject);
@@ -1191,30 +1191,30 @@ Demonstrated language concepts: generics, Self type alias, message chaining for 
 	}
 
 	//
-	abstract class ValidationSuite<T> extends Validation<T> {
+	abstract class ValidationSuite[T] extends Validation[T] {
 
-		constant Array<Node<T>> nodes = Array #new;
+		constant Array[Node[T]] nodes = Array #new;
 
-		final Self add(Constraint<T> constraint) {
+		final Self add(Constraint[T] constraint) {
         	nodes #add(constraint)
     	}
 
-		final <R> Self add(ChildValidation<T, R> suite) {
+		final [R] Self add(ChildValidation[T, R] suite) {
         	nodes #add(suite)
     	}
 
 		final Self validate(T subject, ExecutionContext executionContext) {
-			[ self #accept(subject, executionContext) ]
-				#catch [ Interrupt e -> /* ignore */ ]
+			{ self #accept(subject, executionContext) }
+				#catch { Interrupt e -> /* ignore */ }
 		}
 
 		package final Self doAccept(T subject, ExecutionContext executionContext) {
-			[ nodes #forEach [node -> node #accept(subject, executionContext)] ]
-				#catch [ 
+			{ nodes #forEach {node -> node #accept(subject, executionContext)} }
+				#catch {
 					// the further validation of this ruleset is ignored on an interrupt
 					Interrupt e ->  (e != self #interrupt) ? e #throw
 					// no action required, the containing ruleset will resume the validation
-				]
+				}
 		}
 	}
 
@@ -1248,12 +1248,12 @@ The domain types are a set of data objects and validation classes implementing a
 		String lastName;
 
 		Boolean ~~(Object other) {
-			(self == other) ? [ ^ true ];
-			other #instanceOf(Person) #ifPresent [ p ->
+			(self == other) ? { ^ true };
+			other #instanceOf(Person) #ifPresent { p ->
 				^ (#ssn == p #ssn)
 					&& (#firstName ~~ p #firstName)
 					&& (#lastName ~~ p #lastName)
-			];
+			};
 			^ false
 		}
 
@@ -1264,7 +1264,7 @@ The domain types are a set of data objects and validation classes implementing a
 Demonstrated language concepts: creation methods, message chaining, closure, DI, meta projection, expression evaluation
 
 	//  
-	class ContactFormValidation extends ValidationSuite<ContactForm> {
+	class ContactFormValidation extends ValidationSuite[ContactForm] {
 
 		#< meta constant Interrupt INTERRUPT = Interrupt #new;
 
@@ -1281,7 +1281,7 @@ Demonstrated language concepts: creation methods, message chaining, closure, DI,
 	//
 	& demo.validation.rules.ContactFormValidation.INTERRUPT;
 
-	#! class InssConstraint extends Constraint<Person> {
+	#! class InssConstraint extends Constraint[Person] {
 
 		// singleton in DI configuration
 		meta lazy InssConstraint new() {  
@@ -1315,46 +1315,46 @@ In the Jolk architecture, the behavior of a closure is dictated by the selector 
 
 *Intrinsic Selectors* (Structural Primitives) These are hard-coded building blocks known to the compiler (e.g., `?`, `#catch`). They undergo Flattening, projecting directly to native Java constructs like if statements or try-catch blocks. They support non-local returns (`^`) and require no imports.
 
-	user #isActive ? [
+	user #isActive ? {
 		Log #info("Access Granted");
 		^ true // Non-local return: exits the parent method
-	] #catch [ Error e -> 
+	} #catch { Error e -> 
 		log #error(e #message);
 		^ false
-	]
+	}
 
 *Transparent Selectors* (Custom Control Templates) Library methods marked with `@Inline`. The transpiler performs Lexical Inlining, injecting the method body directly into the call site. This allows developers to create custom control structures (like #`withLock`) that support non-local returns, extending the language without modifying the compiler.
 
 	@Inline
-	T #withLock(Closure<T> logic) {
+	T #withLock(Closure[T] logic) {
 		self #lock;
-		[ ^ logic #call ] #finally [ self #unlock ]
+		{ ^ logic #call } #finally { self #unlock }
 	}
 
 	// Usage
-	#withLock [
+	#withLock {
 		item #isExpired ? ^ false; // Exits the parent method via inlining
 		item #process
-	]
+	}
 
 *Opaque Selectors* (Functional Messages) Standard methods (e.g., `#map`) where the closure is treated as a self-contained unit of work. The transpiler applies Boxing, converting the closure into a Java Lambda. To ensure thread safety and logical consistency, the Semantic Guard forbids non-local returns in this context.
 
-	Thread #async [ 
+	Thread #async { 
 		Log #info("Running in background");
 		^ false; // ERROR: Cannot escape a thread boundary.
-	]
+	}
 
-Placing a closure within a parenthetical argument list—such as #`do(param, [ logic ] )`—is a signal of procedural bias. This pattern forces a collision between static data and deferred logic. To maintain fluidity, Jolk adopts the Selector Refining Protocol: logic must never be a secondary passenger; it must be the primary payload of a Refining Selector. Instead of saturating a single message, the choreography is split into Contextualisation and Application.
+Placing a closure within a parenthetical argument list—such as #`do(param, { logic } )`—is a signal of procedural bias. This pattern forces a collision between static data and deferred logic. To maintain fluidity, Jolk adopts the Selector Refining Protocol: logic must never be a secondary passenger; it must be the primary payload of a Refining Selector. Instead of saturating a single message, the choreography is split into Contextualisation and Application.
 
 	// Anti-Pattern: anonym parameter
-	db #query(sql, [ row -> ... ]);
+	db #query(sql, { row -> ... } );
 
 	// Allowed Pattern: identified parameter
-	rowHandler = [ row -> ... ];
+	rowHandler = { row -> ... };
 	db #query(sql, rowHandler);
 
 	// Recommended Pattern: Selector Refining
-	db #query(sql) #each [ row -> ... ];
+	db #query(sql) #each { row -> ... };
 
 ## Design Patterns
 
@@ -1374,7 +1374,7 @@ The defining characteristic of this state-chaining idiom is automatic scope reve
 	// Linear State-Chaining Fluent API
 	ValidationSuite #new
 		#add(PresenceConstraint #new)               // Parent aggregate state
-		#subject [ f -> f #email ] #add(Email #new) // Transition to sub-context -> fulfilment -> scope reversion
+		#subject { f -> f #email } #add(Email #new) // Transition to sub-context -> fulfilment -> scope reversion
 		#add(NextConstraint #new)                   // Continuation on parent aggregate
 
 This state-chaining design ensures single-responsibility boundaries for each message send:
@@ -1384,13 +1384,13 @@ This state-chaining design ensures single-responsibility boundaries for each mes
 
 By decoupling these concerns, the parent aggregate remains encapsulated. It avoids direct interaction with extraction logic, receiving instead the resulting identity node provided by the bridge upon completion. To implement this technique, the aggregate delegates to a context bridge encapsulating the parent reference and extraction logic.
 
-	// Method implementation inside Sovereign<T>
-	#! <R> Requirement<T, R> subject(Closure<T, R> supplier) {
+	// Method implementation inside Sovereign[T]
+	#! [R] Requirement[T, R] subject(Closure[T, R] supplier) {
 		^ RequirementBridge #new(this, supplier)
 	}
 
-	// Method implementation inside RequirementBridge<T, R>
-	#! <T> Sovereign<T> add(Constraint<R> node) {
+	// Method implementation inside RequirementBridge[T, R]
+	#! [T] Sovereign[T] add(Constraint[R] node) {
 		// Construct internal mapping and update the parent aggregate
 		master #nodes #add(MappingNode #new(supplier, node))
 		^ master // Terminal scope reversion to parent aggregate
@@ -1444,7 +1444,7 @@ Multi-environment and test configurations are managed through Specialization and
 		Service service = Service #new(ConfigurationProvider #CONFIG #database);
 
 		// Register the module's shutdown  
-		Runtime #onShutdown [ config #shutdown ]
+		Runtime #onShutdown { config #shutdown }
 		
 		// ...  
 	}
@@ -1502,7 +1502,7 @@ protocol TestCase {
     }
 
     assertThat(Boolean condition) {
-        condition ?! [ #throw("Assertion Mismatch: Expected True") ]
+        condition ?! { #throw("Assertion Mismatch: Expected True") }
     }
 
 	// ...
@@ -1514,9 +1514,9 @@ The execution engine coordinates execution pipelines via the meta-protocol, driv
 * **Building:** The engine interrogates the loaded `MetaClass` object via the metaobject protocol to extract method selectors. Orchestrator slots containing configuration modifiers evaluate their underlying method blocks to populate the execution context with runtime parameter matrices and lifecycle conditions.
 	```
 	@Inline
-	Extension MetaClassTestExtension on jolk.lang.MetaClass<T extends TestCase> {
+	Extension MetaClassTestExtension on jolk.lang.MetaClass[T extends TestCase] {
 
-		List<Selector> #testSelectors { }
+		List[Selector] #testSelectors { }
 
 	}
 	```
@@ -1541,7 +1541,7 @@ While the full architectural formalization of the dynamic MOP is reserved for fu
 testGivenThenReturn() {
 	repo = #mock(UserRepository);
 	User alice = User #new(42, "Alice");
-	#given [repo #findById(42)] #then(alice);
+	#given {repo #findById(42)} #then(alice);
 
 	// test & verify
 	User user = UserManager #new(repo) #find(42);
@@ -1556,7 +1556,7 @@ testGivenThenThrow() {
 	#given [repo #findById(42)] #throw(RuntimeException);
 
 	// test & verify
-	Closure find = [ UserManager #new(repo) #find(42)];
+	Closure find = { UserManager #new(repo) #find(42)};
 	#assertThrows(find, RuntimeException );
 	#assertTrue(repo #verify("findById", 42));
 }
@@ -1691,7 +1691,7 @@ This is the mechanical process of collapsing high-level messaging protocols into
 
 **Functional Flow Flattening:** The engine utilizes loop fusion to collapse iterative patterns into single-pass loops. The `JolkDispatchNode` leverages `@Cached IndirectCallNode` to inline closure bodies, allowing the compiler to elide intermediate collection allocations.
  
-**Monadic Flow Flattening:** The Tolk Engine identifies *Monadic Chaining* patterns (such as the `Match<T>` container) to elide physical object allocation during partial evaluation. By recognizing these logical structures, the JIT collapses high-level pipelines into raw hardware branches, reducing logic execution to zero-cost machine instructions.
+**Monadic Flow Flattening:** The Tolk Engine identifies *Monadic Chaining* patterns (such as the `Match[T]` container) to elide physical object allocation during partial evaluation. By recognizing these logical structures, the JIT collapses high-level pipelines into raw hardware branches, reducing logic execution to zero-cost machine instructions.
 
 Through these specializations, the Tolk Engine resolves dynamic protocols into static hardware instructions, ensuring performance parity with procedural JVM languages while maintaining a pure message-passing model.
 
@@ -1806,7 +1806,7 @@ The terminology and recontextualized concepts of the Jolk language:
 **Lexical fence:** A structural boundary that enforces message-only interaction.  
 **Message-oriented paradigm:** A computational model where all computation is realized as a dynamic exchange of messages between autonomous entities. Jolk extends this paradigm to a unified field, where even fundamental operations like control flow and arithmetic are resolved through polymorphic dispatch.  
 **Message boundary:** The structural line separating an object's internal state from the external message-passing environment. It enforces *Local Retention* and *Encapsulation*.  
-**MetaClass:** The intrinsic root identity (`MetaClass<T>`) representing the reified type identity in Jolk. Every class is a live singleton instance of `MetaClass`, allowing class-level (`meta`) methods, factory creation methods, and constants to participate in standard polymorphic message dispatch.
+**MetaClass:** The intrinsic root identity (`MetaClass[T]`) representing the reified type identity in Jolk. Every class is a live singleton instance of `MetaClass`, allowing class-level (`meta`) methods, factory creation methods, and constants to participate in standard polymorphic message dispatch.
 **Metaobject protocol (MOP):** A metaobject protocol provides the vocabulary to access and manipulate the structure and behaviour of systems of objects.
 **Nothing:** A reified, first-class Atomic Identity representing the fact of absence and referred to by the reserved object identifier `null`.  
 **Semantic casing:** A lexical rule where the first-letter casing of an identifier determines its semantic role: Meta-Objects are Uppercase, while instances and selectors are lowercase.  

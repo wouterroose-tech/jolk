@@ -325,7 +325,7 @@ public class JolkObjectTest extends JolcTestBase {
         String source = """
             class MyClass {
                 Boolean ~~(Object other) {
-                    (self == other) ? [ ^true ];
+                    (self == other) ? { ^true };
                     ^ false
                 }
             }
@@ -349,10 +349,10 @@ public class JolkObjectTest extends JolcTestBase {
                 Long y;
 
                 Boolean ~~(Object other) {
-                    (self == other) ? [ ^true ];
-                    other #instanceOf(Point) #ifPresent [ p ->
+                    (self == other) ? { ^true };
+                    other #instanceOf(Point) #ifPresent { p ->
                         ^ (self #x == p #x) && (self #y == p #y)
-                    ];
+                    };
                     ^ false
                 }
             }
@@ -377,10 +377,10 @@ public class JolkObjectTest extends JolcTestBase {
         // Define a class that overrides the equivalence operator '~~'.
         String source = """
             class MyClass {
-                Long val() { 42 #ifPresent [ x -> ^ x ]; ^ 0 }
-                Long val2() { null #ifPresent [ x -> ^ x ]; ^ 0 }
-                Long val3() { 42 #ifEmpty [ ^ 42 ]; ^ 0 }
-                Long val4() { null #ifEmpty [ ^ 42 ]; ^ 0 }
+                Long val() { 42 #ifPresent { x -> ^ x }; ^ 0 }
+                Long val2() { null #ifPresent { x -> ^ x }; ^ 0 }
+                Long val3() { 42 #ifEmpty { ^ 42 }; ^ 0 }
+                Long val4() { null #ifEmpty { ^ 42 }; ^ 0 }
                 Long val5() { ^ 42 #isPresent ? 42 : 0 }
                 Long val6() { ^ null #isPresent ? 42 : 0 }
                 Long val7() { ^ 42 #isEmpty ? 42 : 0 }
@@ -494,10 +494,10 @@ public class JolkObjectTest extends JolcTestBase {
     
     @Test
     void testInheritancsGenerics() {
-        String source = "class ClassA<T> { Long x() { ^ 42 } }";
+        String source = "class ClassA[T] { Long x() { ^ 42 } }";
         Value instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
-        source = "class ClassB extends ClassA<Long> { Long y() { ^ 42 } }";
+        source = "class ClassB extends ClassA[Long] { Long y() { ^ 42 } }";
         instance = eval(source).invokeMember("new");
         assertEquals(42L, instance.invokeMember("x").asLong());
         assertEquals(42L, instance.invokeMember("y").asLong());

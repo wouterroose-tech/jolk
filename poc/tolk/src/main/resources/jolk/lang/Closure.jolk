@@ -19,13 +19,13 @@
 /// @author Wouter Roose
 
 @Intrinsic
-package class Closure<T> {
+package class Closure[T] {
     
     /// The captured home scope for Non-Local Return tunneling
     private ExecutionContext context; 
 
     /// The raw structural logic bound to this JoMoo
-    private java.util.function.Supplier<T> logic;
+    private java.util.function.Supplier[T] logic;
 
     /// Executes the reified logic of this closure.
     ///
@@ -71,6 +71,6 @@ package class Closure<T> {
     ///
     /// - **logic**: A closure that consumes the resource.
     /// - **Returns**: The result of the logic block.
-    <R> R try(Closure<R> logic) {}
+    <R> R try(Closure[R] logic) {}
     
 }

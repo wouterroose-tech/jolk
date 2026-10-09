@@ -13,10 +13,10 @@
 ///
 /// @author Wouter Roose
 
-package final class ChildValidation<T, R> extends Node<T> {
+package final class ChildValidation[T, R] extends Node[T] {
 
-    Function<T, R> supplier;
-    Validation<R> validation;
+    Function[T, R] supplier;
+    Validation[R] validation;
 
     /// ## accept
     /// Executes the child validation logic.
@@ -25,6 +25,6 @@ package final class ChildValidation<T, R> extends Node<T> {
     /// - **executionContext**: The shared industrial state.
     @Override
     accept(T subject, ExecutionContext executionContext) {
-        #supplier #apply(subject) #ifPresent [ child -> #validation #accept(child, executionContext) ]
+        #supplier #apply(subject) #ifPresent { child -> #validation #accept(child, executionContext) }
     }
 }

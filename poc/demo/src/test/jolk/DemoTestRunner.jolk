@@ -31,7 +31,7 @@
 class DemoTestRunner extends TestRunner {
 
     run() {
-        Array<TestSuite> suites = #[];
+        Array[TestSuite] suites = #[];
         suites #add(#examples);
         suites #add(#demonstrators);
         suites #add(#domain);

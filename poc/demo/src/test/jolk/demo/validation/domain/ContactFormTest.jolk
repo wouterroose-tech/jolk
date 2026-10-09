@@ -19,13 +19,13 @@ class ContactFormTest extends TestCase {
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description")
-            #ifPresent [ f ->
+            #ifPresent { f ->
                 (f #person == person)
                     && (f #email ~~ "john.doe@example.com")
                     && (f #zipCode == 12345)
                     && (f #description ~~ "Test description");
-                ];
-            #ifEmpty [ #fail ]
+                }
+            #ifEmpty { #fail };
             #success
     }
 

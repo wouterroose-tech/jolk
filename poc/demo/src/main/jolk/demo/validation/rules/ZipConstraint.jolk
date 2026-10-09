@@ -13,7 +13,7 @@
 ///
 /// @author Wouter Roose
 
-#! class ZipConstraint extends Constraint<ContactForm> {
+#! class ZipConstraint extends Constraint[ContactForm] {
 
     Boolean satisfiesPreCondition(ContactForm form, ExecutionContext executionContext) {
         ^ form #zipCode  != 0

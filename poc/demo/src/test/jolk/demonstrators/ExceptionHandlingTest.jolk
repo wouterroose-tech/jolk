@@ -19,27 +19,27 @@ public class ExceptionHandlingTest extends TestCase {
     @Test
     testCatch() {
         String status = "Start";
-        [ RuntimeException #new #throw ] 
-            #catch [ RuntimeException e ->  status = "Caught"  ];
+        { RuntimeException #new #throw } 
+            #catch { RuntimeException e ->  status = "Caught"  };
         #assertEquals("Caught", status);
     }
 
     @Test
     testCatchFinally() {
         String status = "Start";
-        [ RuntimeException #new #throw ]
-            #catch [ RuntimeException e -> status = status + " -> Catch" ]
-            #finally [ status = status + " -> Finally" ];
+        { RuntimeException #new #throw }
+            #catch { RuntimeException e -> status = status + " -> Catch" }
+            #finally { status = status + " -> Finally" };
         #assertEquals("Start -> Catch -> Finally", status);
     }
 
     @Test
     testTryCatchFinally() {
         String status = "Start";
-        [ status = status + " -> Try" ]
-            #try [ RuntimeException #new #throw ]
-            #catch [ RuntimeException e -> status = status + " -> Catch" ]
-            #finally [ status = status + " -> Finally" ];
+        { status = status + " -> Try" }
+            #try { RuntimeException #new #throw }
+            #catch { RuntimeException e -> status = status + " -> Catch" }
+            #finally { status = status + " -> Finally" };
         #assertEquals("Start -> Try -> Catch -> Finally", status);
     }
 

@@ -33,7 +33,7 @@ class TestCase extends Test {
     }
 
     disabled(Boolean condition) {
-        condition ? [#disabled]
+        condition ? {#disabled}
     }
 
     success() {}
@@ -43,42 +43,42 @@ class TestCase extends Test {
     }
 
     assertTrue(Boolean condition) {
-        condition ?! [ #throw("Assertion Mismatch: Expected True") ]
+        condition ?! { #throw("Assertion Mismatch: Expected True") }
     }
     
     assertFalse(Boolean condition) {
-        condition ? [ #throw("Assertion Mismatch: Expected False") ]
+        condition ? { #throw("Assertion Mismatch: Expected False") }
     }
 
     assertSame(Object expected, Object actual) {
-        actual != expected ? [ #throw("Assertion Mismatch: Values not the same, Expected: " + expected + ", Actual: " + actual) ]
+        actual != expected ? { #throw("Assertion Mismatch: Values not the same, Expected: " + expected + ", Actual: " + actual) }
     }
     
     assertNotSame(Object expected, Object actual) {
-        actual == expected ? [ #throw("Assertion Mismatch: Values are the same, Not expected: " + expected + ", Actual: " + actual) ]
+        actual == expected ? { #throw("Assertion Mismatch: Values are the same, Not expected: " + expected + ", Actual: " + actual) }
     }
 
     assertEquals(Object expected, Object actual) {
-        actual !~ expected ? [ #throw("Assertion Mismatch: Values not equivalent, Expected: " + expected + ", Actual: " + actual) ]
+        actual !~ expected ? { #throw("Assertion Mismatch: Values not equivalent, Expected: " + expected + ", Actual: " + actual) }
     }
 
     assertNotEquals(Object expected, Object actual) {
-        actual ~~ expected ? [ #throw("Assertion Mismatch: Values are equivalent, Not expected: " + expected + ", Actual: " + actual) ]
+        actual ~~ expected ? { #throw("Assertion Mismatch: Values are equivalent, Not expected: " + expected + ", Actual: " + actual) }
     }
 
     assertIsPresent(Object target) {
-        target #isPresent ?! [ #throw("Assertion Mismatch: Instance is Nothing") ]
+        target #isPresent ?! { #throw("Assertion Mismatch: Instance is Nothing") }
     }
 
     assertIsEmpty(Object target) {
-        target #isEmpty ?! [ #throw("Assertion Mismatch: Instance is not Empty") ]
+        target #isEmpty ?! { #throw("Assertion Mismatch: Instance is not Empty") }
     }
 
-    assertThrows(Closure closure, MetaClass<Throwable> expectedException) {
-        [ closure #apply ]
-            #catch [ t -> 
-                (t #class == expectedException) ? [ ^ self ];
-                #throw("Assertion Mismatch: Threw unexpected exception type") ];
+    assertThrows(Closure closure, MetaClass[Throwable] expectedException) {
+        { closure #apply }
+            #catch { t -> 
+                (t #class == expectedException) ? { ^ self };
+                #throw("Assertion Mismatch: Threw unexpected exception type") };
         #throw("Assertion Mismatch: Expected exception was not thrown")
     }
 

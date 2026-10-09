@@ -45,7 +45,7 @@ class TestRunner_Test extends TestCase {
 
     @Test
     testSelectors() {
-        List<String> testSelectors = TestRunner #new #selectors(#class);
+        List[String] testSelectors = TestRunner #new #selectors(#class);
         #assertEquals(5, testSelectors #size);
         #assertTrue(testSelectors #contains ("testSelectors"));
     }

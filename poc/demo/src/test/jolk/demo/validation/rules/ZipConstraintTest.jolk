@@ -6,7 +6,7 @@
 
 /// # ZipConstraintTest
 ///
-/// Test suite for verifying the logic within [ZipConstraint].
+/// Test suite for verifying the logic within {ZipConstraint}.
 ///
 /// @author Wouter Roose
 class ZipConstraintTest extends TestCase {
@@ -31,8 +31,8 @@ class ZipConstraintTest extends TestCase {
         // Wrap in catch because ZipConstraint #interrupt returns a signal 
         // thrown by Constraint #doAccept upon violation.
         Boolean interrupted = false;
-        [ ZipConstraint #new #accept(form, context) ]
-            #catch [ Interrupt e -> interrupted = true ];
+        { ZipConstraint #new #accept(form, context) }
+            #catch { Interrupt e -> interrupted = true };
         
         #assertTrue(interrupted && context #hasIssue)
     }

@@ -8,7 +8,7 @@
 /// * `?` is the "if-true" operator.
 /// * `?!` is the "if-not-true" operator.
 /// * `condition ? trueVal : falseVal` is transpiled to a Java ternary expression.
-/// * `condition ? [ ... ]` is transpiled to a Java if-statement.
+/// * `condition ? { ... }` is transpiled to a Java if-statement.
 ///
 /// @author Wouter Roose
 
@@ -35,23 +35,23 @@ final class TernaryExpressionTest extends TestCase {
     }
 
     String runOneBranch(Boolean condition) {
-        condition ? [ ^ "Hit" ];
+        condition ? { ^ "Hit" };
         ^ "Miss"
     }
 
     Boolean runIfNotThen(Boolean cond) {
-        cond ?! [ ^ false ];
+        cond ?! { ^ false };
         ^ true
     }
 
     Boolean runIfNotThenElse(Boolean cond) {
-        cond ?! [ ^ false ] : [ ^ true ]
+        cond ?! { ^ false } : { ^ true }
     }
 
     Int runBlockAssignment(Boolean condition) {
         condition
-            ? [ Int x = 1; ^x ]
-            : [ Int x = 2; ^x ]
+            ? { Int x = 1; ^ x }
+            : { Int x = 2; ^ x }
     }
 
     @Test

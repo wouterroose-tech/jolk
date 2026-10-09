@@ -12,8 +12,8 @@
 ///
 class UserRepositoryMock {
 
-    Map<String, Closure> stubs;
-    Map<String, Boolean> calls;
+    Map[String, Closure] stubs;
+    Map[String, Boolean] calls;
     String pending;
 
     meta new() {
@@ -24,9 +24,9 @@ class UserRepositoryMock {
     
     Object findById(Long id) {
         selector = "findById(" + id #toString + ")";
-        #stubs #at(selector) #ifPresent [ v -> 
+        #stubs #at(selector) #ifPresent { v -> 
             #calls #put(selector , true);
-            ^ v #apply ];
+            ^ v #apply };
         #pending(selector);
         ^ self
     }
@@ -44,11 +44,11 @@ class UserRepositoryMock {
     }
 
     then(Object returnValue) {
-        #stubs #put(#pending, [ returnValue ]);
+        #stubs #put(#pending, { returnValue });
     }
 
-    throw(MetaClass<Throwable> clazz) {
-        #stubs #put(#pending, [ clazz #new #throw ]);
+    throw(MetaClass[Throwable] clazz) {
+        #stubs #put(#pending, { clazz #new #throw });
     }
  
 }

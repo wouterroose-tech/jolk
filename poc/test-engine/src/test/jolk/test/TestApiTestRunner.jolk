@@ -24,7 +24,7 @@ class TestApiTestRunner extends  TestRunner {
             #addTestCase(TestSuite_Test)
             #addTestCase(TestResult_Test)
             #addTestCase(TestRunner_Test);
-        Array<TestSuite> suites = #[testSuite];
+        Array[TestSuite] suites = #{testSuite};
 
         super #run(suites);
     }

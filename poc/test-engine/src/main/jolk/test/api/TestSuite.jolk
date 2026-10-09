@@ -8,7 +8,7 @@
 ///
 class TestSuite extends Test {
 
-    Array<MetaClass<TestCase>> tests;
+    Array[MetaClass[TestCase]] tests;
     
     meta new(String name) {
         ^ super
@@ -17,7 +17,7 @@ class TestSuite extends Test {
             #name(name)
     }
 
-    addTestCase(MetaClass<TestCase> testCase) {
+    addTestCase(MetaClass[TestCase] testCase) {
         tests #add(testCase);
     }
     

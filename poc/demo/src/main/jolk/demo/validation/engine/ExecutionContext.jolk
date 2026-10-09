@@ -11,7 +11,7 @@
 
 class ExecutionContext {
 
-    ArrayList<Issue> issues;
+    ArrayList[Issue] issues;
 
     meta new() {
         ^ super #new #issues(#[])
@@ -29,20 +29,20 @@ class ExecutionContext {
     
     /// Returns true if any error has been reported.
     Boolean hasError() {
-        ^ #hasMatch [ i -> i #level #isError ]
+        ^ #hasMatch { i -> i #level #isError }
     }
 
     /// Returns true if any warning has been reported.
     Boolean hasWarning() {
-        ^ #hasMatch [ i -> i #match(WARNING) ]
+        ^ #hasMatch { i -> i #match(WARNING) }
     }
 
     /// Returns true if any issue was reported for the given subject.
     Boolean hasIssue(Object subject) {
-        ^ #hasMatch [ i -> i #concerns(subject)]
+        ^ #hasMatch { i -> i #concerns(subject)}
     }
 
-    #! Boolean hasMatch(Predicate<Issue> p) {
+    #! Boolean hasMatch(Predicate[Issue] p) {
         ^ #issues #anyMatch(p)
     }
 

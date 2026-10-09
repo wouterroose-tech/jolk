@@ -13,7 +13,7 @@
 ///
 /// @author Wouter Roose
 
-package abstract class Validation<T> extends Node<T> {
+package abstract class Validation[T] extends Node[T] {
 
     /// Checks if the precondition for executing this validation is satisfied.
     ///
@@ -28,7 +28,7 @@ package abstract class Validation<T> extends Node<T> {
     /// Continue the navigation if scope is applicable and preconditions are satisfied.
     @Override
     package final accept(T subject, ExecutionContext executionContext) {
-        #satisfiesPreCondition(subject, executionContext) ? [ self #doAccept(subject, executionContext) ]
+        #satisfiesPreCondition(subject, executionContext) ? { self #doAccept(subject, executionContext) }
     }
 
     /// Visitor Pattern Continuation.

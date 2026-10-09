@@ -10,7 +10,7 @@
 /// the message chain.
 ///
 /// ### #instanceOf
-/// *   **Jolk**: `subject #instanceOf(Person) #ifPresent [ p -> p #... ]`
+/// *   **Jolk**: `subject #instanceOf(Person) #ifPresent { p -> p #... }`
 /// *   **Java**: `if (subject instanceof Person p) { p... }`
 ///
 /// ### #as
@@ -47,13 +47,13 @@ final class PatternMatchingTest extends TestCase {
     @Test
     testInstanceOfIfPresent() {
         Object subject;
-        #assertFalse(subject #instanceOf(Person) #ifPresent [ p -> true ] #ifEmpty [ false ]);
+        #assertFalse(subject #instanceOf(Person) #ifPresent { p -> true } #ifEmpty { false });
 
         subject = Object #new;
-        #assertFalse(subject #instanceOf(Person) #ifPresent [ p -> true ] #ifEmpty [ false ]);
+        #assertFalse(subject #instanceOf(Person) #ifPresent { p -> true } #ifEmpty { false });
 
         Object subject = Person #new;
-        #assertTrue(subject #instanceOf(Person) #ifPresent [ p -> true ] #ifEmpty [ false ]);
+        #assertTrue(subject #instanceOf(Person) #ifPresent { p -> true } #ifEmpty { false });
     }
 
     /// Demonstrates `#isInstance`, which is equivalent to `Class.isInstance()` in Java.

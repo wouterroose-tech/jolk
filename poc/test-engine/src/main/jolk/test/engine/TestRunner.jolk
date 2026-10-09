@@ -21,9 +21,9 @@
 ///
 class TestRunner {
 
-    run(Array<TestSuite> suites) {
+    run(Array[TestSuite] suites) {
         System #out #println("    Run All Tests");
-        suites #forEach [ s -> #runTestSuite(s) ]
+        suites #forEach { s -> #runTestSuite(s) }
     }
 
     runTestSuite(TestSuite suite) {
@@ -31,56 +31,56 @@ class TestRunner {
         System #out #println(">   " + suite #name);
         suite
             #tests
-            #forEach [ test -> #runTestCase(test) ]; 
+            #forEach { test -> #runTestCase(test) }; 
     }
     
-    runTestCase(MetaClass<TestCase> testClass) {
+    runTestCase(MetaClass[TestCase] testClass) {
         System #out #println(">>  " + testClass #name);
-        [ 
+        { 
             testClass #beforeAll;
             #selectors(testClass)
-                #forEach[ s ->
+                #forEach{ s ->
                     TestResult result = #runTest(testClass #new, s);
                     System #out #println(">>> " + s + " -> " + result #result);
-                ];
+                };
             testClass #afterAll
-        ] #catch [ e ->
+        } #catch { e ->
             System #out #println((">>  " + testClass #name + " -> fault" + e #getMessage));
-        ]
+        }
     }
 
     // to be replaced with Metaclass#testSelectors in a future release
-    List<String> selectors(MetaClass<TestCase> testClass) {
+    List[String] selectors(MetaClass[TestCase] testClass) {
         // TODO in future releases protocol will return Selector
         // -> filter methods with @Test annotation
 
         // TODO replace with filter once implemented for ArrayExtension in the Jolk engine
-        // ^ #instanceProtocol #filter [ s -> s #startWith("test)")]
-        List<String> testSelectors = #[];
+        // ^ #instanceProtocol #filter { s -> s #startWith("test)")}
+        List[String] testSelectors = #[];
         testClass
             #instanceProtocol
-            #forEach [ s -> 
-                s #startsWith("test") ? [ testSelectors #add(s)]
-            ];
+            #forEach { s -> 
+                s #startsWith("test") ? { testSelectors #add(s)}
+            };
         ^ testSelectors
     }
 
     TestResult runTest(TestCase test, String selector) {
         test #beforeEach;
-        [
+        {
             test #project(selector);
             ^ TestResult #success
-        ] #catch [
+        } #catch {
             e -> ^ #handle(e)
-        ] #finally [
+        } #finally {
             test #afterEach
-        ]
+        }
     }
 
     #> TestResult handle(RuntimeExecption e) {
         // Exception type verified catch not yet implemented
-        (e #getMessage ~~ "DISABLED") ? [ ^ TestResult #disabled ];
-        (e #getMessage #matches("^FAILURE.*")) ? [ ^ TestResult #failed(e) ];
+        (e #getMessage ~~ "DISABLED") ? { ^ TestResult #disabled };
+        (e #getMessage #matches("^FAILURE.*")) ? { ^ TestResult #failed(e) };
         ^ TestResult #fault(e)
     }
 

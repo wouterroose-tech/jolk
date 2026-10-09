@@ -31,7 +31,7 @@ class TestCase_Test extends TestCase {
 
     @Test
     testAssertFailure() {
-        #assertFailure [ #fail ]
+        #assertFailure { #fail }
     }
 
     @Test
@@ -41,7 +41,7 @@ class TestCase_Test extends TestCase {
     
     @Test
     testAssertTrue_failure() {
-        #assertFailure [ #assertTrue(false) ]
+        #assertFailure { #assertTrue(false) }
     }
     
     /// Test failure of #assertSame
@@ -54,7 +54,7 @@ class TestCase_Test extends TestCase {
     /// Test failure of #assertSame
     @Test
     testAssertSame_failure() {
-        #assertFailure [ #assertSame("~~", "==") ]
+        #assertFailure { #assertSame("~~", "==") }
     }
     
     @Test
@@ -64,7 +64,7 @@ class TestCase_Test extends TestCase {
 
     @Test
     testAssertEquals_failure() {
-        #assertFailure [ #assertEquals("Hello", "World") ]
+        #assertFailure { #assertEquals("Hello", "World") }
     }
 
     @Test
@@ -74,7 +74,7 @@ class TestCase_Test extends TestCase {
 
     @Test
     testAssertIsPresent_failure() {
-        #assertFailure [ #assertIsPresent(null) ]
+        #assertFailure { #assertIsPresent(null) }
     }
 
     @Test
@@ -83,7 +83,7 @@ class TestCase_Test extends TestCase {
     }
     
     #> assertFailure(Closure test) {
-        test #catch [ AssertionSignal e -> ^ #success() ];
+        test #catch { AssertionSignal e -> ^ #success() };
         #fail
     }
 }

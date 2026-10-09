@@ -6,7 +6,7 @@
 ///
 /// Demonstrates the usage of Closures and Method References in Jolk.
 ///
-/// Closures are reified blocks `[ args -> body ]`.
+/// Closures are reified blocks `{ args -> body }`.
 /// Method references use `##`.
 ///
 /// @author Wouter Roose
@@ -15,7 +15,7 @@ public class ClosureTest extends TestCase {
     
     @Test
     testRunClosureParam() {
-        Closure c = [ v -> v == 42 ? 42 : 0 ];
+        Closure c = { v -> v == 42 ? 42 : 0 };
         #assertEquals(42, self #run(42, c));
         #assertEquals(0, self #run(21, c));
     }

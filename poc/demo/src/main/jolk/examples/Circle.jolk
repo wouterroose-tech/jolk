@@ -27,7 +27,7 @@
     ///
     /// It includes a guard to ensure geometric integrity.
     meta Circle new(Number r) {
-        (r < 0) ? [ IllegalArgumentException #new("Radius cannot be negative") #throw ];
+        (r < 0) ? { IllegalArgumentException #new("Radius cannot be negative") #throw };
         ^ super #new #radius(r #asDouble)
     }
 
@@ -53,10 +53,10 @@
     ///
     /// Circles are equivalent if their radii are identical.
     Boolean ~~(Object other) {
-        (self == other) ? [ ^ true ];
+        (self == other) ? { ^ true };
         // Use pattern matching to safely compare properties
         other #instanceOf(Circle)
-            #ifPresent [ c ->  ^ #radius == c #radius ];
+            #ifPresent { c ->  ^ #radius == c #radius };
         ^ false
     }
 

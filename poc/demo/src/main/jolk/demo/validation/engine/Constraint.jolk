@@ -12,7 +12,7 @@
 ///
 /// @author Wouter Roose
 
-abstract class Constraint<T> extends Validation<T> {
+abstract class Constraint[T] extends Validation[T] {
 
     @Override
     /// Executes the constraint logic. 
@@ -20,9 +20,9 @@ abstract class Constraint<T> extends Validation<T> {
     /// If the subject is valid, the method returns self immediately.
     /// Otherwise, it adds an issue to the context and triggers a potential interrupt.
     package final doAccept(T subject, ExecutionContext executionContext) {
-        #isValid(subject) ? [ ^ self ];
+        #isValid(subject) ? { ^ self };
         executionContext #add(subject, #getIssue(subject, executionContext));
-        #interrupt #ifPresent [ i -> i #throw ]
+        #interrupt #ifPresent { i -> i #throw }
     }
 
     /// Returns true when the constraint is violated for the given subject.

@@ -25,19 +25,19 @@ class ChargingStation {
 	}
 	
 	inactive(String message) {
-		message == #StartSession ? [ ^ #become(self ##idle, "Idle") ];
+		message == #StartSession ? { ^ #become(self ##idle, "Idle") };
 		#unhandled(message) 
 	}
 	
 	idle(String message) {
-		message == #StartCharging ? [ ^ #become(self ##charging, "Charging") ];
-		message == #StopSession ? [ ^ #become(self ##inactive, "Inactive") ];
+		message == #StartCharging ? { ^ #become(self ##charging, "Charging") };
+		message == #StopSession ? { ^ #become(self ##inactive, "Inactive") };
 		#unhandled(message)
 	}
 	
 	charging(String message) {
-		message == #StopCharging ? [ ^ #become(self ##idle, "Idle") ];
-		message == #StopSession ? [ ^ #become(self ##inactive, "Inactive") ];
+		message == #StopCharging ? { ^ #become(self ##idle, "Idle") };
+		message == #StopSession ? { ^ #become(self ##inactive, "Inactive") };
 		#unhandled(message)
 	}
 

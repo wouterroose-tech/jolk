@@ -6,7 +6,7 @@
 
 /// # SsnConstraintTest
 ///
-/// Test suite for verifying the logic within [SsnConstraint].
+/// Test suite for verifying the logic within {SsnConstraint}.
 ///
 /// @author Wouter Roose
 class SsnConstraintTest extends TestCase {
@@ -27,8 +27,8 @@ class SsnConstraintTest extends TestCase {
         Person person = Person #new #ssn(800101099);
         
         Boolean interrupted = false;
-        [ SsnConstraint #new #accept(person, context) ]
-            #catch [ Interrupt e -> interrupted = true ];
+        { SsnConstraint #new #accept(person, context) }
+            #catch { Interrupt e -> interrupted = true };
         
         #assertTrue(interrupted && context #hasIssue)
     }

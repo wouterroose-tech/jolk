@@ -11,14 +11,14 @@ public class CoreCollectionTest extends TestCase {
     CoreCollectionDemonstrator demonstrator = CoreCollectionDemonstrator #new;
 
     testRunArrayNew() {
-        List<String> list = demonstrator #runArrayNew;
+        List[String] list = demonstrator #runArrayNew;
         #assertIsPresent(list);
         #assertEquals(3, list #size);
         #assertEquals("red", list #at(0));
     }
 
     testRunArrayNewLiteral() {
-        List<String> list = demonstrator #runArrayLiteral;
+        List[String] list = demonstrator #runArrayLiteral;
         #assertIsPresent(list);
         #assertEquals(3, list #size);
         #assertEquals("red", list #at(0));

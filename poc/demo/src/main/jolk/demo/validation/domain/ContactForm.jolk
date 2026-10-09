@@ -16,13 +16,13 @@
 
     /// Performs a structural equivalence check.
     Boolean ~~(Object other) {
-        (self == other) ? [ ^true ];
-        other #instanceOf(ContactForm) #ifPresent [ f -> 
+        (self == other) ? { ^ true };
+        other #instanceOf(ContactForm) #ifPresent { f -> 
             ^ (#person ~~ f #person)
                 && (#description ~~ f #description)
-                && (#zipCode ~~ f #zipCode)
+                && (#zipCode == f #zipCode)
                 && (#email ~~ f #email)
-            ];
+        };
         ^ false
     }
 }

@@ -12,7 +12,7 @@
 ///
 /// @author Wouter Roose
 
-#! class SsnConstraint extends Constraint<Person> {
+#! class SsnConstraint extends Constraint[Person] {
 
     Boolean satisfiesPreCondition(Person person, ExecutionContext executionContext) {
         ^ person #ssn != 0

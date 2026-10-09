@@ -43,6 +43,6 @@ class CircleTest extends TestCase {
     }
 
     testInvalidConstruction() {
-        #assertThrows([Circle #new(-1.0)], IllegalArgumentException )
+        #assertThrows({Circle #new(-1.0)}, IllegalArgumentException )
     }
 }

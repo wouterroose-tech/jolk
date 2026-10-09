@@ -19,10 +19,10 @@
 ///
 /// @author Wouter Roose
 
-package final class ChildrenValidation<T, R> extends Node<T> {
+package final class ChildrenValidation[T, R] extends Node[T] {
 
-    Function<T, List<R>> supplier;
-    Validation<R> validation;
+    Function[T, List[R]] supplier;
+    Validation[R] validation;
 
     /// ## accept
     /// Propagates the validation to each of the subject's children provided by the supplier.
@@ -31,17 +31,17 @@ package final class ChildrenValidation<T, R> extends Node<T> {
         #delegate(supplier #apply(subject), executionContext);
     }
 
-    private delegate(List<R> children, E executionContext) {
+    private delegate(List[R] children, E executionContext) {
         /*
-        children #isEmpty [^self];
-        [ StructuredTaskScope #open(Joiner #allSuccessfulOrThrow) ]
-            #try [ scope ->
-                children #forEach [child -> scope #fork [validation #accept(child, executionContext) ] ];
-                scope #join ]
-            #catch [ InterruptedException e ->
+        children #isEmpty { ^self };
+        { StructuredTaskScope #open(Joiner #allSuccessfulOrThrow) }
+            #try { scope ->
+                children #forEach { child -> scope #fork { validation #accept(child, executionContext) } };
+                scope #join }
+            #catch { InterruptedException e ->
                 Thread #currentThread #interrupt;
-                RuntimeException #new("Validation interrupted.", e) #throw ]
+                RuntimeException #new("Validation interrupted.", e) #throw }
         */
-        children #forEach [child -> #validation #accept(child, executionContext) ]
+        children #forEach {child -> #validation #accept(child, executionContext) }
     }
 }

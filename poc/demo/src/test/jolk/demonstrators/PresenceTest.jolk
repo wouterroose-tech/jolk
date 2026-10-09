@@ -10,8 +10,8 @@
 ///
 /// * Jolk `subject #isPresent` ~~ `subject != null`
 /// * Jolk `subject #isEmpty`   ~~ `subject == null`
-/// * Jolk `subject #ifPresent [ ... ]` ~~ (subject != null) ? [ ... ]`
-/// * Jolk `subject #ifEmpty [ ... ]`   ~~ `(subject == null)? [ ... ]`
+/// * Jolk `subject #ifPresent { ... }` ~~ (subject != null) ? { ... }`
+/// * Jolk `subject #ifEmpty { ... }`   ~~ `(subject == null)? { ... }`
 ///
 /// @author Wouter Roose
 
@@ -21,12 +21,12 @@ public class PresencyTest extends TestCase {
     Object emptyObject = null;
 
     Boolean runIfPresent(Object subject) {
-        subject #ifPresent [ ^ true ];
+        subject #ifPresent { ^ true };
         ^ false
     }
 
     Boolean runIfEmpty(Object subject) {
-        subject #ifEmpty [ ^ false ];
+        subject #ifEmpty { ^ false };
         ^ true
     }
 

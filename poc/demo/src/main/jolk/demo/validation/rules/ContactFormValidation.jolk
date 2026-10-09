@@ -7,7 +7,7 @@
 ///
 /// @author Wouter Roose
 
-class ContactFormValidation extends ValidationSuite<ContactForm> {
+class ContactFormValidation extends ValidationSuite[ContactForm] {
 
     meta constant Interrupt FORM_INTERRUPT = Interrupt #new;
 
@@ -23,7 +23,7 @@ class ContactFormValidation extends ValidationSuite<ContactForm> {
     }
 
     // temporary fix for overloading
-    add(Constraint<T> constraint) {
+    add(Constraint[T] constraint) {
         #nodes #add(constraint)
     }
     

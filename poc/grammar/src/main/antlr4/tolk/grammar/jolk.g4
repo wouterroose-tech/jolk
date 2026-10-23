@@ -16,11 +16,11 @@ inclusion        : alias? namespace (DOT MUL)? SEMI ;
 alias            : MetaId ASSIGN ;
 namespace        : identifier (DOT identifier)* ;
 
-type_decl        : modifiers archetype type_bound LBRACE type_mbr* RBRACE ;
+type_decl        : modifiers type_category type_bound LBRACE type_mbr* RBRACE ;
 modifiers        : visibility? finality? | MODIFIER ;
 visibility       : PUBLIC | PACKAGE | PROTECTED | PRIVATE ;
 finality         : ABSTRACT | FINAL ;
-archetype        : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
+type_category    : CLASS | VALUE | RECORD | ENUM | PROTOCOL ;
 type_bound       : type type_contracts? ;
 type             : self_type | (identifier DOT)* MetaId type_args? ;
 type_args        : LBRACK type_bound (COMMA type_bound)* RBRACK ;

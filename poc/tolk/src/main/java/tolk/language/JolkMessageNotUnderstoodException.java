@@ -10,7 +10,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
-import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkTypeCategory;
 import tolk.runtime.JolkExceptionExtension;
 import tolk.runtime.JolkMemberNames;
 import tolk.nodes.JolkNode;
@@ -26,7 +26,7 @@ import java.util.Collections;
 /// failures onto this singular identity.
 /// 
 /// This ensures that communication failures—whether they occur on native Jolk 
-/// archetypes, polyglot guest objects (JS/Python), or host Java proxies—are 
+/// TypeCategory, polyglot guest objects (JS/Python), or host Java proxies—are 
 /// treated as manageable guest-level events.
 /// 
 /// @author Wouter Roose
@@ -43,7 +43,7 @@ public class JolkMessageNotUnderstoodException extends RuntimeException implemen
         JolkExceptionExtension.EXCEPTION_TYPE,
         JolkFinality.FINAL,
         JolkVisibility.PUBLIC,
-        JolkArchetype.CLASS,
+        JolkTypeCategory.CLASS,
         Collections.emptyMap(),
         Collections.emptyMap()
     );

@@ -59,9 +59,9 @@ public class DemoTestSuite extends TestRunner {
         load("/examples/ComplexTest.jolk");
         load("/demo/validation/domain/PersonTest.jolk");
         load("/demo/validation/domain/ContactFormTest.jolk");
-        load("/demonstrators/ArchetypeClassTest.jolk");
-        load("/demonstrators/ArchetypeEnumTest.jolk");
-        load("/demonstrators/ArchetypeRecordTest.jolk");
+        load("/demonstrators/ClassTest.jolk");
+        load("/demonstrators/EnumTest.jolk");
+        load("/demonstrators/RecordTest.jolk");
         load("/demonstrators/ClosureTest.jolk");
         load("/demonstrators/CollectionLiteralTest.jolk");
         load("/demonstrators/CoreCollectionTest.jolk");

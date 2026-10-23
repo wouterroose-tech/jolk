@@ -14,7 +14,7 @@ import tolk.JolcTestBase;
 
 /// # CircleTest
 ///
-/// Verifies the behavior of the `Circle` archetype and its geometric calculations
+/// Verifies the behavior of `Circle` and its geometric calculations
 /// as orchestrated by the `CircleExample`.
 
 public class CircleTest  extends JolcTestBase {

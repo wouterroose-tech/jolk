@@ -38,7 +38,7 @@ public class JolkMetaClassTest extends JolcTestBase {
         context.enter();
         try {
             Map<String, Object> metaMembers = Collections.singletonMap("VERSION", 1);
-            metaClass = new JolkMetaClass("MyClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), metaMembers);
+            metaClass = new JolkMetaClass("MyClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), metaMembers);
             metaClass.initializeDefaultValues();
         } finally {
             context.leave();
@@ -70,8 +70,8 @@ public class JolkMetaClassTest extends JolcTestBase {
     void testIsMetaInstanceHierarchy() throws UnsupportedMessageException {
         context.enter();
         try {
-            JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
-            JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+            JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), Collections.emptyMap());
+            JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), Collections.emptyMap());
             
             JolkObject instance = new JolkObject(child);
 
@@ -89,10 +89,10 @@ public class JolkMetaClassTest extends JolcTestBase {
         context.enter();
         try {
             // Mocking intrinsic types by name as per implementation logic
-            JolkMetaClass longClass = new JolkMetaClass("Long", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
-            JolkMetaClass boolClass = new JolkMetaClass("Boolean", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
-            JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
-            JolkMetaClass otherClass = new JolkMetaClass("Other", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+            JolkMetaClass longClass = new JolkMetaClass("Long", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
+            JolkMetaClass boolClass = new JolkMetaClass("Boolean", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
+            JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
+            JolkMetaClass otherClass = new JolkMetaClass("Other", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
 
             assertTrue(longClass.isMetaInstance(42), "Long should be instance of Long");
             assertTrue(boolClass.isMetaInstance(true), "Boolean should be instance of Boolean");
@@ -109,8 +109,8 @@ public class JolkMetaClassTest extends JolcTestBase {
     void testIsMetaInstanceString() throws UnsupportedMessageException {
         context.enter();
         try {
-            JolkMetaClass stringClass = new JolkMetaClass("String", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
-            assertTrue(stringClass.isMetaInstance("hello"), "Java String should be instance of Jolk String archetype");
+            JolkMetaClass stringClass = new JolkMetaClass("String", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
+            assertTrue(stringClass.isMetaInstance("hello"), "Java String should be instance of Jolk String");
             assertFalse(stringClass.isMetaInstance(123L), "Long should not be instance of String");
         } finally {
             context.leave();
@@ -121,7 +121,7 @@ public class JolkMetaClassTest extends JolcTestBase {
     void testIsMetaInstanceNothing() throws UnsupportedMessageException {
         context.enter();
         try {
-            JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+            JolkMetaClass objClass = new JolkMetaClass("Object", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
             // JolkNothing.INSTANCE is an instance of Nothing type and Object (by name)
             assertTrue(objClass.isMetaInstance(JolkNothing.INSTANCE), "Nothing should be instance of Object");
         } finally {
@@ -192,8 +192,8 @@ public class JolkMetaClassTest extends JolcTestBase {
     void testInvokeSuperclass() throws Exception {
         context.enter();
         try {
-            JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
-            JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+            JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), Collections.emptyMap());
+            JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), Collections.emptyMap());
 
             assertEquals(parent, child.callMetaMember("superclass", new Object[]{}), "Should return parent meta class");
             assertEquals(JolkNothing.INSTANCE, parent.callMetaMember("superclass", new Object[]{}), "Root class superclass should be Nothing");
@@ -219,7 +219,7 @@ public class JolkMetaClassTest extends JolcTestBase {
         context.enter();
         try {
             Map<String, Object> fields = Collections.singletonMap("val", null);
-            JolkMetaClass containerClass = new JolkMetaClass("Container", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+            JolkMetaClass containerClass = new JolkMetaClass("Container", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
 
             Object instanceObj = containerClass.callMetaMember("new", new Object[]{"data"});
             assertTrue(instanceObj instanceof JolkObject, "Result should be a JolkObject");
@@ -237,13 +237,13 @@ public class JolkMetaClassTest extends JolcTestBase {
         context.enter();
         try {
             Map<String, Object> fields = new java.util.LinkedHashMap<>();
-            JolkMetaClass otherType = new JolkMetaClass("OtherClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+            JolkMetaClass otherType = new JolkMetaClass("OtherClass", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
             fields.put("id", null);             // Should default to 0L
             fields.put("active", JolkBooleanExtension.BOOLEAN_TYPE);
             fields.put("name", JolkStringExtension.STRING_TYPE);
             fields.put("other", otherType);
 
-            JolkMetaClass meta = new JolkMetaClass("HintTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+            JolkMetaClass meta = new JolkMetaClass("HintTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
             Object[] defaults = meta.getDefaultFieldValues();
 
             assertEquals(0L, defaults[0], "id should default to 0L");
@@ -261,7 +261,7 @@ public class JolkMetaClassTest extends JolcTestBase {
         try {
             Map<String, Object> metaFields = Collections.singletonMap("count", JolkLongExtension.LONG_TYPE);
             // constructor handles registering accessors in metaMembers
-            JolkMetaClass meta = new JolkMetaClass("StaticTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
+            JolkMetaClass meta = new JolkMetaClass("StaticTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, 
                                                   Collections.emptyMap(), Collections.emptyMap(), new java.util.HashMap<>(), metaFields,
                                                   Collections.emptySet(), null, null, null);
             
@@ -291,7 +291,7 @@ public class JolkMetaClassTest extends JolcTestBase {
                 return JolkNothing.INSTANCE;
             }).getCallTarget());
             Map<String, Object> metaMembers = Collections.singletonMap("customMeta", executable);
-            JolkMetaClass meta = new JolkMetaClass("MetaWithMethod", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), metaMembers);
+            JolkMetaClass meta = new JolkMetaClass("MetaWithMethod", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), metaMembers);
             
             meta.callMetaMember("customMeta", new Object[]{});
             assertTrue(ran.get(), "Custom meta member should be invocable");
@@ -368,7 +368,7 @@ public class JolkMetaClassTest extends JolcTestBase {
             // In the Shape-based model, fields are not stored as accessor objects in the registry.
             Map<String, Object> fields = Collections.singletonMap("myField", null);
             // Use the full constructor to inject fields
-            JolkMetaClass fieldClass = new JolkMetaClass("FieldClass", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+            JolkMetaClass fieldClass = new JolkMetaClass("FieldClass", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
             
             assertNull(fieldClass.lookupInstanceMember("myField"), "Fields are no longer represented by accessor objects in the registry.");
         } finally {
@@ -382,8 +382,8 @@ public class JolkMetaClassTest extends JolcTestBase {
         try {
             Object method = new Object(); // Dummy member
             Map<String, Object> parentMembers = Collections.singletonMap("inherited", method);
-            JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, parentMembers, Collections.emptyMap());
-            JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), Collections.emptyMap());
+            JolkMetaClass parent = new JolkMetaClass("Parent", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, parentMembers, Collections.emptyMap());
+            JolkMetaClass child = new JolkMetaClass("Child", parent, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), Collections.emptyMap());
             
             assertEquals(method, child.lookupInstanceMember("inherited"), "Should find member in superclass");
             assertNull(child.lookupInstanceMember("nonexistent"), "Should return null for missing member");
@@ -397,7 +397,7 @@ public class JolkMetaClassTest extends JolcTestBase {
         context.enter();
         try {
             Map<String, Object> fields = Collections.singletonMap("score", null);
-            JolkMetaClass meta = new JolkMetaClass("Score", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+            JolkMetaClass meta = new JolkMetaClass("Score", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
             
             Object instanceObj = meta.callMetaMember("new", new Object[]{10});
             JolkObject instance = (JolkObject) instanceObj;

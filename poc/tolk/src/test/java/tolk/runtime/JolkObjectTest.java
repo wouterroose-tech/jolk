@@ -224,7 +224,7 @@ public class JolkObjectTest extends JolcTestBase {
         // Define a class with one field and one method
         Map<String, Object> fields = Collections.singletonMap("data", "Long");
         Map<String, Object> methods = Collections.singletonMap("perform", JolkNothing.INSTANCE);
-        JolkMetaClass meta = new JolkMetaClass("CompTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, methods, fields, Collections.emptyMap());
+        JolkMetaClass meta = new JolkMetaClass("CompTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, methods, fields, Collections.emptyMap());
         
         JolkObject obj = new JolkObject(meta);
         InteropLibrary interop = InteropLibrary.getUncached();
@@ -252,7 +252,7 @@ public class JolkObjectTest extends JolcTestBase {
     @Test
     void testConstructorFallbackToDefaults() {
         Map<String, Object> fields = Collections.singletonMap("val", JolkLongExtension.LONG_TYPE);
-        JolkMetaClass meta = new JolkMetaClass("CtorTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
+        JolkMetaClass meta = new JolkMetaClass("CtorTest", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap(), fields, Collections.emptyMap());
         
         // Provide wrong number of arguments (arity mismatch for canonical #new)
         // JolkObject constructor should fall back to defaults
@@ -268,7 +268,7 @@ public class JolkObjectTest extends JolcTestBase {
             // Create a method that returns raw Java null
             JolkClosure nullReturner = new JolkClosure(new JolkClosureTest.TestRootNode(args -> null).getCallTarget());
             Map<String, Object> members = Collections.singletonMap("getNull", nullReturner);
-            JolkMetaClass meta = new JolkMetaClass("RestitutionTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+            JolkMetaClass meta = new JolkMetaClass("RestitutionTest", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, members);
             
             JolkObject obj = new JolkObject(meta);
             Object result = InteropLibrary.getUncached().invokeMember(obj, "getNull");

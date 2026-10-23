@@ -22,9 +22,7 @@ import java.util.Map;
  */
 public class JolkMapExtension {
 
-    /**
-     * The first-class meta-object for the Map archetype.
-     */
+    /// The first-class meta-object for the Map.
     public static final JolkMetaClass MAP_TYPE;
 
     static {
@@ -32,7 +30,7 @@ public class JolkMapExtension {
             "Map",
             JolkFinality.FINAL,
             JolkVisibility.PUBLIC,
-            JolkArchetype.CLASS
+            JolkTypeCategory.CLASS
         );
 
         // --- Instance Methods ---

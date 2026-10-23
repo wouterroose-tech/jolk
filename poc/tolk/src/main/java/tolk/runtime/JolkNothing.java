@@ -31,7 +31,7 @@ public final class JolkNothing implements TruffleObject {
     static {
         Map<String, Object> members = new HashMap<>();
         members.put("new", new NothingNew());
-        NOTHING_TYPE = new JolkMetaClass("Nothing", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, new HashMap<>(), members);
+        NOTHING_TYPE = new JolkMetaClass("Nothing", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, new HashMap<>(), members);
     }
 
     private JolkNothing() {

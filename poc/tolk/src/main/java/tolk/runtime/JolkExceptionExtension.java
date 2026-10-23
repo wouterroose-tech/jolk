@@ -6,14 +6,14 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 /**
  * ### JolkExceptionExtension
  * 
- * Implements the runtime logic for the Exception archetype. 
+ * Implements the runtime logic for the Exception. 
  * It provides the Meta-Object for the base Exception type and utility 
  * methods for bridging Jolk exceptions with the JVM's stack unwinding.
  */
 public class JolkExceptionExtension {
 
     /**
-     * The first-class meta-object for the Exception archetype.
+     * The first-class meta-object for the Exception.
      * Even though Jolk instances extend java.lang.Throwable, this 
      * MetaClass provides the identity required for name resolution 
      * and meta-level messaging (e.g., Exception #throw).
@@ -25,7 +25,7 @@ public class JolkExceptionExtension {
             "Exception", // Nominal identity in Jolk manuscripts
             JolkFinality.OPEN, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS
+            JolkTypeCategory.CLASS
         );
 
         // #throw -> Bridges the identity into the JVM's unwinding mechanism.

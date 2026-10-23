@@ -20,8 +20,8 @@ extension ArrayExtension[T] on java.util.List[T] {
     /// This is a meta-method that acts as a factory.
     ///
     /// @param elements The elements to include in the new array.
-    /// @return A new java.util.ArrayList containing the elements.
-    meta ArrayExtension[T] new(T... elements) { }
+    /// @return A new List containing the elements.
+    meta new(T... elements) { }
 
     /// Returns the element at the specified position in this list.
     ///

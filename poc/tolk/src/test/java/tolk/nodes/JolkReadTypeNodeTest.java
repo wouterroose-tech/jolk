@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import tolk.JolcTestBase;
 import tolk.language.JolkLanguage;
-import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkTypeCategory;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkNothing;
@@ -67,7 +67,7 @@ public class JolkReadTypeNodeTest extends JolcTestBase {
         Map<String, Object> mockMetaMembers = new HashMap<>();
         
         JolkMetaClass metaReceiverObj = new JolkMetaClass(
-            "Constants", null, JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS, 
+            "Constants", null, JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, 
             Collections.emptyMap(), Collections.emptyMap(), mockMetaMembers, mockMetaFields, Collections.emptySet(), 
             null, null, null
         );

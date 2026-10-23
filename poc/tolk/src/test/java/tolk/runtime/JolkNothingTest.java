@@ -128,7 +128,7 @@ public class JolkNothingTest extends JolcTestBase {
 
         assertNotNull(result, "Result wrapper should not be null.");
         assertEquals("null", result.toString(), "The restituted identity should have the string representation 'null'.");
-        // Verify the archetype identity
+        // Verify the typeCategory identity
         assertEquals("Nothing", result.invokeMember("class").getMetaSimpleName(), "Raw JVM null from host must be lifted to the Jolk 'Nothing' identity.");
     }
 
@@ -172,7 +172,7 @@ public class JolkNothingTest extends JolcTestBase {
     @Test
     void testEquivalence() throws Exception {
         Object nothing = JolkNothing.INSTANCE;
-        JolkMetaClass meta = new JolkMetaClass("TestObject", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        JolkMetaClass meta = new JolkMetaClass("TestObject", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
         Object other = new JolkObject(meta);
         
         assertTrue((Boolean) InteropLibrary.getUncached().invokeMember(nothing, "~~", nothing));
@@ -182,7 +182,7 @@ public class JolkNothingTest extends JolcTestBase {
     @Test
     void testNonEquivalence() throws Exception {
         Object nothing = JolkNothing.INSTANCE;
-        JolkMetaClass meta = new JolkMetaClass("TestObject", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        JolkMetaClass meta = new JolkMetaClass("TestObject", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
         Object other = new JolkObject(meta);
 
         assertFalse((Boolean) InteropLibrary.getUncached().invokeMember(nothing, "!~", nothing));

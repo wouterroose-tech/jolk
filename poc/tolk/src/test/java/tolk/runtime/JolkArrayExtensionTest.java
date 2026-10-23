@@ -20,7 +20,7 @@ import org.graalvm.polyglot.Value;
 /**
  * ## JolkArrayExtensionTest
  *
- * Validates the runtime implementation of the Array archetype extensions.
+ * Validates the runtime implementation of the Array extensions.
  * Verifies that Jolk selectors like #at, #put, and #new correctly map to 
  * java.util.List operations while adhering to the Jolk messaging protocol.
  */

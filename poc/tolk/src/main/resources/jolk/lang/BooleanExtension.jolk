@@ -6,7 +6,7 @@
 /// `true` and `false`. In Jolk, Booleans are first-class identities that 
 /// encapsulate branching behavior and logical operations through message passing.
 ///
-/// This archetype replaces traditional control-flow keywords (if/else) with 
+/// This type replaces traditional control-flow keywords (if/else) with 
 /// polymorphic dispatch, allowing boolean singletons to decide which execution 
 /// paths to realize.
 /// 

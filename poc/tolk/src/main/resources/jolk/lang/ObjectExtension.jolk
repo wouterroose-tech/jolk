@@ -149,7 +149,7 @@ extension ObjectExtension on java.lang.Object {
     /// Returns the receiver itself.
     ///
     /// An alias for `#get` providing a unified handshake for polymorphic 
-    /// interop across different archetypes.
+    /// interop across different type categories.
     ///
     /// - **Returns**: `self`.
     Object value() {

@@ -12,7 +12,7 @@ import tolk.JolcTestBase;
 
 /// # JolkMapTest
 /// 
-/// Validates the runtime implementation of the Map archetype extensions.
+/// Validates the runtime implementation of the Map extensions.
 /// This includes map literal synthesis, field initialization, and 
 /// behavioral verification of the messaging protocol (#size, #at, #put, etc.).
 public class JolkMapTest extends JolcTestBase {

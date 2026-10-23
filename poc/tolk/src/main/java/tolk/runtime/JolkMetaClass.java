@@ -52,7 +52,7 @@ public class JolkMetaClass extends DynamicObject {
     protected JolkMetaClass superclass;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
-    private final JolkArchetype archetype;
+    private final JolkTypeCategory typeCategory;
     // Instance members (fields and methods) for instances of this class.
     private final Map<String, Object> instanceMembers;
     // Instance fields (Sovereign Coordinate Map).
@@ -82,36 +82,36 @@ public class JolkMetaClass extends DynamicObject {
     protected JolkMemberNames cachedMetaMemberNames;
     protected String[] flattenedFieldNames;
     protected boolean hydrated = false;
-    // Enum constants cache for ENUM archetype
+    // Enum constants cache
     private final Map<String, JolkEnumConstant> enumConstants = new HashMap<>();
 
-    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(name, null, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
+    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory) {
+        this(name, null, finality, visibility, typeCategory, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
-    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
+    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory, Map<String, Object> instanceMembers) {
+        this(name, null, finality, visibility, typeCategory, instanceMembers, new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
-    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, null, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
+    public JolkMetaClass(String name, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
+        this(name, null, finality, visibility, typeCategory, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
-    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(name, superclass, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory) {
+        this(name, superclass, finality, visibility, typeCategory, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
-    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory, Map<String, Object> instanceMembers, Map<String, Object> metaMembers) {
+        this(name, superclass, finality, visibility, typeCategory, instanceMembers, new HashMap<>(), metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
-    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Class<?> hostClass) {
-        this(name, superclass, finality, visibility, archetype, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), hostClass, null, null);
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory, Class<?> hostClass) {
+        this(name, superclass, finality, visibility, typeCategory, new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), hostClass, null, null);
     }
 
     // Convenience constructor for unit tests providing instance field templates
-    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
-        this(name, superclass, finality, visibility, archetype, instanceMembers, instanceFields, metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
+    public JolkMetaClass(String name, JolkMetaClass superclass, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory, Map<String, Object> instanceMembers, Map<String, Object> instanceFields, Map<String, Object> metaMembers) {
+        this(name, superclass, finality, visibility, typeCategory, instanceMembers, instanceFields, metaMembers, new HashMap<>(), Collections.emptySet(), null, null, null);
     }
 
     /**
@@ -123,7 +123,7 @@ public class JolkMetaClass extends DynamicObject {
      * @param superclass The parent identity in the meta-stratum.
      * @param finality Structural constraints (FINAL, OPEN).
      * @param visibility Access level of the identity.
-     * @param archetype The structural template (CLASS, RECORD, etc).
+     * @param typeCategory The structural template (CLASS, RECORD, etc).
      * @param instanceMembers Consolidated instance-level logic.
      * @param instanceFields Sovereign coordinate map for instance state.
      * @param metaMembers Consolidated type-level logic.
@@ -137,7 +137,7 @@ public class JolkMetaClass extends DynamicObject {
                         JolkMetaClass superclass, 
                         JolkFinality finality, 
                         JolkVisibility visibility, 
-                        JolkArchetype archetype, 
+                        JolkTypeCategory typeCategory, 
                         Map<String, Object> instanceMembers, 
                         Map<String, Object> instanceFields, 
                         Map<String, Object> metaMembers, 
@@ -151,7 +151,7 @@ public class JolkMetaClass extends DynamicObject {
         this.superclass = superclass;
         this.finality = finality;
         this.visibility = visibility;
-        this.archetype = archetype;
+        this.typeCategory = typeCategory;
         this.instanceShape = Shape.newBuilder().build(); // Bootstrap anchor to prevent NPE in JolkObject
         this.instanceMembers = instanceMembers != null ? instanceMembers : new HashMap<>();
         this.instanceFields = instanceFields; // Reference retention for definition protocol
@@ -249,10 +249,10 @@ public class JolkMetaClass extends DynamicObject {
     }
 
     /**
-     * Returns the structural archetype of this type (CLASS, RECORD, etc).
+     * Returns the structural TypeCategory of this type (CLASS, RECORD, etc).
      */
-    public JolkArchetype getArchetype() {
-        return archetype;
+    public JolkTypeCategory getTypeCategory() {
+        return typeCategory;
     }
 
     /**
@@ -260,7 +260,7 @@ public class JolkMetaClass extends DynamicObject {
      * Records implicitly treat all fields as stable.
      */
     public boolean isFieldStable(String fieldName) {
-        if (archetype == JolkArchetype.RECORD) return true;
+        if (typeCategory == JolkTypeCategory.RECORD) return true;
         if (stableFields != null && stableFields.contains(fieldName)) return true;
         return superclass != null && superclass.isFieldStable(fieldName);
     }
@@ -302,9 +302,9 @@ public class JolkMetaClass extends DynamicObject {
 
     /// ### registerEnumConstant
     ///
-    /// Registers an enum constant for ENUM archetype types.
+    /// Registers an enum constant for ENUM types.
     public void registerEnumConstant(String name) {
-        if (archetype != JolkArchetype.ENUM) {
+        if (typeCategory != JolkTypeCategory.ENUM) {
             throw new IllegalStateException("Cannot register enum constants on non-enum type: " + this.name);
         }
         int ordinal = enumConstants.size();
@@ -509,7 +509,7 @@ public class JolkMetaClass extends DynamicObject {
             if (this == JolkNothing.NOTHING_TYPE) return true;
         }
 
-        // 2. Handle Jolk's intrinsic numeric archetypes.
+        // 2. Handle Jolk's intrinsic numeric types.
         // We use InteropLibrary to handle both raw primitives and polyglot-wrapped values.
         if (interop.isNumber(instance)) {
             if (isNumberHint(this.name)) return true;
@@ -518,13 +518,13 @@ public class JolkMetaClass extends DynamicObject {
             if (isDecimalHint(this.name)) return true;
         }
 
-        // 3. Handle Jolk's intrinsic `Boolean` archetype.
+        // 3. Handle Jolk's intrinsic `Boolean` type.
         if (interop.isBoolean(instance)) {
-            // Primitives match their specialized archetypes.
+            // Primitives match their specialized types.
             if (isBooleanHint(this.name)) return true;
         }
 
-        // 4. Handle Jolk's intrinsic `String` archetype.
+        // 4. Handle Jolk's intrinsic `String` type.
         if (instance instanceof String) {
             if (isStringHint(this.name)) return true;
         }
@@ -544,7 +544,7 @@ public class JolkMetaClass extends DynamicObject {
 
         // 6. Root Object Fallback: JolkObjects, Nothing, and primitives are instances of Object.
         // Note: During message dispatch, specialized MetaClasses (Boolean/Long) must be 
-        // registered before the root Object archetype to avoid shadowing specialized members.
+        // registered before the root Object type to avoid shadowing specialized members.
         if (this.superclass == null && "Object".equals(this.name)) {
             return instance instanceof JolkObject || instance == JolkNothing.INSTANCE ||
                    interop.isNumber(instance) || interop.isBoolean(instance) || instance instanceof String;
@@ -578,7 +578,7 @@ public class JolkMetaClass extends DynamicObject {
         }
 
         // For ENUM types, check enumConstants directly as a fallback
-        if (archetype == JolkArchetype.ENUM && enumConstants.containsKey(member)) return true;
+        if (typeCategory == JolkTypeCategory.ENUM && enumConstants.containsKey(member)) return true;
 
         // Fallback for host statics (Fields)
         if (hostClass != null) {
@@ -599,7 +599,7 @@ public class JolkMetaClass extends DynamicObject {
         if (val == null) {
             val = objLib.getOrDefault(this, member, null);
         }
-        if (val == null && archetype == JolkArchetype.ENUM) {
+        if (val == null && typeCategory == JolkTypeCategory.ENUM) {
             // Fallback for enum constants in case they aren't in metaRegistry
             val = enumConstants.get(member);
         }
@@ -772,13 +772,15 @@ public class JolkMetaClass extends DynamicObject {
         // 2. Local Meta-Intrinsics: Identity properties specific to this class
         switch (member) {
             case "new":
+                //return invokeIntrinsicNew(arguments, interop);
+
                 // If this class extends a Host Class, we MUST use host instantiation 
                 // to ensure the identity contains the substrate state (e.g. for Exceptions).
                 if (hostClass != null) {
                     return JolkNode.interopLift(JolkDispatchNode.dispatchObjectIntrinsic(this, "new", arguments, interop, tolk.language.JolkLanguage.getContext()));
                 }
                 // For enums, new is not allowed - enum constants are accessed directly
-                if (archetype == JolkArchetype.ENUM) {
+                if (typeCategory == JolkTypeCategory.ENUM) {
                     throw UnsupportedMessageException.create();
                 }
                 // Canonical #new logic: Only applies if no explicit meta-method named 'new' exists.
@@ -1089,7 +1091,7 @@ public class JolkMetaClass extends DynamicObject {
         public JolkMetaClassPlaceholder(String name) {
             // Initialize with minimal skeleton state. 
             // Fields and registries will be populated during updatePlaceholder.
-            super(name, null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            super(name, null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS,
                   new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), Collections.emptySet(), null, null, null); // Pass null for hostClass
             this.hydrated = false;
             // Initialize empty registries for defensive access during hydration

@@ -23,7 +23,7 @@ import java.util.List;
 public class JolkArrayExtension {
 
     /**
-     * The first-class meta-object for the Array archetype.
+     * The first-class meta-object for the Array.
      */
     public static final JolkMetaClass ARRAY_TYPE;
 
@@ -33,7 +33,7 @@ public class JolkArrayExtension {
             "Array", 
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS
+            JolkTypeCategory.CLASS
         );
 
         // --- Instance Methods ---

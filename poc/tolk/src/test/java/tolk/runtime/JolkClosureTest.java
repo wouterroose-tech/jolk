@@ -263,7 +263,7 @@ public class JolkClosureTest extends JolcTestBase {
         });
         Map<String, Object> members = new HashMap<>();
         members.put("close", closeAction);
-        JolkMetaClass resourceClass = new JolkMetaClass("MockResource", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, members);
+        JolkMetaClass resourceClass = new JolkMetaClass("MockResource", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, members);
         return new JolkObject(resourceClass);
     }
     

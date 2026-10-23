@@ -30,7 +30,7 @@ public class JolkDoubleExtension {
             JolkNumberExtension.NUMBER_TYPE, // Identity hierarchy
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS,
+            JolkTypeCategory.CLASS,
             java.lang.Double.class // Associate with host class
         );
 

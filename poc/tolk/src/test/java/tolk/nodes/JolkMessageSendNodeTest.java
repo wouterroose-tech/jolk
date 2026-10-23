@@ -2,7 +2,7 @@ package tolk.nodes;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import org.junit.jupiter.api.Test;
-import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkTypeCategory;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkNothing;
@@ -45,7 +45,7 @@ class JolkMessageSendNodeTest extends JolcTestBase {
         context.enter();
         try {
             // Setup JolkObject
-            JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+            JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
             JolkObject obj = new JolkObject(meta);
 
             JolkNode receiver = new ValueNode(obj);
@@ -62,7 +62,7 @@ class JolkMessageSendNodeTest extends JolcTestBase {
     @Test
     void testMessageWithArguments() {
         // Using JolkObject #== (identity) which takes one argument
-        JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, Collections.emptyMap());
+        JolkMetaClass meta = new JolkMetaClass("Test", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, Collections.emptyMap());
         JolkObject obj = new JolkObject(meta);
         eval(""); // Initialize context
         context.enter();

@@ -38,7 +38,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import tolk.language.JolkContext;
 import tolk.language.JolkLanguage;
 
-import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkTypeCategory;
 import tolk.runtime.JolkClosure;
 import tolk.runtime.JolkDecimalExtension;
 import tolk.runtime.JolkNothing;
@@ -1199,7 +1199,7 @@ public abstract class JolkDispatchNode extends Node {
 
     /// ### Fast Path for Map Iteration (#forEach)
     /// 
-    /// Maps the associative archetype to a two-argument closure.
+    /// Maps the associative type to a two-argument closure.
     @Specialization(guards = {"isForEach(selector)", "isNotDynamicObject(receiver)"})
     protected Object doMapForEach(VirtualFrame frame, Map<?, ?> receiver, String selector, Object[] arguments,
                                   @Shared("callNode") @Cached IndirectCallNode callNode) {
@@ -1972,11 +1972,11 @@ public abstract class JolkDispatchNode extends Node {
                     if (arguments.length != 0) throw ArityException.create(0, 0, arguments.length);
                     if (isNothing(unwrapped)) return "null"; // Use the helper method
                     if (unwrapped instanceof JolkObject jo) {
-                        JolkArchetype archetype = jo.getJolkMetaClass().getArchetype();
-                        if (archetype == JolkArchetype.RECORD) return JolkNode.lift(formatRecord(jo, context));
-                        if (archetype == JolkArchetype.ENUM) return JolkNode.lift(getEnumName(jo));
+                        JolkTypeCategory typeCategory = jo.getJolkMetaClass().getTypeCategory();
+                        if (typeCategory == JolkTypeCategory.RECORD) return JolkNode.lift(formatRecord(jo, context));
+                        if (typeCategory == JolkTypeCategory.ENUM) return JolkNode.lift(getEnumName(jo));
                         // Identity Congruence: Use the simple name for standard objects to maintain 
-                        // instructional density and align with the record archetype's diagnostics.
+                        // instructional density and align with the record type's diagnostics.
                         return JolkNode.lift("instance of " + jo.getJolkMetaClass().getMetaSimpleName());
                     }
                     // Identity Restitution: Ensure host strings are lifted to guest identities.
@@ -2197,7 +2197,7 @@ public abstract class JolkDispatchNode extends Node {
                     return JolkNothing.INSTANCE;
                 }
                 case "new" -> {
-                    // Priority 1: Shims for Intrinsic Archetypes (Host Identities)
+                    // Priority 1: Shims for Intrinsic types (Host Identities)
                     // These must be handled before Jolk-native allocation to ensure shim-less integration.
 
                     // Collection Literal Synthesis: Route List.class or ArrayList.class to host instantiation.

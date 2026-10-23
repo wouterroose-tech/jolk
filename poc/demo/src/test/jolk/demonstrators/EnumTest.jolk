@@ -5,7 +5,7 @@
 
 /// # EnumTest
 ///
-/// Demonstrates various Jolk archetype features using the `Level` enum.
+/// Demonstrates various Jolk enum features using the `Level` enum.
 ///
 /// This class showcases:
 /// * Accessing enum constants via meta-selectors on the Type identity.

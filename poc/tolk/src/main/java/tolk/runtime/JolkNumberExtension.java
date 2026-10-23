@@ -23,7 +23,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 public class JolkNumberExtension {
 
     /**
-     * The first-class meta-object for the Number archetype.
+     * The first-class meta-object for Number.
      */
     public static final JolkMetaClass NUMBER_TYPE;
 
@@ -33,7 +33,7 @@ public class JolkNumberExtension {
             null, // Number is the root protocol; no superclass
             JolkFinality.ABSTRACT, // Number is an abstract protocol
             JolkVisibility.PUBLIC,
-            JolkArchetype.PROTOCOL
+            JolkTypeCategory.PROTOCOL
         );
 
         // --- Instance Methods (Documentary Contract) ---

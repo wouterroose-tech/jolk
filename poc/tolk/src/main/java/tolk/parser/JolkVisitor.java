@@ -51,7 +51,7 @@ import tolk.nodes.JolkReadLocalVariableNode;
 import tolk.nodes.JolkWriteLocalVariableNode;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkVisibility;
-import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkTypeCategory;
 import tolk.runtime.JolkNothing;
 
 /// # JolkVisitor
@@ -137,10 +137,10 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
 
     @Override
     public JolkNode visitExpansion(jolkParser.ExpansionContext ctx) {
-        // Jolk Expansion Protocol (+ / using): Incorporates external archetypes (Java or Jolk) 
+        // Jolk Expansion Protocol (+ / using): Incorporates external types (Java or Jolk) 
         // into the local vocabulary. This adds the class identity to the unit's namespace,
         // ensuring that cross-unit inheritance correctly resolves superclass identities.
-        // Jolk Expansion Protocol (+ / using): Incorporates external archetypes (Java or Jolk)
+        // Jolk Expansion Protocol (+ / using): Incorporates external types (Java or Jolk)
         // into the local vocabulary. When the expansion is an ADD ('+') we must register
         // the referenced host class so that host static members and constructors are
         // discoverable at runtime.
@@ -209,7 +209,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     /// @return A [JolkClassDefinitionNode] if it's a class, otherwise an empty node.
     @Override
     public JolkNode visitType_decl(jolkParser.Type_declContext ctx) {
-        if (ctx.archetype() == null) {
+        if (ctx.type_category() == null) {
             return new JolkEmptyNode();
         }
 
@@ -239,12 +239,12 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 String oldShortName = this.currentShortName;
                 this.currentShortName = shortName;
 
-                JolkArchetype archetype = resolveArchetype(ctx.archetype());
+                JolkTypeCategory typeCategory = resolveTypeCategory(ctx.type_category());
 
                 Map<String, List<JolkMethodNode>> instanceMethods = new LinkedHashMap<>(); // Instance methods
                 Map<String, JolkFieldNode> instanceFields = new LinkedHashMap<>(); // Instance fields
                 Map<String, List<JolkNode>> metaMembers = new LinkedHashMap<>(); // Can contain JolkFieldNode or JolkMethodNode
-                List<String> enumConstants = new ArrayList<>(); // Enum constant names for ENUM archetype
+                List<String> enumConstants = new ArrayList<>(); // Enum constant names for ENUM types
                 Map<String, JolkVisibility> getterOverrides = new HashMap<>();
                 Map<String, JolkVisibility> setterOverrides = new HashMap<>();
 
@@ -291,7 +291,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                         } finally {
                             this.isInMetaScope = oldMetaScope;
                         }
-                    } else if (mbr.enum_constant() != null && archetype == JolkArchetype.ENUM) {
+                    } else if (mbr.enum_constant() != null && typeCategory == JolkTypeCategory.ENUM) {
                         // Handle enum constants
                         String constantName = mbr.enum_constant().MetaId().getText().intern();
                         enumConstants.add(constantName);
@@ -313,7 +313,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
                 this.currentClassName = oldClassName;
                 this.currentShortName = oldShortName;
                 // Support for single inheritance via 'extends'.
-                return new JolkClassDefinitionNode(fullName, superclassName, finality, visibility, archetype, instanceMethods, instanceFields, metaMembers, enumConstants, getterOverrides, setterOverrides);
+                return new JolkClassDefinitionNode(fullName, superclassName, finality, visibility, typeCategory, instanceMethods, instanceFields, metaMembers, enumConstants, getterOverrides, setterOverrides);
             }
         }
         return new JolkEmptyNode();
@@ -390,15 +390,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
         };
     }
 
-    private JolkArchetype resolveArchetype(jolkParser.ArchetypeContext ctx) {
-        if (ctx == null) return JolkArchetype.CLASS;
+    private JolkTypeCategory resolveTypeCategory(jolkParser.Type_categoryContext ctx) {
+        if (ctx == null) return JolkTypeCategory.CLASS;
         return switch (ctx.getText()) {
-            case "class" -> JolkArchetype.CLASS;
-            case "value" -> JolkArchetype.VALUE;
-            case "record" -> JolkArchetype.RECORD;
-            case "enum" -> JolkArchetype.ENUM;
-            case "protocol" -> JolkArchetype.PROTOCOL;
-            default -> JolkArchetype.CLASS;
+            case "class" -> JolkTypeCategory.CLASS;
+            case "value" -> JolkTypeCategory.VALUE;
+            case "record" -> JolkTypeCategory.RECORD;
+            case "enum" -> JolkTypeCategory.ENUM;
+            case "protocol" -> JolkTypeCategory.PROTOCOL;
+            default -> JolkTypeCategory.CLASS;
         };
     }
 
@@ -418,7 +418,7 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
     }
 
     @Override
-    public JolkNode visitArchetype(jolkParser.ArchetypeContext ctx) {
+    public JolkNode visitType_category(jolkParser.Type_categoryContext ctx) {
         return new JolkEmptyNode();
     }
 
@@ -1109,11 +1109,11 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             if ("String".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkStringExtension.STRING_TYPE);
             if ("Exception".equals(name)) return new JolkLiteralNode(tolk.runtime.JolkExceptionExtension.EXCEPTION_TYPE);
             
-            // Support for the Array archetype via common Java collection aliases.
+            // Support for Array via common Java collection aliases.
             if ("Array".equals(name) || "List".equals(name) || "ArrayList".equals(name)) 
                 return new JolkLiteralNode(tolk.runtime.JolkArrayExtension.ARRAY_TYPE);
 
-            // Support for the Map archetype via common Java collection aliases.
+            // Support for Map via common Java collection aliases.
             if ("Map".equals(name) || "HashMap".equals(name))
                 return new JolkLiteralNode(tolk.runtime.JolkMapExtension.MAP_TYPE);
 

@@ -102,7 +102,7 @@ public class JolkDoubleTest extends JolcTestBase {
         String source = "class TypeTest { Boolean isDouble(Object o) { ^ o #instanceOf(Double) #isPresent } }";
         Value instance = eval(source).invokeMember("new");
         
-        // In the Tolk Engine, Double receivers resolve to the Number MetaClass archetype
+        // In the Tolk Engine, Double receivers resolve to the Number MetaClass
         assertTrue(instance.invokeMember("isDouble", 3.14).asBoolean());
         assertFalse(instance.invokeMember("isDouble", "not a double").asBoolean());
     }

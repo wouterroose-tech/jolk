@@ -4,7 +4,7 @@
 ///
 /// The **Map** extension augments [java.util.Map] with the **Jolk Core Protocol**.
 ///
-/// The Map is an associative archetype that reifies the relationship between 
+/// The Map is an associative type that reifies the relationship between 
 /// a domain and a codomain.
 ///
 /// @author Wouter Roose

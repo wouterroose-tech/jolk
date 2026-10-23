@@ -23,13 +23,13 @@ import tolk.runtime.JolkNothing;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkLazyValue;
 import tolk.runtime.JolkVisibility;
-import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkTypeCategory;
 import tolk.runtime.JolkClosure;
 
 /// An AST node that represents the definition of a Jolk type.
 ///
 /// This node captures the core structural properties of a type—such as its name,
-/// archetype, visibility, and finality—during parsing. When executed at runtime, it
+/// type category, visibility, and finality—during parsing. When executed at runtime, it
 /// acts as a factory, instantiating a [JolkMetaClass] meta-object with these
 /// properties. This meta-object then becomes the first-class representation of the
 /// type within the Jolk interpreter.
@@ -41,7 +41,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
     private final String superclassName;
     private final JolkFinality finality;
     private final JolkVisibility visibility;
-    private final JolkArchetype archetype;
+    private final JolkTypeCategory category;
     private final Map<String, List<JolkMethodNode>> instanceMethods;
     private final Map<String, JolkFieldNode> instanceFields;
     private final Map<String, List<JolkNode>> metaMembers;
@@ -64,11 +64,11 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * @param superclassName The name of the superclass (may be null).
      * @param finality The finality (OPEN, FINAL, etc).
      * @param visibility The visibility (PUBLIC, PRIVATE, etc).
-     * @param archetype The archetype (CLASS, RECORD, etc).
+     * @param typeCategory The typeCategory (CLASS, RECORD, etc).
      * @param instanceMethods Map of instance methods.
      * @param instanceFields Map of instance fields.
      * @param metaMembers Map of meta-members (static methods/fields).
-     * @param enumConstants List of enum constant names (for ENUM archetype).
+     * @param enumConstants List of enum constant names (for ENUM typeCategory).
      * @param getterOverrides Visibility overrides for synthesised getters.
      * @param setterOverrides Visibility overrides for synthesised setters.
      */
@@ -76,7 +76,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
                                    String superclassName, 
                                    JolkFinality finality, 
                                    JolkVisibility visibility, 
-                                   JolkArchetype archetype, 
+                                   JolkTypeCategory typeCategory, 
                                    Map<String, List<JolkMethodNode>> instanceMethods, 
                                    Map<String, JolkFieldNode> instanceFields, 
                                    Map<String, List<JolkNode>> metaMembers, 
@@ -87,7 +87,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         this.superclassName = superclassName;
         this.finality = finality;
         this.visibility = visibility;
-        this.archetype = archetype;
+        this.category = typeCategory;
         this.instanceMethods = instanceMethods;
         this.instanceFields = instanceFields;
         this.metaMembers = metaMembers;
@@ -102,8 +102,8 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
      * Convenience constructor for unit tests that do not yet pass the {@link JolkLanguage} 
      * context. The language will be resolved dynamically during execution.
      */
-    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkArchetype archetype) {
-        this(className, null, finality, visibility, archetype, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), null, null);
+    public JolkClassDefinitionNode(String className, JolkFinality finality, JolkVisibility visibility, JolkTypeCategory typeCategory) {
+        this(className, null, finality, visibility, typeCategory, Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList(), null, null);
     }
 
     @Override
@@ -197,7 +197,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         // We pass null for the hostClass substrate identity, as this is a guest-defined type.
         // Enum constants are registered post-instantiation to support circular identity resolution 
         // within the meta-registry.
-        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, archetype, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, hostClass, getterOverrides, setterOverrides);
+        JolkMetaClass newMetaClass = new JolkMetaClass(className, superMetaClass, finality, visibility, category, runtimeMembers, runtimeInstanceFields, runtimeMetaMembers, runtimeMetaFields, stableFields, hostClass, getterOverrides, setterOverrides);
 
         // Identity Synchronization: Anchor meta-field hints as properties immediately.
         // This ensures that getters work correctly even before the evaluation protocol
@@ -252,8 +252,8 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
             }
         }
 
-        // Register enum constants for ENUM archetype
-        if (archetype == JolkArchetype.ENUM) {
+        // Register enum constants for ENUM
+        if (category == JolkTypeCategory.ENUM) {
             for (String constantName : enumConstants) {
                 newMetaClass.registerEnumConstant(constantName);
             }
@@ -306,7 +306,7 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
 
     /**
      * Resolves the type identity for field defaulting hints.
-     * Recognizes intrinsic archetypes that require specific zero-value initialization.
+     * Recognizes intrinsic types that require specific zero-value initialization.
      */
     private Object resolveTypeHint(String typeName, JolkContext context) {
         if ("Long".equals(typeName) || "Int".equals(typeName)) return 0L;
@@ -316,8 +316,8 @@ public class JolkClassDefinitionNode extends JolkExpressionNode {
         if ("Number".equals(typeName)) return 0L;
         if ("Decimal".equals(typeName)) return java.math.BigDecimal.ZERO;
 
-        // Collection Archetypes: Return host identities to maintain Shim-less Integration.
-        // We strip generic parameters to resolve the base archetype identity.
+        // Collection types: Return host identities to maintain Shim-less Integration.
+        // We strip generic parameters to resolve the base type identity.
         String baseType = typeName.contains("<") ? typeName.substring(0, typeName.indexOf("<")).trim() : typeName;
         if ("Array".equals(baseType) || "List".equals(baseType) || "ArrayList".equals(baseType)) return new java.util.ArrayList<>();
         if ("Map".equals(baseType) || "HashMap".equals(baseType)) return new java.util.LinkedHashMap<>();

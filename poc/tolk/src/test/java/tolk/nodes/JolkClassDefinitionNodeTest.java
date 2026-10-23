@@ -8,7 +8,7 @@ import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 import tolk.JolcTestBase;
 import tolk.language.JolkLanguage;
-import tolk.runtime.JolkArchetype;
+import tolk.runtime.JolkTypeCategory;
 import tolk.runtime.JolkFinality;
 import tolk.runtime.JolkMetaClass;
 import tolk.runtime.JolkVisibility;
@@ -33,7 +33,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             className,
             JolkFinality.OPEN,
             JolkVisibility.PUBLIC,
-            JolkArchetype.CLASS
+            JolkTypeCategory.CLASS
         );
 
         Value result = execute(node);
@@ -59,7 +59,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
             null,
             JolkFinality.FINAL,
             JolkVisibility.PUBLIC,
-            JolkArchetype.CLASS,
+            JolkTypeCategory.CLASS,
             Map.of("testMethod", List.of(new JolkMethodNode("testMethod", new JolkLiteralNode("success"), new String[0], new String[0], false, 1, false))),
             new HashMap<String, JolkFieldNode>(),
             new HashMap<String, List<JolkNode>>(),
@@ -95,7 +95,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "Point", 
             null, 
-            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), instanceFields, new HashMap<String, List<JolkNode>>(),
             Collections.emptyList(),
             null,
@@ -120,7 +120,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "MetaTest", 
             null, 
-            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers,
             Collections.emptyList(),
             null,
@@ -133,19 +133,19 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
     }
 
     /**
-     * Verifies that the archetype, visibility, and finality properties are 
+     * Verifies that the typeCategory, visibility, and finality properties are 
      * correctly propagated to the [JolkMetaClass].
      */
     @Test
-    void testArchetypeMetadata() {
+    void testTypeCategoryMetadata() {
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
-            "MyRecord", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.RECORD
+            "MyRecord", JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkTypeCategory.RECORD
         );
 
         Value result = execute(node);
         JolkMetaClass meta = unwrap(result, JolkMetaClass.class);
         
-        assertEquals(JolkArchetype.RECORD, getInternalField(meta, "archetype"), "Archetype should be preserved.");
+        assertEquals(JolkTypeCategory.RECORD, getInternalField(meta, "typeCategory"), "TypeCategory should be preserved.");
         assertEquals(JolkVisibility.PUBLIC, getInternalField(meta, "visibility"), "Visibility should be preserved.");
         assertEquals(JolkFinality.FINAL, getInternalField(meta, "finality"), "Finality should be preserved.");
     }
@@ -185,7 +185,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "Config", 
             null, 
-            JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            JolkFinality.FINAL, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS,
             new HashMap<String, List<JolkMethodNode>>(), new HashMap<String, JolkFieldNode>(), metaMembers,
             Collections.emptyList(),
             null,
@@ -211,7 +211,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "OverloadTest", 
             null, 
-            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS,
             Map.of("val", methods), new HashMap<>(), new HashMap<>(),
             Collections.emptyList(),
             null,
@@ -239,7 +239,7 @@ public class JolkClassDefinitionNodeTest extends JolcTestBase {
         JolkClassDefinitionNode node = new JolkClassDefinitionNode(
             "HintTest", 
             null, 
-            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS,
+            JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS,
             new HashMap<>(), fields, new HashMap<>(),
             Collections.emptyList(),
             null,

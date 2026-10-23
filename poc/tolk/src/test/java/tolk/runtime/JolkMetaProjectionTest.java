@@ -87,7 +87,7 @@ public class JolkMetaProjectionTest extends JolcTestBase {
             null,        // superclass
             JolkFinality.FINAL,                // finality
             JolkVisibility.PUBLIC,             // visibility
-            JolkArchetype.CLASS,               // archetype
+            JolkTypeCategory.CLASS,            // typeCategory
             java.util.Collections.emptyMap(),  // instanceMethods
             java.util.Collections.emptyMap(),  // instanceFields
             null,                              // metaMethods (registry - source of NPE)

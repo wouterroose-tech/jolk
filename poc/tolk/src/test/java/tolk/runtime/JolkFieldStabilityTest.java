@@ -51,7 +51,7 @@ public class JolkFieldStabilityTest extends JolcTestBase {
 
     @Test
     void testRecordImmutabilityEnforcement() {
-        // Records are inherently stable. The JolkObject kernel blocks setters for RECORD archetypes.
+        // Records are inherently stable. The JolkObject kernel blocks setters for RECORD.
         String source = """
             record Point {
                 Long x;

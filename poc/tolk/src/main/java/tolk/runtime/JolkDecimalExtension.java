@@ -28,7 +28,7 @@ public class JolkDecimalExtension {
             JolkNumberExtension.NUMBER_TYPE, 
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS,
+            JolkTypeCategory.CLASS,
             java.math.BigDecimal.class
         );
 

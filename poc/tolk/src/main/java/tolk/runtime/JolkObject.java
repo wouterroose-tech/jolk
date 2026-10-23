@@ -33,7 +33,7 @@ public class JolkObject extends DynamicObject {
     /// This identity has no superclass and serves as the terminus
     /// for all message dispatch delegation.
     public static final JolkMetaClass OBJECT_TYPE = new JolkMetaClass(
-        "Object", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkArchetype.CLASS, new HashMap<>(), new HashMap<>()
+        "Object", null, JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, new HashMap<>(), new HashMap<>()
     );
 
     private final JolkMetaClass metaClass;
@@ -174,7 +174,7 @@ public class JolkObject extends DynamicObject {
                 }
                 return JolkNode.interopLift(value);
             } else if (arguments.length == 1) {
-                // Immutability Enforcement: Respect stable fields and Record archetypes.
+                // Immutability Enforcement: Respect stable fields and Record.
                 if (metaClass.isFieldStable(name)) {
                     throw UnsupportedMessageException.create();
                 }

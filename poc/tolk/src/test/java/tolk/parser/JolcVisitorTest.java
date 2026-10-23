@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class JolcVisitorTest extends JolcTestBase {
 
     @Test
-    void testVisitDeclArchetype() {
+    void testVisitDeclTypeCategory() {
         eval("class MyClass { }");
         eval("value MyValue { }");
         eval("record MyRecord { }");

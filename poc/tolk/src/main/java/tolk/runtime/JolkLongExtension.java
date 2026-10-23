@@ -29,7 +29,7 @@ public final class JolkLongExtension {
             JolkNumberExtension.NUMBER_TYPE, // Identity hierarchy
             JolkFinality.FINAL, 
             JolkVisibility.PUBLIC, 
-            JolkArchetype.CLASS,
+            JolkTypeCategory.CLASS,
             java.lang.Long.class // Associate with host class
         );
 

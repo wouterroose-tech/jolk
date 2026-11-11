@@ -14,11 +14,14 @@ class ContactFormTest extends TestCase {
 
     testNewCompleted() {
         Person person = #getPerson;
+        Document document = #getDocument("Test document");
         ContactForm #new
+            #id(1)
             #person(person)
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description")
+            #addDocument(document)
             #ifPresent { f ->
                 (f #person == person)
                     && (f #email ~~ "john.doe@example.com")
@@ -26,13 +29,14 @@ class ContactFormTest extends TestCase {
                     && (f #description ~~ "Test description");
                 }
             #ifEmpty { #fail };
-            #success
+        #success
     }
 
     // Form should be identical to itself.
     testEquality1() {
         
         ContactForm form = ContactForm #new
+            #id(1)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
@@ -44,11 +48,13 @@ class ContactFormTest extends TestCase {
     testEquality2() {
         
         ContactForm formA = ContactForm #new
+            #id(1)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
         ContactForm formB = ContactForm #new
+            #id(2)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
@@ -60,6 +66,7 @@ class ContactFormTest extends TestCase {
     testEquivalence1() {
         
         ContactForm form = ContactForm #new
+            #id(1)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
@@ -71,11 +78,13 @@ class ContactFormTest extends TestCase {
     testEquivalence2() {
         
         ContactForm formA = ContactForm #new
+            #id(1)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description");
         ContactForm formB = ContactForm #new
+            #id(1)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
@@ -87,11 +96,13 @@ class ContactFormTest extends TestCase {
     testEquivalence3() {
 
         ContactForm formA = ContactForm #new
+            #id(1)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
             #description("Test description A");
         ContactForm formB = ContactForm #new
+            #id(2)
             #person(#getPerson)
             #email("john.doe@example.com")
             #zipCode(12345)
@@ -104,6 +115,10 @@ class ContactFormTest extends TestCase {
             #ssn(12345678939)
             #firstName("John")
             #lastName("Doe");
+    }
+
+    #> Document getDocument(String name) {
+        ^ Document #new (name, "Document description for: " + name, null)
     }
 
 }

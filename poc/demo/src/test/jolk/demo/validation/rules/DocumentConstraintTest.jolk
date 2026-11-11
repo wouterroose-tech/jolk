@@ -1,0 +1,43 @@
+~ demo.validation.rules;
+
++ demo.validation.domain.Document;
++ demo.validation.domain.*;
++ jolk.test.api.TestCase;
+
+/// # DocumentConstraintTest
+///
+/// Test suite for verifying the logic within {DocumentConstraint}.
+///
+/// @author Wouter Roose
+class DocumentConstraintTest extends TestCase {
+
+    @Test
+    test_isValid_success() {
+        document = Document #new("MyDocument", "pdf", "A test document", #[1, 2, 3]);
+        #assertTrue(DocumentConstraint #new #isValid(document));
+    }
+    
+    @Test
+    test_isValid_failure() {
+        document = Document #new("MyDocument", "txt", "A test document", #[1, 2, 3]);
+        #assertFalse(DocumentConstraint #new #isValid(document));
+    }
+    
+    @Test
+    test_accept_success() {
+        context = ExecutionContext #new;
+        document = Document #new("MyDocument", "pdf", "A test document", #[1, 2, 3]);
+
+        DocumentConstraint #new #accept(document, context);
+        #assertFalse(context #hasIssue)
+    }
+
+    @Test
+    test_accept_failure() {
+        context = ExecutionContext #new;
+        document = Document #new("MyDocument", "txt", "A test document", #[1, 2, 3]);
+        
+        DocumentConstraint #new #accept(document, context);
+        #assertTrue(context #hasIssue)
+    }
+}

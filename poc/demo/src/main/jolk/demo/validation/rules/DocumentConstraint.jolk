@@ -1,0 +1,26 @@
+~ demo.validation.rules;
+
++ demo.validation.engine.Constraint;
++ demo.validation.engine.ExecutionContext;
++ demo.validation.engine.Interrupt;
++ demo.validation.engine.Issue;
++ demo.validation.engine.Level;
++ demo.validation.domain.Document;
+
+///
+/// @author Wouter Roose
+
+#! class DocumentConstraint extends Constraint[Document] {
+
+    #: Boolean isValid(Document document) {
+        ^ #isValidType(document #type)
+    }
+
+    #> Boolean isValidType(String type) {
+        ^ type ~~ "pdf" || type ~~ "jpg"
+    }
+
+    #: Issue getIssue(Document document,  ExecutionContext executionContext) {
+        ^ Issue #new(document, "pdf", "DOCUMENT_TYPE_INVALID",  Level #ERROR)
+    }
+}

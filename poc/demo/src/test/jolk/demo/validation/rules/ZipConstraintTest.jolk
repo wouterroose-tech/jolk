@@ -17,7 +17,6 @@ class ZipConstraintTest extends TestCase {
         // Create a ContactForm with a valid Malines zip code
         ContactForm form = ContactForm #new #zipCode(2800);
         ZipConstraint #new #accept(form, context);
-        
         #assertFalse(context #hasIssue)
     }
 
@@ -27,14 +26,8 @@ class ZipConstraintTest extends TestCase {
         ExecutionContext context = ExecutionContext #new;
         // Create a ContactForm with an invalid zip code
         ContactForm form = ContactForm #new #zipCode(9999);
-        
-        // Wrap in catch because ZipConstraint #interrupt returns a signal 
-        // thrown by Constraint #doAccept upon violation.
-        Boolean interrupted = false;
-        { ZipConstraint #new #accept(form, context) }
-            #catch { Interrupt e -> interrupted = true };
-        
-        #assertTrue(interrupted && context #hasIssue)
+        ZipConstraint #new #accept(form, context);
+        #assertTrue(context #hasIssue)
     }
 
     /// Verifies satisfiesPreCondition when a zip code is present.

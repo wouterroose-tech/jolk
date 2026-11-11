@@ -15,8 +15,8 @@
 
 package final class ChildValidation[T, R] extends Node[T] {
 
-    Function[T, R] supplier;
     Validation[R] validation;
+    Function[T, R] supplier;
 
     /// ## accept
     /// Executes the child validation logic.

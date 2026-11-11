@@ -14,10 +14,14 @@
 + demonstrators.ExceptionHandlingTest;
 + demonstrators.RecordTest;
 + demo.validation.domain.PersonTest;
++ demo.validation.domain.DocumentTest;
 + demo.validation.domain.ContactFormTest;
++ demo.validation.engine.ChildValidationTest;
++ demo.validation.engine.ChildrenValidationTest;
 + demo.validation.engine.IssueTest;
 + demo.validation.engine.LevelTest;
 + demo.validation.rules.ContactFormValidationTest;
++ demo.validation.rules.DocumentConstraintTest;
 + demo.validation.rules.SsnConstraintTest;
 + demo.validation.rules.ZipConstraintTest;
 + mock.MockTest;
@@ -66,6 +70,7 @@ class DemoTestRunner extends TestRunner {
         ^ TestSuite
             #new("demo.validation.domain")
             #addTestCase(PersonTest)
+            #addTestCase(DocumentTest)
             #addTestCase(ContactFormTest)
     }
 
@@ -75,6 +80,8 @@ class DemoTestRunner extends TestRunner {
             #new("demo.validation.engine")
             #addTestCase(LevelTest)
             #addTestCase(IssueTest)
+            #addTestCase(ChildValidationTest)
+            #addTestCase(ChildrenValidationTest)
     }
 
     TestSuite rules() {
@@ -82,6 +89,7 @@ class DemoTestRunner extends TestRunner {
             #new("demo.validation.rules")
             #addTestCase(ZipConstraintTest)
             #addTestCase(SsnConstraintTest)
+            #addTestCase(DocumentConstraintTest)
             #addTestCase(ContactFormValidationTest)
     }
 

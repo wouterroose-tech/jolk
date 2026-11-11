@@ -1,0 +1,14 @@
+~ demo.validation.domain;
+
++ java.util.List;
+
+///
+/// @author Wouter Roose
+
+record Document {
+
+    String name;
+    String type;
+    String description;
+    Array[Byte] data;
+}

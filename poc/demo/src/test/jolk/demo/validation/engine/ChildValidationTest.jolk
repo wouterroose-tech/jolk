@@ -1,0 +1,43 @@
+~ demo.validation.engine;
+
++ demo.validation.engine.ExecutionContext;
++ demo.validation.domain.ContactForm;
++ demo.validation.domain.Person;
++ demo.validation.rules.SsnConstraint;
++ jolk.test.api.TestCase;
+
+/// # ChildValidation
+///
+/// @author Wouter Roose
+///
+class ChildValidationTest extends TestCase {
+
+    testChildValidation_success() {
+        childValidation = ChildValidation[ContactForm, Person] #new(SsnConstraint #new, ContactForm ##person);
+        #assertIsPresent(childValidation);
+        #assertIsPresent(childValidation #validation);
+        #assertIsPresent(childValidation #supplier);
+
+        context = ExecutionContext #new;
+        childValidation #accept(#getForm(800101035), context);
+        #assertFalse(context #hasIssue)
+    }
+
+    testChildValidation_failure() {
+        childValidation = ChildValidation[ContactForm, Person] #new(SsnConstraint #new, ContactForm ##person);
+
+        context = ExecutionContext #new;
+        Boolean interrupted = false;
+        { 
+            childValidation #accept(#getForm(800101099), context)
+        } #catch { 
+            Interrupt e -> interrupted = true
+        };
+        #assertTrue(interrupted && context #hasIssue)
+    }
+
+    ContactForm getForm(Long ssn) {
+        ^ ContactForm #new #person(Person #new #ssn(ssn))
+    }
+
+}

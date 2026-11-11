@@ -2,6 +2,7 @@ package tolk.runtime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -22,7 +23,6 @@ public class JolkEnumTest extends JolcTestBase {
                 Boolean isDebug() { ^ self == DEBUG }
             }""";  
             
-
     @Test
     void testSimpleEnum() {
         String enumSource = "enum Color { RED; GREEN; BLUE; }";
@@ -108,5 +108,40 @@ public class JolkEnumTest extends JolcTestBase {
         Value instance = eval(source).invokeMember("new");
         assertEquals("ERROR", instance.invokeMember("run").asString()); 
     }  
+
+    /// Test enum value unicity, even if there names are equal for two different enum types
+    @Test
+    void testEnumValueUnicity() {
+        String source = """
+            enum Level { ONE; TWO; THREE;
+                 Boolean isONE() { ^ self == ONE }
+            }""";
+        Value level = eval(source);
+        source =  """
+            enum Error { ONE; TWO; THREE;
+                 Boolean isONE() { ^ self == ONE }
+            }""";
+        Value error = eval(source);
+        source = """
+            class MyClass {
+                Boolean shouldBeTrue() {
+                    ^ Level #ONE == Level #ONE
+                        && Error #ONE == Error #ONE;
+                }
+                Boolean shouldBeFalse() {
+                    ^ Level #ONE == Error #ONE;
+                }
+            }""";
+        Value instance = eval(source).invokeMember("new");
+
+        assertEquals(error.getMember("ONE"), error.getMember("ONE"));
+        assertTrue(error.getMember("ONE").invokeMember("isONE").asBoolean());
+        assertNotEquals(error.getMember("ONE"), level.getMember("ONE"));
+        assertNotEquals(level.getMember("ONE"), error.getMember("ONE"));
+        assertEquals(level.getMember("ONE"), level.getMember("ONE"));
+        assertTrue(level.getMember("ONE").invokeMember("isONE").asBoolean());
+        assertFalse(instance.invokeMember("shouldBeFalse").asBoolean());
+        assertTrue(instance.invokeMember("shouldBeTrue").asBoolean());
+    }
 
 }

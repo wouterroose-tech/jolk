@@ -23,6 +23,7 @@ public class DemoTestSuite extends TestRunner {
         load("/examples/Complex.jolk");
         // domain
         load("/demo/validation/domain/ContactForm.jolk");
+        load("/demo/validation/domain/Document.jolk");
         load("/demo/validation/domain/Person.jolk");
         load("/demo/validation/domain/User.jolk");
         // validation engine
@@ -49,6 +50,7 @@ public class DemoTestSuite extends TestRunner {
         // validation rules
         load("/demo/validation/rules/SsnConstraint.jolk");
         load("/demo/validation/rules/ZipConstraint.jolk");
+        load("/demo/validation/rules/DocumentConstraint.jolk");
         load("/demo/validation/rules/ContactFormValidation.jolk");
     }
     
@@ -68,9 +70,11 @@ public class DemoTestSuite extends TestRunner {
         load("/demonstrators/CoreProtocolTest.jolk");
         load("/demonstrators/EqualityTest.jolk");
         load("/demonstrators/ExceptionHandlingTest.jolk");
+        load("/demo/validation/engine/ChildValidationTest.jolk");
+        load("/demo/validation/engine/ChildrenValidationTest.jolk");
         load("/demo/validation/engine/LevelTest.jolk");
         load("/demo/validation/engine/IssueTest.jolk");
-        load("/demo/validation/rules/SsnConstraint.jolk");
+        load("/demo/validation/rules/DocumentConstraintTest.jolk");
         load("/demo/validation/rules/SsnConstraintTest.jolk");
         load("/demo/validation/rules/ZipConstraintTest.jolk");
         load("/demo/validation/rules/ContactFormValidationTest.jolk");
@@ -115,7 +119,7 @@ public class DemoTestSuite extends TestRunner {
         testClass = load("/demonstrators/ExpressionTest.jolk");
         runTestClass(testClass);
 
-        load("/demonstrators/StableAndConstantFieldTest.jolk");
+        testClass = load("/demonstrators/StableAndConstantFieldTest.jolk");
         runTestClass(testClass);
 
         testClass = load("/demonstrators/PresenceTest.jolk");
@@ -148,6 +152,9 @@ public class DemoTestSuite extends TestRunner {
         Value personTest = load("/demo/validation/domain/PersonTest.jolk");
         runTestClass(personTest);
 
+        Value documentTest = load("/demo/validation/domain/DocumentTest.jolk");
+        runTestClass(documentTest);
+
         Value contactFormTest = load("/demo/validation/domain/ContactFormTest.jolk");
         runTestClass(contactFormTest);
     }
@@ -163,6 +170,10 @@ public class DemoTestSuite extends TestRunner {
         testClass = load("/demo/validation/rules/ZipConstraintTest.jolk");
         runTestClass(testClass);
 
+        load("/demo/validation/rules/DocumentConstraint.jolk");
+        testClass = load("/demo/validation/rules/DocumentConstraintTest.jolk");
+        runTestClass(testClass);
+
         load("/demo/validation/rules/ContactFormValidation.jolk");
         testClass = load("/demo/validation/rules/ContactFormValidationTest.jolk");
         runTestClass(testClass);
@@ -175,6 +186,12 @@ public class DemoTestSuite extends TestRunner {
         runTestClass(testClass);
         
         testClass = load("/demo/validation/engine/IssueTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demo/validation/engine/ChildValidationTest.jolk");
+        runTestClass(testClass);
+        
+        testClass = load("/demo/validation/engine/ChildrenValidationTest.jolk");
         runTestClass(testClass);
     }
     

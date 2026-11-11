@@ -9,7 +9,6 @@ public class JolkRecordTest extends JolcTestBase {
 
     
     @Test
-    @Disabled
     void testRecord() {
     }
 }

@@ -28,13 +28,13 @@ public class ClosureTest extends TestCase {
 
     @Test
     testRunMethodReference_meta() {
-        #assertEquals(42, self #run(21, ClosureDemonstrator ##doubleValue));
-        #assertEquals(0, self #run(0, ClosureDemonstrator ##doubleValue));
+        #assertEquals(42, self #run(21, ClosureTest ##doubleValue));
+        #assertEquals(0, self #run(0, ClosureTest ##doubleValue));
     }
 
     @Test
     testRunMethodReference_instance() {
-        ClosureDemonstrator instance = Self #new;
+        ClosureTest instance = Self #new;
         #assertEquals(42, self #run(21, instance ##doubleValue));
         #assertEquals(0, self #run(0, instance ##doubleValue));
     }

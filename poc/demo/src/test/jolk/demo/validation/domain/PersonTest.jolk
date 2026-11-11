@@ -9,7 +9,7 @@
 class PersonTest extends TestCase {
 
     testPersonCreation() {
-        Person person = Person #new
+        person = Person #new
             #ssn(12345678939)
             #firstName("John")
             #lastName("Doe");
@@ -20,11 +20,11 @@ class PersonTest extends TestCase {
     }
 
     testPersonEquality() {
-        Person p1 = Person #new
+        p1 = Person #new
             #ssn(12345678939)
             #firstName("John")
             #lastName("Doe");
-        Person p2 = Person #new
+        p2 = Person #new
             #ssn(12345678939)
             #firstName("John")
             #lastName("Doe");
@@ -34,15 +34,15 @@ class PersonTest extends TestCase {
     }
 
     testPersonEquivalence() {
-        Person p1 = Person #new
+        p1 = Person #new
             #ssn(12345678939)
             #firstName("John")
             #lastName("Doe");
-        Person p2 = Person #new
+        p2 = Person #new
             #ssn(12345678939)
             #firstName("John")
             #lastName("Doe");
-        Person p3 = Person #new
+        p3 = Person #new
             #ssn(987654321)
             #firstName("Jane")
             #lastName("Smith");

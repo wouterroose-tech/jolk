@@ -21,8 +21,8 @@
 
 package final class ChildrenValidation[T, R] extends Node[T] {
 
-    Function[T, List[R]] supplier;
     Validation[R] validation;
+    Function[T, List[R]] supplier;
 
     /// ## accept
     /// Propagates the validation to each of the subject's children provided by the supplier.

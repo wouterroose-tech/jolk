@@ -86,6 +86,9 @@ public class JolkStringTest extends JolcTestBase {
             class EqualityTest {
                 Boolean eq(String a, String b) { ^ a ~~ b }
                 Boolean ne(String a, String b) { ^ a !~ b }
+                Boolean is42(String a) { ^ a ~~ "42" }
+                Boolean eq42() { ^ #is42("42") }
+                Boolean ne42() { ^ #is42("0") }
             }
             """;
         Value instance = eval(source).invokeMember("new");
@@ -93,6 +96,10 @@ public class JolkStringTest extends JolcTestBase {
         assertFalse(instance.invokeMember("eq", "hello", "world").asBoolean());
         assertTrue(instance.invokeMember("ne", "hello", "world").asBoolean());
         assertFalse(instance.invokeMember("ne", "hello", "hello").asBoolean());
+        assertTrue(instance.invokeMember("is42", "42").asBoolean());
+        assertFalse(instance.invokeMember("is42", "0").asBoolean());
+        assertTrue(instance.invokeMember("eq42").asBoolean());
+        assertFalse(instance.invokeMember("ne42").asBoolean());
     }
     
     @Test

@@ -1,8 +1,14 @@
 ~ demo.validation.rules;
 
++ demo.validation.engine.ChildValidation;
++ demo.validation.engine.ChildrenValidation;
 + demo.validation.engine.Interrupt;
 + demo.validation.engine.ValidationSuite;
 + demo.validation.domain.ContactForm;
++ demo.validation.domain.Document;
++ demo.validation.domain.Person;
++ demo.validation.rules.DocumentConstraint;
++ demo.validation.rules.SsnConstraint;
 
 ///
 /// @author Wouter Roose
@@ -17,14 +23,26 @@ class ContactFormValidation extends ValidationSuite[ContactForm] {
             //#add basic constraint
             #add(ZipConstraint #new)
             //#add ChildValidation via method reference
-            #add(SsnConstraint #new, ContactForm ##person)
-            // TODO
-            // #add children ruleset 
+            //#add(SsnConstraint #new, ContactForm ##person)
+            #addChildValidation(SsnConstraint #new, ContactForm ##person)
+            // #add children ruleset via method reference
+            //#add(DocumentConstraint #new, ContactForm ##documents)
+            #addChildrenValidation(DocumentConstraint #new, ContactForm ##documents)
     }
 
     // temporary fix for overloading
     add(Constraint[T] constraint) {
         #nodes #add(constraint)
+    }
+
+    // temporary fix for overloading
+    final [R] addChildValidation(Validation[Person] validation, Function[ContactForm, Person] supplier) {
+        #nodes #add(ChildValidation[ContactForm, Person] #new(validation, supplier))
+    }
+
+    // temporary fix for overloading
+    final [R] addChildrenValidation(Validation[Document] validation, Function[ContactForm, List[Document]] supplier) {
+        #nodes #add(ChildrenValidation[ContactForm, Document] #new(validation, supplier))
     }
     
 }

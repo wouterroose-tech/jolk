@@ -1,7 +1,6 @@
 ~ demo.validation.rules;
 
 + demo.validation.domain.*;
-+ demo.validation.domain.*;
 + jolk.test.api.TestCase;
 
 /// # SsnConstraintTest

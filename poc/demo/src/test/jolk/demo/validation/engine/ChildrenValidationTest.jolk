@@ -1,0 +1,39 @@
+~ demo.validation.engine;
+
++ demo.validation.engine.ExecutionContext;
++ demo.validation.domain.ContactForm;
++ demo.validation.domain.Person;
++ demo.validation.rules.SsnConstraint;
++ jolk.test.api.TestCase;
+
+/// # ChildValidation
+///
+/// @author Wouter Roose
+///
+class ChildrenValidationTest extends TestCase {
+
+    testChildrenValidation_success() {
+        childrenValidation = ChildrenValidation[ContactForm, Document] #new(DocumentConstraint #new, ContactForm ##documents);
+        #assertIsPresent(childrenValidation);
+        #assertIsPresent(childrenValidation #validation);
+        #assertIsPresent(childrenValidation #supplier);
+
+        context = ExecutionContext #new;
+        childrenValidation #accept(#getForm("pdf"), context);
+        #assertFalse(context #hasIssue)
+    }
+
+    testChildrenValidation_failure() {
+        childrenValidation = ChildrenValidation[ContactForm, Document] #new(DocumentConstraint #new, ContactForm ##documents);
+
+        context = ExecutionContext #new;
+        childrenValidation #accept(#getForm("txt"), context);
+        #assertTrue(context #hasIssue)
+    }
+
+    ContactForm getForm(String type) {
+        ^ ContactForm #new 
+            #addDocument(Document #new("Document", type, "A document", #[1, 2, 3]))
+    }
+
+}

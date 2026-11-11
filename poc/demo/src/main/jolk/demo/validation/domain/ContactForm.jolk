@@ -1,28 +1,36 @@
 ~ demo.validation.domain;
 
++ java.util.List;
+
 ///
 /// @author Wouter Roose
 
 #! class ContactForm {
+    Long id;
     Person person;
-    String description;
     Long zipCode;
     String email;
+    String description;
+    List[Document] documents = #[];
 
     /// Returns a string representation of the contact form.
     String toString() {
-        ^ "ContactForm[person=" + #person + ", description=" + #description + ", zipCode=" + #zipCode + ", email=" + #email + "]"
+        ^ "ContactForm[id=" + #id + ", person=" + #person + ", description=" + #description + "]"
     }
 
     /// Performs a structural equivalence check.
     Boolean ~~(Object other) {
         (self == other) ? { ^ true };
         other #instanceOf(ContactForm) #ifPresent { f -> 
-            ^ (#person ~~ f #person)
-                && (#description ~~ f #description)
+            ^ (#id == f #id)
+                && (#person ~~ f #person)
                 && (#zipCode == f #zipCode)
-                && (#email ~~ f #email)
         };
         ^ false
     }
+
+    addDocument(Document document) {
+        #documents #add(document)
+    }
+
 }

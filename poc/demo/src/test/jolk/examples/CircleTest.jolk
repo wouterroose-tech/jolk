@@ -21,6 +21,7 @@ class CircleTest extends TestCase {
     }
 
     testArea() {
+        //TODO fails when running all tests, succeeds when running this test only 
         Double area = Circle #new(5) #area;
         #assertEquals(78.53981633974483 #asDouble, area);
     }

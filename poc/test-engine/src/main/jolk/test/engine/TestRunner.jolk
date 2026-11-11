@@ -80,7 +80,7 @@ class TestRunner {
     #> TestResult handle(RuntimeExecption e) {
         // Exception type verified catch not yet implemented
         (e #getMessage ~~ "DISABLED") ? { ^ TestResult #disabled };
-        (e #getMessage #matches("^FAILURE.*")) ? { ^ TestResult #failed(e) };
+        (e #getMessage #matches("FAILURE")) ? { ^ TestResult #failed(e) };
         ^ TestResult #fault(e)
     }
 

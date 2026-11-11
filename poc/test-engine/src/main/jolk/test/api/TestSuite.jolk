@@ -2,8 +2,6 @@
 
 /// # TestSuite
 ///
-/// TODO
-///
 /// @author Wouter Roose
 ///
 class TestSuite extends Test {

@@ -6,10 +6,11 @@
 
 enum TestStatus {
 
-    DISABLED; FAULT; FAILURE; SUCCESS;
+    DISABLED; FAULT; FAILURE; SUCCESS; ERROR;
 
     Boolean isDisabled() { ^ self == DISABLED }
     Boolean isFault() { ^ self == FAULT }
     Boolean isFailure() { ^ self == FAILURE }
     Boolean isSuccess() { ^ self == SUCCESS }
+    Boolean isError() { ^ self == ERROR }
 }

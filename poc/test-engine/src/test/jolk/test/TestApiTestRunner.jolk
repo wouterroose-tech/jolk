@@ -11,8 +11,6 @@
 
 /// # TestApiTestRunner
 ///
-/// TODO
-///
 /// @author Wouter Roose
 ///
 class TestApiTestRunner extends  TestRunner {

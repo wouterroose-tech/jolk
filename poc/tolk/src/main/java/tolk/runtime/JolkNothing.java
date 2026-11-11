@@ -143,7 +143,8 @@ public final class JolkNothing implements TruffleObject {
         }
         @ExportMessage
         public Object execute(Object[] arguments) {
-            throw new RuntimeException("Nothing cannot be instantiated. Use 'null' literal.");
+            // Silent Absorption: Return self for any unknown message
+            return INSTANCE;
         }
     }
 }

@@ -21,7 +21,7 @@ extension ObjectExtension on java.lang.Object {
     /// Creates a new instance of the receiving type.
     ///
     /// - **Returns**: A new instance of the receiving type.
-	meta Self new() { }
+	meta new() { }
 
     /// ## ~~
     /// Performs a semantic equivalent check.
@@ -104,7 +104,7 @@ extension ObjectExtension on java.lang.Object {
     /// - **s**: The reified Selector (message) to project onto the receiver.
     /// - **args**: Variadic arguments for the message send.
     /// - **Returns**: The result of the projected message send.
-    Object project(Selector s, Object... args) {}
+    Self project(Selector s, Object... args) {}
 
     /// ## isEmpty
     /// Checks if the receiver represents the absence of a value.
@@ -124,7 +124,7 @@ extension ObjectExtension on java.lang.Object {
     /// The Jolk Type pattern match.
     ///
     /// At runtime, this flattens into an INSTANCEOF check and a conditional branch.
-    /// At compile-time, the selector returns a Selection[T], enabling execution in the fluent chain.
+    /// At compile-time, the method returns a Match[T], enabling execution in the fluent chain.
     ///
     /// - **type**: The type to check against.
     /// - **Returns**: A Match containing the object if it is an instance of the type, otherwise an empty Match.

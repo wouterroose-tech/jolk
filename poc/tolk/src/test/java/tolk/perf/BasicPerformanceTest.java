@@ -28,14 +28,14 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
         try {
             setUp();
             test();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         } finally {
             tearDown();
         }
     }
 
-    protected abstract void test() throws Exception;
+    protected abstract void test() throws Throwable;
 
     protected long measureJolk(Value jolkTest, String member, long n, long iterations) {
         long start = System.nanoTime();
@@ -89,17 +89,18 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                     times #times { sum = sum + self #fibonacci(n) };
                     ^ sum
                 }
+                Long fibonacci_i(Long n) {
+                    Long a = 0; Long b = 1;
+                    n #times { i ->
+                        Long temp = a;
+                        a = b;
+                        b = temp + b
+                    };
+                    ^ a;
+                }
                 Long runFibonacciIterative(Long n, Long times) {
                     Long sum = 0;
-                    times #times {
-                        Long a = 0; Long b = 1;
-                        n #times { i ->
-                            Long temp = a;
-                            a = b;
-                            b = temp + b
-                        };
-                        sum = sum + a;
-                    };
+                    times #times { sum = sum + #fibonacci_i(n) };
                     ^ sum
                 }
             }            

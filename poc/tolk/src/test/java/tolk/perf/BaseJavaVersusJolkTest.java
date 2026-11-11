@@ -1,19 +1,22 @@
 package tolk.perf;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import org.graalvm.polyglot.Value;
 
 public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
+
+    private static final int ROUNDS = 5;
+    private static volatile long SINK;
 
     public static void main(String[] args) {
         new BaseJavaVersusJolkTest().run(args);
     }
     
 
-    protected void test() throws Exception {
-
-        JavaPerformanceTest javaTest = getJavaTest();        
+    protected void test() throws Throwable {
+    
         // High iteration count ensures we spend more time in compiled code than in the JIT thread.
         long iterations = 100000;
         
@@ -24,49 +27,59 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
         long[] params = {7, 1024, 1024, 20, 20, 7, 7};
 
         for (int i = 0; i < tests.length; i++) {
-            // RE-INITIALIZE Jolk for every test to prevent Profile Pollution
-            Value freshJolk = getJolkTest();
-            test(freshJolk, javaTest, tests[i], params[i], iterations);
+            test(tests[i], params[i], iterations);
         }
     }
 
-    void test(Value jolkTest, JavaPerformanceTest javaTest, String testCase, long n, long iterations) throws Exception {
+    void test(String testCase, long n, long iterations) throws Throwable {
+
+        JavaPerformanceTest javaTest = getJavaTest();
         Method javaMethod = javaTest.getClass().getDeclaredMethod(testCase, long.class, long.class);
         javaMethod.setAccessible(true);
+        // Warmup Java (same shape as measurement, a few entries)
+        for (int i = 0; i < ROUNDS; i++) {
+            javaMethod.invoke(javaTest, n, iterations);
+        }
+        System.gc();
+        Thread.sleep(500);
 
-        // 1. Warmup Java
-        for (int i = 0; i < 10000; i++) {
-            javaMethod.invoke(javaTest, n, 1);
+        // Measure Java: several rounds, keep median
+        long[] javaTimes = new long[ROUNDS];
+        for (int r = 0; r < ROUNDS; r++) {
+            long start = System.nanoTime();
+            javaMethod.invoke(javaTest, n, iterations);
+            javaTimes[r] = System.nanoTime() - start;
+            SINK++; // opaque use: blocks DCE
         }
 
-        // Engineered Integrity: Ensure the JIT compilation threads have finished
-        // and the GC has reclaimed any temporary warmup objects before measuring.
+        Value jolkTest = getJolkTest();
+        // Warmup Jolk
+        for (int r = 0; r < ROUNDS; r++) jolkTest.invokeMember(testCase, n, iterations);
         System.gc();
-        Thread.sleep(500); 
-    
-        // 2. Measure Java
-        long start = System.nanoTime();
-        javaMethod.invoke(javaTest, n, iterations);
-        long javaTime = System.nanoTime() - start;
+        Thread.sleep(500);
 
-        // 3. Warmup Jolk (Trigger Truffle Compilation)
-        // We need many entries to the RootNode to trigger Graal JIT.
-        // Compilation Thresholds: Truffle typically waits for a method to be called 1,000 times (default) before compiling it.
-        for (int i = 0; i < 50000; i++) {
-            jolkTest.invokeMember(testCase, n, 1);
+        // Measure Jolk
+        long[] jolkTimes = new long[ROUNDS];
+        for (int r = 0; r < ROUNDS; r++) {
+            long start = System.nanoTime();
+            jolkTest.invokeMember(testCase, n, iterations);
+            jolkTimes[r] = System.nanoTime() - start;
+            SINK++;                      // opaque use: blocks DCE
         }
 
-        // reset before measuring Jolk
-        System.gc();
-        Thread.sleep(500); 
+        long javaTime = median(javaTimes);
+        long jolkTime = median(jolkTimes);
+        System.out.printf("%-22s %12d %7d %13d %13d %7.2fx%n",
+                testCase, iterations, n, javaTime, jolkTime, (double) jolkTime / javaTime);
+    }
 
-        // 4. Measure Jolk
-        start = System.nanoTime();
-        jolkTest.invokeMember(testCase, n, iterations);
-        long jolkTime = System.nanoTime() - start;
-        double ratio = (double) jolkTime / javaTime;
-
-        System.out.printf("%-22s %12d %7d %13d %13d %7.2fx\n", testCase, iterations, n, javaTime, jolkTime, ratio);
+    private static long median(long[] values) {
+        long[] sorted = values.clone();
+        Arrays.sort(sorted);
+        int mid = sorted.length / 2;
+        return (sorted.length % 2 == 0)
+                ? sorted[mid - 1] / 2 + sorted[mid] / 2   // avoid overflow on large sums
+                : sorted[mid];
     }
     
 
@@ -78,12 +91,7 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
         @SuppressWarnings("unused")
         long runBase(long n, long times) {
             String s = "Iterations: " + times;
-            long res = 0;
-            if ((n * times / 2) == 0) { 
-                res = 0;
-            } else {
-                res = 1;
-            }
+            long res =  ((n * times / 2) == 0) ? 0 : 1;
             return res + factorial(n) + fibonacci(n) + s.length();
         } 
         @SuppressWarnings("unused")

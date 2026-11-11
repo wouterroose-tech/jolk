@@ -36,18 +36,18 @@ public class BasePerformanceTest extends BasicPerformanceTest {
         
         Value jolkTest = getJolkTest();
 
-        System.out.println("run  iterations   runBase      runString    runNumerical runFibonacci");
-        System.out.println("----|------------|------------|------------|------------|------------");
+        System.out.println("run  iterations   base         String       Numerical    Fibonacci_i    Fibonacci_r");
+        System.out.println("----|------------|------------|------------|------------|------------|------------");
 
         long it = 1; // Increased to 10M to ensure the sampler can catch the tight loops
-        for (int i = 1; i <= 64; i++) {
+        for (int i = 1; i <= 32; i++) {
             long tRun = measureJolk(jolkTest, "runBase", 7, it);
             long tString = measureJolk(jolkTest, "runString", 1024, it);
             long tNumerical = measureJolk(jolkTest, "runNumerical", 1024, it);
-            // Fibonacci is recursive and naturally slower; 1M is enough for it
-            long tFib = measureJolk(jolkTest, "runFibonacci", 7, it / 10);
+            long tFib_i = measureJolk(jolkTest, "runFibonacciIterative", 7, it / 10);
+            long tFib_r = measureJolk(jolkTest, "runFibonacci", 7, it / 10);
 
-            System.out.printf("%4d|%12d|%12d|%12d|%12d|%12d\n", i, it, tRun / it, tString / it, tNumerical / it, (tFib * 10) / it);
+            System.out.printf("%4d|%12d|%12d|%12d|%12d|%12d|%12d\n", i, it, tRun / it, tString / it, tNumerical / it, (tFib_i * 10) / it, (tFib_r * 10) / it);
             it = Math.min(128 * 1024 , it * 2); 
             //System.gc(); Thread.sleep(100); 
         }

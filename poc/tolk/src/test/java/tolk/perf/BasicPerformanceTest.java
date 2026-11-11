@@ -53,15 +53,15 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                 }
                 Long runString(Long n, Long times) {
                     Long totalLength = 0;
-                    times #times [
+                    times #times {
                         String s = "Iterations: " + times;
                         totalLength = totalLength + s #length
-                    ];
+                    };
                     ^ totalLength
                 }
                 Long runNumerical(Long n, Long times) {
                     Long sum = 0;
-                    times #times [ i ->  sum = sum + ((i * times % 2) == 0 ? 0 : 1) ];
+                    times #times { i ->  sum = sum + ((i * times % 2) == 0 ? 0 : 1) };
                     ^ sum
                 }
                 Long factorial(Long n) {
@@ -69,16 +69,16 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                 }
                 Long runFactorial(Long n, Long times) {
                     Long sum = 0;
-                    times #times [ sum = sum + self #factorial(n) ];
+                    times #times { sum = sum + self #factorial(n) };
                     ^ sum
                 }
                 Long runFactorialIterative(Long n, Long times) {
                     Long sum = 0;
-                    times #times [
+                    times #times {
                         Long result = 1;
-                        n #times [ i -> result = result * (i + 2) ];
+                        n #times { i -> result = result * (i + 2) };
                         sum = sum + result;
-                    ];
+                    };
                     ^ sum
                 }
                 Long fibonacci(Long n) {
@@ -86,20 +86,20 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                 }
                 Long runFibonacci(Long n, Long times) {
                     Long sum = 0;
-                    times #times [ sum = sum + self #fibonacci(n) ];
+                    times #times { sum = sum + self #fibonacci(n) };
                     ^ sum
                 }
                 Long runFibonacciIterative(Long n, Long times) {
                     Long sum = 0;
-                    times #times [
+                    times #times {
                         Long a = 0; Long b = 1;
-                        n #times [ i ->
+                        n #times { i ->
                             Long temp = a;
                             a = b;
                             b = temp + b
-                        ];
+                        };
                         sum = sum + a;
-                    ];
+                    };
                     ^ sum
                 }
             }            

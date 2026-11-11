@@ -1034,24 +1034,15 @@ public class JolkVisitor extends jolkBaseVisitor<JolkNode> {
             String methodName;
 
             if (ctx.reserved() != null) {
-                // Case: self ## doRun, Self ## doRun
+                // Case: self ##doRun, Self ##doRun
                 JolkNode reserved = visit(ctx.reserved());
                 receiverNode = (reserved instanceof JolkSuperNode) ? visitReservedSelf() : reserved;
                 methodName = ctx.identifier(0).getText().intern();
             } else {
-                // Case: myObj ## doRun or String ## valueOf
+                // Case: myObj ##doRun or MyObj ##doRun
                 String firstId = ctx.identifier(0).getText().intern();
-
-                // By default resolve the identifier (could be a Type or instance).
+                // Resolves the identifier (could be a Type or instance).
                 receiverNode = createIdentifierNode(firstId, ctx.getStart().getLine());
-
-                // If this is a Type-level reference inside an instance method,
-                // bind it to the lexical `self` so the resulting method-reference
-                // closure behaves like an instance-bound reference when used
-                // within method bodies (fixes Stream.reduce accumulator receiver mismatch).
-                if (!scopes.isEmpty() && receiverNode instanceof tolk.nodes.JolkReadTypeNode) {
-                    receiverNode = visitReservedSelf();
-                }
                 methodName = ctx.identifier(ctx.identifier().size() - 1).getText().intern();
             }
 

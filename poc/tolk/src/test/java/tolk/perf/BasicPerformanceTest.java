@@ -65,28 +65,28 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                     ^ sum
                 }
                 Long factorial(Long n) {
-                    ^ (n <= 1) ? 1 : n * self #factorial(n - 1)
+                    ^ (n <= 1) ? 1 : n * #factorial(n - 1)
                 }
                 Long runFactorial(Long n, Long times) {
                     Long sum = 0;
-                    times #times { sum = sum + self #factorial(n) };
+                    times #times { sum = sum + #factorial(n) };
                     ^ sum
                 }
                 Long runFactorialIterative(Long n, Long times) {
                     Long sum = 0;
                     times #times {
                         Long result = 1;
-                        n #times { i -> result = result * (i + 2) };
+                        n #times { i -> result = result * (i * 2) };
                         sum = sum + result;
                     };
                     ^ sum
                 }
                 Long fibonacci(Long n) {
-                    ^ (n <= 1) ? n : self #fibonacci(n - 1) + self #fibonacci(n - 2)
+                    ^ (n <= 1) ? n : #fibonacci(n - 1) + #fibonacci(n - 2)
                 }
                 Long runFibonacci(Long n, Long times) {
                     Long sum = 0;
-                    times #times { sum = sum + self #fibonacci(n) };
+                    times #times { sum = sum + #fibonacci(n) };
                     ^ sum
                 }
                 Long runFibonacciIterative(Long n, Long times) {

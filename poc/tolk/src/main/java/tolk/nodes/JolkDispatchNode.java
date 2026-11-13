@@ -848,17 +848,15 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(guards = {"isTimes(selector)", "getClosureTarget(getArg0(arguments)) == cachedTarget"}, limit = "3")
     protected Object doTimesDirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
                                   @Cached("getClosureTarget(getArg0(arguments))") CallTarget cachedTarget,
+                                  @Cached("asClosure(getArg0(arguments))") JolkClosure cachedClosure,
                                   @Cached("create(cachedTarget)") DirectCallNode callNode) {
-        JolkClosure closure = asClosure(arguments[0]);
+        //JolkClosure closure = asClosure(arguments[0]);
         long limit = receiver.longValue();
-        Object env = closure.getEnvironment();
-        // INDUSTRIAL OPTIMIZATION: Use call overloads to avoid array traffic entirely in the fast path.
-        for (long i = 0; i < limit; i++) {
-            callNode.call(env, i);
-        }
-        return limit;
+        Object env = cachedClosure.getEnvironment();
+        // OPTIMIZATION: Use call overloads to avoid array traffic entirely in the fast path.
+        for (long i = 0; i < limit; i++) callNode.call(env, i);
+        return receiver;
     }
-
 
     @Specialization(guards = "isTimes(selector)", replaces = "doTimesDirect")
     protected Object doTimesIndirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
@@ -874,7 +872,7 @@ public abstract class JolkDispatchNode extends Node {
                 args[1] = i;
                 callNode.call(target, args);
             }
-            return limit;
+            return receiver;
         }
         throw new RuntimeException("Invalid arguments for #times: expected a single closure.");
     }

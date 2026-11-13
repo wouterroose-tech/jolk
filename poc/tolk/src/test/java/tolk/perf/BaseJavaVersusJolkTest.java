@@ -94,8 +94,8 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
             jolkTimes[r] = System.nanoTime() - start;
         }
 
-        long javaTime = median(javaTimes);
-        long jolkTime = median(jolkTimes);
+        long javaTime = trimmedMedian(javaTimes);
+        long jolkTime = trimmedMedian(jolkTimes);
         System.out.printf("%-22s %12d %7d %13d %13d %7.2fx%n",
                 testCase, iterations, n, javaTime, jolkTime, (double) jolkTime / javaTime);
     }
@@ -107,6 +107,25 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
         return (sorted.length % 2 == 0)
                 ? sorted[mid - 1] / 2 + sorted[mid] / 2   // avoid overflow on large sums
                 : sorted[mid];
+    }
+
+    // remove min() & max() and return median
+    public static long trimmedMedian(long[] times) {
+        if (times.length < 3) {
+            throw new IllegalArgumentException("Array length must be at least 3 to trim extremes.");
+        }
+        long[] sorted = times.clone();
+        java.util.Arrays.sort(sorted);
+        
+        int start = 1;
+        int end = sorted.length - 1;
+        int length = end - start;
+        
+        if (length % 2 == 1) {
+            return sorted[start + length / 2];
+        } else {
+            return (sorted[start + length / 2 - 1] + sorted[start + length / 2]) / 2;
+        }
     }
     
 

@@ -17,6 +17,7 @@ import com.oracle.truffle.api.library.ExportMessage;
 
 import tolk.nodes.JolkNode;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 
 /// # JolkClosure (The Reified Identity)
@@ -36,7 +37,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 /// 
 @ExportLibrary(InteropLibrary.class)
 public class JolkClosure implements TruffleObject {
+    @CompilationFinal
     private final CallTarget callTarget;
+    @CompilationFinal
     private MaterializedFrame environment;
 
     private String methodReferenceSelector;

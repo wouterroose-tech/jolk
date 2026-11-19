@@ -23,17 +23,17 @@ public class DomainTest extends JolcTestBase {
                 String firstName;
                 String lastName;
                 String name() {
-                    ^ self #firstName + " "+ self #lastName
+                    ^ #firstName + " "+ #lastName
                 }
                 String toString() {
-                    ^ "Person[ssn=" + self #ssn + ", firstName=" + self #firstName + ", lastName=" + self #lastName + "]"
+                    ^ "Person[ssn=" + #ssn + ", firstName=" + #firstName + ", lastName=" + #lastName + "]"
                 }
                 Boolean ~~(Object other) {
                     (self == other) ? { ^true };
                     other #instanceOf(Person) #ifPresent { p -> 
-                        ^ (self #ssn == p #ssn)
-                            && (self #firstName ~~ p #firstName)
-                            && (self #lastName ~~ p #lastName)
+                        ^ (#ssn == p #ssn)
+                            && (#firstName ~~ p #firstName)
+                            && (#lastName ~~ p #lastName)
                         };
                     ^ false
                 }
@@ -48,14 +48,14 @@ public class DomainTest extends JolcTestBase {
                 String description;
                 Long zipCode;
                 String toString() {
-                    ^ "ContactForm[person=" + self #person + ", description=" + self #description + ", zipCode=" + self #zipCode + "]"
+                    ^ "ContactForm[person=" + #person + ", description=" + #description + ", zipCode=" + #zipCode + "]"
                 }
                 Boolean ~~(Object other) {
                     (self == other) ? { ^true };
                     other #instanceOf(ContactForm) #ifPresent { f -> 
-                        ^ (self #person ~~ f #person)
-                            && (self #description ~~ f #description)
-                            && (self #zipCode ~~ f #zipCode)
+                        ^ (#person ~~ f #person)
+                            && (#description ~~ f #description)
+                            && (#zipCode ~~ f #zipCode)
                         };
                     ^ false
                 }

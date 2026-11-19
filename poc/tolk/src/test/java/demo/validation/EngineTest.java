@@ -16,13 +16,13 @@ public class EngineTest extends JolcTestBase {
                 Validation[R] validation;
                 @Override
                 accept(T subject, E executionContext) {
-                    self #delegate(self #supplier #apply(subject), executionContext);
+                    #delegate(#supplier #apply(subject), executionContext);
                 }
                 private delegate(List[R] children, E executionContext) {
                     children #isEmpty {^self};
                     { StructuredTaskScope #open(Joiner #allSuccessfulOrThrow) }
                         #try { scope ->
-                            children #forEach {child -> scope #fork {self #validation #accept(child, executionContext) } };
+                            children #forEach {child -> scope #fork {#validation #accept(child, executionContext) } };
                             scope #join }
                         #catch { InterruptedException e ->
                             Thread #currentThread #interrupt;
@@ -47,7 +47,7 @@ public class EngineTest extends JolcTestBase {
                 Function[T, R] supplier;
                 final ValidationSuite[T] add(Validation[R] validation) {
                     // Construct the internal node and revert to master
-                    self #master #add(ChildValidation[T, R] #new(self #supplier, self #validation))
+                    #master #add(ChildValidation[T, R] #new(#supplier, #validation))
                 }
             }""";
         return eval(source);
@@ -60,7 +60,7 @@ public class EngineTest extends JolcTestBase {
                 Validation[R] validation;
                 @Override
                 accept(T subject, ExecutionContext executionContext) {
-                    self #supplier #apply(subject) #ifPresent { child -> self #validation #accept(child, executionContext) }
+                    #supplier #apply(subject) #ifPresent { child -> #validation #accept(child, executionContext) }
                 }
             }""";
         return eval(source);
@@ -72,9 +72,9 @@ public class EngineTest extends JolcTestBase {
 
                 @Override
                 package final doAccept(T subject, ExecutionContext executionContext) {
-                    (self #isValid(subject)) ? { ^ self };
-                    executionContext #add(subject, self #getIssue(subject, executionContext));
-                    self #interrupt #ifPresent { i -> i #throw }
+                    (#isValid(subject)) ? { ^ self };
+                    executionContext #add(subject, #getIssue(subject, executionContext));
+                    #interrupt #ifPresent { i -> i #throw }
                 }
 
                 /// Returns true when the constraint is violated for the given subject.
@@ -103,7 +103,7 @@ public class EngineTest extends JolcTestBase {
                     ^ true
                 }
                 package final accept(T subject, ExecutionContext executionContext) {
-                    self #satisfiesPreCondition(subject, executionContext) ? self #doAccept(subject, executionContext)
+                    #satisfiesPreCondition(subject, executionContext) ? #doAccept(subject, executionContext)
                 }
                 protected Interrupt interrupt() {
                     ^ Interrupt #NO_INTERRUPT
@@ -117,23 +117,23 @@ public class EngineTest extends JolcTestBase {
             abstract class ValidationSuite[T] extends Validation[T] {
                 stable Array[Node[T]] nodes = #[];
                 final add(Constraint[T] constraint) {
-                    self #nodes #add(constraint)
+                    #nodes #add(constraint)
                 }
                 package final [R] add(ChildValidation[T, R] suite) {
-                    self #nodes #add(suite)
+                    #nodes #add(suite)
                 }
                 final [R] ChildRequirement[T, R] subject(Function[T, R] supplier) {
-                    ^ ChildRequirementBridge[T, R] #new(self, self #supplier)
+                    ^ ChildRequirementBridge[T, R] #new(self, #supplier)
                 }
                 final validate(T subject, ExecutionContext executionContext) {
-                    { self #accept(subject, executionContext) }
+                    { #accept(subject, executionContext) }
                         #catch { Interrupt e -> /* ignore */ }
                 }
                 package final doAccept(T subject, ExecutionContext executionContext) {
-                    { self #nodes #forEach { node -> node #accept(subject, executionContext) } }
+                    { #nodes #forEach { node -> node #accept(subject, executionContext) } }
                         #catch { 
                             // the further validation of this ruleset is ignored on an interrupt
-                            Interrupt e ->  (e != self #interrupt) ? e #throw
+                            Interrupt e ->  (e != #interrupt) ? e #throw
                             // no action required, the containing ruleset will resume the validation
                         }
                 }
@@ -163,22 +163,22 @@ public class EngineTest extends JolcTestBase {
             class ExecutionContext {
                 stable ArrayList[Issue] issues = #[];
                 Self add(Object subject, Issue issue) {
-                    self #issues #add(issue)
+                    #issues #add(issue)
                 }
                 Boolean hasIssue() {
-                    ^ !self #issues #isEmpty
+                    ^ !#issues #isEmpty
                 }
                 Boolean hasError() {
-                    ^ self #hasMatch {i -> i #level #isError }
+                    ^ #hasMatch {i -> i #level #isError }
                 }
                 Boolean hasWarning() {
-                    ^ self #hasMatch {i -> i #match(WARNING) }
+                    ^ #hasMatch {i -> i #match(WARNING) }
                 }
                 Boolean hasIssue(Object subject) {
-                    ^ self #hasMatch {i -> i #concerns(subject)}
+                    ^ #hasMatch {i -> i #concerns(subject)}
                 }
                 private Boolean hasMatch(Predicate[Issue] p) {
-                    ^ self #issues #anyMatch(p)
+                    ^ #issues #anyMatch(p)
                 }
             }""";  
         return eval(source);

@@ -82,28 +82,28 @@ public class CircleTest  extends JolcTestBase {
         & java.lang.Math.PI;
         final class Circle {
             Double radius;
-            lazy Double diameter = self #radius * 2;
+            lazy Double diameter = #radius * 2;
             meta Circle new(Double r) {
                 (r < 0) ? { Exception #throw("Radius cannot be negative") };
                 ^ super #new #radius(r)
             }
             Double area() {
-                ^ PI * self #radius ** 2
+                ^ PI * #radius ** 2
             }
             Double circumference() {
-                ^ 2 * PI * self #radius
+                ^ 2 * PI * #radius
             }
             String toString() {
-                ^ "Circle[radius=" + self #radius #toString + "]"
+                ^ "Circle[radius=" + #radius #toString + "]"
             }
             Circle *(Number factor) {
-                ^ Circle #new(self #radius * factor)
+                ^ Circle #new(#radius * factor)
             }
             Boolean ~~(Object other) {
                 (self == other) ? { ^ true };
                 // Use pattern matching to safely compare properties
                 other #instanceOf(Circle)
-                    #ifPresent { c ->  ^ self #radius == c #radius };
+                    #ifPresent { c ->  ^ #radius == c #radius };
                 ^ false
             }
         }""";

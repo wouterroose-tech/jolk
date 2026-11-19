@@ -114,4 +114,17 @@ public class JolkMethodTest  extends JolcTestBase {
         assertEquals(89L, instance.invokeMember("fib", 10L).asLong());
     }
 
+    @Test
+    void testImplicitSelfReceiver() {
+        String source = """
+            class MyClass {
+                Long  x = 42;
+                Long eval(Long x) { ^ #x }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");
+        
+        assertEquals(42L, instance.invokeMember("eval").asLong());
+    }
+
 }

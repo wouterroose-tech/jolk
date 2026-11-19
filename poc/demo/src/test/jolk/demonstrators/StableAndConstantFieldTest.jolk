@@ -26,7 +26,7 @@ final class StableAndConstantFieldTest extends TestCase {
 
     @Test
     testStableField() {
-        #assertEquals("stable", Self #new("stable") #stableField)
+        #assertEquals("stable", #new("stable") #stableField)
     }
 
 }

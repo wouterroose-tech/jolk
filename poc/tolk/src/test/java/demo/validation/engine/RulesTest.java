@@ -41,7 +41,7 @@ public class RulesTest extends JolcTestBase {
                     ^ form #zipCode #isPresent
                 }
                 #: Boolean isValid(ContactForm form) {
-                    ^ self #isMalinesArea(form #zipCode)
+                    ^ #isMalinesArea(form #zipCode)
                 }
                 #> Boolean isMalinesArea(Int zipCode) {
                     ^ GeoGraphicalService #GGS #exists(zipCode) && MECHELEN #contains(zipCode)
@@ -63,7 +63,7 @@ public class RulesTest extends JolcTestBase {
                     ^ person #ssn #isPresent
                 }
                 #: Boolean isValid(Person person) {
-                    ^ self #isValid(person #ssn)
+                    ^ #isValid(person #ssn)
                 }
                 #> Boolean isValid(Long ssn) {
                     ^ (ssn / 100 / 97) != (ssn % 97)

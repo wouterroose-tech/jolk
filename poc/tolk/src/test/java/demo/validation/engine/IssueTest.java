@@ -15,8 +15,8 @@ public class IssueTest extends JolcTestBase {
                 Object subject;
                 String message;
                 Level level;
-                Boolean concerns(Object subject) { ^ self #subject == subject }
-                Boolean match(Level level) { ^ self #level == level }
+                Boolean concerns(Object subject) { ^ #subject == subject }
+                Boolean match(Level level) { ^ #level == level }
             }""";
         return eval(source);
     }

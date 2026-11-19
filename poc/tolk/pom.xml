@@ -8,6 +8,7 @@
         <groupId>jolk</groupId>
         <artifactId>poc</artifactId>
         <version>0.1.0-SNAPSHOT</version>
+        
     </parent>
 
     <artifactId>tolk-engine</artifactId>
@@ -17,7 +18,7 @@
          | Align with the GraalVM and Java versions you are targeting.
          | Using Java 25 aligns with Jolk's future-proofing goals.
         -->
-        <graalvm.version>25.0.2</graalvm.version> <!-- Known stable version with all profiler artifacts available -->
+        <graalvm.version>25.0.5</graalvm.version> <!-- Known stable version with all profiler artifacts available -->
         <maven.compiler.release>25</maven.compiler.release>
     </properties>
 

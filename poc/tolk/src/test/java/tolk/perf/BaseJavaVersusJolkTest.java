@@ -17,7 +17,7 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
     protected void test() throws Throwable {
     
         // High iteration count ensures we spend more time in compiled code than in the JIT thread.
-        long iterations = 10000;
+        long iterations = 7000;
         
         System.out.println("Benchmark               iterations   param   java          jolk          factor");
         System.out.println("----------------------|------------|-------|-------------|-------------|--------");
@@ -91,6 +91,7 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
             Thread.sleep(500);
             start = System.nanoTime();
             jolkTest.invokeMember(testCase, n, iterations);
+            //System.out.println("round: " + r);
             jolkTimes[r] = System.nanoTime() - start;
         }
 

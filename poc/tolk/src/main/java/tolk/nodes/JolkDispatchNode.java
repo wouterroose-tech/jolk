@@ -433,7 +433,7 @@ public abstract class JolkDispatchNode extends Node {
         "receiver.getShape() == cachedShape",
         "selector == cachedSelector",
         "isReifiedMethod(member)"
-    }, limit = "3")
+    }, limit = "7")
     protected Object doUserDirect(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
                                    @Cached("receiver.getShape()") Shape cachedShape,
                                    @Cached("selector") String cachedSelector,
@@ -443,15 +443,15 @@ public abstract class JolkDispatchNode extends Node {
         int arity = arguments.length;
         if (arity == 1) {
             // Pattern: factorial(n) -> [Self, n]
-            return JolkNode.lift(JolkNode.unwrap(callNode.call(receiver, arguments[0])));
+            return callNode.call(receiver, arguments[0]);
         } else if (arity == 0) {
-            return JolkNode.lift(JolkNode.unwrap(callNode.call(receiver)));
+            return callNode.call(receiver);
         } else {
             // Generic case: Jolk Calling Convention [Self, ...Args]
             Object[] callArgs = new Object[arity + 1];
             callArgs[0] = receiver;
             System.arraycopy(arguments, 0, callArgs, 1, arity);
-            return JolkNode.lift(JolkNode.unwrap(callNode.call(callArgs)));
+            return callNode.call(callArgs);
         }
     }
 
@@ -463,7 +463,7 @@ public abstract class JolkDispatchNode extends Node {
     @Specialization(guards = {
         "receiver.getShape() == cachedShape",
         "selector == cachedSelector"
-    }, limit = "3", replaces = "doUserDirect")
+    }, limit = "7")
     protected Object doUserDispatch(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
                                    @Cached("receiver.getShape()") Shape cachedShape,
                                    @Cached("selector") String cachedSelector,
@@ -846,15 +846,13 @@ public abstract class JolkDispatchNode extends Node {
     /// passed to the call node, allowing the closure to optionally bind it to a 
     /// parameter (e.g., `[ i -> ... ]`) or ignore it (e.g., `[ ... ]`).
     @Specialization(guards = {"isTimes(selector)", "getClosureTarget(getArg0(arguments)) == cachedTarget"}, limit = "3")
-    protected Object doTimesDirect(VirtualFrame frame, Number receiver, String selector, Object[] arguments,
+    protected Object doTimesDirect(VirtualFrame frame, long receiver, String selector, Object[] arguments,
                                   @Cached("getClosureTarget(getArg0(arguments))") CallTarget cachedTarget,
                                   @Cached("asClosure(getArg0(arguments))") JolkClosure cachedClosure,
-                                  @Cached("create(cachedTarget)") DirectCallNode callNode) {
-        //JolkClosure closure = asClosure(arguments[0]);
-        long limit = receiver.longValue();
+                                  @Cached("create(cachedTarget)") DirectCallNode callNode)  {
         Object env = cachedClosure.getEnvironment();
         // OPTIMIZATION: Use call overloads to avoid array traffic entirely in the fast path.
-        for (long i = 0; i < limit; i++) callNode.call(env, i);
+        for (long i = 0; i < receiver; i++) callNode.call(env, i);
         return receiver;
     }
 

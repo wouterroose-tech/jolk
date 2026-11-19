@@ -14,6 +14,7 @@ import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 import tolk.nodes.JolkDispatchNode;
 import tolk.nodes.JolkNode;
@@ -23,7 +24,6 @@ import java.util.HashSet;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import java.util.Collections;
 import java.util.Set;
 
@@ -152,7 +152,7 @@ public class JolkMetaClass extends DynamicObject {
         this.finality = finality;
         this.visibility = visibility;
         this.typeCategory = typeCategory;
-        this.instanceShape = Shape.newBuilder().build(); // Bootstrap anchor to prevent NPE in JolkObject
+        this.instanceShape = Shape.newBuilder().dynamicType(this).build(); // Bootstrap anchor to prevent NPE in JolkObject
         this.instanceMembers = instanceMembers != null ? instanceMembers : new HashMap<>();
         this.instanceFields = instanceFields; // Reference retention for definition protocol
         this.fieldIndices = new HashMap<>();
@@ -198,7 +198,7 @@ public class JolkMetaClass extends DynamicObject {
         if (superclass != null && superclass.instanceShape != null) {
             this.instanceShape = superclass.instanceShape;
         } else if (this.instanceShape == null) {
-            this.instanceShape = Shape.newBuilder().build();
+            this.instanceShape = Shape.newBuilder().dynamicType(this).build();
         }
         
         if (superclass != null) {
@@ -285,7 +285,7 @@ public class JolkMetaClass extends DynamicObject {
     public void registerInstanceMethod(String name, Object method) {
         this.instanceMembers.put(name, method);
         if (!hydrated) return;
-        // Ensure the consolidated registry and interop caches stay in sync
+        // Ensure the consolidated registry and interop caches stay in sync²
         this.instanceRegistry.put(name, method);
         refreshInstanceMemberCache();
     }
@@ -685,6 +685,39 @@ public class JolkMetaClass extends DynamicObject {
                         @Cached(value = "doLookupMeta(this, member)", allowUncached = true, neverDefault = false) Object cachedValue, // This is for methods/enum constants
                         @Exclusive @CachedLibrary("this") DynamicObjectLibrary objLib) throws UnknownIdentifierException, ArityException, UnsupportedTypeException, UnsupportedMessageException {
         ensureHydrated();
+
+        /*
+        // Handle the 'new' selector specifically to prioritize user-defined methods and intrinsics.
+        if ("new".equals(member)) {
+            // Attempt to find a user-defined 'new' method first.
+            Object userDefinedNew = lookupMetaMethod("new");
+            if (userDefinedNew != null) {
+                // If a user-defined method is found, invoke it.
+                // Prepare arguments, including the receiver ('this') as the first argument.
+                Object[] metaArguments = new Object[arguments.length + 1];
+                metaArguments[0] = this;
+                if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
+                try {
+                    // Use the interop library to execute the found method.
+                    return JolkNode.interopLift(interop.execute(userDefinedNew, metaArguments));
+                } catch (JolkReturnException e) {
+                    throw e; // Preserve non-local returns.
+                } catch (ArityException | UnsupportedTypeException | UnsupportedMessageException e) {
+                    // If the user-defined method has the wrong arity or is unsupported, fallback to intrinsic.
+                    // This might need more nuanced error handling.
+                }
+            } else {
+                // If no user-defined 'new' method is found via lookupMetaMethod, proceed to intrinsic.
+                // Ensure that for ENUM types, 'new' is not allowed.
+                if (typeCategory == JolkTypeCategory.ENUM) {
+                    throw UnsupportedMessageException.create();
+                }
+                // Call the intrinsic 'new' logic.
+                return invokeIntrinsicNew(arguments, interop);
+            }
+        }
+        */
+        // Original logic for other members, including the cached member check.
         
         if (member.equals(cachedMember) && cachedValue != null) {
             Object memberObj = cachedValue;
@@ -822,6 +855,37 @@ public class JolkMetaClass extends DynamicObject {
 
         throw UnknownIdentifierException.create(member);
     }
+
+    /*
+    private Object invokeIntrinsicNew(Object[] arguments, InteropLibrary interop)
+            throws UnsupportedMessageException, ArityException {
+            case "new":
+                // Attempt to find a user-defined 'new' method from metaRegistry.
+                Object foundNewMethod = metaRegistry != null ? metaRegistry.get("new") : null;
+                if (foundNewMethod != null && InteropLibrary.getUncached().isExecutable(foundNewMethod)) {
+                    // If a user-defined method is found, invoke it.
+                    Object[] metaArguments = new Object[arguments.length + 1];
+                    metaArguments[0] = this;
+                    if (arguments.length > 0) System.arraycopy(arguments, 0, metaArguments, 1, arguments.length);
+                    try {
+                        return JolkNode.interopLift(interop.execute(foundNewMethod, metaArguments));
+                    } catch (JolkReturnException e) {
+                        throw e;
+                    } catch (ArityException | UnsupportedTypeException | UnsupportedMessageException e) {
+                        // Fallback if user-defined method has wrong arity or is unsupported
+                    }
+                }
+
+                // If no user-defined 'new' method is found or applicable, proceed to intrinsic.
+                // Ensure that for ENUM types, 'new' is not allowed.
+                if (typeCategory == JolkTypeCategory.ENUM) {
+                    throw UnsupportedMessageException.create();
+                }
+                // Call the intrinsic 'new' logic.
+                return invokeIntrinsicNew(arguments, interop);
+
+    }
+    */
 
     @ExportMessage.Ignore
     public static Object invokeSuperMember(JolkMetaClass receiver, JolkMetaClass startClass, String member, Object[] arguments,

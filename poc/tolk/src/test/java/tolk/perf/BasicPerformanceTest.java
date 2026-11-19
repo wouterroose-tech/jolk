@@ -93,7 +93,7 @@ public abstract class BasicPerformanceTest extends JolcTestBase {
                     Long sum = 0;
                     times #times {
                         Long a = 0; Long b = 1;
-                        n #times { i ->
+                        n #times {
                             Long temp = a;
                             a = b;
                             b = temp + b

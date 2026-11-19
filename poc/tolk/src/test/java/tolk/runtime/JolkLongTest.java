@@ -190,6 +190,21 @@ public class JolkLongTest extends JolcTestBase {
     }
 
     @Test
+    void testTimes_() {
+        String source = """
+            class TimesTest {
+                Long r = 0;
+                Long test() {
+                    42 #times { #r(#r + 1) };
+                    ^ #r
+                }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");  
+        assertEquals(42L, instance.invokeMember("test").asLong());
+    }
+
+    @Test
     void testToString() throws Exception {
         Object op = getOperation("toString");
         assertEquals("42", execute(op, 42L));

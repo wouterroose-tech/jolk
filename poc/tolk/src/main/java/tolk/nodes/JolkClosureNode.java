@@ -1,6 +1,7 @@
 package tolk.nodes;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.GenerateCached;
 import com.oracle.truffle.api.dsl.GenerateInline;
@@ -18,6 +19,7 @@ import tolk.runtime.JolkClosure;
 @GenerateCached(true)
 public abstract class JolkClosureNode extends JolkNode {
 
+    @CompilationFinal
     private final CallTarget callTarget;
 
     public JolkClosureNode(CallTarget callTarget) {

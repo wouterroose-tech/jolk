@@ -27,12 +27,12 @@
     /// are returned in the parts of the result according to the rules for Double arithmetic.
     +(Complex other) {
         (#isNaN || other #isNaN) ? { ^ Complex #NaN };
-        ^ Self #new(#real + other #real, #imaginary + other #imaginary)
+        ^ #new(#real + other #real, #imaginary + other #imaginary)
     }
 
     -(Complex other) {
         (#isNaN || other #isNaN) ? { ^ Complex #NaN };
-        ^ Self #new(#real - other #real, #imaginary - other #imaginary)
+        ^ #new(#real - other #real, #imaginary - other #imaginary)
     }
 
     Boolean ~~(Object other) {

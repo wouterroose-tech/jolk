@@ -1153,7 +1153,7 @@ Demonstrated language concepts: generics, Self type alias, message chaining for 
 		Validation[R] validation;
 
 		meta ChildValidation new(Function[T, R] supplier, Validation[R] validation) {
-			^ self #new
+			^ #new
 				#supplier(supplier)
 				#validation(validation)
 		}
@@ -1166,7 +1166,7 @@ Demonstrated language concepts: generics, Self type alias, message chaining for 
 	package abstract class Validation[T] extends Node[T] {
 
 		package final Self accept(T subject, ExecutionContext context) {  
-			(self #satisfiesPreCondition(subject, context)) ? { self #doAccept(subject, context) }  
+			(#satisfiesPreCondition(subject, context)) ? { #doAccept(subject, context) }  
 		}
 
 		protected Boolean satisfiesPreCondition(T subject, ExecutionContext context) { ^ true }
@@ -1180,9 +1180,9 @@ Demonstrated language concepts: generics, Self type alias, message chaining for 
 	abstract class Constraint[T] extends Validation[T] {
 
 		package final Self doAccept(T subject, ExecutionContext context) {  
-			self #isValid(subject) ? { ^ self };  
-			context #add(subject, self #getIssue(subject, context));  
-			self #interrupt #ifPresent { e -> e #throw }  
+			#isValid(subject) ? { ^ self };  
+			context #add(subject, #getIssue(subject, context));  
+			#interrupt #ifPresent { e -> e #throw }  
 		}
 
 		package abstract Boolean isValid(T subject);
@@ -1204,7 +1204,7 @@ Demonstrated language concepts: generics, Self type alias, message chaining for 
     	}
 
 		final Self validate(T subject, ExecutionContext executionContext) {
-			{ self #accept(subject, executionContext) }
+			{ #accept(subject, executionContext) }
 				#catch { Interrupt e -> /* ignore */ }
 		}
 
@@ -1212,7 +1212,7 @@ Demonstrated language concepts: generics, Self type alias, message chaining for 
 			{ nodes #forEach {node -> node #accept(subject, executionContext)} }
 				#catch {
 					// the further validation of this ruleset is ignored on an interrupt
-					Interrupt e ->  (e != self #interrupt) ? e #throw
+					Interrupt e ->  (e != #interrupt) ? e #throw
 					// no action required, the containing ruleset will resume the validation
 				}
 		}
@@ -1270,7 +1270,7 @@ Demonstrated language concepts: creation methods, message chaining, closure, DI,
 
 		// singleton in DI configuration  
 		meta lazy ContactFormValidation new() {  
-			^ super #new  
+			^ #new  
 				#add(ZipConstraint #new)
 				#add(InssConstraint #new, ContactForm ##person)
 		}
@@ -1293,7 +1293,7 @@ Demonstrated language concepts: creation methods, message chaining, closure, DI,
 		}
 
 		#: Boolean isValid(Person person) {  
-			^ self #isValid(person #ssn)  
+			^ #isValid(person #ssn)  
 		}
 
 		#> Boolean isValid(Long ssn) {  
@@ -1327,8 +1327,8 @@ In the Jolk architecture, the behavior of a closure is dictated by the selector 
 
 	@Inline
 	T #withLock(Closure[T] logic) {
-		self #lock;
-		{ ^ logic #call } #finally { self #unlock }
+		#lock;
+		{ ^ logic #call } #finally { #unlock }
 	}
 
 	// Usage
@@ -1433,8 +1433,8 @@ Multi-environment and test configurations are managed through Specialization and
 		}
 
 		// The Explicit Shutdown Message  
-		Self shutdown() {  
-			self #database #close  
+		shutdown() {  
+			#database #close  
 		}  
 	}
 

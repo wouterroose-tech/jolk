@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.graalvm.polyglot.Value;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import tolk.JolcTestBase;
@@ -134,6 +135,7 @@ public class JolkStringTest extends JolcTestBase {
                 Long length(String str) { ^ str #length() }
                 Boolean contains(String a, String b) { ^ a #contains(b) }
                 String toUpperCase(String str) { ^ str #toUpperCase() }
+                Int compareTo(String first, String second) { ^ first #compareTo(second) }
             }
             """;
         Value instance = eval(source).invokeMember("new");
@@ -142,5 +144,30 @@ public class JolkStringTest extends JolcTestBase {
         assertTrue(instance.invokeMember("contains", "hello", "ell").asBoolean());
         assertFalse(instance.invokeMember("contains", "hello", "world").asBoolean());
         assertEquals("HELLO", instance.invokeMember("toUpperCase", "hello").asString());
+        assertEquals(0, instance.invokeMember("compareTo", "a", "a").asLong());
+        assertEquals(-1, instance.invokeMember("compareTo", "a", "b").asLong());
+        assertEquals(1, instance.invokeMember("compareTo", "b", "a").asLong());
+    }
+    
+    @Test
+    @Disabled("TODO: fix MetaClass setup for String")
+    void testJolkProtocol() {
+        String source = """
+            class ConcatTest {
+                String toString(String str) { ^ str #toString }
+                String isPresent(String str) { ^ str #isPresent }
+                String isEmpty(String str) { ^ str #isEmpty }
+                String getClass(String str) { ^ str #class #name }
+                Long hash(String str) { ^ str #hash }
+            }
+            """;
+        Value instance = eval(source).invokeMember("new");
+        assertEquals("hello", instance.invokeMember("toString", "hello").asString());
+        assertTrue(instance.invokeMember("isPresent", "hello").asBoolean());
+        assertFalse(instance.invokeMember("isPresent", JolkNothing.INSTANCE).asBoolean());
+        assertTrue(instance.invokeMember("isEmpty", JolkNothing.INSTANCE).asBoolean());
+        assertFalse(instance.invokeMember("isEmpty", "hello").asBoolean());
+        assertEquals("hello", instance.invokeMember("getClass", "hello"));
+        assertEquals(99162322, instance.invokeMember("hash", "hello").asLong());
     }
 }

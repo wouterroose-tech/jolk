@@ -1,13 +1,65 @@
 # Jolk
-Jolk: A Semantic Messaging Overlay and Meta-layer for the JVM
+
+## Unified Messaging, and Metaobject Protocol for the Java Type System
+
+Jolk is a statically-typed, message-passing programming language for the JVM that synthesizes C-family structural syntax with Smalltalk-inspired unified messaging, Strongtalk-style protocol lattices, and a Metaobject Protocol (MOP). It is executed by the **Tolk Engine**, a self-optimizing AST interpreter built on the **GraalVM Truffle** framework, enabling shim-less Java interoperability and partial evaluation into native machine code.
+
+* **Language Specification & Manuscript:** Read [The Jolk Book](doc/jolk-book.md) for the grammar, type system, and engine architecture.
+* **Status:** Proof of Concept (`poc/`) — includes the ANTLR4 grammar, Truffle runtime implementation, JolkUnit (JUnit Platform test engine), benchmarks and demonstrator applications.
+
+
+## At a Glance
+
+```jolk
+class Person implements Comparable<Person> {
+    String name;
+
+    meta new(String name) {
+        ^ #new #name(name);
+    }
+
+    Boolean ~~(Object other) {
+        (self == other) ? { ^ true };
+        other #instanceOf(Person) #ifPresent { p -> ^ #name ~~ p #name };
+        ^ false
+    }
+
+    String greet() {
+        ^ "Hello, " + #name;
+    }
+
+    Int compareTo(Person other) {
+     ^ #name #compareTo(other #name)
+    }
+
+}
+```
+
+
+## Repository Layout
+
+* `doc/` — Language specification and *The Jolk Book*.
+* `poc/grammar/` — The ANTLR4 grammar (`jolk.g4`) and parser definitions.
+* `poc/tolk/` — The **Tolk Engine**, Jolk's GraalVM Truffle AST interpreter and runtime.
+* `poc/test-engine/` — **JolkUnit**, a JUnit Platform-compatible test engine for Jolk.
+* `poc/bench/` — Performance benchmarks evaluating semantic flattening and JIT specialization.
+* `poc/demo/` — Demonstrator applications and frameworks (including the Form Validation Framework).
+
+
+## Building and Running
+
+*Requires GraalVM for JDK 25+.*
+
+--- 
 
 
 ## Community and Contributions
 
-To maintain **Industrial Sovereignty** and the structural density of the Jolk ecosystem, all contributions must adhere to our established protocols. 
+Contributions must adhere to our protocols. 
 
 * **Contributing**: Please review our [Contributing Guidelines](CONTRIBUTING.md) for details on our commit standards and the legal requirements for code submissions.
 * **Security**: For vulnerability disclosures, refer to our [Security Policy](SECURITY.md).
+
 
 ## Licensing
 
@@ -28,6 +80,7 @@ See the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for the full legal text an
 
 Copyright © 2026 by Wouter Roose
 
+
 ### **Intellectual Property and Licensing Standards**
 
 **Copyright © 2026 by Wouter Roose**
@@ -41,6 +94,7 @@ You are free to share, copy, redistribute, adapt, remix, transform, and build up
 * **ShareAlike:** If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original.
 
 ---
+
 
 ### **Software Licensing and Industrial Sovereignty**
 
@@ -56,13 +110,16 @@ You may obtain a copy of the License at [http://www.apache.org/licenses/LICENSE-
 
 ---
 
+
 ### **Trademarks and Affiliations**
 
-The Jolk programming language is a community effort to implement an experimental message oriented language specification designed for the JVM and to closely integrate with the Java ecosystem and is not endorsed by, affiliated with, or supported by Oracle. Java and the JVM are registered trademarks of Oracle and/or its affiliates. Other names may be trademarks of their respective owners. The use of these trademarks does not imply any affiliation with or endorsement by the trademark holders.
+The Jolk programming language is an experimental message oriented language specification designed for the JVM and to closely integrate with the Java ecosystem and is not endorsed by, affiliated with, or supported by Oracle. Java, GraalVM and the JVM are registered trademarks of Oracle and/or its affiliates. Other names may be trademarks of their respective owners. The use of these trademarks does not imply any affiliation with or endorsement by the trademark holders.
+
 
 ### **Disclaimer**
 
 The code examples and software architecture described in this book are provided for educational and design purposes. While every precaution has been taken in the preparation of this book, the author assumes no responsibility for errors or omissions, or for damages resulting from the use of the information contained herein. The software is provided "as is," and the author disclaims all warranties, express or implied.
+
 
 ### **Disclosure of AI Assistance**
 

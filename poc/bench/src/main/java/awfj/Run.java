@@ -27,17 +27,15 @@ import java.util.function.Supplier;
 public final class Run {
   private final String name;
   private final Supplier<Benchmark> benchmarkSuite;
-  private int warmupIterations;
   private int numIterations;
   private int innerIterations;
   private long total;
 
-  public Run(final String name, int warmupIterations, int numIterations, int innerIterations) {
+  public Run(final String name) {
     this.name = name;
     this.benchmarkSuite = getSuiteFromName(name);
-    this.warmupIterations = warmupIterations;
-    this.numIterations = numIterations;
-    this.innerIterations = innerIterations;
+    numIterations   = 1;
+    innerIterations = 1;
   }
 
   private static Supplier<Benchmark> getSuiteFromName(final String name) {
@@ -62,10 +60,6 @@ public final class Run {
   }
 
   public void runBenchmark() {
-    
-    System.out.println("Warming up " + name + " benchmark ...");
-    warmup(benchmarkSuite.get());
-
     // Checkstyle: stop
     System.out.println("Starting " + name + " benchmark ...");
     // Checkstyle: resume
@@ -78,7 +72,7 @@ public final class Run {
     // Checkstyle: resume
   }
 
-  private void measure(final Benchmark bench, final int iteration) {
+  private void measure(final Benchmark bench) {
     long startTime = System.nanoTime();
     if (!bench.innerBenchmarkLoop(innerIterations)) {
       throw new RuntimeException("Benchmark failed with incorrect result");
@@ -86,20 +80,14 @@ public final class Run {
     long endTime = System.nanoTime();
     long runTime = (endTime - startTime) / 1000;
 
-    printResult(runTime, iteration);
+    printResult(runTime);
 
     total += runTime;
   }
 
-  private void warmup(final Benchmark bench) {
-    for (int i = 1; i <= warmupIterations; i++) {
-      measure(bench, i);
-    }
-  }
-
   private void doRuns(final Benchmark bench) {
-    for (int i = 1; i <= numIterations; i++) {
-      measure(bench, i);
+    for (int i = 0; i < numIterations; i++) {
+      measure(bench);
     }
   }
 
@@ -110,9 +98,9 @@ public final class Run {
     // Checkstyle: resume
   }
 
-  private void printResult(final long runTime, final int iterations) {
+  private void printResult(final long runTime) {
     // Checkstyle: stop
-    System.out.println(name + ": iteration=" + iterations + " runtime: " + runTime + "us");
+    System.out.println(name + ": iterations=1 runtime: " + runTime + "us");
     // Checkstyle: resume
   }
 

@@ -1,20 +1,22 @@
-package tolk.perf;
+package runner;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
 import org.graalvm.polyglot.Value;
 
-public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
+import basic.BasicBenchmark;
+
+public class RunBasicBenchmark extends BaseRunner {
 
     private static final int ROUNDS = 7;
 
     public static void main(String[] args) {
-        new BaseJavaVersusJolkTest().run(args);
+        new RunBasicBenchmark().run(args);
     }
-    
 
-    protected void test() throws Throwable {
+    @Override 
+    protected void run(JolkRuntime jolk) throws Throwable {
     
         // High iteration count ensures we spend more time in compiled code than in the JIT thread.
         long iterations = 7000;
@@ -25,8 +27,11 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
         String[] tests = {"runBase", "runString", "runNumerical", "runFactorial", "runFactorialIterative", "runFibonacci", "runFibonacciIterative"};
         long[] params = {7, 1024, 1024, 20, 20, 7, 7};
 
+        BasicBenchmark javaTest = new BasicBenchmark();
+        Value jolkTest = jolk.createInstance("BasicBenchmark", "/basic/BasicBenchmark.jolk");
+
         for (int i = 0; i < tests.length; i++) {
-            test(tests[i], params[i], iterations);
+            run(tests[i], params[i], iterations, javaTest, jolkTest);
         }
     }
 
@@ -61,14 +66,13 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
      *                   (e.g. recursion depth or string length)
      * @param iterations the in-guest loop count passed through to both implementations;
      *                   both implementations must loop in-guest over this count
+     * @param javaTest 
+     * @param jolkTest 
      */
-    void test(String testCase, long n, long iterations) throws Throwable {
+    void run(String testCase, long n, long iterations, Object javaTest, Value jolkTest) throws Throwable {
 
-        JavaPerformanceTest javaTest = getJavaTest();
         Method javaMethod = javaTest.getClass().getDeclaredMethod(testCase, long.class, long.class);
         javaMethod.setAccessible(true);
-        Value jolkTest = getJolkTest();
-
         // Warmup (same shape as measurement, a few entries)
         for (int i = 0; i < 3; i++) {
             javaMethod.invoke(javaTest, n, iterations);
@@ -126,85 +130,6 @@ public class BaseJavaVersusJolkTest extends BasicPerformanceTest {
             return sorted[start + length / 2];
         } else {
             return (sorted[start + length / 2 - 1] + sorted[start + length / 2]) / 2;
-        }
-    }
-    
-
-    private JavaPerformanceTest getJavaTest() {
-        return new JavaPerformanceTest();
-    }
-
-    private class JavaPerformanceTest {
-        @SuppressWarnings("unused")
-        long runBase(long n, long times) {
-            String s = "Iterations: " + times;
-            long res =  ((n * times / 2) == 0) ? 0 : 1;
-            return res + factorial(n) + fibonacci(n) + s.length();
-        } 
-        @SuppressWarnings("unused")
-        long runString(long n, long times) {
-            long totalLength = 0;
-            for (long i = 0; i < times; i++) {
-                String s = "Iterations: " + times;
-                totalLength += s.length();
-            }
-            return totalLength;
-        }
-        @SuppressWarnings("unused")
-        long runNumerical(long n, long times) {
-            long sum = 0;
-            for (long i = 0; i < times; i++) {
-                sum += ((i * times % 2) == 0) ? 0 : 1;
-            }
-            return sum;
-        }
-        long factorial(long n) {
-            return (n <= 1) ? 1 : n * factorial(n - 1);
-        }
-        @SuppressWarnings("unused")
-        long runFactorial(long n, long times) {
-            long sum = 0;
-            for (long i = 0; i < times; i++) {
-                sum += factorial(n);
-            }
-            return sum;
-        }
-        @SuppressWarnings("unused")
-        long runFactorialIterative(long n, long times) {
-            long sum = 0;
-            for (long i = 0; i < times; i++) {
-                long result = 1;
-                for (long j = 2; j <= n; j++) {
-                    result *= j;
-                }
-                sum += result;
-            }
-            return sum;
-        }
-        @SuppressWarnings("unused")
-        long runFibonacci(long n, long times) {
-            long sum = 0;
-            for (long i = 0; i < times; i++) {
-                sum += fibonacci(n);
-            }
-            return sum;
-        }
-        long fibonacci(long n) {
-            return (n <= 1) ? n : fibonacci(n - 1) + fibonacci(n - 2);
-        }
-        @SuppressWarnings("unused")
-        long runFibonacciIterative(long n, long times) {
-            long sum = 0;
-            for (long i = 0; i < times; i++) {
-                long a = 0; long b = 1;
-                for (long j = 0; j < n; j++) {
-                    long temp = a;
-                    a = b;
-                    b = temp + b;
-                }
-                sum += a;
-            }
-            return sum;
         }
     }
 

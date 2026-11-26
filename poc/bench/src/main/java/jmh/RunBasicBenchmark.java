@@ -1,4 +1,4 @@
-package tolk.perf;
+package jmh;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
@@ -7,6 +7,9 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
+
+import basic.BasicBenchmark;
+import runner.JolkRuntime;
 
 import java.util.concurrent.TimeUnit;
 
@@ -28,22 +31,21 @@ import java.util.concurrent.TimeUnit;
 /// @Fork(value = 1) is for development, but for final performance reporting, 
 /// increase this to 3 or 5 to account for OS-level jitter and JVM start-up variance.
 @Fork(value = 1, jvmArgsAppend = {"-XX:+UnlockExperimentalVMOptions", "-XX:+EnableJVMCI"})
-public class JolkBasicBenchmark {
+public class RunBasicBenchmark {
 
     /// ## main
     /// 
     /// Entry point to execute the benchmark directly from an IDE or debugger.
     public static void main(String[] args) throws Exception {
         Options opt = new OptionsBuilder()
-                .include(JolkBasicBenchmark.class.getSimpleName())
+                .include(RunBasicBenchmark.class.getSimpleName())
                 .build();
-
         new Runner(opt).run();
     }
 
-    private Context context;
+    private JolkRuntime jolk;
     private Value jolkTest;
-    private final JavaBasicBenchmarkWorkload javaTest = new JavaBasicBenchmarkWorkload();
+    private BasicBenchmark javaTest;
 
     @Param({"7"})
     public long n;
@@ -53,17 +55,19 @@ public class JolkBasicBenchmark {
 
     @Setup(Level.Trial)
     public void setup() {
-        this.context = Context.newBuilder("jolk")
-                .allowAllAccess(true)
-                .allowHostAccess(HostAccess.ALL)
-                .allowHostClassLookup(className -> true)
-                .build();
-        this.jolkTest =  JolkBasicBenchmarkWorkload.create(context);
+        this.jolk = new JolkRuntime();
+        this.javaTest = new BasicBenchmark();
+        this.jolkTest =  newJolkBasicBenchmark();
+    }
+
+    private Value newJolkBasicBenchmark() {
+        Value testClass = jolk.loadClass("JolkBasicBenchmark", "/basic/BasicBenchmark.jolk");
+        return testClass.invokeMember("new");
     }
 
     @TearDown(Level.Trial)
     public void tearDown() {
-        this.context.close();
+        this.jolk.close();
     }
 
     /// ### javaBase

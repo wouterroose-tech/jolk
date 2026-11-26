@@ -78,6 +78,12 @@
                 </configuration>
             </plugin>
         </plugins>
+        
+        <resources>
+            <resource>
+                <directory>src/main/jolk</directory>
+            </resource>
+        </resources>
     </build>
 
 </project>

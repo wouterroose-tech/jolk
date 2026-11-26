@@ -1,18 +1,18 @@
-package tolk.perf;
+package basic;
 
 /**
  * # JavaBasicBenchmarkWorkload
  * 
  * Provides the baseline Java implementation for fundamental performance benchmarks.
  */
-public class JavaBasicBenchmarkWorkload {
+public class BasicBenchmark {
 
     /**
      * ### runBase
      * 
      * Executes a composite workload involving strings, basic arithmetic, and recursion.
      */
-    long runBase(long n, long times) {
+    public long runBase(long n, long times) {
         String s = "Iterations: " + times;
         long res = ((n * times / 2) == 0) ? 0 : 1;
         return res + factorial(n) + fibonacci(n) + s.length();
@@ -23,7 +23,7 @@ public class JavaBasicBenchmarkWorkload {
      * 
      * Focuses on string allocation and iteration overhead.
      */
-    long runString(long n, long times) {
+    public long runString(long n, long times) {
         long totalLength = 0;
         for (long i = 0; i < times; i++) {
             String s = "Iterations: " + times;
@@ -32,7 +32,7 @@ public class JavaBasicBenchmarkWorkload {
         return totalLength;
     }
 
-    long runNumerical(long n, long times) {
+    public long runNumerical(long n, long times) {
         long sum = 0;
         for (long i = 0; i < times; i++) {
             sum += ((i * times % 2) == 0) ? 0 : 1;
@@ -44,7 +44,7 @@ public class JavaBasicBenchmarkWorkload {
         return (n <= 1) ? 1 : n * factorial(n - 1);
     }
 
-    long runFactorial(long n, long times) {
+    public long runFactorial(long n, long times) {
         long sum = 0;
         for (long i = 0; i < times; i++) {
             sum += factorial(n);
@@ -56,7 +56,7 @@ public class JavaBasicBenchmarkWorkload {
         return (n <= 1) ? n : fibonacci(n - 1) + fibonacci(n - 2);
     }
 
-    long runFibonacci(long n, long times) {
+    public long runFibonacci(long n, long times) {
         long sum = 0;
         for (long i = 0; i < times; i++) {
             sum += fibonacci(n);
@@ -64,7 +64,7 @@ public class JavaBasicBenchmarkWorkload {
         return sum;
     }
 
-    long runFactorialIterative(long n, long times) {
+    public long runFactorialIterative(long n, long times) {
         long sum = 0;
         for (long i = 0; i < times; i++) {
             long result = 1;
@@ -76,7 +76,7 @@ public class JavaBasicBenchmarkWorkload {
         return sum;
     }
 
-    long runFibonacciIterative(long n, long times) {
+    public long runFibonacciIterative(long n, long times) {
         long sum = 0;
         for (long i = 0; i < times; i++) {
             long a = 0; long b = 1;

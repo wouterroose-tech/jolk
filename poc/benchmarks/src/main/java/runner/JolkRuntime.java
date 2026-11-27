@@ -74,13 +74,13 @@ public class JolkRuntime implements AutoCloseable {
         }
     }
 
-    public Value loadClass(String className, String path) {
+    public Value loadClass(String path) {
         String source = readResource(path);
         return context.eval(JolkLanguage.ID, source);
     }
 
-    public Value createInstance(String className, String path) {
-        return loadClass(className, path).invokeMember("new");
+    public Value createInstance(String path) {
+        return loadClass(path).invokeMember("new");
     }
 
     /// ### readResource

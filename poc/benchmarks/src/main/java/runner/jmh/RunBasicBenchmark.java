@@ -61,7 +61,7 @@ public class RunBasicBenchmark {
     }
 
     private Value newJolkBasicBenchmark() {
-        Value testClass = jolk.loadClass("JolkBasicBenchmark", "/basic/BasicBenchmark.jolk");
+        Value testClass = jolk.loadClass("/basic/BasicBenchmark.jolk");
         return testClass.invokeMember("new");
     }
 

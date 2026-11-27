@@ -17,8 +17,8 @@ public final class AwfyJolkRun extends AwfyRun<Value> {
   public AwfyJolkRun(final String name) {
     super(name);
     this.jolk = new JolkRuntime();
-    jolk.loadClass("Benchmark",   "/awfy/Benchmark.jolk");
-    jolk.loadClass("Benchmark",   "/awfy/Element.jolk");
+    jolk.loadClass("/awfy/Benchmark.jolk");
+    jolk.loadClass("/awfy/Element.jolk");
   }
 
   protected Supplier<Value> getSuiteFromName(final String name) {
@@ -28,7 +28,7 @@ public final class AwfyJolkRun extends AwfyRun<Value> {
       //case "DeltaBlue":   return () -> new DeltaBlue();
       //case "Havlak":      return () -> new Havlak();
       //case "Json":        return () -> new Json();
-      case "List":        return () -> jolk.createInstance("List",   "/awfy/List.jolk");
+      case "List":        return () -> jolk.createInstance("/awfy/List.jolk");
       //case "Mandelbrot":  return () -> new Mandelbrot();
       //case "NBody":       return () -> new NBody();
       //case "Permute":     return () -> new Permute();

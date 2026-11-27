@@ -29,7 +29,7 @@ public class RunBasicBenchmark extends BaseRunner {
         long[] params = {7, 1024, 1024, 20, 20, 7, 7};
 
         BasicBenchmark javaTest = new BasicBenchmark();
-        Value jolkTest = jolk.createInstance("BasicBenchmark", "/basic/BasicBenchmark.jolk");
+        Value jolkTest = jolk.createInstance("/basic/BasicBenchmark.jolk");
 
         for (int i = 0; i < tests.length; i++) {
             run(tests[i], params[i], iterations, javaTest, jolkTest);

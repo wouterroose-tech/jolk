@@ -13,7 +13,7 @@ public class RunBasicJolkBenchmark extends BaseRunner {
     @Override 
     protected void run(JolkRuntime jolk) throws Throwable {
         
-        Value jolkTest = jolk.createInstance("BasicBenchmark", "/basic/BasicBenchmark.jolk");
+        Value jolkTest = jolk.createInstance("/basic/BasicBenchmark.jolk");
 
         System.out.println("run  iterations   base         String       Numerical    Fibonacci_i    Fibonacci_r");
         System.out.println("----|------------|------------|------------|------------|------------|------------");

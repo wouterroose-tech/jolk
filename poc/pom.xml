@@ -12,7 +12,7 @@
     <modules>
         <module>grammar</module>
         <module>tolk</module>
-        <module>bench</module>
+        <module>benchmarks</module>
         <module>test-engine</module>
         <module>demo</module>
     </modules>

@@ -101,6 +101,8 @@ import tolk.runtime.JolkLazyValue;
 @GenerateInline(false)
 @GenerateCached(true)
 public abstract class JolkDispatchNode extends Node {
+    
+    private static final Object[] EMPTY_ARGS = new Object[0];
 
     /// Executes the message dispatch.
     /// 
@@ -436,7 +438,7 @@ public abstract class JolkDispatchNode extends Node {
     /// the call boundary and allows Partial Escape Analysis to elide argument arrays.
     @Specialization(guards = {
         "receiver.getShape() == cachedShape",
-        "selector == cachedSelector",
+        "selector.equals(cachedSelector)",
         "isReifiedMethod(member)"
     }, limit = "7")
     protected Object doUserDirect(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
@@ -451,13 +453,12 @@ public abstract class JolkDispatchNode extends Node {
             return callNode.call(receiver, arguments[0]);
         } else if (arity == 0) {
             return callNode.call(receiver);
-        } else {
-            // Generic case: Jolk Calling Convention [Self, ...Args]
-            Object[] callArgs = new Object[arity + 1];
-            callArgs[0] = receiver;
-            System.arraycopy(arguments, 0, callArgs, 1, arity);
-            return callNode.call(callArgs);
         }
+        // Generic case: Jolk Calling Convention [Self, ...Args]
+        Object[] callArgs = new Object[arity + 1];
+        callArgs[0] = receiver;
+        System.arraycopy(arguments, 0, callArgs, 1, arity);
+        return callNode.call(callArgs);
     }
 
     /// ### doUserDispatch
@@ -465,26 +466,26 @@ public abstract class JolkDispatchNode extends Node {
     /// Fallback for Guest methods that are not closure-reified or exceed the
     /// inline cache limit. This ensures the metaboundary is maintained for all
     /// Jolk objects.
+    /// 
     @Specialization(guards = {
         "receiver.getShape() == cachedShape",
-        "selector == cachedSelector"
+        "selector.equals(cachedSelector)"
     }, limit = "7")
     protected Object doUserDispatch(VirtualFrame frame, DynamicObject receiver, String selector, Object[] arguments,
-                                   @Cached("receiver.getShape()") Shape cachedShape,
-                                   @Cached("selector") String cachedSelector,
-                                   @Cached("lookupUserMember(receiver, cachedSelector)") Object member,
-                                   @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
+                                    @Cached("receiver.getShape()") Shape cachedShape,
+                                    @Cached("selector") String cachedSelector,
+                                    @Cached("lookupUserMember(receiver, cachedSelector)") Object member,
+                                    @CachedLibrary(limit = "3") InteropLibrary memberInterop,
+                                    @CachedLibrary(limit = "3") @Shared("interop") InteropLibrary interop) {
         if (member != null && !isNothing(member) && interop.isExecutable(member)) {
             try {
-                InteropLibrary memberInterop = InteropLibrary.getUncached(member); // Get interop for the member
                 Object[] args = prepareArguments(member, receiver, arguments);
                 return JolkNode.lift(JolkNode.unwrap(memberInterop.execute(member, args)));
             } catch (UnsupportedMessageException | ArityException | UnsupportedTypeException | RuntimeException e) {
                 if (e instanceof RuntimeException re) {
                     throw re; // Re-throw RuntimeExceptions directly
-                } else {
-                    throw new RuntimeException(e); // Wrap other exceptions
                 }
+                throw new RuntimeException(e); // Wrap other exceptions
             }
         }
         // If member is null, fall back to generic dispatch (e.g., host members)
@@ -854,51 +855,27 @@ public abstract class JolkDispatchNode extends Node {
     /// - arguments[0]: The closure { r = r + 1 }
     /// 
     /// Handles #while on JolkClosure by routing to the closure's interop protocol.
-    @Specialization(guards = "isWhile(selector)")
-    protected Object doClosureWhile(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
-                                   @Shared("callNode") @Cached IndirectCallNode callNode,
-                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
+    @Specialization(guards = {"isWhile(selector)", "getClosureTarget(receiver) == cachedConditionTarget"}, limit = "2")
+    protected Object doWhile(
+            VirtualFrame frame,
+            Object receiver,
+            String selector,
+            Object[] arguments,
+            @Cached("getClosureTarget(receiver)") CallTarget cachedConditionTarget,
+            @Cached("create(cachedConditionTarget)") DirectCallNode conditionCall,
+            @Cached("getClosureTarget(getArg0(arguments))") CallTarget cachedBodyTarget,
+            @Cached("create(cachedBodyTarget)") DirectCallNode bodyCall) {
         if (! (receiver instanceof JolkClosure)) {
             throw new RuntimeException("Invalid receiver for #while: expected a condition closure: " + receiver.getClass().getName());
         }
-        if (arguments.length != 1 || !(arguments[0] instanceof  JolkClosure bodyClosure)) {
+        if (arguments.length != 1 || !(arguments[0] instanceof  JolkClosure)) {
             throw new RuntimeException("Invalid arguments for #while: expected a single body closure.");
         } 
-        // Loop while the condition closure evaluates to true
-        while (evaluateClosureAsBoolean((JolkClosure) receiver, callNode, interop)) {
-            // Execute the body closure
-            Object env = bodyClosure. getEnvironment();
-            CallTarget target = bodyClosure.getCallTarget();
-            callNode.call(target, env);
+        while (Boolean.TRUE == conditionCall.call(frame, EMPTY_ARGS)) {
+            bodyCall.call(frame, EMPTY_ARGS);
         }
         // implicit self return
         return receiver;
-    } 
-
-    /**
-     * Evaluates a JolkClosure and determines if its result is truthy.
-     * This method is intended for use within dispatch logic where callNode and interop are available.
-     */
-    private boolean evaluateClosureAsBoolean(JolkClosure conditionClosure, IndirectCallNode callNode, InteropLibrary interop) {
-        Object env = conditionClosure.getEnvironment();
-        CallTarget target = conditionClosure.getCallTarget();
-        Object result = callNode.call(target, env);
-
-        // Unwrap the result for simpler checking
-        Object unwrappedResult  = JolkNode.unwrap(result);
-
-        if (unwrappedResult instanceof Boolean b) {
-            return b;
-        } else if (unwrappedResult == JolkNothing.INSTANCE || unwrappedResult == null)  {
-            return false;
-        } else if (unwrappedResult instanceof JolkMatch match) {
-            return match.isPresent() && !match.isTerminal(); // Treat present non-terminal match as true
-        }
-        try {
-            return (boolean) interop.execute(unwrappedResult);
-        } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
-            throw new RuntimeException("Error evaluating #while condition: " + unwrappedResult, e);
-        }
     }
 
     /// ### Fast Path for Long-based Iteration (#times)
@@ -1733,7 +1710,7 @@ public abstract class JolkDispatchNode extends Node {
     /// inline cache (`limit = "3"`) to handle different receiver types efficiently.
     @Specialization(replaces = {
         "doNothing", "doShapeRead", "doUserDispatch", "doClosureTry", 
-        "doClosureCatch", "doCatchPassThrough", 
+        "doWhile", "doClosureCatch", "doCatchPassThrough", 
         "doControlFlowDirect", "doTernaryDirect", "doControlFlow", "doDecimal",
         "doTimesDirect", "doTimesIndirect", "doListMap", "doFilter", "doAnyMatch", "doFindFirst",
         "doIteratorForEach", "doMapForEach", "doLongClosureDirect", "doLongCached", 
@@ -2357,7 +2334,7 @@ public abstract class JolkDispatchNode extends Node {
             String key = (String) keys[i];
             Object val = lib.getOrDefault(jo, key, JolkNothing.INSTANCE);
             // Recurse into #toString dispatch to handle nested records or enums correctly.
-            Object stringified = dispatchObjectIntrinsic(val, "toString", new Object[0], InteropLibrary.getUncached(), context);
+            Object stringified = dispatchObjectIntrinsic(val, "toString", EMPTY_ARGS, InteropLibrary.getUncached(), context);
             String valStr = (stringified instanceof TruffleString ts) ? ts.toString() : String.valueOf(stringified);
             
             sb.append(key).append("=").append(valStr);
@@ -2685,8 +2662,7 @@ public abstract class JolkDispatchNode extends Node {
             return (java.lang.Runnable) () -> {
                 Object prev = truffleContext.enter(null);
                 try {
-                    Object[] args = new Object[0];
-                    closure.execute(args);
+                    closure.execute();
                 } catch (Throwable ignored) {
                 } finally {
                     truffleContext.leave(null, prev);
@@ -2748,7 +2724,7 @@ public abstract class JolkDispatchNode extends Node {
             return (java.util.function.Supplier<Object>) () -> {
                 Object prev = truffleContext.enter(null);
                 try {
-                    return closure.execute(new Object[0]);
+                    return closure.execute();
                 } catch (Throwable t) {
                     if (t instanceof RuntimeException re) throw re;
                     if (t instanceof Error e) throw e;

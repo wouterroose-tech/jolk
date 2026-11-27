@@ -105,7 +105,7 @@ public class JolkClosure implements TruffleObject {
     }
 
     @ExportMessage
-    public Object execute(Object[] arguments) {
+    public Object execute(Object... arguments) {
         Object env = this.environment;
         if (env != null) {
             // Prepend the captured environment (lexical scope) at index 0
@@ -148,7 +148,7 @@ public class JolkClosure implements TruffleObject {
                 Object errorType = arguments[0];
                 Object handler = arguments[1];
                 try {
-                    return execute(new Object[0]);
+                    return execute();
                 } catch (RuntimeException | Error t) {
                     if (errorType instanceof Class<?> clazz) {
                          if (clazz.isInstance(t)) return InteropLibrary.getUncached().execute(handler, lift(t));
@@ -161,14 +161,14 @@ public class JolkClosure implements TruffleObject {
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 Object finalAction = arguments[0];
                 try {
-                    return execute(new Object[0]);
+                    return execute();
                 } finally {
                     InteropLibrary.getUncached().execute(finalAction);
                 }
             case "try":
                 if (arguments.length != 1) throw ArityException.create(1, 1, arguments.length);
                 Object logic = arguments[0];
-                Object resource = execute(new Object[0]);
+                Object resource = execute();
                 Throwable thrown = null;
                 try {
                     return InteropLibrary.getUncached().execute(logic, resource);

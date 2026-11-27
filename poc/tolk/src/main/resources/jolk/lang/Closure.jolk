@@ -69,8 +69,17 @@ package class Closure[T] {
     /// After execution, the resource's `#close` method is invoked, ensuring proper cleanup
     /// regardless of whether the logic completed successfully or threw an exception.
     ///
-    /// - **logic**: A closure that consumes the resource.
-    /// - **Returns**: The result of the logic block.
+    /// @param logic: A closure that consumes the resource.
+    /// @return The result of the logic block.
     <R> R try(Closure[R] logic) {}
+
+
+    /// Implements the while loop in Jolk.
+    ///
+    /// The receiver closure serves as the  condition. The `logic` closure is
+    /// executed until it returns false or throws an exception.
+    ///
+    /// @param logic The closure to execute.
+    while(Closure logic) {}
     
 }

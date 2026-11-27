@@ -133,6 +133,11 @@ public abstract class JolkDispatchNode extends Node {
     }
 
     @Idempotent
+    protected static boolean isWhile(String selector) {
+        return "while".equals(selector);
+    }
+
+    @Idempotent
     protected static boolean isFilter(String selector) {
         return "filter".equals(selector);
     }
@@ -834,6 +839,66 @@ public abstract class JolkDispatchNode extends Node {
     protected Object doCatchPassThrough(VirtualFrame frame, Object receiver, String selector, Object[] arguments) {
         // If the receiver is not a closure, the 'try' block already succeeded.
         return JolkNode.lift(receiver);
+    }
+
+    /// ### Fast Path for Closure While-Loop
+    /// 
+    /// Executes the while loop. The receiver is the condition, and the first argument
+    /// is the closure to execute if the condition is true.
+    /// 
+    /// Example:
+    ///  { r < 42 } #while { r = r + 1 }
+    /// 
+    /// In this case:
+    /// - receiver: The result of evaluating { r < 42 }
+    /// - arguments[0]: The closure { r = r + 1 }
+    /// 
+    /// Handles #while on JolkClosure by routing to the closure's interop protocol.
+    @Specialization(guards = "isWhile(selector)")
+    protected Object doClosureWhile(VirtualFrame frame, Object receiver, String selector, Object[] arguments,
+                                   @Shared("callNode") @Cached IndirectCallNode callNode,
+                                   @Shared("interop") @CachedLibrary(limit = "3") InteropLibrary interop) {
+        if (! (receiver instanceof JolkClosure)) {
+            throw new RuntimeException("Invalid receiver for #while: expected a condition closure: " + receiver.getClass().getName());
+        }
+        if (arguments.length != 1 || !(arguments[0] instanceof  JolkClosure bodyClosure)) {
+            throw new RuntimeException("Invalid arguments for #while: expected a single body closure.");
+        } 
+        // Loop while the condition closure evaluates to true
+        while (evaluateClosureAsBoolean((JolkClosure) receiver, callNode, interop)) {
+            // Execute the body closure
+            Object env = bodyClosure. getEnvironment();
+            CallTarget target = bodyClosure.getCallTarget();
+            callNode.call(target, env);
+        }
+        // implicit self return
+        return receiver;
+    } 
+
+    /**
+     * Evaluates a JolkClosure and determines if its result is truthy.
+     * This method is intended for use within dispatch logic where callNode and interop are available.
+     */
+    private boolean evaluateClosureAsBoolean(JolkClosure conditionClosure, IndirectCallNode callNode, InteropLibrary interop) {
+        Object env = conditionClosure.getEnvironment();
+        CallTarget target = conditionClosure.getCallTarget();
+        Object result = callNode.call(target, env);
+
+        // Unwrap the result for simpler checking
+        Object unwrappedResult  = JolkNode.unwrap(result);
+
+        if (unwrappedResult instanceof Boolean b) {
+            return b;
+        } else if (unwrappedResult == JolkNothing.INSTANCE || unwrappedResult == null)  {
+            return false;
+        } else if (unwrappedResult instanceof JolkMatch match) {
+            return match.isPresent() && !match.isTerminal(); // Treat present non-terminal match as true
+        }
+        try {
+            return (boolean) interop.execute(unwrappedResult);
+        } catch (UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+            throw new RuntimeException("Error evaluating #while condition: " + unwrappedResult, e);
+        }
     }
 
     /// ### Fast Path for Long-based Iteration (#times)

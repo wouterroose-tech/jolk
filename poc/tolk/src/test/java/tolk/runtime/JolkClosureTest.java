@@ -6,6 +6,7 @@ import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.nodes.RootNode;
 import tolk.JolcTestBase;
 
+import org.graalvm.polyglot.Value;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -265,6 +266,21 @@ public class JolkClosureTest extends JolcTestBase {
         members.put("close", closeAction);
         JolkMetaClass resourceClass = new JolkMetaClass("MockResource", JolkFinality.OPEN, JolkVisibility.PUBLIC, JolkTypeCategory.CLASS, members);
         return new JolkObject(resourceClass);
+    }
+    
+    @Test
+    void testWhile() {
+        String source = """
+            class TimesTest {
+                Long test() {
+                    Int i = 0;
+                    { i < 42 } #while { i = i + 1 };
+                    ^ i
+                }
+            }""";
+        Value meta = eval(source);
+        Value instance = meta.invokeMember("new");  
+        assertEquals(42L, instance.invokeMember("test").asLong());
     }
     
 }

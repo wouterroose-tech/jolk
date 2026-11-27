@@ -1,6 +1,8 @@
-package runner;
+package runner.basic;
 
 import org.graalvm.polyglot.Value;
+
+import runner.JolkRuntime;
 
 public class RunBasicJolkBenchmark extends BaseRunner {
 

@@ -1,4 +1,4 @@
-package awfj;
+package awfy;
 
 /* This code is based on the SOM class library.
  *
@@ -22,16 +22,17 @@ package awfj;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-abstract class Benchmark {
+public abstract class Benchmark {
 
-  abstract Object benchmark();
-  abstract Boolean verifyResult(Object result);
+  public abstract Object benchmark();
+  public abstract boolean verifyResult(Object result);
 
-  Boolean innerBenchmarkLoop(Int innerIterations) {
-    innerIterations #times {
-      ! #verifyResult(#benchmark) ? { ^ false }
-    };
-    ^ true
+  public boolean innerBenchmarkLoop(final int innerIterations) {
+    for (int i = 0; i < innerIterations; i++) {
+      if (!verifyResult(benchmark())) {
+        return false;
+      }
+    }
+    return true;
   }
-
 }

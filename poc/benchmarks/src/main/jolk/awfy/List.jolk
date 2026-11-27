@@ -1,4 +1,4 @@
-package awfj;
+~ awfy;
 
 /* This code is based on the SOM class library.
  *
@@ -22,17 +22,44 @@ package awfj;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-public abstract class Benchmark {
+final class List extends Benchmark {
 
-  public abstract Object benchmark();
-  public abstract boolean verifyResult(Object result);
-
-  public boolean innerBenchmarkLoop(final int innerIterations) {
-    for (int i = 0; i < innerIterations; i++) {
-      if (!verifyResult(benchmark())) {
-        return false;
-      }
-    }
-    return true;
+  @Override
+  public Object benchmark() {
+    ^ #tail(#makeList(15), #makeList(10), #makeList(6)) #length
   }
+
+  private Element makeList(Int length) {
+    (length == 0) ? { ^ null };
+    ^ Element #new(length) #next(#makeList(length - 1))
+  }
+
+  private Boolean isShorterThan(Element x, Element y) {
+    Element xTail = x;
+    Element yTail = y;
+
+    {yTail != null}
+      #while {
+        (xTail == null) ? { ^ true };
+        xTail = xTail #next;
+        yTail = yTail #next
+      };
+    ^ false
+  }
+
+  private Element tail(Element x, Element y, Element z) {
+    #isShorterThan(y, x) ? {
+      ^ #tail(
+          #tail(x #next, y, z),
+          #tail(y #next, z, x),
+          #tail(z #next, x, y))
+    };
+    ^ z
+  }
+
+  @Override
+  Boolean verifyResult(Object result) {
+    ^ 10 == result
+  }
+
 }

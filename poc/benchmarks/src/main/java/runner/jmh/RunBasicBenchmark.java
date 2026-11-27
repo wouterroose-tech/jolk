@@ -1,4 +1,4 @@
-package jmh;
+package runner.jmh;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;

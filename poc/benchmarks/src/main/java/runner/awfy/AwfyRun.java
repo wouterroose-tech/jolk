@@ -1,4 +1,4 @@
-package awfj;
+package runner.awfy;
 
 import java.util.function.Supplier;
 
@@ -24,40 +24,40 @@ import java.util.function.Supplier;
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-public final class Run {
+public abstract class AwfyRun<T> {
+
+  private static int WARMUP_ITERATIONS = 3;
+  private static int NUM_ITERATIONS = 7;
+  private static int INNER_ITERATIONS = 1000;
+
   private final String name;
-  private final Supplier<Benchmark> benchmarkSuite;
+  private final Supplier<T> benchmarkSuite;
   private int numIterations;
   private int innerIterations;
   private long total;
 
-  public Run(final String name) {
+  public AwfyRun(final String name) {
     this.name = name;
     this.benchmarkSuite = getSuiteFromName(name);
-    numIterations   = 1;
-    innerIterations = 1;
+    this.innerIterations = INNER_ITERATIONS;
+  }
+  
+  protected final void run() throws Exception {
+    System.out.println("Warump ...");
+    run(WARMUP_ITERATIONS);
+    
+    total = 0;
+    System.out.println("Run  ...");
+    run(NUM_ITERATIONS);
   }
 
-  private static Supplier<Benchmark> getSuiteFromName(final String name) {
-    switch (name) {
-      //case "Bounce":      return () -> new Bounce();
-      //case "CD":          return () -> new CD();
-      //case "DeltaBlue":   return () -> new DeltaBlue();
-      //case "Havlak":      return () -> new Havlak();
-      //case "Json":        return () -> new Json();
-      case "List":        return () -> new List();
-      //case "Mandelbrot":  return () -> new Mandelbrot();
-      //case "NBody":       return () -> new NBody();
-      //case "Permute":     return () -> new Permute();
-      //case "Queens":      return () -> new Queens();
-      //case "Richards":    return () -> new Richards();
-      //case "Sieve":       return () -> new Sieve();
-      //case "Storage":     return () -> new Storage();
-      //case "Towers":      return () -> new Towers();
-      default:
-        throw new RuntimeException("No benchmark found with the name: " + name);
-    }
+  public void run(final int runs) throws Exception {
+    setNumIterations(runs); 
+    runBenchmark();
   }
+  
+
+  protected abstract Supplier<T> getSuiteFromName(String name2);
 
   public void runBenchmark() {
     // Checkstyle: stop
@@ -72,9 +72,9 @@ public final class Run {
     // Checkstyle: resume
   }
 
-  private void measure(final Benchmark bench) {
+  private void measure(final T bench) {
     long startTime = System.nanoTime();
-    if (!bench.innerBenchmarkLoop(innerIterations)) {
+    if (!innerBenchmarkLoop(bench,innerIterations)) {
       throw new RuntimeException("Benchmark failed with incorrect result");
     }
     long endTime = System.nanoTime();
@@ -85,7 +85,9 @@ public final class Run {
     total += runTime;
   }
 
-  private void doRuns(final Benchmark bench) {
+  protected abstract boolean innerBenchmarkLoop(final T bench, final int innerIterations);
+
+  private void doRuns(final T bench) {
     for (int i = 0; i < numIterations; i++) {
       measure(bench);
     }
@@ -116,5 +118,9 @@ public final class Run {
 
   public void setInnerIterations(final int innerIterations) {
     this.innerIterations = innerIterations;
+  }
+
+  public long total() {
+    return total;
   }
 }

@@ -1,4 +1,4 @@
-package runner;
+package runner.basic;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.graalvm.polyglot.Value;
 
 import basic.BasicBenchmark;
+import runner.JolkRuntime;
 
 public class RunBasicBenchmark extends BaseRunner {
 

@@ -1,4 +1,4 @@
-package awfj;
+package awfy;
 
 /* This code is based on the SOM class library.
  *

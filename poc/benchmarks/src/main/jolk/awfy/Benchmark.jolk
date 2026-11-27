@@ -1,4 +1,4 @@
-~ awfj;
+~ awfy;
 
 /* This code is based on the SOM class library.
  *
@@ -22,16 +22,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package final class Element {
-    private Object val;
-    private Element next;
+abstract class Benchmark {
 
-    meta new(Object v) {
-      ^ #new #val(v)
-    }
+  abstract Object benchmark();
+  abstract Boolean verifyResult(Object result);
 
-    Int length() {
-      ^ next == null ? 1 : 1 + next #length
-    }
+  Boolean innerBenchmarkLoop(Int innerIterations) {
+    innerIterations #times {
+      ! #verifyResult(#benchmark) ? { ^ false }
+    };
+    ^ true
+  }
 
 }

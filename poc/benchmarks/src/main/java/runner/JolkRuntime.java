@@ -13,11 +13,21 @@ import org.graalvm.polyglot.Value;
 
 import tolk.language.JolkLanguage;
 
-/**
- * # JolkBasicBenchmarkWorkload
- * 
- * Provides the Jolk guest-language implementation for fundamental performance benchmarks.
- */
+/// # JolkBasicBenchmarkWorkload
+/// 
+/// Provides the Jolk guest-language implementation for fundamental performance benchmarks.
+///
+///
+/// set these argumens to activate GraalJIT
+///    vmArgs:
+///     -XX:+UnlockExperimentalVMOptions,
+///     -XX:+EnableJVMCI,
+///     -XX:+UseJVMCICompiler 
+///     -Xms4G -Xmx4G
+///     -XX:MetaspaceSize=512m
+///     -XX:ReservedCodeCacheSize=512m
+///     -XX:+HeapDumpOnOutOfMemoryError
+/// 
 public class JolkRuntime implements AutoCloseable {
 
     private Engine engine;

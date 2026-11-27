@@ -1,4 +1,4 @@
-package jmh;
+package runner.jmh;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
@@ -8,7 +8,7 @@ import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import awfj.List;
+import awfy.List;
 import runner.JolkRuntime;
 
 import java.util.concurrent.TimeUnit;
